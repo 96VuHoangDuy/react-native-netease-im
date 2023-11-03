@@ -1,5 +1,7 @@
 package com.netease.im;
 
+import static com.netease.nimlib.sdk.NIMClient.getService;
+
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -15,6 +17,7 @@ import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.login.LoginService;
+import com.netease.im.session.SessionService;
 import com.netease.im.session.extension.AccountNoticeAttachment;
 import com.netease.im.session.extension.BankTransferAttachment;
 import com.netease.im.session.extension.CardAttachment;
@@ -37,7 +40,9 @@ import com.netease.im.uikit.contact.core.model.IContact;
 import com.netease.im.uikit.contact.core.model.TeamContact;
 import com.netease.im.uikit.session.emoji.AitHelper;
 import com.netease.im.uikit.session.helper.TeamNotificationHelper;
+import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.friend.model.AddFriendNotify;
 import com.netease.nimlib.sdk.msg.MsgService;
@@ -47,6 +52,7 @@ import com.netease.nimlib.sdk.msg.attachment.LocationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.VideoAttachment;
+import com.netease.nimlib.sdk.msg.constant.AttachStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgDirectionEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
@@ -1028,6 +1034,26 @@ public class ReactCache {
 
     final static String MESSAGE_EXTEND = MessageConstant.Message.EXTEND;
 
+    public static boolean isOriginVideoHasDownloaded(final IMMessage message) {
+        Log.d("isOriginVideo", message.getAttachStatus() + " ?? " + !TextUtils.isEmpty(((VideoAttachment) message.getAttachment()).getPath()));
+        if (message.getAttachStatus() == AttachStatusEnum.transferred &&
+                !TextUtils.isEmpty(((VideoAttachment) message.getAttachment()).getPath())) {
+            return true;
+        }
+        return false;
+    }
+
+    public interface DownloadCallback extends RequestCallback<Void> {
+        @Override
+        void onSuccess(Void result);
+
+        @Override
+        void onFailed(int code);
+
+        @Override
+        void onException(Throwable exception);
+    }
+
     /**
      * <br/>uuid 消息ID
      * <br/>sessionId 会话id
@@ -1164,6 +1190,30 @@ public class ReactCache {
                     VideoAttachment videoAttachment = (VideoAttachment) attachment;
                     videoDic.putString(MessageConstant.MediaFile.URL, videoAttachment.getUrl());
                     videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
+
+                    if (!isOriginVideoHasDownloaded(item)) {
+                        DownloadCallback callback = new DownloadCallback() {
+                            @Override
+                            public void onSuccess(Void result) {
+                                List<IMMessage> list = new ArrayList<>(1);
+                                list.add(item);
+                                Object a = ReactCache.createMessageList(list);
+                                ReactCache.emit(ReactCache.observeMsgStatus, a);
+                            }
+
+                            @Override
+                            public void onFailed(int code) {
+
+                            }
+
+                            @Override
+                            public void onException(Throwable exception) {
+
+                            }
+                        };
+                        AbortableFuture future = getService(MsgService.class).downloadAttachment(item, videoAttachment.getThumbPath() == null);
+                        future.setCallback(callback);
+                    }
                     videoDic.putString(MessageConstant.MediaFile.DISPLAY_NAME, videoAttachment.getDisplayName());
                     videoDic.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(videoAttachment.getHeight()));
                     videoDic.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(videoAttachment.getWidth()));

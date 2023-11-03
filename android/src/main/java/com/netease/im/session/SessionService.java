@@ -364,7 +364,7 @@ public class SessionService {
     }
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
-        if (isMyMessage(message)) {
+        if ((isMyMessage(message) && message.getMsgType() != MsgTypeEnum.video) || isSend || (message.getMsgType() == MsgTypeEnum.video && ReactCache.isOriginVideoHasDownloaded(message))) {
             List<IMMessage> list = new ArrayList<>(1);
             list.add(message);
             Object a = ReactCache.createMessageList(list);
@@ -1047,18 +1047,6 @@ public class SessionService {
         if (isOriginImageHasDownloaded(message)) {
             return;
         }
-
-        // Define a callback that will be executed when the future completes.
-        Consumer<Void> callback = result -> {
-            if (result != null) {
-                // The download was successful, and 'result' is the Void value.
-                System.out.println("Download successful");
-                ReactCache.emit(ReactCache.observeReceiveMessage, message);
-            } else {
-                // An error occurred during the download.
-                System.out.println("Download failed");
-            }
-        };
 
         AbortableFuture future = getService(MsgService.class).downloadAttachment(message, isThumb);
     }

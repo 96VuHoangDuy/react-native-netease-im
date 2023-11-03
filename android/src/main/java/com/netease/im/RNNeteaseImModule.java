@@ -1677,6 +1677,34 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 });
     }
 
+//    @ReactMethod
+//    public void searchMessagesinCurrentSession(String anchorId,int limit,ReadableArray messageTypes,int direction, final Promise promise) {
+//        MsgSearchOption option = new MsgSearchOption();
+//        option.setSearchContent(keyWords);
+//        option.setLimit(100);
+//
+//        if (anchor == null) {
+//            anchor = MessageBuilder.createEmptyMessage(sessionId, sessionTypeEnum, 0);
+//        }
+//
+//        NIMClient.getService(MsgService.class).queryMessageListByTypesV2(messageTypes,anchorId,0,direction == 1 ? QueryDirectionEnum.QUERY_NEW : QueryDirectionEnum.QUERY_OLD, limit,direction == 1 ? true : false)
+//                .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+//                    @Override
+//                    public void onResult(int code, List<IMMessage> result, Throwable exception) {
+//                        LogUtil.d("test searchMessages,", result.toString());
+//                        if (code == ResponseCode.RES_SUCCESS) {
+//                            if (result != null && result.size() > 0) {
+//                                WritableMap a = ReactCache.createMessageObjectList(result);
+//
+//                                promise.resolve(a);
+//                                return;
+//                            }
+//                        }
+//                        promise.reject("" + code, "");
+//                    }
+//                });
+//    }
+
     /**
      * 获取最近聊天内容
      *
