@@ -85,6 +85,7 @@ import com.netease.nimlib.sdk.team.constant.VerifyTypeEnum;
 import com.netease.nimlib.sdk.team.model.CreateTeamResult;
 import com.netease.nimlib.sdk.team.model.Team;
 import com.netease.nimlib.sdk.team.model.TeamMember;
+import com.netease.nimlib.sdk.uinfo.constant.UserInfoFieldEnum;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 
@@ -1330,7 +1331,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     /**
      * 转发消息操作
      *
-     * @param messageId
+     * @param messageIds
      * @param sessionId
      * @param sessionType
      * @param content
