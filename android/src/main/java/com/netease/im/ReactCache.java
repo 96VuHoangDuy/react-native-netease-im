@@ -1,13 +1,11 @@
 package com.netease.im;
 
 import static com.netease.nimlib.sdk.NIMClient.getService;
+import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
 
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
@@ -17,14 +15,11 @@ import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.login.LoginService;
-import com.netease.im.session.SessionService;
 import com.netease.im.session.extension.AccountNoticeAttachment;
 import com.netease.im.session.extension.BankTransferAttachment;
-import com.netease.im.session.extension.CardAttachment;
 import com.netease.im.session.extension.CustomAttachment;
 import com.netease.im.session.extension.CustomAttachmentType;
 import com.netease.im.session.extension.DefaultCustomAttachment;
-import com.netease.im.session.extension.ForwardMultipleTextAttachment;
 import com.netease.im.session.extension.LinkUrlAttachment;
 import com.netease.im.session.extension.RedPacketAttachement;
 import com.netease.im.session.extension.RedPacketOpenAttachement;
@@ -66,33 +61,15 @@ import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.SystemMessage;
 import com.netease.nimlib.sdk.team.constant.TeamFieldEnum;
 import com.netease.nimlib.sdk.team.constant.TeamMessageNotifyTypeEnum;
-import com.netease.nimlib.sdk.team.constant.VerifyTypeEnum;
 import com.netease.nimlib.sdk.team.model.MemberChangeAttachment;
-//import com.netease.nimlib.sdk.team.model.MuteMemberAttachment;
 import com.netease.nimlib.sdk.team.model.MuteMemberAttachment;
 import com.netease.nimlib.sdk.team.model.Team;
 import com.netease.nimlib.sdk.team.model.TeamMember;
-//import com.netease.nimlib.sdk.team.model.UpdateTeamAttachment;
 import com.netease.nimlib.sdk.team.model.UpdateTeamAttachment;
-import com.netease.nimlib.sdk.uinfo.constant.UserInfoFieldEnum;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 
-//import com.netease.im.IMApplication;
-//import com.netease.im.R;
-//import com.netease.im.uikit.cache.TeamDataCache;
-//import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
-//import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
-//import com.netease.nimlib.sdk.msg.model.IMMessage;
-//import com.netease.nimlib.sdk.team.constant.TeamAllMuteModeEnum;
-//import com.netease.nimlib.sdk.team.constant.TeamFieldEnum;
-//import com.netease.nimlib.sdk.team.constant.TeamTypeEnum;
-//import com.netease.nimlib.sdk.team.constant.VerifyTypeEnum;
-//import com.netease.nimlib.sdk.team.model.MemberChangeAttachment;
-//import com.netease.nimlib.sdk.team.model.MuteMemberAttachment;
-//import com.netease.nimlib.sdk.team.model.Team;
-//import com.netease.nimlib.sdk.team.model.UpdateTeamAttachment;
-
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -100,7 +77,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
 
 /**
  * Created by dowin on 2017/4/28.
@@ -1035,7 +1011,7 @@ public class ReactCache {
     final static String MESSAGE_EXTEND = MessageConstant.Message.EXTEND;
 
     public static boolean isOriginVideoHasDownloaded(final IMMessage message) {
-        Log.d("isOriginVideo", message.getAttachStatus() + " ?? " + !TextUtils.isEmpty(((VideoAttachment) message.getAttachment()).getPath()));
+        Log.d("isOriginVideo", message.getAttachStatus() + " ?? " + ((VideoAttachment) message.getAttachment()).getPath() + " ?? " + !TextUtils.isEmpty(((VideoAttachment) message.getAttachment()).getPath()));
         if (message.getAttachStatus() == AttachStatusEnum.transferred &&
                 !TextUtils.isEmpty(((VideoAttachment) message.getAttachment()).getPath())) {
             return true;
@@ -1052,6 +1028,22 @@ public class ReactCache {
 
         @Override
         void onException(Throwable exception);
+    }
+
+    private static File setFileName(String path) {
+        String currentFileName = path.substring(path.lastIndexOf("/"), path.length());
+        currentFileName = currentFileName.substring(1);
+        Log.d("Current file name",path + "," + currentFileName);
+
+        File from      = new File(path);
+        String directory = from.getParentFile().getAbsolutePath();
+        File to        = new File(directory, currentFileName.trim() + ".mp4");
+        from.renameTo(to);
+        Log.i("Directory is", directory);
+        Log.i("Default path is", from.getPath());
+        Log.i("From path is", from.toString());
+        Log.i("To path is", to.getPath().toString());
+        return to;
     }
 
     /**
@@ -1189,26 +1181,43 @@ public class ReactCache {
                 if (attachment instanceof VideoAttachment) {
                     VideoAttachment videoAttachment = (VideoAttachment) attachment;
                     videoDic.putString(MessageConstant.MediaFile.URL, videoAttachment.getUrl());
-                    videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
+                    Log.d("video.getPath()", videoAttachment.getPath() + "");
+                    if (videoAttachment.getPath() != null) {
+                        if (videoAttachment.getPath().contains(".mp4")) {
+                            videoDic.putString(MessageConstant.MediaFile.THUMB_PATH,videoAttachment.getPath());
+                            videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
+                        } else {
+                            File newFile = setFileName(videoAttachment.getPath());
+
+                            videoAttachment.setPath(newFile.getPath());
+                            item.setAttachment(videoAttachment);
+                            getMsgService().updateIMMessageStatus(item);
+                            videoDic.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
+                            videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+
+                        }
+                    } else {
+                        videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getPath());
+                        videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
+                    }
 
                     if (!isOriginVideoHasDownloaded(item)) {
                         DownloadCallback callback = new DownloadCallback() {
                             @Override
                             public void onSuccess(Void result) {
-                                List<IMMessage> list = new ArrayList<>(1);
-                                list.add(item);
-                                Object a = ReactCache.createMessageList(list);
-                                ReactCache.emit(ReactCache.observeMsgStatus, a);
+                                ReactCache.createMessage(item);
+                                Log.d("onSuccess download", "onSuccess download" + "" +  ((VideoAttachment) attachment).getPath());
+//                                ReactCache.emit(ReactCache.observeReceiveMessage, a);
                             }
 
                             @Override
                             public void onFailed(int code) {
-
+                                Log.d("onFailed resultresult", String.valueOf(code));
                             }
 
                             @Override
                             public void onException(Throwable exception) {
-
+                                Log.d("onException result", String.valueOf(exception));
                             }
                         };
                         AbortableFuture future = getService(MsgService.class).downloadAttachment(item, videoAttachment.getThumbPath() == null);
@@ -1219,8 +1228,6 @@ public class ReactCache {
                     videoDic.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(videoAttachment.getWidth()));
                     videoDic.putString(MessageConstant.MediaFile.DURATION, Long.toString(videoAttachment.getDuration()));
                     videoDic.putString(MessageConstant.MediaFile.SIZE, Long.toString(videoAttachment.getSize()));
-
-                    videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getThumbPath());
                 }
                 itemMap.putMap(MESSAGE_EXTEND, videoDic);
             } else if (item.getMsgType() == MsgTypeEnum.location) {
