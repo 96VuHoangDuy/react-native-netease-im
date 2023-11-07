@@ -72,6 +72,7 @@ import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
+import com.netease.nimlib.sdk.msg.model.SearchOrderEnum;
 import com.netease.nimlib.sdk.msg.model.SystemMessage;
 import com.netease.nimlib.sdk.nos.NosService;
 import com.netease.nimlib.sdk.team.TeamService;
@@ -1659,13 +1660,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void searchMessages(String keyWords, final Promise promise) {
         MsgSearchOption option = new MsgSearchOption();
         option.setSearchContent(keyWords);
-        option.setLimit(100);
 
         NIMClient.getService(MsgService.class).searchAllMessage(option)
                 .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
                     @Override
                     public void onResult(int code, List<IMMessage> result, Throwable exception) {
-                        LogUtil.d("test searchMessages,", result.toString());
                         if (code == ResponseCode.RES_SUCCESS) {
                             if (result != null && result.size() > 0) {
                                 WritableMap a = ReactCache.createMessageObjectList(result);
@@ -1681,80 +1680,68 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void searchMessagesinCurrentSession(String keyWords,String anchorId,int limit,ReadableArray messageTypes,int direction, final Promise promise) {
-        IMMessage anchor = null;
+        ArrayList<String> _messageTypes = (ArrayList<String>)(ArrayList<?>)(messageTypes.toArrayList());
 
-        Map<String, MsgTypeEnum> mockUpKeys = new HashMap();
-        mockUpKeys.put("text", MsgTypeEnum.text);
-        mockUpKeys.put("voice", MsgTypeEnum.audio);
-        mockUpKeys.put("file", MsgTypeEnum.file);
-        mockUpKeys.put("image", MsgTypeEnum.image);
-        mockUpKeys.put("video", MsgTypeEnum.video);
-        mockUpKeys.put("notification", MsgTypeEnum.notification);
-        mockUpKeys.put("custom", MsgTypeEnum.custom);
-        mockUpKeys.put("tip", MsgTypeEnum.tip);
+        MsgSearchOption option = new MsgSearchOption();
+        option.setSearchContent(keyWords);
+        option.setLimit(limit);
+        option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
 
-        ArrayList<MsgTypeEnum> arrayListMessageTypes = new ArrayList<>();
+        if (messageTypes != null && _messageTypes.size() > 0) {
+            Map<String, MsgTypeEnum> mockUpKeys = new HashMap();
+            mockUpKeys.put("text", MsgTypeEnum.text);
+            mockUpKeys.put("voice", MsgTypeEnum.audio);
+            mockUpKeys.put("file", MsgTypeEnum.file);
+            mockUpKeys.put("image", MsgTypeEnum.image);
+            mockUpKeys.put("video", MsgTypeEnum.video);
+            mockUpKeys.put("notification", MsgTypeEnum.notification);
+            mockUpKeys.put("custom", MsgTypeEnum.custom);
+            mockUpKeys.put("tip", MsgTypeEnum.tip);
+
+            ArrayList<MsgTypeEnum> arrayListMessageTypes = new ArrayList<>();
 
 
-        for (int i=0; i<messageTypes.size(); i++) {
-            String type = String.valueOf(messageTypes.getType(i));
-            arrayListMessageTypes.add(mockUpKeys.get(type));
+            for (int i=0; i < _messageTypes.size(); i++) {
+                String type = _messageTypes.get(i);
+                arrayListMessageTypes.add(mockUpKeys.get(type));
+            }
+
+            option.setMessageTypes(arrayListMessageTypes);
         }
 
-        if (anchorId == null) {
-            anchor = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
+        final IMMessage[] anchor = {null};
 
-            NIMClient.getService(MsgService.class).queryMessageListByTypesV2(
-                    arrayListMessageTypes,
-                    anchor,
-                    anchor.getTime(),
-                    direction == 1 ? QueryDirectionEnum.QUERY_NEW : QueryDirectionEnum.QUERY_OLD,
-                    limit,
-                    direction == 1 ? true : false
-                    )
-                    .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
-                        @Override
-                        public void onResult(int code, List<IMMessage> result, Throwable exception) {
-                            LogUtil.d("test searchMessages,", result.toString());
-                            if (code == ResponseCode.RES_SUCCESS) {
-                                if (result != null && result.size() > 0) {
-                                    Object a = ReactCache.createMessageList(result);
-
-                                    promise.resolve(a);
-                                    return;
-                                }
-                            }
-                            promise.reject("" + code, "");
-                        }
-                    });
+        if (anchorId.isEmpty() || anchorId == null) {
+            anchor[0] = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
         } else {
             sessionService.queryMessage(anchorId, new SessionService.OnMessageQueryListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
-                    NIMClient.getService(MsgService.class).queryMessageListByTypesV2(arrayListMessageTypes, message,message.getTime(),direction == 1 ? QueryDirectionEnum.QUERY_NEW : QueryDirectionEnum.QUERY_OLD, limit, direction == 1 ? true : false)
-                            .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
-                                @Override
-                                public void onResult(int code, List<IMMessage> result, Throwable exception) {
-                                    LogUtil.d("test searchMessages,", result.toString());
-                                    if (code == ResponseCode.RES_SUCCESS) {
-                                        if (result != null && result.size() > 0) {
-                                            Object a = ReactCache.createMessageList(result);
-
-                                            promise.resolve(a);
-                                            return;
-                                        }
-                                    }
-                                    promise.reject("" + code, "");
-                                }
-                            });
+                    anchor[0] = message;
                     return code;
                 }
             });
+
+
+            option.setStartTime(direction == 1 ? anchor[0].getTime() : 0);
+            option.setEndTime(direction == 0 ? anchor[0].getTime() : 0);
         }
 
+        NIMClient.getService(MsgService.class).searchAllMessage(option)
+                .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                    @Override
+                    public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                        if (code == ResponseCode.RES_SUCCESS) {
+                            if (result != null && result.size() > 0) {
+                                Object a = ReactCache.createMessageList(result);
 
-
-
+                                promise.resolve(a);
+                                return;
+                            }
+                        }
+                        promise.reject("" + code, "");
+                    }
+                });
     }
 
     /**
