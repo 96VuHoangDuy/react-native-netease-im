@@ -797,7 +797,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         if (code == ResponseCode.RES_SUCCESS) {
 
                             Team team = createTeamResult.getTeam();
-                            MessageHelper.getInstance().onCreateTeamMessage(team);
+                            // MessageHelper.getInstance().onCreateTeamMessage(team);
                             WritableMap id = Arguments.createMap();
                             id.putString("teamId", team.getId());
                             promise.resolve(id);
