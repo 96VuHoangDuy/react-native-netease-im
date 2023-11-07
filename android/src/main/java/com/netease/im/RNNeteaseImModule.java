@@ -66,6 +66,7 @@ import com.netease.nimlib.sdk.msg.MessageBuilder;
 import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.SystemMessageService;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
+import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
@@ -1677,33 +1678,83 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 });
     }
 
-//    @ReactMethod
-//    public void searchMessagesinCurrentSession(String anchorId,int limit,ReadableArray messageTypes,int direction, final Promise promise) {
-//        MsgSearchOption option = new MsgSearchOption();
-//        option.setSearchContent(keyWords);
-//        option.setLimit(100);
-//
-//        if (anchor == null) {
-//            anchor = MessageBuilder.createEmptyMessage(sessionId, sessionTypeEnum, 0);
-//        }
-//
-//        NIMClient.getService(MsgService.class).queryMessageListByTypesV2(messageTypes,anchorId,0,direction == 1 ? QueryDirectionEnum.QUERY_NEW : QueryDirectionEnum.QUERY_OLD, limit,direction == 1 ? true : false)
-//                .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
-//                    @Override
-//                    public void onResult(int code, List<IMMessage> result, Throwable exception) {
-//                        LogUtil.d("test searchMessages,", result.toString());
-//                        if (code == ResponseCode.RES_SUCCESS) {
-//                            if (result != null && result.size() > 0) {
-//                                WritableMap a = ReactCache.createMessageObjectList(result);
-//
-//                                promise.resolve(a);
-//                                return;
-//                            }
-//                        }
-//                        promise.reject("" + code, "");
-//                    }
-//                });
-//    }
+    @ReactMethod
+    public void searchMessagesinCurrentSession(String keyWords,String anchorId,int limit,ReadableArray messageTypes,int direction, final Promise promise) {
+        IMMessage anchor = null;
+
+        Map<String, MsgTypeEnum> mockUpKeys = new HashMap();
+        mockUpKeys.put("text", MsgTypeEnum.text);
+        mockUpKeys.put("voice", MsgTypeEnum.audio);
+        mockUpKeys.put("file", MsgTypeEnum.file);
+        mockUpKeys.put("image", MsgTypeEnum.image);
+        mockUpKeys.put("video", MsgTypeEnum.video);
+        mockUpKeys.put("notification", MsgTypeEnum.notification);
+        mockUpKeys.put("custom", MsgTypeEnum.custom);
+        mockUpKeys.put("tip", MsgTypeEnum.tip);
+
+        ArrayList<MsgTypeEnum> arrayListMessageTypes = new ArrayList<>();
+
+
+        for (int i=0; i<messageTypes.size(); i++) {
+            String type = String.valueOf(messageTypes.getType(i));
+            arrayListMessageTypes.add(mockUpKeys.get(type));
+        }
+
+        if (anchorId == null) {
+            anchor = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
+
+            NIMClient.getService(MsgService.class).queryMessageListByTypesV2(
+                    arrayListMessageTypes,
+                    anchor,
+                    anchor.getTime(),
+                    direction == 1 ? QueryDirectionEnum.QUERY_NEW : QueryDirectionEnum.QUERY_OLD,
+                    limit,
+                    direction == 1 ? true : false
+                    )
+                    .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                        @Override
+                        public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                            LogUtil.d("test searchMessages,", result.toString());
+                            if (code == ResponseCode.RES_SUCCESS) {
+                                if (result != null && result.size() > 0) {
+                                    Object a = ReactCache.createMessageList(result);
+
+                                    promise.resolve(a);
+                                    return;
+                                }
+                            }
+                            promise.reject("" + code, "");
+                        }
+                    });
+        } else {
+            sessionService.queryMessage(anchorId, new SessionService.OnMessageQueryListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    NIMClient.getService(MsgService.class).queryMessageListByTypesV2(arrayListMessageTypes, message,message.getTime(),direction == 1 ? QueryDirectionEnum.QUERY_NEW : QueryDirectionEnum.QUERY_OLD, limit, direction == 1 ? true : false)
+                            .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                                @Override
+                                public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                                    LogUtil.d("test searchMessages,", result.toString());
+                                    if (code == ResponseCode.RES_SUCCESS) {
+                                        if (result != null && result.size() > 0) {
+                                            Object a = ReactCache.createMessageList(result);
+
+                                            promise.resolve(a);
+                                            return;
+                                        }
+                                    }
+                                    promise.reject("" + code, "");
+                                }
+                            });
+                    return code;
+                }
+            });
+        }
+
+
+
+
+    }
 
     /**
      * 获取最近聊天内容
@@ -1713,7 +1764,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void queryMessageListEx(String messageId, final int limit,int direction, final Promise promise) {
+    public void queryMessageListEx(String messageId, final
+    int limit,int direction, final Promise promise) {
         LogUtil.w(TAG, "queryMessageListEx:" + messageId + "(" + limit + ")");
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
             @Override
