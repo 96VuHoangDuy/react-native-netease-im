@@ -66,11 +66,13 @@ import com.netease.nimlib.sdk.msg.MessageBuilder;
 import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.SystemMessageService;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
+import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
+import com.netease.nimlib.sdk.msg.model.SearchOrderEnum;
 import com.netease.nimlib.sdk.msg.model.SystemMessage;
 import com.netease.nimlib.sdk.nos.NosService;
 import com.netease.nimlib.sdk.team.TeamService;
@@ -84,6 +86,7 @@ import com.netease.nimlib.sdk.team.constant.VerifyTypeEnum;
 import com.netease.nimlib.sdk.team.model.CreateTeamResult;
 import com.netease.nimlib.sdk.team.model.Team;
 import com.netease.nimlib.sdk.team.model.TeamMember;
+import com.netease.nimlib.sdk.uinfo.constant.UserInfoFieldEnum;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 
@@ -797,7 +800,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         if (code == ResponseCode.RES_SUCCESS) {
 
                             Team team = createTeamResult.getTeam();
-                            MessageHelper.getInstance().onCreateTeamMessage(team);
+                            // MessageHelper.getInstance().onCreateTeamMessage(team);
                             WritableMap id = Arguments.createMap();
                             id.putString("teamId", team.getId());
                             promise.resolve(id);
@@ -1329,7 +1332,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     /**
      * 转发消息操作
      *
-     * @param messageId
+     * @param messageIds
      * @param sessionId
      * @param sessionType
      * @param content
@@ -1657,16 +1660,80 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void searchMessages(String keyWords, final Promise promise) {
         MsgSearchOption option = new MsgSearchOption();
         option.setSearchContent(keyWords);
-        option.setLimit(100);
 
         NIMClient.getService(MsgService.class).searchAllMessage(option)
                 .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
                     @Override
                     public void onResult(int code, List<IMMessage> result, Throwable exception) {
-                        LogUtil.d("test searchMessages,", result.toString());
                         if (code == ResponseCode.RES_SUCCESS) {
                             if (result != null && result.size() > 0) {
                                 WritableMap a = ReactCache.createMessageObjectList(result);
+
+                                promise.resolve(a);
+                                return;
+                            }
+                        }
+                        promise.reject("" + code, "");
+                    }
+                });
+    }
+
+    @ReactMethod
+    public void searchMessagesinCurrentSession(String keyWords,String anchorId,int limit,ReadableArray messageTypes,int direction, final Promise promise) {
+        ArrayList<String> _messageTypes = (ArrayList<String>)(ArrayList<?>)(messageTypes.toArrayList());
+
+        MsgSearchOption option = new MsgSearchOption();
+        option.setSearchContent(keyWords);
+        option.setLimit(limit);
+        option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
+
+        if (messageTypes != null && _messageTypes.size() > 0) {
+            Map<String, MsgTypeEnum> mockUpKeys = new HashMap();
+            mockUpKeys.put("text", MsgTypeEnum.text);
+            mockUpKeys.put("voice", MsgTypeEnum.audio);
+            mockUpKeys.put("file", MsgTypeEnum.file);
+            mockUpKeys.put("image", MsgTypeEnum.image);
+            mockUpKeys.put("video", MsgTypeEnum.video);
+            mockUpKeys.put("notification", MsgTypeEnum.notification);
+            mockUpKeys.put("custom", MsgTypeEnum.custom);
+            mockUpKeys.put("tip", MsgTypeEnum.tip);
+
+            ArrayList<MsgTypeEnum> arrayListMessageTypes = new ArrayList<>();
+
+
+            for (int i=0; i < _messageTypes.size(); i++) {
+                String type = _messageTypes.get(i);
+                arrayListMessageTypes.add(mockUpKeys.get(type));
+            }
+
+            option.setMessageTypes(arrayListMessageTypes);
+        }
+
+        final IMMessage[] anchor = {null};
+
+        if (anchorId.isEmpty() || anchorId == null) {
+            anchor[0] = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
+        } else {
+            sessionService.queryMessage(anchorId, new SessionService.OnMessageQueryListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    anchor[0] = message;
+                    return code;
+                }
+            });
+
+
+            option.setStartTime(direction == 1 ? anchor[0].getTime() : 0);
+            option.setEndTime(direction == 0 ? anchor[0].getTime() : 0);
+        }
+
+        NIMClient.getService(MsgService.class).searchAllMessage(option)
+                .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                    @Override
+                    public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                        if (code == ResponseCode.RES_SUCCESS) {
+                            if (result != null && result.size() > 0) {
+                                Object a = ReactCache.createMessageList(result);
 
                                 promise.resolve(a);
                                 return;
@@ -1685,7 +1752,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void queryMessageListEx(String messageId, final int limit,int direction, final Promise promise) {
+    public void queryMessageListEx(String messageId, final
+    int limit,int direction, final Promise promise) {
         LogUtil.w(TAG, "queryMessageListEx:" + messageId + "(" + limit + ")");
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
             @Override
