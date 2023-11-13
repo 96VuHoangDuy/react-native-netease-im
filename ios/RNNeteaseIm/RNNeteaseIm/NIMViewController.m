@@ -56,7 +56,7 @@
             [self getResouces];
             break;
         case NIMLoginStepLinkFailed://连接服务器失败
-            strStatus = @"7";
+            strStatus = @"2";
             break;
         case NIMLoginStepLogining://登录
             strStatus = @"4";
@@ -77,7 +77,7 @@
             [self getResouces];
             break;
         case NIMLoginStepLoseConnection://连接断开
-            strStatus = @"7";
+            strStatus = @"2";
             break;
         case NIMLoginStepNetChanged://网络切换
             strStatus = @"15";
