@@ -82,6 +82,9 @@
         case NIMLoginStepNetChanged://网络切换
             strStatus = @"15";
             break;
+        case NIMLoginStepLogout:
+            strStatus = @"7";
+            break;
         default:
             break;
     }
