@@ -2,18 +2,32 @@ import { NativeModules, Platform } from "react-native";
 const { RNNeteaseIm, PinYin } = NativeModules;
 
 class NimUtils {
+  getCacheSize() {
+    return RNNeteaseIm.getCacheSize();
+  }
   /**
    * 清除数据缓存
    */
-  cleanCache() {
-    return RNNeteaseIm.cleanCache();
+  getSessionCacheSize(sessionId: string) {
+    return RNNeteaseIm.getSessionCacheSize(sessionId);
   }
 
   /**
    * 获取缓存大小
    */
-  getCacheSize() {
-    return RNNeteaseIm.getCacheSize();
+  cleanSessionCache(sessionId: string) {
+    return RNNeteaseIm.cleanSessionCache(sessionId);
+  }
+
+  getListSessionsCacheSize(sessionIds: Array<string>) {
+    return RNNeteaseIm.getListSessionsCacheSize(sessionIds);
+  }
+
+  /**
+   * 获取缓存大小
+   */
+  cleanListSessionsCache(sessionIds: Array<string>) {
+    return RNNeteaseIm.cleanListSessionsCache(sessionIds);
   }
 
   /**

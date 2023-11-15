@@ -46,6 +46,7 @@ import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
 import com.netease.nimlib.sdk.msg.attachment.FileAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
+import com.netease.nimlib.sdk.msg.attachment.VideoAttachment;
 import com.netease.nimlib.sdk.msg.constant.AttachStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgDirectionEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
@@ -364,11 +365,21 @@ public class SessionService {
     }
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
-        if ((isMyMessage(message) && message.getMsgType() != MsgTypeEnum.video) || isSend || (message.getMsgType() == MsgTypeEnum.video && ReactCache.isOriginVideoHasDownloaded(message))) {
-            List<IMMessage> list = new ArrayList<>(1);
-            list.add(message);
-            Object a = ReactCache.createMessageList(list);
-            ReactCache.emit(ReactCache.observeMsgStatus, a);
+        Map<String, Object> localExtension = message.getLocalExtension();
+        switch (message.getMsgType()) {
+            case audio:
+            case video:
+            case file:
+            case image:
+                break;
+            default:
+                if (isMyMessage(message) || isSend) {
+                    List<IMMessage> list = new ArrayList<>(1);
+                    list.add(message);
+                    Object a = ReactCache.createMessageList(list);
+                    ReactCache.emit(ReactCache.observeMsgStatus, a);
+                }
+                break;
         }
     }
 
@@ -779,25 +790,25 @@ public class SessionService {
     }
 
     public void sendCardMessage(String toSessionType,String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, OnSendMessageListener onSendMessageListener) {
-//        CustomMessageConfig config = new CustomMessageConfig();
-//        CardAttachment attachment = new CardAttachment();
-//        name = NimUserInfoCache.getInstance().getUserName(id);
-//        attachment.setParams(type, name, imgPath, id);
-//        IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, "[名片] " + name, attachment, config);
-//        sendMessageSelf(message, onSendMessageListener, false);
-        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(toSessionType);
-        IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "card");
-
-        Map<String, Object> remoteExt = MapBuilder.newHashMap();
-        remoteExt.put("extendType", "card");
-        remoteExt.put("type", cardSessionType);
-        remoteExt.put("name", name);
-        remoteExt.put("sessionId", cardSessionId);
-        remoteExt.put("imgPath", imgPath);
-
-        message.setRemoteExtension(remoteExt);
-
+        CustomMessageConfig config = new CustomMessageConfig();
+        CardAttachment attachment = new CardAttachment();
+        name = name;
+        attachment.setParams(toSessionType, name, imgPath, cardSessionId);
+        IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, "[名片] " + name, attachment, config);
         sendMessageSelf(message, onSendMessageListener, false);
+//        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(toSessionType);
+//        IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "card");
+//
+//        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+//        remoteExt.put("extendType", "card");
+//        remoteExt.put("type", cardSessionType);
+//        remoteExt.put("name", name);
+//        remoteExt.put("sessionId", cardSessionId);
+//        remoteExt.put("imgPath", imgPath);
+//
+//        message.setRemoteExtension(remoteExt);
+//
+//        sendMessageSelf(message, onSendMessageListener, false);
     }
 
     public void forwardMultipleTextMessage(ReadableMap dataDict,  String sessionId,  String sessionType,  String content, OnSendMessageListener onSendMessageListener) {
@@ -1014,20 +1025,24 @@ public class SessionService {
 
     private boolean isOriginImageHasDownloaded(final IMMessage message) {
 
-        if (message.getAttachStatus() == AttachStatusEnum.transferred) {
-            FileAttachment attachment = null;
-            try {
-                attachment = (FileAttachment) message.getAttachment();
-//                AudioAttachment audioAttachment;
-//                VideoAttachment videoAttachment;
-//                ImageAttachment imageAttachment;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (attachment != null && !TextUtils.isEmpty(attachment.getPath())) {
-                LogUtil.w(TAG, "attachmentPath:" + attachment.getPath());
-                return true;
-            }
+//        if (message.getAttachStatus() == AttachStatusEnum.transferred) {
+//            FileAttachment attachment = null;
+//            try {
+//                attachment = (FileAttachment) message.getAttachment();
+////                AudioAttachment audioAttachment;
+////                VideoAttachment videoAttachment;
+////                ImageAttachment imageAttachment;
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            if (attachment != null && !TextUtils.isEmpty(attachment.getPath())) {
+//                LogUtil.w(TAG, "attachmentPath:" + attachment.getPath());
+//                return true;
+//            }
+//        }
+        if (message.getAttachStatus() == AttachStatusEnum.transferred &&
+                !TextUtils.isEmpty(((FileAttachment) message.getAttachment()).getPath())) {
+            return true;
         }
         return false;
     }
@@ -1048,7 +1063,25 @@ public class SessionService {
             return;
         }
 
+        ReactCache.DownloadCallback callback = new ReactCache.DownloadCallback() {
+            @Override
+            public void onSuccess(Void result) {
+                ReactCache.createMessage(message);
+                Log.d("onSuccess download", "onSuccess download" + "");
+            }
+
+            @Override
+            public void onFailed(int code) {
+                Log.d("onFailed resultresult", String.valueOf(code));
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                Log.d("onException result", String.valueOf(exception));
+            }
+        };
         AbortableFuture future = getService(MsgService.class).downloadAttachment(message, isThumb);
+        future.setCallback(callback);
     }
 
     public interface OnSendMessageListener {

@@ -1,7 +1,11 @@
 package com.netease.im;
 
+import static com.netease.im.IMApplication.getSdkStorageRooPath;
 import static com.netease.nimlib.sdk.NIMClient.getService;
 import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
+
+import android.content.Context;
+import android.os.Environment;
 
 import android.text.TextUtils;
 import android.util.Log;
@@ -12,9 +16,11 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.common.MapBuilder;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.login.LoginService;
+import com.netease.im.session.SessionService;
 import com.netease.im.session.extension.AccountNoticeAttachment;
 import com.netease.im.session.extension.BankTransferAttachment;
 import com.netease.im.session.extension.CustomAttachment;
@@ -1011,7 +1017,6 @@ public class ReactCache {
     final static String MESSAGE_EXTEND = MessageConstant.Message.EXTEND;
 
     public static boolean isOriginVideoHasDownloaded(final IMMessage message) {
-        Log.d("isOriginVideo", message.getAttachStatus() + " ?? " + ((VideoAttachment) message.getAttachment()).getPath() + " ?? " + !TextUtils.isEmpty(((VideoAttachment) message.getAttachment()).getPath()));
         if (message.getAttachStatus() == AttachStatusEnum.transferred &&
                 !TextUtils.isEmpty(((VideoAttachment) message.getAttachment()).getPath())) {
             return true;
@@ -1030,20 +1035,252 @@ public class ReactCache {
         void onException(Throwable exception);
     }
 
-    private static File setFileName(String path) {
+    private static File replaceVideoPath(String path,String sessionId,String type,String extension) {
+        Log.d("pathpath", path);
         String currentFileName = path.substring(path.lastIndexOf("/"), path.length());
-        currentFileName = currentFileName.substring(1);
-        Log.d("Current file name",path + "," + currentFileName);
+        int extensionIndex = currentFileName.lastIndexOf(".");
 
-        File from      = new File(path);
-        String directory = from.getParentFile().getAbsolutePath();
-        File to        = new File(directory, currentFileName.trim() + ".mp4");
+        if (extensionIndex > 0) {
+            currentFileName = currentFileName.substring(1, extensionIndex);
+        } else {
+            currentFileName = currentFileName.substring(1);
+        }
+        Log.d("extensionextension",currentFileName + "" + extension);
+
+        File from = new File(path);
+
+        Context context = IMApplication.getContext();
+        String directory = context.getCacheDir().getAbsolutePath();
+
+        String typeDir = "";
+        switch (type) {
+            case "video":
+                typeDir        = "/video/";
+                break;
+            case "image":
+                typeDir        = "/image/";
+                break;
+            case "audio":
+                typeDir        = "/audio/";
+                break;
+            case "file":
+                typeDir        = "/file/";
+                break;
+        }
+        Log.d("directory", directory + "......" + directory + "/nim" + typeDir + sessionId + "......." + currentFileName.trim() + extension);
+
+        File to = new File(directory + "/nim" + typeDir + sessionId, currentFileName.trim() + extension);
+
         from.renameTo(to);
-        Log.i("Directory is", directory);
-        Log.i("Default path is", from.getPath());
-        Log.i("From path is", from.toString());
-        Log.i("To path is", to.getPath().toString());
+        from.delete();
         return to;
+    }
+
+    public static Map<String, Object> setLocalExtension(IMMessage item, String key, Object value) {
+        Map<String, Object> localExtension = item.getLocalExtension();
+
+        Map<String, Object> map = MapBuilder.newHashMap();
+
+        if (localExtension != null) {
+            map.putAll(localExtension);
+        }
+
+        if (map.containsKey(key)) {
+            map.replace(key, value);
+        } else {
+            map.put(key, value);
+        }
+
+        item.setLocalExtension(map);
+        getMsgService().updateIMMessage(item);
+        Log.d("mapmap", map.toString());
+        return map;
+    }
+
+    public static WritableMap generateVideoExtend(IMMessage item) {
+        Log.d("getSdkStorageRooPath", IMApplication.getContext().getCacheDir().getAbsolutePath());
+
+        WritableMap videoDic = Arguments.createMap();
+        MsgAttachment attachment = item.getAttachment();
+        Map<String, Object> localExtension = item.getLocalExtension();
+
+        if (attachment instanceof VideoAttachment) {
+            VideoAttachment videoAttachment = (VideoAttachment) attachment;
+            videoDic.putString(MessageConstant.MediaFile.URL, videoAttachment.getUrl());
+            videoDic.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            videoDic.putBoolean("needRefreshMessage", false);
+
+            Boolean isFilePathDeleted = false;
+            Log.d("videoAttachment.", videoAttachment.getPath() + "");
+
+            if (localExtension.get("isReplacePathSuccess").equals(true) && videoAttachment.getPath() == null) {
+                videoDic.putBoolean("isFilePathDeleted", true);
+                isFilePathDeleted = true;
+            }
+
+            videoDic.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            if (!isFilePathDeleted) {
+                if (videoAttachment.getPath() != null) {
+                    if (!videoAttachment.getPath().contains(".mp4") || !videoAttachment.getPath().contains(item.getSessionId())) {
+                        File newFile = replaceVideoPath(videoAttachment.getPath(), item.getSessionId(), "video", ".mp4");
+                        Log.d("newFilenewFile",newFile.getPath());
+                        videoAttachment.setPath(newFile.getPath());
+                        item.setAttachment(videoAttachment);
+                        getMsgService().updateIMMessageStatus(item);
+                        videoDic.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
+                        videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+
+                        setLocalExtension(item, "isReplacePathSuccess", true);
+                        videoDic.putBoolean("isReplacePathSuccess", true);
+
+                        videoDic.putBoolean("needRefreshMessage", true);
+                    } else {
+                        videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getPath());
+                        videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
+                    }
+                } else {
+                    videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getPath());
+                    videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
+                }
+
+                if (!isOriginVideoHasDownloaded(item)) {
+                    DownloadCallback callback = new DownloadCallback() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            ReactCache.createMessage(item);
+                        }
+
+                        @Override
+                        public void onFailed(int code) {
+                            Log.d("onFailed resultresult", String.valueOf(code));
+                        }
+
+                        @Override
+                        public void onException(Throwable exception) {
+                            Log.d("onException result", String.valueOf(exception));
+                        }
+                    };
+                    AbortableFuture future = getService(MsgService.class).downloadAttachment(item, videoAttachment.getThumbPath() == null);
+                    future.setCallback(callback);
+                }
+                videoDic.putString(MessageConstant.MediaFile.DISPLAY_NAME, videoAttachment.getDisplayName());
+                videoDic.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(videoAttachment.getHeight()));
+                videoDic.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(videoAttachment.getWidth()));
+                videoDic.putString(MessageConstant.MediaFile.DURATION, Long.toString(videoAttachment.getDuration()));
+                videoDic.putString(MessageConstant.MediaFile.SIZE, Long.toString(videoAttachment.getSize()));
+            }
+        }
+//        }
+
+        return videoDic;
+    }
+
+    public static WritableMap generateImageExtend(IMMessage item) {
+        MsgAttachment attachment = item.getAttachment();
+        WritableMap imageObj = Arguments.createMap();
+
+        if (attachment instanceof ImageAttachment) {
+            ImageAttachment imageAttachment = (ImageAttachment) attachment;
+
+            Map<String, Object> localExtension = item.getLocalExtension();
+            imageObj.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            imageObj.putBoolean("needRefreshMessage", false);
+
+            Boolean isFilePathDeleted = false;
+            Log.d("imageAttachment",imageAttachment.getPath()+"");
+            Log.d("localExtension.get()",localExtension.get("isReplacePathSuccess")+"");
+
+            if (localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {
+                    imageObj.putBoolean("isFilePathDeleted", true);
+                    isFilePathDeleted = true;
+            }
+
+            imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            if (!isFilePathDeleted) {
+                if (imageAttachment.getPath() != null && !imageAttachment.getPath().contains(item.getSessionId())) {
+                    File newFile = replaceVideoPath(imageAttachment.getPath(), item.getSessionId(), "image", "." + imageAttachment.getExtension());
+                    Log.d("newFilenewFile",newFile.getPath());
+
+                    imageAttachment.setPath(newFile.getPath());
+                    item.setAttachment(imageAttachment);
+                    getMsgService().updateIMMessageStatus(item);
+                    imageObj.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
+                    imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+
+                    setLocalExtension(item, "isReplacePathSuccess", true);
+                    imageObj.putBoolean("isReplacePathSuccess", true);
+                    imageObj.putBoolean("needRefreshMessage", true);
+                } else {
+                    if (item.getDirect() == MsgDirectionEnum.Out) {
+                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getPath());
+                    } else {
+                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getThumbPath());
+                    }
+                    imageObj.putString(MessageConstant.MediaFile.PATH, imageAttachment.getPath());
+                    imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
+                    imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
+                    imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
+                    imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
+                }
+                SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
+            }
+        }
+
+        return imageObj;
+    }
+
+    public static WritableMap generateRecordExtend(IMMessage item) {
+        MsgAttachment attachment = item.getAttachment();
+        WritableMap audioObj = Arguments.createMap();
+
+        if (attachment instanceof AudioAttachment) {
+            AudioAttachment audioAttachment = (AudioAttachment) attachment;
+
+            Map<String, Object> localExtension = item.getLocalExtension();
+            audioObj.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            audioObj.putBoolean("needRefreshMessage", false);
+            Log.d("audioAttachment.ge", audioAttachment.getPath() + "");
+            Boolean isFilePathDeleted = false;
+
+            if (localExtension.get("isReplacePathSuccess").equals(true) && audioAttachment.getPath() == null) {
+                audioObj.putBoolean("isFilePathDeleted", true);
+                isFilePathDeleted = true;
+            }
+
+            audioObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            if(!isFilePathDeleted) {
+                if (audioAttachment.getPath() != null && !audioAttachment.getPath().contains(item.getSessionId())) {
+                    File newFile = replaceVideoPath(audioAttachment.getPath(), item.getSessionId(), "audio","." + audioAttachment.getExtension());
+
+                    audioAttachment.setPath(newFile.getPath());
+                    item.setAttachment(audioAttachment);
+                    getMsgService().updateIMMessageStatus(item);
+                    audioObj.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
+                    audioObj.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+                    audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
+
+                    setLocalExtension(item, "isReplacePathSuccess", true);
+                    audioObj.putBoolean("isReplacePathSuccess", true);
+                    audioObj.putBoolean("needRefreshMessage", true);
+                } else {
+                    audioObj.putString(MessageConstant.MediaFile.PATH, audioAttachment.getPath());
+                    audioObj.putString(MessageConstant.MediaFile.THUMB_PATH, audioAttachment.getThumbPath());
+                    audioObj.putString(MessageConstant.MediaFile.URL, audioAttachment.getUrl());
+                    audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
+                }
+                if (item.getStatus() == MsgStatusEnum.read) {
+                    audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED, true);
+                } else {
+                    audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED, false);
+                }
+                SessionService.getInstance().downloadAttachment(item, false);
+            }
+        }
+
+       return audioObj;
     }
 
     /**
@@ -1142,103 +1379,29 @@ public class ReactCache {
         MsgAttachment attachment = item.getAttachment();
         String text = "";
 
+
         if (attachment != null) {
+            Map<String, Object> localExtension = item.getLocalExtension();
+
+            if (localExtension == null || !localExtension.containsKey("isReplacePathSuccess")) {
+                Map<String, Object> newLocalExtension = setLocalExtension(item, "isReplacePathSuccess", false);
+                Log.d("newLocalExtension", newLocalExtension.toString());
+
+//                localExtension.putAll(newLocalExtension);
+            }
+
             if (item.getMsgType() == MsgTypeEnum.image) {
-                WritableMap imageObj = Arguments.createMap();
-                if (attachment instanceof ImageAttachment) {
-                    ImageAttachment imageAttachment = (ImageAttachment) attachment;
-                    if (item.getDirect() == MsgDirectionEnum.Out) {
-                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getPath());
-                    } else {
-                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getThumbPath());
-                    }
-                    imageObj.putString(MessageConstant.MediaFile.PATH, imageAttachment.getPath());
-                    imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
-                    imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
-                    imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
-                    imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
-                }
+                WritableMap imageObj = generateImageExtend(item);
+
                 itemMap.putMap(MESSAGE_EXTEND, imageObj);
             } else if (item.getMsgType() == MsgTypeEnum.audio) {
-                WritableMap audioObj = Arguments.createMap();
-                if (attachment instanceof AudioAttachment) {
-                    AudioAttachment audioAttachment = (AudioAttachment) attachment;
-                    audioObj.putString(MessageConstant.MediaFile.PATH, audioAttachment.getPath());
-                    audioObj.putString(MessageConstant.MediaFile.THUMB_PATH, audioAttachment.getThumbPath());
-                    audioObj.putString(MessageConstant.MediaFile.URL, audioAttachment.getUrl());
-                    audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
+                WritableMap audioObj = generateRecordExtend(item);
 
-                    if (item.getStatus() == MsgStatusEnum.read) {
-                        audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED,true);
-                    } else {
-                        audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED,false);
-                    }
-
-                }
                 itemMap.putMap(MESSAGE_EXTEND, audioObj);
             } else if (item.getMsgType() == MsgTypeEnum.video) {
-                WritableMap videoDic = Arguments.createMap();
-                if (attachment instanceof VideoAttachment) {
-                    VideoAttachment videoAttachment = (VideoAttachment) attachment;
-                    videoDic.putString(MessageConstant.MediaFile.URL, videoAttachment.getUrl());
-                    Log.d("video.getPath()", videoAttachment.getPath() + "");
-                    if (videoAttachment.getPath() != null) {
-                        if (videoAttachment.getPath().contains(".mp4")) {
-                            videoDic.putString(MessageConstant.MediaFile.THUMB_PATH,videoAttachment.getPath());
-                            videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
-                        } else {
-                            File newFile = setFileName(videoAttachment.getPath());
+                WritableMap videoDic = generateVideoExtend(item);
 
-                            videoAttachment.setPath(newFile.getPath());
-                            item.setAttachment(videoAttachment);
-                            getMsgService().updateIMMessageStatus(item);
-                            videoDic.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
-                            videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
-
-                        }
-                    } else {
-                        videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getPath());
-                        videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
-                    }
-
-                    if (!isOriginVideoHasDownloaded(item)) {
-                        DownloadCallback callback = new DownloadCallback() {
-                            @Override
-                            public void onSuccess(Void result) {
-                                ReactCache.createMessage(item);
-                                Log.d("onSuccess download", "onSuccess download" + "" +  ((VideoAttachment) attachment).getPath());
-//                                ReactCache.emit(ReactCache.observeReceiveMessage, a);
-                            }
-
-                            @Override
-                            public void onFailed(int code) {
-                                Log.d("onFailed resultresult", String.valueOf(code));
-                            }
-
-                            @Override
-                            public void onException(Throwable exception) {
-                                Log.d("onException result", String.valueOf(exception));
-                            }
-                        };
-                        AbortableFuture future = getService(MsgService.class).downloadAttachment(item, videoAttachment.getThumbPath() == null);
-                        future.setCallback(callback);
-                    }
-                    videoDic.putString(MessageConstant.MediaFile.DISPLAY_NAME, videoAttachment.getDisplayName());
-                    videoDic.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(videoAttachment.getHeight()));
-                    videoDic.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(videoAttachment.getWidth()));
-                    videoDic.putString(MessageConstant.MediaFile.DURATION, Long.toString(videoAttachment.getDuration()));
-                    videoDic.putString(MessageConstant.MediaFile.SIZE, Long.toString(videoAttachment.getSize()));
-                }
                 itemMap.putMap(MESSAGE_EXTEND, videoDic);
-            } else if (item.getMsgType() == MsgTypeEnum.location) {
-                WritableMap locationObj = Arguments.createMap();
-                if (attachment instanceof LocationAttachment) {
-                    LocationAttachment locationAttachment = (LocationAttachment) attachment;
-                    locationObj.putString(MessageConstant.Location.LATITUDE, Double.toString(locationAttachment.getLatitude()));
-                    locationObj.putString(MessageConstant.Location.LONGITUDE, Double.toString(locationAttachment.getLongitude()));
-                    locationObj.putString(MessageConstant.Location.ADDRESS, locationAttachment.getAddress());
-                }
-                itemMap.putMap(MESSAGE_EXTEND, locationObj);
             } else if (item.getMsgType() == MsgTypeEnum.notification) {
                 if (item.getSessionType() == SessionTypeEnum.Team) {
                     WritableMap notiObj = Arguments.createMap();
@@ -1324,78 +1487,11 @@ public class ReactCache {
                 } else {
                     text = item.getContent();
                 }
-            } else if (item.getMsgType() == MsgTypeEnum.custom) {//自定义消息
-                try {
-                    CustomAttachment customAttachment = (CustomAttachment) attachment;
-
-                    switch (customAttachment.getType()) {
-//                        case CustomAttachmentType.ForwardMultipleText:
-//                            if (attachment instanceof ForwardMultipleTextAttachment) {
-//                                WritableMap extend = Arguments.createMap();
-//
-//                                ForwardMultipleTextAttachment forwardMultipleTextAttachment = (ForwardMultipleTextAttachment) attachment;
-//                                JSONArray messagesForwarded = JSON.parseArray(forwardMultipleTextAttachment.toReactNativeCustom());
-//
-//                                extend.putArray(MessageConstant.ForwardMultipleText.messages, ArrayUtil.toWritableArray(messagesForwarded));
-//                                itemMap.putMap(MESSAGE_EXTEND, extend);
-//                            }
-//                            break;
-
-                        case CustomAttachmentType.RedPacket:
-                            if (attachment instanceof RedPacketAttachement) {
-                                RedPacketAttachement redPackageAttachement = (RedPacketAttachement) attachment;
-                                itemMap.putMap(MESSAGE_EXTEND, redPackageAttachement.toReactNative());
-                            }
-                            break;
-
-                        case CustomAttachmentType.BankTransfer:
-                            if (attachment instanceof BankTransferAttachment) {
-                                BankTransferAttachment bankTransferAttachment = (BankTransferAttachment) attachment;
-                                itemMap.putMap(MESSAGE_EXTEND, bankTransferAttachment.toReactNative());
-                            }
-                            break;
-                        case CustomAttachmentType.AccountNotice:
-                            if (attachment instanceof AccountNoticeAttachment) {
-                                AccountNoticeAttachment accountNoticeAttachment = (AccountNoticeAttachment) attachment;
-                                itemMap.putMap(MESSAGE_EXTEND, accountNoticeAttachment.toReactNative());
-                            }
-                            break;
-                        case CustomAttachmentType.LinkUrl:
-                            if (attachment instanceof LinkUrlAttachment) {
-                                LinkUrlAttachment linkUrlAttachment = (LinkUrlAttachment) attachment;
-                                itemMap.putMap(MESSAGE_EXTEND, linkUrlAttachment.toReactNative());
-                            }
-                            break;
-                        case CustomAttachmentType.RedPacketOpen:
-                            if (attachment instanceof RedPacketOpenAttachement) {
-                                RedPacketOpenAttachement rpOpen = (RedPacketOpenAttachement) attachment;
-//                                if (!rpOpen.isSelf()) {
-//                                    return null;
-//                                }
-                                itemMap.putMap(MESSAGE_EXTEND, rpOpen.toReactNative());
-                            }
-                            break;
-                        // case CustomAttachmentType.Card:
-                        //     if (attachment instanceof CardAttachment) {
-                        //         CardAttachment cardAttachment = (CardAttachment) attachment;
-                        //         itemMap.putMap(MESSAGE_EXTEND, cardAttachment.toReactNative());
-                        //     }
-                        //     break;
-                        default:
-                            if (attachment instanceof DefaultCustomAttachment) {
-                                DefaultCustomAttachment defaultCustomAttachment = (DefaultCustomAttachment) attachment;
-                                itemMap.putMap(MESSAGE_EXTEND, defaultCustomAttachment.toReactNative());
-                            }
-                            break;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
             }
         } else {
             text = item.getContent();
         }
+
         if (item.getMsgType() == MsgTypeEnum.text) {
             text = item.getContent();
 
@@ -1415,9 +1511,14 @@ public class ReactCache {
             } else {
                 text = item.getContent();
             }
-
         }
         itemMap.putString(MessageConstant.Message.MSG_TEXT, text);
+
+        if (item.getDirect() == MsgDirectionEnum.In && itemMap.getMap(MESSAGE_EXTEND) != null && itemMap.getMap(MESSAGE_EXTEND).toHashMap().containsKey("needRefreshMessage") && itemMap.getMap(MESSAGE_EXTEND).getBoolean("needRefreshMessage")) {
+            WritableArray writableArray = Arguments.createArray();
+            writableArray.pushMap(itemMap);
+            ReactCache.emit(ReactCache.observeMsgStatus, writableArray);
+        }
 
         return itemMap;
     }

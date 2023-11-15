@@ -4,22 +4,21 @@ import android.content.Context;
 import android.content.pm.IPackageDataObserver;
 import android.content.pm.IPackageStatsObserver;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageStats;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
-import android.os.RemoteException;
 import android.os.StatFs;
+import android.util.Log;
 
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
 import com.netease.im.uikit.common.util.file.FileUtil;
 import com.netease.im.uikit.common.util.log.LogUtil;
-import com.netease.im.uikit.common.util.storage.StorageType;
-import com.netease.im.uikit.common.util.storage.StorageUtil;
-import com.netease.nimlib.sdk.NIMClient;
-import com.netease.nimlib.sdk.msg.MsgService;
+import com.netease.nimlib.sdk.RequestCallbackWrapper;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,73 +45,69 @@ public class FileCacheUtil {
         void onCleanCache(boolean succeeded);
     }
 
-    public static void getCacheSie(final OnObserverGet observer) {
-
-        new AsyncTask<Void, Void, Void>() {
-
-            @Override
-            protected Void doInBackground(Void... params) {
-                Set<String> pathList = getCacheDir();
-                long allLength = 0;
-                for (String s : pathList) {
-                    long t = makeDirSize(new File(s));
-                    LogUtil.w(TAG, s + ":" + FileUtil.formatFileSize(t));
-                    allLength += t;
-                }
-                LogUtil.w(TAG, "allFile" + ":" + FileUtil.formatFileSize(allLength));
-                final long finalAllLength = allLength;
-                getCacheSize(new IPackageStatsObserver.Stub() {
-                    @Override
-                    public void onGetStatsCompleted(PackageStats pStats, boolean succeeded) throws RemoteException {
-
-                        LogUtil.w(TAG, "cacheSize" + ":" + FileUtil.formatFileSize(pStats.cacheSize));
-                        LogUtil.w(TAG, "externalCacheSize" + ":" + FileUtil.formatFileSize(pStats.externalCacheSize));
-
-//                        LogUtil.w(TAG, "codeSize" + ":" + FileUtil.formatFileSize(pStats.codeSize));
-//                        LogUtil.w(TAG, "dataSize" + ":" + FileUtil.formatFileSize(pStats.dataSize));
-//                        LogUtil.w(TAG, "externalCodeSize" + ":" + FileUtil.formatFileSize(pStats.externalCodeSize));
-//                        LogUtil.w(TAG, "externalDataSize" + ":" + FileUtil.formatFileSize(pStats.externalDataSize));
-//                        LogUtil.w(TAG, "externalMediaSize" + ":" + FileUtil.formatFileSize(pStats.externalMediaSize));
-//                        LogUtil.w(TAG, "externalObbSize" + ":" + FileUtil.formatFileSize(pStats.externalObbSize));
-                        long result = finalAllLength;
-                        result += pStats.cacheSize;
-                        result += pStats.externalCacheSize;
-//                        LogUtil.w(TAG, "result" + ":" + FileUtil.formatFileSize(result));
-                        if (observer != null) {
-                            observer.onGetCacheSize(Long.toString(result / (1024 * 1024)));
-                        }
-                    }
-                });
-                return null;
+    public static long getDirSize(File dir){
+        long size = 0;
+        for (File file : dir.listFiles()) {
+            if (file != null && file.isDirectory()) {
+                size += getDirSize(file);
+            } else if (file != null && file.isFile()) {
+                size += file.length();
             }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+        return size;
     }
 
-    public static void cleanCache(final OnObserverClean observer) {
-        new AsyncTask<Void, Void, Void>() {
+    public static WritableArray getSessionsCacheSie(ArrayList<String> sessionIds) {
+        WritableArray arrResult = Arguments.createArray();
 
-            @Override
-            protected Void doInBackground(Void... params) {
-                IMApplication.getImageLoaderKit().clearCache();
-                Set<String> pathList = getCacheDir();
-                for (String s : pathList) {
-                    deleteDir(new File(s));
-                }
-                NIMClient.getService(MsgService.class).clearMsgDatabase(true);
-                freeStorageAndNotify(new IPackageDataObserver.Stub() {
+        for (String sessionId: sessionIds) {
+            long folderSize =  getSessionCacheSie(sessionId);
+            WritableMap result = Arguments.createMap();
+            result.putString("sessionId", sessionId);
+            result.putString("size", FileUtil.formatFileSize(folderSize));
+            arrResult.pushMap(result);
+        }
 
-                    @Override
-                    public void onRemoveCompleted(String packageName, boolean succeeded) throws RemoteException {
-                        LogUtil.w(TAG, "result" + ":" + packageName);
-                        LogUtil.w(TAG, "result" + ":" + succeeded);
-                        if (observer != null) {
-                            observer.onCleanCache(succeeded);
-                        }
-                    }
-                });
-                return null;
+        return arrResult;
+    }
+
+    public static String cleanSessionCache(ArrayList<String> sessionIds) {
+        for (String sessionId: sessionIds) {
+            cleanSessionCache(sessionId);
+        }
+
+        return "deleteSuccess";
+    }
+
+
+    public static long getSessionCacheSie(String sessionId) {
+        Set<String> pathList = getCacheDir(sessionId);
+        Log.d("pathList", pathList + "");
+        long allLength = 0;
+        for (String s : pathList) {
+            File dirFile = new File(s);
+            if (dirFile.exists()) {
+                long t = getDirSize(dirFile);
+                Log.d(TAG, s + ":" + FileUtil.formatFileSize(t));
+                allLength += t;
             }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+        Log.d("allLengthallLength", FileUtil.formatFileSize(allLength) + "");
+        return allLength;
+    }
+
+    public static String cleanSessionCache(String sessionId) {
+        Set<String> pathList = getCacheDir(sessionId);
+        Log.d("pathList", pathList + "");
+
+        for (String s : pathList) {
+            File dirFile = new File(s);
+            if (dirFile.exists()) {
+                deleteDir(dirFile);
+            }
+        }
+
+        return "deleteSuccess";
     }
 
     private static void deleteDir(File file) {
@@ -170,26 +165,29 @@ public class FileCacheUtil {
         }
     }
 
-    private static Set<String> getCacheDir() {
-
-        StorageType[] storageTypes = StorageType.values();
-        String[] sdkFileName = {"log/", "file/", "image/", "audio/", "video/", "thumb/"};
+    private static Set<String> getCacheDir(String sessionId) {
+//        StorageType[] storageTypes = StorageType.values();
+        String[] sdkFileName = {"file/", "image/", "audio/", "video/", "thumb/"};
         Set<String> path = new HashSet<>();
-        for (StorageType type : storageTypes) {
-            path.add(StorageUtil.getDirectoryByDirType(type));
-        }
-        for (String sdk : sdkFileName) {
-            path.add(IMApplication.getSdkStorageRooPath() + "/" + sdk);
-        }
-        File imageCacheDir = IMApplication.getImageLoaderKit().getChacheDir();
-        if (imageCacheDir.exists()) {
-            path.add(imageCacheDir.getAbsolutePath());
-        }
-
         Context context = IMApplication.getContext();
-        path.add(context.getCacheDir().getAbsolutePath());
-        path.add(context.getExternalCacheDir().getAbsolutePath());
+//        path.add(context.getCacheDir().getAbsolutePath());
+//        path.add(context.getExternalCacheDir().getAbsolutePath());
 
+//        for (StorageType type : storageTypes) {
+//            path.add(StorageUtil.getDirectoryByDirType(type));
+//        }
+        for (String sdk : sdkFileName) {
+            String pathDir = context.getCacheDir().getAbsolutePath() + "/nim/" + sdk + sessionId;
+            path.add(pathDir);
+        }
+//        File imageCacheDir = IMApplication.getImageLoaderKit().getChacheDir();
+//        if (imageCacheDir.exists()) {
+//            path.add(imageCacheDir.getAbsolutePath());
+//        }
+
+
+        Log.d("getCacheDir", context.getCacheDir().getAbsolutePath());
+        Log.d("getExternalCacheDir", context.getExternalCacheDir().getAbsolutePath());
         return path;
     }
 

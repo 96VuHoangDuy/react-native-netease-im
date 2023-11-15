@@ -44,6 +44,7 @@ import com.netease.im.team.TeamObserver;
 import com.netease.im.uikit.cache.NimUserInfoCache;
 import com.netease.im.uikit.cache.SimpleCallback;
 import com.netease.im.uikit.cache.TeamDataCache;
+import com.netease.im.uikit.common.util.file.FileUtil;
 import com.netease.im.uikit.common.util.log.LogUtil;
 import com.netease.im.uikit.common.util.sys.NetworkUtil;
 import com.netease.im.uikit.contact.core.model.ContactDataList;
@@ -1657,6 +1658,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void deleteFiles(ReadableArray sessionIds, final Promise promise) {
+        ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
+    }
+
+    @ReactMethod
     public void searchMessages(String keyWords, final Promise promise) {
         MsgSearchOption option = new MsgSearchOption();
         option.setSearchContent(keyWords);
@@ -2125,24 +2131,39 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
 
     @ReactMethod
-    public void getCacheSize(final Promise promise) {
-        FileCacheUtil.getCacheSie(new FileCacheUtil.OnObserverGet() {
-            @Override
-            public void onGetCacheSize(String size) {
-                promise.resolve(size);
-            }
-        });
+    public void getListSessionsCacheSize(ReadableArray sessionIds, final Promise promise) {
+        ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
+        Log.d("_sessionIds",_sessionIds + "");
+        WritableArray result = FileCacheUtil.getSessionsCacheSie(_sessionIds);
+
+        promise.resolve(result);
+//        promise.reject("" + code, "");
     }
 
     @ReactMethod
-    public void cleanCache(final Promise promise) {
-        FileCacheUtil.cleanCache(new FileCacheUtil.OnObserverClean() {
+    public void cleanListSessionsCache(ReadableArray sessionIds, final Promise promise) {
+        ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
 
-            @Override
-            public void onCleanCache(boolean succeeded) {
-                promise.resolve("" + succeeded);
-            }
-        });
+        String result = FileCacheUtil.cleanSessionCache(_sessionIds);
+
+        promise.resolve(result);
+//        promise.reject("" + code, "");
+    }
+
+    @ReactMethod
+    public void getSessionCacheSize(String sessionId, final Promise promise) {
+        long result = FileCacheUtil.getSessionCacheSie(sessionId);
+
+        promise.resolve("" + FileUtil.formatFileSize(result));
+//        promise.reject("" + code, "");
+    }
+
+    @ReactMethod
+    public void cleanSessionCache(String sessionId, final Promise promise) {
+        String result = FileCacheUtil.cleanSessionCache(sessionId);
+
+        promise.resolve(result);
+//        promise.reject("" + code, "");
     }
 
     void showTip(final String tip) {

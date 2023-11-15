@@ -36,23 +36,23 @@ public class RNAppCacheUtilModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getCacheSize(final Promise promise) {
-        FileCacheUtil.getCacheSie(new FileCacheUtil.OnObserverGet() {
-            @Override
-            public void onGetCacheSize(String size) {
-                promise.resolve(size);
-            }
-        });
+//        FileCacheUtil.getCacheSie(new FileCacheUtil.OnObserverGet() {
+//            @Override
+//            public void onGetCacheSize(String size) {
+//                promise.resolve(size);
+//            }
+//        });
     }
 
     @ReactMethod
     public void cleanCache(final Promise promise) {
-        FileCacheUtil.cleanCache(new FileCacheUtil.OnObserverClean() {
-
-            @Override
-            public void onCleanCache(boolean succeeded) {
-                promise.resolve("" + succeeded);
-            }
-        });
+//        FileCacheUtil.cleanCache(new FileCacheUtil.OnObserverClean() {
+//
+//            @Override
+//            public void onCleanCache(boolean succeeded) {
+//                promise.resolve("" + succeeded);
+//            }
+//        });
     }
 
     @ReactMethod
