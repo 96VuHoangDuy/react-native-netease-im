@@ -44,6 +44,7 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   thumbPath: string;
   path: string;
   messages: NIMMessage;
+  isFilePathDeleted: boolean;
 
   // have when message type is "card"
   extendType?: string;
@@ -55,6 +56,7 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
 
   videoUrl?: string; //video
   coverUrl?: string; //video
+  coverPath?: string;
 }
 
 export interface NIMMessage {

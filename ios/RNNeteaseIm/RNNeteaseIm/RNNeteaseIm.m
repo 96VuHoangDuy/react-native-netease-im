@@ -737,67 +737,127 @@ RCT_EXPORT_METHOD(updateTeamName:(nonnull NSString *)teamId nick:(nonnull NSStri
 
 #pragma mark ---- 获得缓存和处理缓存
 //获取缓存大小
-RCT_EXPORT_METHOD(getCacheSize:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+RCT_EXPORT_METHOD(getSessionCacheSize:(NSString *)sessionId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *strDocPath = @"";
+    NSString *strDocPath = documentPath;
     NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
     if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
         for (NSString *file in files) {
             if ([file hasSuffix:@"Global/Resources"]) {
-                strDocPath = file;
+                strDocPath = [strDocPath stringByAppendingPathComponent:file];
                 break;
             }
         }
     }
-    CGFloat docSize = [self folderSizeAtPath:strDocPath];
+    NSString *cacheMediaPath = [strDocPath stringByAppendingPathComponent:sessionId];
+
+    CGFloat cacheSize = [self folderSizeAtPath:cacheMediaPath];
     
-    NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *libCachePath =  [libraryPath stringByAppendingPathComponent:@"Caches"];
-    CGFloat libSize = [self folderSizeAtPath:libCachePath];
-    
-    NSString *tmpPath = NSTemporaryDirectory();
-    NSString *tmpNimPath = [tmpPath stringByAppendingPathComponent:@"NIM"];
-    NSString *tmpPickPath = [tmpPath stringByAppendingPathComponent:@"react-native-image-crop-picker"];
-    CGFloat tmpNimSize = [self folderSizeAtPath:tmpNimPath];
-    CGFloat tmpPickSize = [self folderSizeAtPath:tmpPickPath];
-    
-    NSString *allSize = [NSString stringWithFormat:@"%f",docSize+libSize+tmpNimSize+tmpPickSize];
-    NSLog(@"allSize:%@   documentPath:%@",allSize,documentPath);
-    resolve(allSize);
+    NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:cacheSize
+                                                               countStyle:NSByteCountFormatterCountStyleFile];
+    resolve(displayFileSize);
 }
 
 //清除数据缓存
-RCT_EXPORT_METHOD(cleanCache){
+RCT_EXPORT_METHOD(cleanSessionCache:(NSString *)sessionId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     //Document
     NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *strDocPath = @"";
+    NSString *strDocPath = documentPath;
     NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
     if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
         for (NSString *file in files) {
             if ([file hasSuffix:@"Global/Resources"]) {
-                strDocPath = file;
+                strDocPath = [strDocPath stringByAppendingPathComponent:file];
                 break;
             }
         }
     }
-    NSArray *ResourcesFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:strDocPath error:nil];
-    [self deleteFilesWithPath:strDocPath andFiles:ResourcesFiles];
     
-    //Library
-    NSString *libraryPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *libCachePath =  [libraryPath stringByAppendingPathComponent:@"Caches"];
-    NSArray *libFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:libCachePath error:nil];
-    [self deleteFilesWithPath:libCachePath andFiles:libFiles];
+    NSArray *documentListFile = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
+        for (NSString *file in documentListFile) {
+            if ([[file lastPathComponent] containsString:@"png"] || [[file lastPathComponent] containsString:@"jpg"]) {
+                NSFileManager *fileMgr = [NSFileManager defaultManager];
+                NSError *err;
+                NSString *filePath = [documentPath stringByAppendingPathComponent:file];
+                [fileMgr removeItemAtPath:filePath error:&err];
+            }
+        }
+    }
     
-    NSString *tmpPath = NSTemporaryDirectory();
-    NSString *tmpNimPath = [tmpPath stringByAppendingPathComponent:@"NIM"];
-    NSString *tmpPickPath = [tmpPath stringByAppendingPathComponent:@"react-native-image-crop-picker"];
-    NSArray *tmpNimFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:tmpNimPath error:nil];
-    [self deleteFilesWithPath:tmpNimPath andFiles:tmpNimFiles];
-    NSArray *tmpPickFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:tmpPickPath error:nil];
-    [self deleteFilesWithPath:tmpPickPath andFiles:tmpPickFiles];
+    NSString *cacheMediaPath = [strDocPath stringByAppendingPathComponent:sessionId];
+
+    NSArray *cacheMediaFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:cacheMediaPath error:nil];
+    [self deleteFilesWithPath:cacheMediaPath andFiles:cacheMediaFiles];
+
+    resolve(@"deleteSuccess");
+}
+
+RCT_EXPORT_METHOD(getListSessionsCacheSize:(NSArray *)sessionIds resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSLog(@"documentPath %@", documentPath);
+    NSString *strDocPath = documentPath;
+    NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
+        for (NSString *file in files) {
+            if ([file hasSuffix:@"Global/Resources"]) {
+                strDocPath = [strDocPath stringByAppendingPathComponent:file];
+                break;
+            }
+        }
+    }
     
-    [self removAllRecentSessions];
+    float allSize = 0;
+    NSMutableArray *arraySize = [[NSMutableArray alloc] init];
+    for (NSString *sessionId in sessionIds) {
+        NSString *cacheMediaPath = [strDocPath stringByAppendingPathComponent:sessionId];
+        float cacheSize = [self folderSizeAtPath:cacheMediaPath];
+        allSize += cacheSize;
+        NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:cacheSize
+                                                                     countStyle:NSByteCountFormatterCountStyleFile];
+        [arraySize addObject:@{@"sessionId": sessionId, @"size": displayFileSize}];
+    }
+    
+    resolve(@{@"listSize": arraySize, @"totalSize": [NSByteCountFormatter stringFromByteCount:allSize
+                                                                         countStyle:NSByteCountFormatterCountStyleFile]});
+}
+
+//清除数据缓存
+RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    //Document
+    NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSLog(@"documentPath %@", documentPath);
+    NSString *strDocPath = documentPath;
+    NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
+        for (NSString *file in files) {
+            if ([file hasSuffix:@"Global/Resources"]) {
+                strDocPath = [strDocPath stringByAppendingPathComponent:file];
+                break;
+            }
+        }
+    }
+    
+    NSArray *documentListFile = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
+        for (NSString *file in documentListFile) {
+            if ([[file lastPathComponent] containsString:@"png"] || [[file lastPathComponent] containsString:@"jpg"]) {
+                NSFileManager *fileMgr = [NSFileManager defaultManager];
+                NSError *err;
+                NSString *filePath = [documentPath stringByAppendingPathComponent:file];
+                [fileMgr removeItemAtPath:filePath error:&err];
+            }
+        }
+    }
+    
+    for (NSString *sessionId in sessionIds) {
+        NSString *cacheMediaPath = [strDocPath stringByAppendingPathComponent:sessionId];
+
+        NSArray *cacheMediaFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:cacheMediaPath error:nil];
+        [self deleteFilesWithPath:cacheMediaPath andFiles:cacheMediaFiles];
+    }
+    
+    resolve(@"deleteSuccess");
 }
 
 //删除文件夹下所有文件
@@ -825,14 +885,23 @@ RCT_EXPORT_METHOD(cleanCache){
 - (float )folderSizeAtPath:(NSString*) folderPath{
     NSFileManager* manager = [NSFileManager defaultManager];
     if (![manager fileExistsAtPath:folderPath]) return 0;
-    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:folderPath] objectEnumerator];
-    NSString* fileName;
+//    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:folderPath] objectEnumerator];
+    NSArray* childFilesEnumerator = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:folderPath
+                                                                        error:NULL];
+    NSLog(@"childFilesEnumerator =>> folderPath:%@, %@",folderPath, childFilesEnumerator);
+    
     long long folderSize = 0;
-    while ((fileName = [childFilesEnumerator nextObject]) != nil){
-        NSString* fileAbsolutePath = [folderPath stringByAppendingPathComponent:fileName];
-        folderSize += [self fileSizeAtPath:fileAbsolutePath];
+    
+    for (NSString *filename in childFilesEnumerator) {
+        folderSize += [self fileSizeAtPath:[folderPath stringByAppendingPathComponent:filename]];
     }
-    return folderSize/(1024.0*1024.0);
+    
+//    NSString* fileName;
+//    while ((fileName = [childFilesEnumerator nextObject]) != nil){
+//        NSString* fileAbsolutePath = [folderPath stringByAppendingPathComponent:fileName];
+//    }
+
+    return folderSize;
 }
 
 

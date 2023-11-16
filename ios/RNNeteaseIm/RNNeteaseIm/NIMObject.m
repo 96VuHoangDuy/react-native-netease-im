@@ -17,9 +17,9 @@
     });
     return nimObj;
 }
-- (void)downLoadVideo:(NIMVideoObject *)videoObject Error:(void(^)(NSError *error))handler progress:(void(^)(float progress))succ {
+- (void)downLoadAttachment:(NSString *)path filePath:(NSString *)filePath Error:(void(^)(NSError *error))handler progress:(void(^)(float progress))succ {
     __weak typeof(self) wself = self;
-    [[NIMSDK sharedSDK].resourceManager download:videoObject.url filepath:videoObject.path progress:^(float progress) {
+    [[NIMSDK sharedSDK].resourceManager download:path filepath:filePath progress:^(float progress) {
         succ(progress);
     } completion:^(NSError *error) {
         if (wself) {
