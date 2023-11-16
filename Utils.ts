@@ -2,9 +2,9 @@ import { NativeModules, Platform } from "react-native";
 const { RNNeteaseIm, PinYin } = NativeModules;
 
 class NimUtils {
-  getCacheSize() {
-    return RNNeteaseIm.getCacheSize();
-  }
+  // getCacheSize() {
+  //   return RNNeteaseIm.getCacheSize();
+  // }
   /**
    * 清除数据缓存
    */

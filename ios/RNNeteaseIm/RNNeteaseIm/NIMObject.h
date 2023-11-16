@@ -13,5 +13,5 @@
 +(instancetype)initNIMObject;
 @property(nonatomic,strong)NSString *attachment;
 //下载本地视频
-- (void)downLoadVideo:(NIMVideoObject *)videoObject Error:(void(^)(NSError *error))handler progress:(void(^)(float progress))succ;
+- (void)downLoadAttachment:(NSString *)path filePath:(NSString *)filePath Error:(void(^)(NSError *error))handler progress:(void(^)(float progress))succ;
 @end

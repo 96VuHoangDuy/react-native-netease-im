@@ -58,6 +58,7 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
 
   videoUrl?: string; //video
   coverUrl?: string; //video
+  coverPath?: string;
 }
 
 export interface NIMMessage {
