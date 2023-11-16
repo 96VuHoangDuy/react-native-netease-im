@@ -140,7 +140,7 @@ public class AudioMessageService implements IAudioRecordCallback {
         }
         currTime = (int) (audioLength / 1000);
         if (sessionService != null)
-            sessionService.sendAudioMessage(audioFile.getAbsolutePath(), audioLength, null);
+            sessionService.sendAudioMessage(audioFile.getAbsolutePath(), audioLength, false,null);
     }
 
     @Override

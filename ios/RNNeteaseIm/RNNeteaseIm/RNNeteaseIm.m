@@ -402,17 +402,17 @@ RCT_EXPORT_METHOD(clearMessage:(nonnull  NSString *)sessionId sessionId:(nonnull
     [[ConversationViewController initWithConversationViewController] clearMsg:sessionId type:type];
 }
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
-RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds){
-    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds];
+RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds isCustomerService:(BOOL *)isCustomerService) {
+    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds isCustomerService:isCustomerService];
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", content);
 }
 //发送图片消息
-RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName){
-    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName];
+RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
+    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService];
 }
 //发送音频消息
-RCT_EXPORT_METHOD(sendAudioMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration){
-    [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration];
+RCT_EXPORT_METHOD(sendAudioMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration isCustomerService:(BOOL *)isCustomerService){
+    [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isCustomerService:isCustomerService];
 }
 //发送自定义消息
 RCT_EXPORT_METHOD(sendCustomMessage:(NSInteger)custType attachment: (nonnull  NSDictionary *)attachment){
@@ -426,8 +426,8 @@ RCT_EXPORT_METHOD(forwardMultipleTextMessage: (nonnull  NSDictionary *)attachmen
 }
 
 //发送视频消息
-RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName){
-    [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName];
+RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
+    [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService];
 
 }
 
