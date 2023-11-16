@@ -1785,6 +1785,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         MsgSearchOption option = new MsgSearchOption();
         option.setLimit(limit);
         option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
+        option.setAllMessageTypes(true);
 
         RequestCallbackWrapper callback = new RequestCallbackWrapper<List<IMMessage>>() {
             @Override

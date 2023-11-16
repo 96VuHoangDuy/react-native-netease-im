@@ -1072,7 +1072,7 @@ public class ReactCache {
         File to = new File(directory + "/nim" + typeDir + sessionId, currentFileName.trim() + extension);
 
         from.renameTo(to);
-        from.delete();
+       from.delete();
         return to;
     }
 
@@ -1122,7 +1122,9 @@ public class ReactCache {
 
             if (!isFilePathDeleted) {
                 if (videoAttachment.getPath() != null) {
-                    if (!videoAttachment.getPath().contains(".mp4") || !videoAttachment.getPath().contains(item.getSessionId())) {
+                    if ( (!videoAttachment.getPath().contains(".mp4")
+                            || !videoAttachment.getPath().contains(item.getSessionId()) )
+                                && item.getStatus() == MsgStatusEnum.success) {
                         File newFile = replaceVideoPath(videoAttachment.getPath(), item.getSessionId(), "video", ".mp4");
                         Log.d("newFilenewFile",newFile.getPath());
                         videoAttachment.setPath(newFile.getPath());
@@ -1148,6 +1150,7 @@ public class ReactCache {
                     DownloadCallback callback = new DownloadCallback() {
                         @Override
                         public void onSuccess(Void result) {
+                            setLocalExtension(item, "downloadStatus", "success");
                             ReactCache.createMessage(item);
                         }
 
@@ -1161,6 +1164,8 @@ public class ReactCache {
                             Log.d("onException result", String.valueOf(exception));
                         }
                     };
+                    setLocalExtension(item, "downloadStatus", "downloading");
+
                     AbortableFuture future = getService(MsgService.class).downloadAttachment(item, videoAttachment.getThumbPath() == null);
                     future.setCallback(callback);
                 }
@@ -1199,7 +1204,9 @@ public class ReactCache {
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
             if (!isFilePathDeleted) {
-                if (imageAttachment.getPath() != null && !imageAttachment.getPath().contains(item.getSessionId())) {
+                if (imageAttachment.getPath() != null
+                        && !imageAttachment.getPath().contains(item.getSessionId())
+                            && item.getStatus() == MsgStatusEnum.success) {
                     File newFile = replaceVideoPath(imageAttachment.getPath(), item.getSessionId(), "image", "." + imageAttachment.getExtension());
                     Log.d("newFilenewFile",newFile.getPath());
 
@@ -1224,6 +1231,7 @@ public class ReactCache {
                     imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
                     imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
                 }
+
                 SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
             }
         }
@@ -1252,7 +1260,9 @@ public class ReactCache {
             audioObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
             if(!isFilePathDeleted) {
-                if (audioAttachment.getPath() != null && !audioAttachment.getPath().contains(item.getSessionId())) {
+                if (audioAttachment.getPath() != null
+                        && !audioAttachment.getPath().contains(item.getSessionId())
+                         && item.getStatus() == MsgStatusEnum.success) {
                     File newFile = replaceVideoPath(audioAttachment.getPath(), item.getSessionId(), "audio","." + audioAttachment.getExtension());
 
                     audioAttachment.setPath(newFile.getPath());
@@ -1514,11 +1524,11 @@ public class ReactCache {
         }
         itemMap.putString(MessageConstant.Message.MSG_TEXT, text);
 
-        if (item.getDirect() == MsgDirectionEnum.In && itemMap.getMap(MESSAGE_EXTEND) != null && itemMap.getMap(MESSAGE_EXTEND).toHashMap().containsKey("needRefreshMessage") && itemMap.getMap(MESSAGE_EXTEND).getBoolean("needRefreshMessage")) {
-            WritableArray writableArray = Arguments.createArray();
-            writableArray.pushMap(itemMap);
-            ReactCache.emit(ReactCache.observeMsgStatus, writableArray);
-        }
+//        if (item.getDirect() == MsgDirectionEnum.In && itemMap.getMap(MESSAGE_EXTEND) != null && itemMap.getMap(MESSAGE_EXTEND).toHashMap().containsKey("needRefreshMessage") && itemMap.getMap(MESSAGE_EXTEND).getBoolean("needRefreshMessage")) {
+//            WritableArray writableArray = Arguments.createArray();
+//            writableArray.pushMap(itemMap);
+//            ReactCache.emit(ReactCache.observeMsgStatus, writableArray);
+//        }
 
         return itemMap;
     }

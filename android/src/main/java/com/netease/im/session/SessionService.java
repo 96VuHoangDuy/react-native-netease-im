@@ -75,6 +75,7 @@ import java.util.function.Consumer;
 
 import androidx.annotation.NonNull;
 
+import static com.netease.im.ReactCache.setLocalExtension;
 import static com.netease.nimlib.sdk.NIMClient.getService;
 
 /**
@@ -366,20 +367,14 @@ public class SessionService {
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
         Map<String, Object> localExtension = message.getLocalExtension();
-        switch (message.getMsgType()) {
-            case audio:
-            case video:
-            case file:
-            case image:
-                break;
-            default:
-                if (isMyMessage(message) || isSend) {
-                    List<IMMessage> list = new ArrayList<>(1);
-                    list.add(message);
-                    Object a = ReactCache.createMessageList(list);
-                    ReactCache.emit(ReactCache.observeMsgStatus, a);
-                }
-                break;
+        if (localExtension != null && localExtension.containsKey("downloadStatus") && localExtension.get("downloadStatus").equals("downloading")) {
+            return;
+        }
+        if (isMyMessage(message) || isSend) {
+            List<IMMessage> list = new ArrayList<>(1);
+            list.add(message);
+            Object a = ReactCache.createMessageList(list);
+            ReactCache.emit(ReactCache.observeMsgStatus, a);
         }
     }
 
@@ -1065,6 +1060,7 @@ public class SessionService {
             @Override
             public void onSuccess(Void result) {
                 ReactCache.createMessage(message);
+                setLocalExtension(message, "downloadStatus", "success");
                 Log.d("onSuccess download", "onSuccess download" + "");
             }
 
@@ -1078,6 +1074,8 @@ public class SessionService {
                 Log.d("onException result", String.valueOf(exception));
             }
         };
+        setLocalExtension(message, "downloadStatus", "downloading");
+
         AbortableFuture future = getService(MsgService.class).downloadAttachment(message, isThumb);
         future.setCallback(callback);
     }
