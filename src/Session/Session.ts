@@ -77,9 +77,17 @@ class NimSession {
   queryMessageListEx(
     messageId: string,
     limit: number,
-    direction: QueryDirectionType
+    direction: QueryDirectionType,
+    sessionId?: string,
+    sessionType?: NIMSessionTypeEnum
   ) {
-    return RNNeteaseIm.queryMessageListEx(messageId, limit, direction);
+    return RNNeteaseIm.queryMessageListEx(
+      messageId,
+      limit,
+      direction,
+      sessionId,
+      sessionType
+    );
   }
 
   searchMessages(keyWords: string): Promise<Record<string, NIMMessage[]>> {

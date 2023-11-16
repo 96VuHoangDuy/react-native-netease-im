@@ -103,16 +103,17 @@
     }
 }
 //聊天界面历史记录
--(void)localSession:(NSInteger)index currentMessageID:(NSString *)currentMessageID direction:(int)direction success:(Success)succe err:(Errors)err{
-    _index = index;
+-(void)localSession:(NSInteger)limit currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err{
     [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
     NIMGetMessagesDynamicallyParam *param = [[NIMGetMessagesDynamicallyParam alloc] init];
-    param.session = self._session;
-    param.limit = index;
+    NIMSession *session = [sessionId length] && [sessionType length] ? [NIMSession session:sessionId type:[sessionType integerValue]] : self._session;
+    
+    param.session = session;
+    param.limit = limit;
     
   
     if (currentMessageID.length != 0) {
-        NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[currentMessageID] ];
+        NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[currentMessageID] ];
         NIMMessage *currentM = currentMessage[0];
 
         param.anchorClientId = currentMessageID;

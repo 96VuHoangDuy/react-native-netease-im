@@ -1759,28 +1759,53 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void queryMessageListEx(String messageId, final
-    int limit,int direction, final Promise promise) {
-        LogUtil.w(TAG, "queryMessageListEx:" + messageId + "(" + limit + ")");
-        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
-                sessionService.queryMessageListEx(message, direction == 1 ? QueryDirectionEnum.QUERY_NEW : QueryDirectionEnum.QUERY_OLD, limit, new SessionService.OnMessageQueryListListener() {
-                    @Override
-                    public int onResult(int code, List<IMMessage> messageList, Set<String> timedItems) {
-                        if (messageList == null || messageList.isEmpty()) {
-                            promise.reject("" + code, "");
-                        } else {
-                            Object a = ReactCache.createMessageList(messageList);
-                            sessionService.sendMsgReceipt(messageList);
-                            promise.resolve(a);
-                        }
-                        return 0;
-                    }
-                });
-                return 0;
-            }
-        });
+    int limit,int direction,String sessionId, String sessionType, final Promise promise) {
+        MsgSearchOption option = new MsgSearchOption();
+        option.setLimit(limit);
+        option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
 
+        final IMMessage[] anchor = {null};
+
+        if (messageId.isEmpty() || messageId == null) {
+            anchor[0] = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
+        } else {
+            sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    anchor[0] = message;
+                    return code;
+                }
+            });
+
+
+            option.setStartTime(direction == 1 ? anchor[0].getTime() : 0);
+            option.setEndTime(direction == 0 ? anchor[0].getTime() : 0);
+        }
+
+        RequestCallbackWrapper callback = new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    if (result != null && result.size() > 0) {
+                        Object a = ReactCache.createMessageList(result);
+                        sessionService.sendMsgReceipt(result);
+                        promise.resolve(a);
+                        return;
+                    }
+                }
+                promise.reject("" + code, "");
+            }
+        };
+
+        if (sessionId != null && sessionType != null) {
+            SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
+
+            NIMClient.getService(MsgService.class).searchMessage(sessionTypeE, sessionId, option)
+                    .setCallback(callback);
+        } else {
+            NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
+                    .setCallback(callback);
+        }
     }
 
     private QueryDirectionEnum getQueryDirection(String direction) {
