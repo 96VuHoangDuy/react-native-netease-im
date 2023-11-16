@@ -818,7 +818,7 @@ RCT_EXPORT_METHOD(getListSessionsCacheSize:(NSArray *)sessionIds resolve:(RCTPro
         [arraySize addObject:@{@"sessionId": sessionId, @"size": displayFileSize}];
     }
     
-    resolve(@{@"listSize": arraySize, @"totalSize": [NSByteCountFormatter stringFromByteCount:allSize
+    resolve(@{@"data": arraySize, @"totalSize": [NSByteCountFormatter stringFromByteCount:allSize
                                                                          countStyle:NSByteCountFormatterCountStyleFile]});
 }
 
