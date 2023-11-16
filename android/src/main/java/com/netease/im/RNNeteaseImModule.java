@@ -94,6 +94,8 @@ import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1715,39 +1717,59 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             option.setMessageTypes(arrayListMessageTypes);
         }
 
-        final IMMessage[] anchor = {null};
-
         if (anchorId.isEmpty() || anchorId == null) {
-            anchor[0] = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
+            IMMessage anchor;
+            anchor = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
+            option.setStartTime(direction == 1 ? anchor.getTime() : 0);
+            option.setEndTime(direction == 0 ? anchor.getTime() : 0);
+
+            NIMClient.getService(MsgService.class).searchAllMessage(option)
+                    .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                        @Override
+                        public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                            if (code == ResponseCode.RES_SUCCESS) {
+                                if (result != null && result.size() > 0) {
+                                    List<IMMessage>  messages = result;
+                                    if (direction == 0) {
+                                        Collections.reverse(messages);
+                                    }
+                                    Object a = ReactCache.createMessageList(messages);
+                                    promise.resolve(a);
+                                    return;
+                                }
+                            }
+                            promise.reject("" + code, "");
+                        }
+                    });
         } else {
             sessionService.queryMessage(anchorId, new SessionService.OnMessageQueryListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
-                    anchor[0] = message;
+                    option.setStartTime(direction == 1 ? message.getTime() : 0);
+                    option.setEndTime(direction == 0 ? message.getTime() : 0);
+
+                    NIMClient.getService(MsgService.class).searchAllMessage(option)
+                            .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                                @Override
+                                public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                                    if (code == ResponseCode.RES_SUCCESS) {
+                                        if (result != null && result.size() > 0) {
+                                            List<IMMessage>  messages = result;
+                                            if (direction == 0) {
+                                                Collections.reverse(messages);
+                                            }
+                                            Object a = ReactCache.createMessageList(messages);
+                                            promise.resolve(a);
+                                            return;
+                                        }
+                                    }
+                                    promise.reject("" + code, "");
+                                }
+                            });
                     return code;
                 }
             });
-
-
-            option.setStartTime(direction == 1 ? anchor[0].getTime() : 0);
-            option.setEndTime(direction == 0 ? anchor[0].getTime() : 0);
         }
-
-        NIMClient.getService(MsgService.class).searchAllMessage(option)
-                .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
-                    @Override
-                    public void onResult(int code, List<IMMessage> result, Throwable exception) {
-                        if (code == ResponseCode.RES_SUCCESS) {
-                            if (result != null && result.size() > 0) {
-                                Object a = ReactCache.createMessageList(result);
-
-                                promise.resolve(a);
-                                return;
-                            }
-                        }
-                        promise.reject("" + code, "");
-                    }
-                });
     }
 
     /**
@@ -1764,30 +1786,17 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         option.setLimit(limit);
         option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
 
-        final IMMessage[] anchor = {null};
-
-        if (messageId.isEmpty() || messageId == null) {
-            anchor[0] = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
-        } else {
-            sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
-                @Override
-                public int onResult(int code, IMMessage message) {
-                    anchor[0] = message;
-                    return code;
-                }
-            });
-
-
-            option.setStartTime(direction == 1 ? anchor[0].getTime() : 0);
-            option.setEndTime(direction == 0 ? anchor[0].getTime() : 0);
-        }
-
         RequestCallbackWrapper callback = new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> result, Throwable exception) {
                 if (code == ResponseCode.RES_SUCCESS) {
                     if (result != null && result.size() > 0) {
-                        Object a = ReactCache.createMessageList(result);
+                        List<IMMessage>  messages = result;
+                        if (direction == 0) {
+                            Collections.reverse(messages);
+                        }
+
+                        Object a = ReactCache.createMessageList(messages);
                         sessionService.sendMsgReceipt(result);
                         promise.resolve(a);
                         return;
@@ -1797,14 +1806,36 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             }
         };
 
-        if (sessionId != null && sessionType != null) {
-            SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
+        if (messageId.isEmpty() || messageId == null) {
+            if (sessionId != null && sessionType != null) {
+                SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
 
-            NIMClient.getService(MsgService.class).searchMessage(sessionTypeE, sessionId, option)
-                    .setCallback(callback);
+                NIMClient.getService(MsgService.class).searchMessage(sessionTypeE, sessionId, option)
+                        .setCallback(callback);
+            } else {
+                NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
+                        .setCallback(callback);
+            }
         } else {
-            NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
-                    .setCallback(callback);
+            sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    option.setStartTime(direction == 1 ? message.getTime() : 0);
+                    option.setEndTime(direction == 0 ? message.getTime() : 0);
+                    Log.d("optionoption>>>", option.toString());
+                    if (sessionId != null && sessionType != null) {
+                        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
+
+                        NIMClient.getService(MsgService.class).searchMessage(sessionTypeE, sessionId, option)
+                                .setCallback(callback);
+                    } else {
+                        NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
+                                .setCallback(callback);
+                    }
+
+                    return code;
+                }
+            });
         }
     }
 
@@ -2157,7 +2188,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void getListSessionsCacheSize(ReadableArray sessionIds, final Promise promise) {
-        try {
+       try {
             ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
             WritableMap result = FileCacheUtil.getSessionsCacheSie(_sessionIds);
             promise.resolve(result);
