@@ -26,6 +26,7 @@ export enum NIMMessageTypeEnum {
   CARD = 'card',
   CUSTOM = 'custom',
   MULTIPLE_TEXT = 'forwardMultipleText',
+  UNKNOWN = 'unknown',
 }
 
 export enum NIMMessageStatusEnum {
@@ -35,7 +36,6 @@ export enum NIMMessageStatusEnum {
   SEND_SUCCESS = 'send_succeed',
   RECEIVE_READ = 'receive_read',
   RECEIVE_UNREAD = 'receive_unread',
-  UNKNOWN = 'unknown',
 }
 
 export interface NimMessageTypeExtend extends NimSessionTypeExtend {
