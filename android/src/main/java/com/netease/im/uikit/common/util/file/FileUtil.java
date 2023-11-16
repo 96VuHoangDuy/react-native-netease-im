@@ -113,18 +113,16 @@ public class FileUtil {
         }
 
         switch (unit) {
-            case Byte:
-                return size + "B";
             case KB:
-                return String.format(Locale.US, "%.2fKB", size / KB);
+                return String.format(Locale.US, "%.2f KB", size / KB);
             case MB:
-                return String.format(Locale.US, "%.2fMB", size / MB);
+                return String.format(Locale.US, "%.2f MB", size / MB);
             case GB:
-                return String.format(Locale.US, "%.2fGB", size / GB);
+                return String.format(Locale.US, "%.2f GB", size / GB);
             case TB:
-                return String.format(Locale.US, "%.2fPB", size / TB);
+                return String.format(Locale.US, "%.2f PB", size / TB);
             default:
-                return size + "B";
+                return size + " B";
         }
     }
 }

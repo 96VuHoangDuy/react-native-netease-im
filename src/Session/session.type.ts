@@ -82,3 +82,14 @@ export interface NimSessionType {
   name: string;
   extend?: NimSessionTypeExtend;
 }
+
+export type SessionCache = {
+  size: string;
+  sessionId: string;
+  sizeNumber?: number;
+};
+
+export type ListSessionCacheType = {
+  data: SessionCache[];
+  totalSize: string;
+};
