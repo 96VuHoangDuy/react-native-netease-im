@@ -1131,11 +1131,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void sendTextMessage(String content, ReadableArray atUserIds, final Promise promise) {
+    public void sendTextMessage(String content, ReadableArray atUserIds, boolean isCustomerService,final Promise promise) {
         LogUtil.w(TAG, "sendTextMessage" + content);
 
         List<String> atUserIdList = array2ListString(atUserIds);
-        sessionService.sendTextMessage(content, atUserIdList, new SessionService.OnSendMessageListener() {
+        sessionService.sendTextMessage(content, atUserIdList, isCustomerService, new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1144,9 +1144,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
-    public void sendTextMessage(String content, final Promise promise) {
+    public void sendTextMessage(String content, boolean isCustomerService,final Promise promise) {
         LogUtil.w(TAG, "sendTextMessage" + content);
-        sessionService.sendTextMessage(content, null, new SessionService.OnSendMessageListener() {
+        sessionService.sendTextMessage(content, null, isCustomerService,new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1159,8 +1159,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    file, // 图片文件对象
 //    displayName // 文件显示名字，如果第三方 APP 不关注，可以为 null
     @ReactMethod
-    public void sendImageMessage(String file, String displayName, final Promise promise) {
-        sessionService.sendImageMessage(file, displayName, new SessionService.OnSendMessageListener() {
+    public void sendImageMessage(String file, String displayName, boolean isCustomerService,final Promise promise) {
+        sessionService.sendImageMessage(file, displayName, isCustomerService,new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
                 return 0;
@@ -1172,14 +1172,14 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    file, // 音频文件
 //    duration // 音频持续时间，单位是ms
     @ReactMethod
-    public void sendAudioMessage(String file, String duration, final Promise promise) {
+    public void sendAudioMessage(String file, String duration, boolean isCustomerService,final Promise promise) {
         long durationL = 0;
         try {
             durationL = Long.parseLong(duration);
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-        sessionService.sendAudioMessage(file, durationL, new SessionService.OnSendMessageListener() {
+        sessionService.sendAudioMessage(file, durationL, isCustomerService,new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
                 return 0;
@@ -1194,8 +1194,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    height, // 视频高度
 //    displayName // 视频显示名，可为空
     @ReactMethod
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, final Promise promise) {
-        sessionService.sendVideoMessage(file, duration, width, height, displayName, new SessionService.OnSendMessageListener() {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService,final Promise promise) {
+        sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService,new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
                 return 0;

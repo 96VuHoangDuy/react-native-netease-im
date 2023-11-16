@@ -1,12 +1,12 @@
-import { NativeModules, Platform } from "react-native";
+import { NativeModules, Platform } from 'react-native';
 import {
   CustomMessageType,
   NIMSessionTypeEnum,
   NIMQueryDirectionEnum,
   NIMSendAttachmentEnum,
   QueryDirectionType,
-} from "./session.type";
-import { NIMMessage, NIMMessageTypeEnum } from "../Message/message.type";
+} from './session.type';
+import { NIMMessage, NIMMessageTypeEnum } from '../Message/message.type';
 const { RNNeteaseIm } = NativeModules;
 
 class NimSession {
@@ -149,8 +149,16 @@ class NimSession {
    * @param content 文本内容
    * @param atUserIds @的群成员ID ["abc","abc12"]
    */
-  sendTextMessage(content: string, atUserIds?: string[]) {
-    return RNNeteaseIm.sendTextMessage(content, atUserIds);
+  sendTextMessage(
+    content: string,
+    atUserIds?: string[],
+    isCustomerService?: boolean
+  ) {
+    return RNNeteaseIm.sendTextMessage(
+      content,
+      atUserIds,
+      isCustomerService ?? false
+    );
   }
 
   /**
@@ -160,13 +168,22 @@ class NimSession {
    * @param displayName 文件显示名字，如果第三方 APP 不关注，可为空
    * @returns {*}
    */
-  sendImageMessages(file: string, displayName?: string) {
-    if (Platform.OS === "ios") {
-      return RNNeteaseIm.sendImageMessages(file, displayName);
+  sendImageMessages(
+    file: string,
+    displayName?: string,
+    isCustomerService?: boolean
+  ) {
+    if (Platform.OS === 'ios') {
+      return RNNeteaseIm.sendImageMessages(
+        file,
+        displayName,
+        isCustomerService ?? false
+      );
     }
     return RNNeteaseIm.sendImageMessage(
-      file.replace("file://", ""),
-      displayName
+      file.replace('file://', ''),
+      displayName,
+      isCustomerService ?? false
     );
   }
   /**
@@ -175,8 +192,16 @@ class NimSession {
    * @param duration 音频持续时间，单位是ms
    * @returns {*}
    */
-  sendAudioMessage(file: string, duration: string) {
-    return RNNeteaseIm.sendAudioMessage(file, duration);
+  sendAudioMessage(
+    file: string,
+    duration: string,
+    isCustomerService?: boolean
+  ) {
+    return RNNeteaseIm.sendAudioMessage(
+      file,
+      duration,
+      isCustomerService ?? false
+    );
   }
 
   /**
@@ -193,14 +218,16 @@ class NimSession {
     duration: string,
     width: number,
     height: number,
-    displayName?: string
+    displayName?: string,
+    isCustomerService?: boolean
   ) {
     return RNNeteaseIm.sendVideoMessage(
       file,
       duration,
       width,
       height,
-      displayName
+      displayName,
+      isCustomerService ?? false
     );
   }
   /**
@@ -420,7 +447,7 @@ class NimSession {
    * @returns {*}
    */
   downloadAttachment(messageId: string) {
-    return RNNeteaseIm.downloadAttachment(messageId, "0");
+    return RNNeteaseIm.downloadAttachment(messageId, '0');
   }
 
   /**
@@ -433,7 +460,7 @@ class NimSession {
   }
 
   getLaunch() {
-    if (Platform.OS === "android") {
+    if (Platform.OS === 'android') {
       return RNNeteaseIm.getLaunch();
     }
   }

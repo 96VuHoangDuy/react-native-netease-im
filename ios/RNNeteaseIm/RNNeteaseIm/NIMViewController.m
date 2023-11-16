@@ -290,7 +290,9 @@
                         break;
                     default:
                     {
-                        [dic setObject:obj.dataDict  forKey:@"extend"];
+                        if (obj.dataDict != nil) {
+                            [dic setObject:obj.dataDict  forKey:@"extend"];
+                        }
                         [dic setObject:@"unknown" forKey:@"msgType"];
                     }
                         break;
@@ -430,7 +432,9 @@
                             break;
                         default:
                         {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
+                            if (obj.dataDict != nil) {
+                                [dic setObject:obj.dataDict  forKey:@"extend"];
+                            }
                             [dic setObject:@"unknown" forKey:@"msgType"];
                         }
                             break;
@@ -547,7 +551,9 @@
                                 break;
                             default:
                             {
-                                [dic setObject:obj.dataDict  forKey:@"extend"];
+                                if (obj.dataDict != nil) {
+                                    [dic setObject:obj.dataDict  forKey:@"extend"];
+                                }
                                 [dic setObject:@"unknown" forKey:@"msgType"];
                             }
                                 break;

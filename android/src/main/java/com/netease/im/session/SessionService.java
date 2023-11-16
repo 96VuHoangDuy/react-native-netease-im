@@ -648,13 +648,13 @@ public class SessionService {
 //                onMsgSend(item);
 //                appendPushConfig(item);
 //                getMsgService().sendMessage(item, true);
-        sendMessageSelf(item, null, true);
+        sendMessageSelf(item, null, true, false);
     }
 
     /**
      * @param content
      */
-    public void sendTextMessage(String content, List<String> selectedMembers, OnSendMessageListener onSendMessageListener) {
+    public void sendTextMessage(String content, List<String> selectedMembers, Boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
 
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
 
@@ -663,7 +663,7 @@ public class SessionService {
 //            message.setPushContent("有人@了你");
             message.setMemberPushOption(option);
         }
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
     }
 
     /**
@@ -693,12 +693,12 @@ public class SessionService {
                 message.setStatus(MsgStatusEnum.success);
                 getMsgService().saveMessageToLocal(message, true);
             } else {
-                sendMessageSelf(message, onSendMessageListener, false);
+                sendMessageSelf(message, onSendMessageListener, false, false);
             }
         }
     }
 
-    public void sendImageMessage(String file, String displayName, OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessage(String file, String displayName, boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
@@ -708,15 +708,15 @@ public class SessionService {
         }
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
         IMMessage message = MessageBuilder.createImageMessage(sessionId, sessionTypeEnum, f, TextUtils.isEmpty(displayName) ? f.getName() : displayName);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false,isCustomerService);
     }
 
-    public void sendAudioMessage(String file, long duration, OnSendMessageListener onSendMessageListener) {
+    public void sendAudioMessage(String file, long duration, boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
 
         IMMessage message = MessageBuilder.createAudioMessage(sessionId, sessionTypeEnum, f, duration);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false,isCustomerService);
     }
 
     //        String md5Path = StorageUtil.getWritePath(filename, StorageType.TYPE_VIDEO);
@@ -724,7 +724,7 @@ public class SessionService {
 //        long duration = mediaPlayer == null ? 0 : mediaPlayer.getDuration();
 //        int height = mediaPlayer == null ? 0 : mediaPlayer.getVideoHeight();
 //        int width = mediaPlayer == null ? 0 : mediaPlayer.getVideoWidth();
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, OnSendMessageListener onSendMessageListener) {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
 
 //        String filename = md5 + "." + FileUtil.getExtensionName(file);
         file = Uri.parse(file).getPath();
@@ -737,7 +737,7 @@ public class SessionService {
             e.printStackTrace();
         }
         IMMessage message = MessageBuilder.createVideoMessage(sessionId, sessionTypeEnum, f, durationL, width, height, md5);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
     }
 
     public void sendLocationMessage(String latitude, String longitude, String address, OnSendMessageListener onSendMessageListener) {
@@ -754,7 +754,7 @@ public class SessionService {
             e.printStackTrace();
         }
         IMMessage message = MessageBuilder.createLocationMessage(sessionId, sessionTypeEnum, lat, lon, address);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
     public void sendDefaultMessage(String type, String digst, String content, OnSendMessageListener onSendMessageListener) {
@@ -763,7 +763,7 @@ public class SessionService {
         attachment.setDigst(digst);
         attachment.setContent(content);
         IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, digst, attachment, config);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
     public void sendRedPacketOpenMessage(String sendId, String openId, String hasRedPacket, String serialNo, OnSendMessageListener onSendMessageListener) {
@@ -786,7 +786,7 @@ public class SessionService {
         RedPacketAttachement attachment = new RedPacketAttachement();
         attachment.setParams(type, comments, serialNo);
         IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, comments, attachment, config);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
     public void sendCardMessage(String toSessionType,String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, OnSendMessageListener onSendMessageListener) {
@@ -795,7 +795,7 @@ public class SessionService {
         name = name;
         attachment.setParams(toSessionType, name, imgPath, cardSessionId);
         IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, "[名片] " + name, attachment, config);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, false);
 //        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(toSessionType);
 //        IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "card");
 //
@@ -825,14 +825,14 @@ public class SessionService {
         remoteExt.put("extendType", "forwardMultipleText");
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, false);
 
         if (content == null) {
             return;
         }
 
         IMMessage messageText = MessageBuilder.createTextMessage(sessionId, sessionTypeE, content);
-        sendMessageSelf(messageText, onSendMessageListener, false);
+        sendMessageSelf(messageText, onSendMessageListener, false, false);
     }
 
     public void sendBankTransferMessage(String amount, String comments, String serialNo, OnSendMessageListener onSendMessageListener) {
@@ -840,7 +840,7 @@ public class SessionService {
         BankTransferAttachment attachment = new BankTransferAttachment();
         attachment.setParams(amount, comments, serialNo);
         IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, comments, attachment, config);
-        sendMessageSelf(message, onSendMessageListener, false);
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
     public int sendForwardMessage(List<IMMessage> selectMessages, final String sessionId, final String sessionType, String content, OnSendMessageListener onSendMessageListener) {
@@ -858,11 +858,11 @@ public class SessionService {
             if (message == null) {
                 return 1;
             }
-            sendMessageSelf(message, onSendMessageListener, false);
+            sendMessageSelf(message, onSendMessageListener, false, false);
         }
 
         IMMessage messageSelf = MessageBuilder.createTextMessage(sessionId, sessionTypeE, content);
-        sendMessageSelf(messageSelf, onSendMessageListener, false);
+        sendMessageSelf(messageSelf, onSendMessageListener, false, false);
         return 2;
     }
 
@@ -938,9 +938,7 @@ public class SessionService {
         getMsgService().updateIMMessageStatus(message);
     }
 
-    public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend) {
-
-
+    public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isCustomerService) {
         appendPushConfig(message);
         if (sessionTypeEnum == SessionTypeEnum.P2P) {
             sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
@@ -948,7 +946,7 @@ public class SessionService {
 
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
             LogUtil.w(TAG, "isFriend:" + isFriend);
-            if (!isFriend) {
+            if (!isFriend && !isCustomerService) {
 
                 message.setStatus(MsgStatusEnum.fail);
                 CustomMessageConfig config = new CustomMessageConfig();
