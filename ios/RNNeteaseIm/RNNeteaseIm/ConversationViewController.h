@@ -14,7 +14,7 @@ typedef void(^Errors)(id erro);
 @interface ConversationViewController : UIViewController<NIMChatManagerDelegate,NIMConversationManagerDelegate>
 
 +(instancetype)initWithConversationViewController;
--(void)localSession:(NSInteger)index currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err;
+-(void)localSession:(NSInteger)index currentMessageID:(NSString *)currentMessageID direction:(int)direction success:(Success)succe err:(Errors)err;
 -(void)startSession:(NSString *)sessionID withType:(NSString *)type;
 -(void)stopSession;
 //-(void)sendAudioRecode:(NSString *)filePath;
@@ -28,13 +28,13 @@ typedef void(^Errors)(id erro);
 //开始录音
 - (void)onStartRecording;
 //发送文本，并指定@用户（@仅适用于群组）
--(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members;
+-(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService;
 //发送图片
--(void)sendImageMessages:(  NSString *)path   displayName:(  NSString *)displayName;
+-(void)sendImageMessages:(  NSString *)path displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService;
 //发送音频
--(void)sendAudioMessage:(  NSString *)file duration:(  NSString *)duration;
+-(void)sendAudioMessage:(  NSString *)file duration:(  NSString *)duration isCustomerService:(BOOL *)isCustomerService;
 //发送视频
--(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName;
+-(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService;
 //发送自定义消息
 -(void)sendCustomMessage:(NSInteger )custType data:(NSDictionary *)dataDict;
 
