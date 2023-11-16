@@ -10,16 +10,21 @@ import android.os.StatFs;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.netease.im.uikit.common.util.file.FileUtil;
 import com.netease.im.uikit.common.util.log.LogUtil;
-import com.netease.nimlib.sdk.RequestCallbackWrapper;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -57,18 +62,42 @@ public class FileCacheUtil {
         return size;
     }
 
-    public static WritableArray getSessionsCacheSie(ArrayList<String> sessionIds) {
-        WritableArray arrResult = Arguments.createArray();
+    public static WritableMap getSessionsCacheSie(ArrayList<String> sessionIds) {
+        // Create a list to store session data
+        List<WritableMap> sessionDataList = new ArrayList<>();
+        long totalSize = 0;
 
         for (String sessionId: sessionIds) {
-            long folderSize =  getSessionCacheSie(sessionId);
+            long folderSize = getSessionCacheSie(sessionId);
+            totalSize += folderSize;
+            Log.d("FOLDER_SIZE", String.valueOf(folderSize));
             WritableMap result = Arguments.createMap();
             result.putString("sessionId", sessionId);
             result.putString("size", FileUtil.formatFileSize(folderSize));
-            arrResult.pushMap(result);
+            result.putDouble("sizeNumber",folderSize);
+            // Add the result map to the list
+            sessionDataList.add(result);
         }
 
-        return arrResult;
+        // Sort the list in descending order of size
+        Collections.sort(sessionDataList, new Comparator<WritableMap>() {
+            @Override
+            public int compare(WritableMap o1, WritableMap o2) {
+                return Double.compare(o2.getDouble("sizeNumber"), o1.getDouble("sizeNumber"));
+            }
+        });
+
+        // Create the result array and add the sorted data
+        WritableArray arrResult = Arguments.createArray();
+        for (WritableMap data : sessionDataList) {
+            arrResult.pushMap(data);
+        }
+
+        WritableMap finalResult = Arguments.createMap();
+        finalResult.putArray("data", arrResult);
+        finalResult.putString("totalSize", FileUtil.formatFileSize(totalSize));
+
+        return finalResult;
     }
 
     public static String cleanSessionCache(ArrayList<String> sessionIds) {

@@ -2132,12 +2132,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void getListSessionsCacheSize(ReadableArray sessionIds, final Promise promise) {
-        ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
-        Log.d("_sessionIds",_sessionIds + "");
-        WritableArray result = FileCacheUtil.getSessionsCacheSie(_sessionIds);
-
-        promise.resolve(result);
-//        promise.reject("" + code, "");
+        try {
+            ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
+            WritableMap result = FileCacheUtil.getSessionsCacheSie(_sessionIds);
+            promise.resolve(result);
+        } catch (Error error){
+            promise.reject(error);
+        }
     }
 
     @ReactMethod
@@ -2147,7 +2148,6 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         String result = FileCacheUtil.cleanSessionCache(_sessionIds);
 
         promise.resolve(result);
-//        promise.reject("" + code, "");
     }
 
     @ReactMethod
