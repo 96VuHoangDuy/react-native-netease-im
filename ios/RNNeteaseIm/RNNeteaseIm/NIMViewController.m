@@ -350,8 +350,6 @@
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
     NSMutableArray *sessionList = [NSMutableArray array];
     for (NIMRecentSession *recent in NIMlistArr) {
-        
-        
         if (recent.session.sessionType == NIMSessionTypeP2P) {
             NSMutableDictionary *dic = [NSMutableDictionary dictionary];
             [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
@@ -637,6 +635,19 @@
     return [NIMKitUtil showTime:recent.lastMessage.timestamp showDetail:NO];
 }
 
+- (NSString *)convertMessageMedia:(NIMMessage *)message contentMessage:(NSString *)contentMessage{
+    NSString *text = @"";
+    
+    
+    if ([message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
+        text = contentMessage;
+    } else {
+        text = [NSString stringWithFormat:@"%@ : %@", message.senderName, contentMessage];
+    }
+    
+    return text;
+}
+
 - (NSString *)messageContent:(NIMMessage*)lastMessage{
     NSString *text = @"";
     switch (lastMessage.messageType) {
@@ -644,23 +655,18 @@
             text = lastMessage.text;
             break;
         case NIMMessageTypeAudio:
-            text = @"[语音]";
-            break;
+            return [self convertMessageMedia:lastMessage contentMessage:@"[语音]"];
         case NIMMessageTypeImage:
-            text = @"[图片]";
-            break;
+            return [self convertMessageMedia:lastMessage contentMessage:@"[图片]"];
         case NIMMessageTypeVideo:
-            text = @"[视频]";
-            break;
+            return [self convertMessageMedia:lastMessage contentMessage:@"[视频]"];
         case NIMMessageTypeLocation:
-            text = @"[位置]";
-            break;
+            return [self convertMessageMedia:lastMessage contentMessage:@"[位置]"];
         case NIMMessageTypeNotification:{
             return [self notificationMessageContent:lastMessage];
         }
         case NIMMessageTypeFile:
-            text = @"[文件]";
-            break;
+            return [self convertMessageMedia:lastMessage contentMessage:@"[文件]"];
         case NIMMessageTypeTip:
             text = lastMessage.text;
             break;

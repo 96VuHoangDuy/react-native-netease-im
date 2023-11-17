@@ -228,16 +228,32 @@ public class ReactCache {
                         content = contact.getContent();
                         break;
                     case image:
-                        content = "[图片]";
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                            content = name + " : [图片]";
+                        } else {
+                            content = "[图片]";
+                        }
                         break;
                     case video:
-                        content = "[视频]";
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                            content = name + " : [视频]";
+                        } else {
+                            content = "[视频]";
+                        }
                         break;
                     case audio:
-                        content = "[语音消息]";
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                            content = name + " : [语音消息]";
+                        } else {
+                            content = "[语音消息]";
+                        }
                         break;
                     case location:
-                        content = "[位置]";
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                            content = name + " : [位置]";
+                        } else {
+                            content = "[位置]";
+                        }
                         break;
                     case tip:
                         List<String> uuids = new ArrayList<>();
