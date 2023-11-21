@@ -162,8 +162,7 @@ RCT_EXPORT_METHOD(logout){
     }];
 }
 //手动删除最近聊天列表
-RCT_EXPORT_METHOD(deleteRecentContact:(nonnull NSString * )recentContactId  resolve:(RCTPromiseResolveBlock)resolve
-                  reject:(RCTPromiseRejectBlock)reject){
+RCT_EXPORT_METHOD(deleteRecentContact:(nonnull NSString * )recentContactId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[NIMViewController initWithController]deleteCurrentSession:recentContactId andback:^(NSString *error) {
         if (!error) {
             resolve(@"200");
