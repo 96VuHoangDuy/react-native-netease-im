@@ -785,25 +785,19 @@ public class SessionService {
     }
 
     public void sendCardMessage(String toSessionType,String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, OnSendMessageListener onSendMessageListener) {
-        CustomMessageConfig config = new CustomMessageConfig();
-        CardAttachment attachment = new CardAttachment();
-        name = name;
-        attachment.setParams(toSessionType, name, imgPath, cardSessionId);
-        IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, "[名片] " + name, attachment, config);
+        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(toSessionType);
+        IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "card");
+
+        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+        remoteExt.put("extendType", "card");
+        remoteExt.put("type", cardSessionType);
+        remoteExt.put("name", name);
+        remoteExt.put("sessionId", cardSessionId);
+        remoteExt.put("imgPath", imgPath);
+
+        message.setRemoteExtension(remoteExt);
+
         sendMessageSelf(message, onSendMessageListener, false, false);
-//        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(toSessionType);
-//        IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "card");
-//
-//        Map<String, Object> remoteExt = MapBuilder.newHashMap();
-//        remoteExt.put("extendType", "card");
-//        remoteExt.put("type", cardSessionType);
-//        remoteExt.put("name", name);
-//        remoteExt.put("sessionId", cardSessionId);
-//        remoteExt.put("imgPath", imgPath);
-//
-//        message.setRemoteExtension(remoteExt);
-//
-//        sendMessageSelf(message, onSendMessageListener, false);
     }
 
     public void forwardMultipleTextMessage(ReadableMap dataDict,  String sessionId,  String sessionType,  String content, OnSendMessageListener onSendMessageListener) {

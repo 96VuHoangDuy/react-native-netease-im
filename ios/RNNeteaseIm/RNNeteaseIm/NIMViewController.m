@@ -470,7 +470,7 @@
             
         }
         else{
-            if ( [[NIMSDK sharedSDK].teamManager isMyTeam:recent.lastMessage.session.sessionId]) {
+            // if ( [[NIMSDK sharedSDK].teamManager isMyTeam:recent.lastMessage.session.sessionId]) {
                 NSMutableDictionary *dic = [NSMutableDictionary dictionary];
                 [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
@@ -593,7 +593,7 @@
                 [dic setObject:strMute forKey:@"mute"];
                 [sessionList addObject:dic];
                 
-            }
+            // }
         }
     }
     

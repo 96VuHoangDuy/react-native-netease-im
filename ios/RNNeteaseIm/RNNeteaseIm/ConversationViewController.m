@@ -991,9 +991,9 @@
     NSDictionary  *remoteExt = @{@"extendType": @"card", @"type":cardSessionType, @"name":name, @"imgPath":strImgPath, @"sessionId":cardSessionId};
     message.remoteExt = remoteExt;
     
-    if ([self isFriendToSendMessage:message]) {
+//    if ([self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
-    }
+//    }
 }
 
 // dict字典转json字符串
