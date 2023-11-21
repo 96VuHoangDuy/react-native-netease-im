@@ -75,7 +75,17 @@ import com.netease.nimlib.sdk.team.model.UpdateTeamAttachment;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 
+
+import org.apache.lucene.portmobile.file.Files;
+import org.apache.lucene.portmobile.file.Paths;
+import org.apache.lucene.portmobile.file.Path;
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1051,8 +1061,41 @@ public class ReactCache {
         void onException(Throwable exception);
     }
 
+    private static boolean filemovetoanotherfolder(File afile, File bfile) throws IOException {
+        boolean ismove = false;
+        InputStream inStream = null;
+        OutputStream outStream = null;
+        final int BUFFERSIZE = 4 * 1024;
+
+        try {
+            FileInputStream fin = new FileInputStream(afile);
+            FileOutputStream fout = new FileOutputStream(bfile);
+
+            byte[] buffer = new byte[BUFFERSIZE];
+
+            while(fin.available() != 0) {
+                int bytesRead = fin.read(buffer);
+                fout.write(buffer, 0, bytesRead);
+            }
+            // delete the original file
+            afile.delete();
+            ismove = true;
+            System.out.println("File is copied successful!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally{
+            if (inStream != null) {
+                inStream.close();
+            }
+
+            if (outStream != null) {
+                outStream.close();
+            }
+        }
+        return ismove;
+    }
+
     private static File replaceVideoPath(String path,String sessionId,String type,String extension) {
-        Log.d("pathpath", path);
         String currentFileName = path.substring(path.lastIndexOf("/"), path.length());
         int extensionIndex = currentFileName.lastIndexOf(".");
 
@@ -1061,9 +1104,10 @@ public class ReactCache {
         } else {
             currentFileName = currentFileName.substring(1);
         }
-        Log.d("extensionextension",currentFileName + "" + extension);
 
         File from = new File(path);
+        boolean isFromPathExits = from.exists();
+        if (!isFromPathExits) return null;
 
         Context context = IMApplication.getContext();
         String directory = context.getCacheDir().getAbsolutePath();
@@ -1086,10 +1130,22 @@ public class ReactCache {
         Log.d("directory", directory + "......" + directory + "/nim" + typeDir + sessionId + "......." + currentFileName.trim() + extension);
 
         File to = new File(directory + "/nim" + typeDir + sessionId, currentFileName.trim() + extension);
+        File toMkdir = new File(directory + "/nim" + typeDir + sessionId);
 
-        from.renameTo(to);
-       from.delete();
-        return to;
+        if (!toMkdir.exists()) {
+            toMkdir.mkdir();
+        }
+
+        try {
+            boolean isMoveSuccess = filemovetoanotherfolder(from, to);
+
+            if (isMoveSuccess) {
+                return to;
+            }
+            return null;
+        } catch (IOException e) {
+                return null;
+        }
     }
 
     public static Map<String, Object> setLocalExtension(IMMessage item, String key, Object value) {
@@ -1142,17 +1198,18 @@ public class ReactCache {
                             || !videoAttachment.getPath().contains(item.getSessionId()) )
                                 && item.getStatus() == MsgStatusEnum.success) {
                         File newFile = replaceVideoPath(videoAttachment.getPath(), item.getSessionId(), "video", ".mp4");
-                        Log.d("newFilenewFile",newFile.getPath());
-                        videoAttachment.setPath(newFile.getPath());
-                        item.setAttachment(videoAttachment);
-                        getMsgService().updateIMMessageStatus(item);
-                        videoDic.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
-                        videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+                        if (newFile != null) {
+                            videoAttachment.setPath(newFile.getPath());
+                            item.setAttachment(videoAttachment);
+                            getMsgService().updateIMMessageStatus(item);
+                            videoDic.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
+                            videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
 
-                        setLocalExtension(item, "isReplacePathSuccess", true);
-                        videoDic.putBoolean("isReplacePathSuccess", true);
+                            setLocalExtension(item, "isReplacePathSuccess", true);
+                            videoDic.putBoolean("isReplacePathSuccess", true);
 
-                        videoDic.putBoolean("needRefreshMessage", true);
+                            videoDic.putBoolean("needRefreshMessage", true);
+                        }
                     } else {
                         videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getPath());
                         videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
@@ -1224,17 +1281,17 @@ public class ReactCache {
                         && !imageAttachment.getPath().contains(item.getSessionId())
                             && item.getStatus() == MsgStatusEnum.success) {
                     File newFile = replaceVideoPath(imageAttachment.getPath(), item.getSessionId(), "image", "." + imageAttachment.getExtension());
-                    Log.d("newFilenewFile",newFile.getPath());
+                    if (newFile != null) {
+                        imageAttachment.setPath(newFile.getPath());
+                        item.setAttachment(imageAttachment);
+                        getMsgService().updateIMMessageStatus(item);
+                        imageObj.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
+                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
 
-                    imageAttachment.setPath(newFile.getPath());
-                    item.setAttachment(imageAttachment);
-                    getMsgService().updateIMMessageStatus(item);
-                    imageObj.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
-                    imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
-
-                    setLocalExtension(item, "isReplacePathSuccess", true);
-                    imageObj.putBoolean("isReplacePathSuccess", true);
-                    imageObj.putBoolean("needRefreshMessage", true);
+                        setLocalExtension(item, "isReplacePathSuccess", true);
+                        imageObj.putBoolean("isReplacePathSuccess", true);
+                        imageObj.putBoolean("needRefreshMessage", true);
+                    }
                 } else {
                     if (item.getDirect() == MsgDirectionEnum.Out) {
                         imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getPath());
@@ -1280,17 +1337,18 @@ public class ReactCache {
                         && !audioAttachment.getPath().contains(item.getSessionId())
                          && item.getStatus() == MsgStatusEnum.success) {
                     File newFile = replaceVideoPath(audioAttachment.getPath(), item.getSessionId(), "audio","." + audioAttachment.getExtension());
+                    if (newFile != null) {
+                        audioAttachment.setPath(newFile.getPath());
+                        item.setAttachment(audioAttachment);
+                        getMsgService().updateIMMessageStatus(item);
+                        audioObj.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
+                        audioObj.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+                        audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
 
-                    audioAttachment.setPath(newFile.getPath());
-                    item.setAttachment(audioAttachment);
-                    getMsgService().updateIMMessageStatus(item);
-                    audioObj.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
-                    audioObj.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
-                    audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
-
-                    setLocalExtension(item, "isReplacePathSuccess", true);
-                    audioObj.putBoolean("isReplacePathSuccess", true);
-                    audioObj.putBoolean("needRefreshMessage", true);
+                        setLocalExtension(item, "isReplacePathSuccess", true);
+                        audioObj.putBoolean("isReplacePathSuccess", true);
+                        audioObj.putBoolean("needRefreshMessage", true);
+                    }
                 } else {
                     audioObj.putString(MessageConstant.MediaFile.PATH, audioAttachment.getPath());
                     audioObj.putString(MessageConstant.MediaFile.THUMB_PATH, audioAttachment.getThumbPath());

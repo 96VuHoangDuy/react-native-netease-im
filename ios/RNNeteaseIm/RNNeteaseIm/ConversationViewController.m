@@ -440,7 +440,8 @@
 
     if (mediaPath != nil) {
         NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
-        if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath]){
+        NSString *isDownloadSuccess = [message.localExt objectForKey:@"downloadAttStatus"];
+        if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([isDownloadSuccess length] && [isDownloadSuccess isEqual:@"downloadSuccess"])){
             [videoObj setObject:@true forKey:@"isFilePathDeleted"];
         }
         [videoObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
@@ -546,6 +547,7 @@
             NSLog(@"[copyError description]: %@", [copyError description]);
             return nil;
         }
+        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
         
         if ([isThumb isEqual:@1]) {
             if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]){
@@ -556,6 +558,8 @@
             }
         }
     }else if (isThumb == nil) {
+        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloading"];
+
         [[NIMObject initNIMObject] downLoadAttachment:urlDownload filePath:cacheMediaPath Error:^(NSError *error) {
             NSLog(@"downLoadVideo error: %@", [error description]);
             if (!error) {
@@ -572,15 +576,13 @@
 };
 
 - (NSDictionary *) setLocalExtMessage:(NIMMessage *)message key:(NSString *)key value:(NSString *)value {
-    NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] initWithDictionary:@{key: value}];
-
-    if (message.localExt != nil) {
-        [dictionary addEntriesFromDictionary:message.localExt];
-    }
-
-    message.localExt = dictionary;
+    
+    NSDictionary *localExt = message.localExt ? : @{};
+    NSMutableDictionary *dict = [localExt mutableCopy];
+    [dict setObject:value forKey:key];
+    message.localExt = dict;
     [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:message.session completion:nil];
-    return dictionary;
+    return dict;
 }
 
 -(NSMutableArray *)setTimeArr:(NSArray *)messageArr{
@@ -1075,7 +1077,7 @@
 - (void)onRecvMessages:(NSArray *)messages
 {
     NIMMessage *message = messages.firstObject;
-
+    
     if ([message.session.sessionId isEqualToString:_sessionID]) {
         [self refrashMessage:message From:@"receive" ];
         NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:message];
@@ -1170,6 +1172,7 @@
 - (void)fetchMessageAttachment:(NIMMessage *)message didCompleteWithError:(NSError *)error
 {
 //    NIMVideoObject *object = message.messageObject;
+    [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
     [self refrashMessage:message From:@"receive"];
 //    [[NSNotificationCenter defaultCenter]postNotificationName:@"RNNeteaseimDidCompletePic" object:nil];
     //    if ([message.session isEqual:_session]) {

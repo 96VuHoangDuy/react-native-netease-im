@@ -840,7 +840,7 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
     NSArray *documentListFile = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
     if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
         for (NSString *file in documentListFile) {
-            if ([[file lastPathComponent] containsString:@"png"] || [[file lastPathComponent] containsString:@"jpg"]) {
+            if ([[file lastPathComponent] containsString:@"png"] || [[file lastPathComponent] containsString:@"jpg"] || [[file lastPathComponent] containsString:@"acc"]) {
                 NSFileManager *fileMgr = [NSFileManager defaultManager];
                 NSError *err;
                 NSString *filePath = [documentPath stringByAppendingPathComponent:file];
