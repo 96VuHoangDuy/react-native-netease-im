@@ -54,6 +54,7 @@ import com.netease.im.uikit.permission.annotation.OnMPermissionGranted;
 import com.netease.im.uikit.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.im.uikit.session.helper.MessageHelper;
 import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.NIMSDK;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.ResponseCode;
@@ -93,10 +94,13 @@ import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 
 import java.io.File;
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1821,17 +1825,19 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
-                    option.setStartTime(direction == 1 ? message.getTime() : 0);
-                    option.setEndTime(direction == 0 ? message.getTime() : 0);
-                    Log.d("optionoption>>>", option.toString());
-                    if (sessionId != null && sessionType != null) {
-                        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
+                    if (message != null) {
+                        option.setStartTime(direction == 1 ? message.getTime() : 0);
+                        option.setEndTime(direction == 0 ? message.getTime() : 0);
+                        Log.d("optionoption>>>", option.toString());
+                        if (sessionId != null && sessionType != null) {
+                            SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
 
-                        NIMClient.getService(MsgService.class).searchMessage(sessionTypeE, sessionId, option)
-                                .setCallback(callback);
-                    } else {
-                        NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
-                                .setCallback(callback);
+                            NIMClient.getService(MsgService.class).searchMessage(sessionTypeE, sessionId, option)
+                                    .setCallback(callback);
+                        } else {
+                            NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
+                                    .setCallback(callback);
+                        }
                     }
 
                     return code;
@@ -1846,6 +1852,42 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             directionEnum = QueryDirectionEnum.QUERY_OLD;
         }
         return directionEnum;
+    }
+
+    private WritableMap updateLocalExt(IMMessage message, String chatBotType) {
+        String key = "chatBotType";
+        Map<String, Object> map = ReactCache.setLocalExtension(message, key, chatBotType);
+        String valueChatBotType = (String) map.get(key);
+
+        if (valueChatBotType == null) return null;
+
+        WritableMap result = Arguments.createMap();
+        result.putString(key, chatBotType);
+
+        return result;
+    }
+
+    @ReactMethod
+    public void updateMessageOfChatBot(String messageId, String sessionId, String chatBotType, final Promise promise) {
+        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+                Map<String, Object> localExtension = message.getLocalExtension();
+                if (localExtension != null) {
+                    String chatBotTypeByLocalExtension = (String) localExtension.get("chatBotType");
+
+                    if (!chatBotTypeByLocalExtension.equals("")) {
+                        promise.resolve(null);
+                        return 0;
+                    }
+                }
+
+                WritableMap result = updateLocalExt(message, chatBotType);
+
+                promise.resolve(result);
+                return 0;
+            }
+        });
     }
 
     /**
@@ -2298,6 +2340,48 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         promise.resolve(networkString);
     }
 
+    @ReactMethod
+    public void addEmptyRecentSessionBySession(String sessionId) {
+        NIMSDK.getMsgService().createEmptyRecentContact(sessionId, SessionTypeEnum.P2P, 0, System.currentTimeMillis(), true);
+    }
+
+    @ReactMethod
+    public  void updateRecentSessionIsCsrOrChatbot(String sessionId,String type, String name ) {
+        Boolean isUpdated = type.equals("chatbot") || type.equals("csr");
+        if (!isUpdated) return;
+
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
+
+        Map<String, Object> extension = recent.getExtension();
+
+        if (extension == null) {
+            extension = new HashMap<String, Object>();
+        }
+
+        Boolean isCsr = false;
+        Boolean isChatBot = false;
+
+        if (type.equals("chatbot")) {
+            isChatBot = true;
+        }
+
+        if (type.equals("csr")) {
+            isCsr = true;
+        }
+
+        if (!name.equals("")) {
+            extension.put("name", name);
+        }
+
+        extension.put("isCsr", isCsr);
+        extension.put("isChatBot", isChatBot);
+        extension.put("isUpdated", true);
+
+        recent.setExtension(extension);
+
+        NIMSDK.getMsgService().updateRecent(recent);
+    }
+
     @Override
     public void onHostResume() {
 
@@ -2327,5 +2411,16 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @Override
     public void onHostDestroy() {
         LogUtil.w(TAG, "onHostDestroy");
+    }
+}
+
+class LocalExt {
+    public Boolean isUpdated = true;
+    public Boolean isCsr;
+    public  Boolean isChatBot;
+
+    public  LocalExt(Boolean csr, Boolean chatBot) {
+        isCsr = csr;
+        isChatBot = chatBot;
     }
 }
