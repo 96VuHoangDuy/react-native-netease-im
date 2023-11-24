@@ -25,6 +25,11 @@ export enum NIMSessionTypeEnum {
   systemMessage = "system_message",
 }
 
+export enum NIMSessionOnlineServiceType {
+  CHATBOT = 'chatbot',
+  CSR = 'csr'
+}
+
 export enum NIMQueryDirectionEnum {
   QUERY_OLD = "QUERY_OLD",
   QUERY_NEW = "QUERY_NEW",
@@ -41,6 +46,12 @@ export enum NIMCustomAttachmentEnum {
   LinkUrl = "url",
   AccountNotice = "account_notice",
   Card = "card",
+}
+
+export enum NIMMessageChatBotType {
+  OFFLINE = "offline",
+  FIND_CSR = "find_csr",
+  OUT_SESSION = 'out_session'
 }
 
 export enum NIMSendAttachmentEnum {
@@ -81,6 +92,12 @@ export interface NimSessionType {
   imagePath: string;
   name: string;
   extend?: NimSessionTypeExtend;
+  localExt?:{
+    isChatBot:boolean;
+    isCsr: boolean;
+    isUpdated: boolean;
+    name?: string
+  }
 }
 
 export type SessionCache = {

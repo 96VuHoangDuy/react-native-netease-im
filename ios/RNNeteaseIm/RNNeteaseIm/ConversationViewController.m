@@ -585,12 +585,48 @@
     return dict;
 }
 
+-(NSDictionary *) updateMessageOfChatBot:(NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(NSString *)chatBotType {
+    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+    NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *message = messages.firstObject;
+    NSString *chatBotTypeOfLocalExt = [message.localExt objectForKey:@"chatBotType"];
+    
+    if (message.localExt != nil && chatBotType != nil) {
+        return nil;
+    }
+    
+    NSDictionary *dict = [self setLocalExtMessage:message key:@"chatBotType" value:chatBotType];
+    return dict;
+}
+
 -(NSMutableArray *)setTimeArr:(NSArray *)messageArr{
     NSMutableArray *sourcesArr = [NSMutableArray array];
     for (NIMMessage *message in messageArr) {
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         NSMutableDictionary *fromUser = [NSMutableDictionary dictionary];
         NIMUser   *messageUser = [[NIMSDK sharedSDK].userManager userInfo:message.from];
+        NIMSession *session = [NIMSession session:messageUser.userId type:NIMSessionTypeP2P];
+        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+            
+        NSNumber *isCsrNumber = [recent.localExt objectForKey:@"isCsr"];
+        NSNumber *isChatBotNumber = [recent.localExt objectForKey:@"isChatBot"];
+        BOOL isCsr = [isCsrNumber boolValue];
+        BOOL isChatBot = [isChatBotNumber boolValue];
+        
+        NSDictionary *localExt = message.localExt;
+        
+        NSLog(@"localExt =>>> %@", localExt);
+        
+        if (localExt != nil) {
+            [dic setObject:localExt forKey:@"localExt"];
+        }
+        
+        if (recent.localExt != nil) {
+            [fromUser setObject:[NSString stringWithFormat:@"%@", @(isChatBot)] forKey:@"isChatBot"];
+            
+            [fromUser setObject:[NSString stringWithFormat:@"%@", @(isCsr)] forKey:@"isCsr"];
+        }
+    
         [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userInfo.avatarUrl] forKey:@"avatar"];
         NSString *strAlias = messageUser.alias;
         if (strAlias.length) {
@@ -598,7 +634,17 @@
         }else if(messageUser.userInfo.nickName.length){
              [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userInfo.nickName] forKey:@"name"];
         }else{
-            [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userId] forKey:@"name"];
+            if (recent.localExt != nil && isCsr) {
+                NSString *nickname = [recent.localExt objectForKey:@"name"];
+                
+                if ([nickname length]) {
+                    [fromUser setObject:[NSString stringWithFormat:@"%@", nickname] forKey:@"name"];
+                } else {
+                    [fromUser setObject:[NSString stringWithFormat:@"%@", @"CSR"] forKey:@"name"];
+                }
+            } else {
+                [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userId] forKey:@"name"];
+            }
         }
         [fromUser setObject:[NSString stringWithFormat:@"%@", message.from] forKey:@"_id"];
         NSArray *key = [fromUser allKeys];
@@ -764,6 +810,10 @@
             [dic setObject:@"unknown" forKey:@"msgType"];
             NSMutableDictionary *unknowObj = [NSMutableDictionary dictionary];
             [dic setObject:unknowObj  forKey:@"extend"];
+        }
+        
+        if (isChatBot) {
+            [dic setObject:@"unknown" forKey:@"msgType"];
         }
         [dic setObject:fromUser forKey:@"fromUser"];
         [sourcesArr addObject:dic];
@@ -1100,7 +1150,6 @@
 - (void)onRecvMessageReceipts:(NSArray<NIMMessageReceipt *> *)receipts
 {
     NSMutableArray *messageIds = [NSMutableArray array];
-    NSLog(@"onRecv MessageReceipts receipt %@", receipts);
 
     for (NIMMessageReceipt *receipt in receipts) {
         
@@ -1356,6 +1405,18 @@
     NSMutableDictionary *dic2 = [NSMutableDictionary dictionary];
     NIMUser   *user = [[NIMSDK sharedSDK].userManager userInfo:message.from];
     NSMutableDictionary *fromUser = [NSMutableDictionary dictionary];
+    NIMSession *session = [NIMSession session:user.userId type:NIMSessionTypeP2P];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    NSNumber *isChatBotNumber = [recent.localExt objectForKey:@"isChatBot"];
+    NSNumber *isCsrNumber = [recent.localExt objectForKey:@"isCsr"];
+    BOOL isChatBot = [isChatBotNumber boolValue];
+    BOOL isCsr = [isCsrNumber boolValue];
+    
+    if (recent.localExt != nil) {
+        [fromUser setObject:[NSString stringWithFormat:@"%@", isChatBot ? @"true" : @"false"] forKey:@"isChatBot"];
+        [fromUser setObject:[NSString stringWithFormat:@"%@", isCsr ? @"true" : @"false"] forKey:@"isCsr"];
+    }
+    
     [fromUser setObject:[NSString stringWithFormat:@"%@",user.userInfo.avatarUrl] forKey:@"avatar"];
     NSString *strAlias = user.alias;
     if (strAlias.length) {
@@ -1583,6 +1644,38 @@
 - (NSString *)stringFromKey:(NSString *)strKey andDict:(NSDictionary *)dict{
     NSString *text = [dict objectForKey:strKey];
     return text?text:@" ";
+}
+
+-(void)updateRecentSessionIsCsrOrChatbot:(NSString *)sessionId type:(NSString *)type name:(NSString *)name {
+    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent) {
+        BOOL isChatBot = NO;
+        BOOL isCsr = NO;
+        
+        if ([type  isEqual: @"chatbot"]) {
+            isChatBot = YES;
+        } else if ([type isEqual:@"csr"]) {
+            isCsr = YES;
+        }
+        
+        NSDictionary *localExt = recent.localExt?:@{};
+        NSMutableDictionary *dict = [localExt mutableCopy];
+        [dict setObject:@(isCsr) forKey:@"isCsr"];
+        [dict setObject:@(isChatBot) forKey:@"isChatBot"];
+        [dict setObject:@(YES) forKey:@"isUpdated"];
+        
+        if (name) {
+            [dict setObject:[NSString stringWithFormat:@"%@", name] forKey:@"name"];
+        }
+        
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
+    }
+}
+
+-(void)addEmptyRecentSessionBySession:(NSString *)sessionId {
+    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+    [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
 }
 
 //转发消息

@@ -424,6 +424,19 @@ RCT_EXPORT_METHOD(forwardMultipleTextMessage: (nonnull  NSDictionary *)attachmen
     [[ConversationViewController initWithConversationViewController] forwardMultipleTextMessage:attachment sessionId:sessionId sessionType:sessionType content:content];
 }
 
+RCT_EXPORT_METHOD(updateRecentSessionIsCsrOrChatbot:(nonnull NSString *)sessionId type:(nonnull NSString *)type name:(NSString *)name) {
+    [[ConversationViewController initWithConversationViewController]updateRecentSessionIsCsrOrChatbot:sessionId type:type name:name];
+}
+
+RCT_EXPORT_METHOD(addEmptyRecentSessionBySession:(nonnull NSString *)sessionId) {
+    [[ConversationViewController initWithConversationViewController]addEmptyRecentSessionBySession:sessionId];
+    }
+
+RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(nonnull NSString *)chatBotType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    NSDictionary *dict =  [[ConversationViewController initWithConversationViewController]updateMessageOfChatBot:messageId sessionId:sessionId chatBotType:chatBotType];
+    resolve(dict);
+}
+
 //发送视频消息
 RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
     [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService];
