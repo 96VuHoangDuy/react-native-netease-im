@@ -154,6 +154,24 @@ public class ReactCache {
                 String name = "";
                 SessionTypeEnum sessionType = contact.getSessionType();
                 String imagePath = "";
+                Map<String, Object> extension = contact.getExtension();
+                if (extension != null) {
+                    WritableMap localExt = Arguments.createMap();
+                    Boolean isCsr = (Boolean) extension.get("isCsr");
+                    Boolean isChatBot = (Boolean) extension.get("isChatBot");
+                    Boolean isUpdated  = (Boolean) extension.get("isUpdated");
+                    String nameCsr = (String) extension.get("name");
+
+                    localExt.putBoolean("isCsr", isCsr);
+                    localExt.putBoolean("isChatBot", isChatBot);
+                    localExt.putBoolean("isUpdated", isUpdated);
+
+                    if (nameCsr != null) {
+                        localExt.putString("name", nameCsr);
+                    }
+
+                    map.putMap("localExt", localExt);
+                 }
                 Team team = null;
                 if (sessionType == SessionTypeEnum.P2P) {
                     map.putString("teamType", "-1");
@@ -1385,6 +1403,40 @@ public class ReactCache {
     public static WritableMap createMessage(IMMessage item) {
         WritableMap itemMap = Arguments.createMap();
         itemMap.putString(MessageConstant.Message.MSG_ID, item.getUuid());
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(item.getSessionId(), item.getSessionType());
+        Map<String, Object> extension = recent.getExtension();
+        Map<String, Object> messageLocalExt = item.getLocalExtension();
+
+        Boolean isCsr = false;
+        Boolean isChatBot = false;
+
+        if (messageLocalExt != null) {
+            String chatBotType = (String)  messageLocalExt.get("chatBotType");
+
+            if (chatBotType != null) {
+                WritableMap localExt = Arguments.createMap();
+
+                localExt.putString("chatBotType", chatBotType);
+
+                itemMap.putMap("localExt", localExt);
+            }
+        }
+
+        if (extension != null) {
+            Boolean extensionIsCsr = (Boolean) extension.get("isCsr");
+            Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
+            String chatBotType = (String) extension.get("chatBotType");
+
+            isCsr = extensionIsCsr;
+            isChatBot = extensionIsChatBot;
+
+            if (chatBotType != null) {
+                WritableMap localExt = Arguments.createMap();
+                localExt.putString("chatBotType", chatBotType);
+
+                itemMap.putMap("localExt", localExt);
+            }
+        }
 
         if (item.getMsgType() == MsgTypeEnum.custom) {
             itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(),(CustomAttachment) item.getAttachment()));
@@ -1446,18 +1498,27 @@ public class ReactCache {
             e.printStackTrace();
         }
         if (!TextUtils.isEmpty(fromAccount)) {
-
-
             if (item.getSessionType() == SessionTypeEnum.Team && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
                 displayName = getTeamUserDisplayName(item.getSessionId(), fromAccount);
             } else {
-                displayName = !TextUtils.isEmpty(fromNick) ? fromNick : NimUserInfoCache.getInstance().getUserDisplayName(fromAccount);
+                if (isCsr) {
+                    String csrName = (String) extension.get("name");
+
+                    displayName = csrName != null ? csrName : "CSR";
+                } else {
+                    displayName = !TextUtils.isEmpty(fromNick) ? fromNick : NimUserInfoCache.getInstance().getUserDisplayName(fromAccount);
+                }
             }
             avatar = NimUserInfoCache.getInstance().getAvatar(fromAccount);
         }
         user.putString(MessageConstant.User.DISPLAY_NAME, displayName);
         user.putString(MessageConstant.User.USER_ID, fromAccount);
         user.putString(MessageConstant.User.AVATAR_PATH, avatar);
+        user.putBoolean("isChatBot", isChatBot);
+        if (isCsr) {
+            user.putBoolean("isCsr", true);
+        }
+
         itemMap.putMap(MessageConstant.Message.FROM_USER, user);
 
         MsgAttachment attachment = item.getAttachment();

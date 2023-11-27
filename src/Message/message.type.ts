@@ -1,4 +1,5 @@
 import {
+  NIMMessageChatBotType,
   NIMSessionTypeEnum,
   NimSessionTypeExtend,
 } from '../Session/session.type';
@@ -84,6 +85,8 @@ export interface NIMMessage {
     _id: string;
     avatar: string;
     name: string;
+    isCsr?: string;
+    isChatBot?: string;
   };
   isOutgoing: boolean;
   isShowTime: boolean;
@@ -97,4 +100,7 @@ export interface NIMMessage {
   // audio message
   mediaPath: string;
   duration: number;
+  localExt?: {
+    chatBotType?: NIMMessageChatBotType
+  }
 }

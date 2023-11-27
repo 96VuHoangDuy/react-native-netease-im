@@ -5,6 +5,7 @@ import {
   NIMQueryDirectionEnum,
   NIMSendAttachmentEnum,
   QueryDirectionType,
+  NIMSessionOnlineServiceType,
 } from './session.type';
 import { NIMMessage, NIMMessageTypeEnum } from '../Message/message.type';
 const { RNNeteaseIm } = NativeModules;
@@ -463,6 +464,34 @@ class NimSession {
     if (Platform.OS === 'android') {
       return RNNeteaseIm.getLaunch();
     }
+  }
+
+  addEmptyRecentSessionBySession(sessionId: string) {
+    return RNNeteaseIm.addEmptyRecentSessionBySession(sessionId);
+  }
+
+  updateRecentSessionIsCsrOrChatbot(
+    sessionId: string,
+    type: `${NIMSessionOnlineServiceType}`,
+    nickname?: string
+  ) {
+    return RNNeteaseIm.updateRecentSessionIsCsrOrChatbot(
+      sessionId,
+      type,
+      nickname
+    );
+  }
+
+  updateMessageOfChatBot(
+    messageId: string,
+    sessionId: string,
+    chatBotType: string
+  ) {
+    return RNNeteaseIm.updateMessageOfChatBot(
+      messageId,
+      sessionId,
+      chatBotType
+    );
   }
 }
 

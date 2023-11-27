@@ -214,6 +214,9 @@
     NSMutableArray *sessionList = [NSMutableArray array];
     for (NIMRecentSession *recent in NIMlistArr) {
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        if (recent.localExt) {
+            [dic setObject:recent.localExt forKey:@"localExt"];
+        }
         [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
         [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
         //未读
@@ -362,6 +365,10 @@
             [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
             //账号
             [dic setObject:[NSString stringWithFormat:@"%@",recent.lastMessage.session.sessionId] forKey:@"account"];
+            
+            if (recent.localExt) {
+                [dic setObject:recent.localExt forKey:@"localExt"];
+            }
             
             if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                 NIMCustomObject *customObject = recent.lastMessage.messageObject;
