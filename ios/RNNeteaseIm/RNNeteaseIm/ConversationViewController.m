@@ -477,7 +477,7 @@
         if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath]){
             [voiceObj setObject:@true forKey:@"isFilePathDeleted"];
         }
-        [voiceObj setObject:[NSString stringWithFormat:@"%@",object.path] forKey:@"path"];
+        [voiceObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
     }
     
     if (message.deliveryState == NIMMessageDeliveryStateDeliveried) {
