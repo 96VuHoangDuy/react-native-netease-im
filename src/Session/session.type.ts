@@ -98,6 +98,7 @@ export interface NimSessionType {
     isUpdated: boolean;
     name?: string
   }
+  isOutgoing: boolean
 }
 
 export type SessionCache = {
