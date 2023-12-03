@@ -1163,8 +1163,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    file, // 图片文件对象
 //    displayName // 文件显示名字，如果第三方 APP 不关注，可以为 null
     @ReactMethod
-    public void sendImageMessage(String file, String displayName, boolean isCustomerService,final Promise promise) {
-        sessionService.sendImageMessage(file, displayName, isCustomerService,new SessionService.OnSendMessageListener() {
+    public void sendImageMessage(String file, String displayName, boolean isCustomerService, boolean isHighQuality, final Promise promise) {
+        sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
                 return 0;

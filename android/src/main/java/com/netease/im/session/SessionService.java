@@ -693,11 +693,11 @@ public class SessionService {
         }
     }
 
-    public void sendImageMessage(String file, String displayName, boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessage(String file, String displayName, boolean isCustomerService,boolean isHighQuality, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
-        File temp = ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()));
+        File temp = ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()), isHighQuality);
         if (temp != null) {
             f = temp;
         }

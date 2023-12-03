@@ -889,9 +889,9 @@
     }
 }
 //发送图片
--(void)sendImageMessages:(  NSString *)path  displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService{
+-(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality {
     UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
-    NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session];
+    NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session isHighQuality:isHighQuality];
 //    NIMMessage *message = [NIMMessageMaker msgWithImagePath:path];
     if (isCustomerService || [self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];

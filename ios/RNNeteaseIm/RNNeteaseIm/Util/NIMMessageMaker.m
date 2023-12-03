@@ -112,11 +112,18 @@
     [NIMMessageMaker setupMessagePushBody:message andSession:session];
     return message;
 }
-+ (NIMMessage*)msgWithImage:(UIImage*)image andeSession:(NIMSession *)session
++ (NIMMessage*)msgWithImage:(UIImage*)image andeSession:(NIMSession *)session isHighQuality:(BOOL *)isHighQuality
 {
-    NIMImageObject *imageObject = [[NIMImageObject alloc] initWithImage:image];
+    // to keep image not rotating
+    UIGraphicsBeginImageContext(image.size);
+    [image drawAtPoint:CGPointZero];
+    UIImage *formattedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    NIMImageObject *imageObject = [[NIMImageObject alloc] initWithImage:formattedImage];
     NIMImageOption *option  = [[NIMImageOption alloc] init];
-    option.compressQuality  = 0.7;
+    option.compressQuality  = isHighQuality ? 1: 0.7;
+    option.format           = isHighQuality ? NIMImageFormatPNG : NIMImageFormatJPEG;
     imageObject.option      = option;
     return [NIMMessageMaker generateImageMessage:imageObject andeSession:session];
 }

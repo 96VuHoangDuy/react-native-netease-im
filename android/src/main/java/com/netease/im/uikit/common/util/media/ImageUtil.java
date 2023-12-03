@@ -112,6 +112,7 @@ public class ImageUtil {
 
         return f;
     }
+
     public static int getImageMaxEdge() {
         return (int) (165.0 / 320.0 * ScreenUtil.screenWidth);
     }
@@ -119,6 +120,7 @@ public class ImageUtil {
     public static int getImageMinEdge() {
         return (int) (76.0 / 320.0 * ScreenUtil.screenWidth);
     }
+
     public static String makeThumbnail(Context context, File imageFile) {
         String thumbFilePath = StorageUtil.getWritePath(imageFile.getName(),
                 StorageType.TYPE_THUMB_IMAGE);
@@ -273,7 +275,7 @@ public class ImageUtil {
         return new ImageSize((int) srcWidth, (int) srcHeight);
     }
 
-    public static File getScaledImageFileWithMD5(File imageFile, String mimeType) {
+    public static File getScaledImageFileWithMD5(File imageFile, String mimeType, boolean isHighQuality) {
         String filePath = imageFile.getPath();
 
         if (!isInvalidPictureFile(mimeType)) {
@@ -287,10 +289,10 @@ public class ImageUtil {
             return null;
         }
 
-        CompressFormat compressFormat = CompressFormat.JPEG;
+        CompressFormat compressFormat = isHighQuality ? CompressFormat.PNG : CompressFormat.JPEG;
         // 压缩数值由第三方开发者自行决定
-        int maxWidth = 720;
-        int quality = 60;
+        int maxWidth = isHighQuality ? 1000 : 720;
+        int quality = isHighQuality ? 100 : 60;
 
         if (ImageUtil.scaleImage(imageFile, tempImageFile, maxWidth, compressFormat, quality)) {
             return tempImageFile;

@@ -406,8 +406,8 @@ RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArra
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", content);
 }
 //发送图片消息
-RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
-    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService];
+RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality) {
+    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality];
 }
 //发送音频消息
 RCT_EXPORT_METHOD(sendAudioMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration isCustomerService:(BOOL *)isCustomerService){

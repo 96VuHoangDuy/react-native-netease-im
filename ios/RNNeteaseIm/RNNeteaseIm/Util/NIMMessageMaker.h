@@ -17,7 +17,7 @@
 
 + (NIMMessage *)msgWithAudio:(NSString *)filePath andeSession:(NIMSession *)session;
 
-+ (NIMMessage *)msgWithImage:(UIImage *)image andeSession:(NIMSession *)session;
++ (NIMMessage *)msgWithImage:(UIImage *)image andeSession:(NIMSession *)session isHighQuality:(BOOL *)isHighQuality;
 
 + (NIMMessage *)msgWithImagePath:(NSString *)path andeSession:(NIMSession *)session;
 
