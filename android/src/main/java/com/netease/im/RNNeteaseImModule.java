@@ -1727,18 +1727,19 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             option.setStartTime(direction == 1 ? anchor.getTime() : 0);
             option.setEndTime(direction == 0 ? anchor.getTime() : 0);
 
-            NIMClient.getService(MsgService.class).searchAllMessage(option)
+            NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId() ,option)
                     .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
                         @Override
                         public void onResult(int code, List<IMMessage> result, Throwable exception) {
                             if (code == ResponseCode.RES_SUCCESS) {
                                 if (result != null && result.size() > 0) {
-                                    List<IMMessage>  messages = result;
+                                    List<IMMessage> messages = result;
                                     if (direction == 0) {
                                         Collections.reverse(messages);
                                     }
-                                    Object a = ReactCache.createMessageList(messages);
-                                    promise.resolve(a);
+
+                                    WritableMap messageObjectList = ReactCache.createMessageObjectList(result);
+                                    promise.resolve(messageObjectList);
                                     return;
                                 }
                             }
@@ -1752,7 +1753,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                     option.setStartTime(direction == 1 ? message.getTime() : 0);
                     option.setEndTime(direction == 0 ? message.getTime() : 0);
 
-                    NIMClient.getService(MsgService.class).searchAllMessage(option)
+                    NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId() ,option)
                             .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
                                 @Override
                                 public void onResult(int code, List<IMMessage> result, Throwable exception) {
@@ -1762,8 +1763,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                             if (direction == 0) {
                                                 Collections.reverse(messages);
                                             }
-                                            Object a = ReactCache.createMessageList(messages);
-                                            promise.resolve(a);
+                                            
+                                            WritableMap messageObjectList = ReactCache.createMessageObjectList(result);
+                                            promise.resolve(messageObjectList);
                                             return;
                                         }
                                     }

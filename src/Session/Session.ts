@@ -107,7 +107,7 @@ class NimSession {
     limit: number;
     messageType: Array<NIMMessageTypeEnum>;
     direction: QueryDirectionType;
-  }): Promise<NIMMessage[]> {
+  }): Promise<Record<string, NIMMessage[]>> {
     return RNNeteaseIm.searchMessagesinCurrentSession(
       keyWords,
       anchorId,
