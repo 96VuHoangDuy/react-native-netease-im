@@ -224,8 +224,11 @@
     [[NIMSDK sharedSDK].conversationManager searchMessages:self._session option:option result:^(NSError * _Nullable error, NSArray<NIMMessage *> * __nullable messages) {
         NSLog(@"searchAllMessages messages: %@]", messages);
 
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        [dict setValue:[self setTimeArr:messages] forKey:self._session.sessionId];
+
         if (!error) {
-            succe([self setTimeArr:messages]);
+            succe(dict);
         } else {
             err(error);
         }
