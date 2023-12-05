@@ -140,7 +140,7 @@ public class SysMessageObserver {
                 if (hasRegister) {
                     return;
                 }
-                onIncomingMessage(systemMessage, false);
+                onIncomingMessage(systemMessage, true);
             }
         }, register);
     }
