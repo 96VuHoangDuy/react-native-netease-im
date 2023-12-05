@@ -1159,6 +1159,17 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
+    public void sendGifMessage(String url,String aspectRatio, boolean isCustomerService,final Promise promise) {
+        LogUtil.w(TAG, "sendTextMessage" + url);
+        sessionService.sendGifMessage(url, aspectRatio, null, isCustomerService,new SessionService.OnSendMessageListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+//                promise.resolve(ReactCache.createMessage(message,null));
+                return 0;
+            }
+        });
+    }
+
     //2.发送图片消息
 //    file, // 图片文件对象
 //    displayName // 文件显示名字，如果第三方 APP 不关注，可以为 null
@@ -1763,7 +1774,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                             if (direction == 0) {
                                                 Collections.reverse(messages);
                                             }
-                                            
+
                                             WritableMap messageObjectList = ReactCache.createMessageObjectList(result);
                                             promise.resolve(messageObjectList);
                                             return;

@@ -710,6 +710,11 @@
                 [dic setObject:message.remoteExt forKey:@"extend"];
                 [dic setObject:@"card" forKey:@"msgType"];
             }
+            
+            if ([[message.remoteExt objectForKey:@"extendType"]  isEqual: @"gif"]) {
+                [dic setObject:message.remoteExt forKey:@"extend"];
+                [dic setObject:@"image" forKey:@"msgType"];
+            }
         }else if (message.messageType  == NIMMessageTypeImage) {
             // image coming is not have object.path, just have thumb_path.
             [dic setObject:@"image" forKey:@"msgType"];
@@ -891,6 +896,19 @@
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
+
+//发送文字消息
+-(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
+    NIMMessage *message = [NIMMessageMaker msgWithText:@"gif" andApnsMembers:members andeSession:self._session];
+    NSDictionary  *remoteExt = @{@"extendType": @"gif", @"path": url, @"aspectRatio": aspectRatio};
+    message.remoteExt = remoteExt;
+    NSLog(@"message.remoteExt: %@", message.remoteExt);
+    //发送消息
+    if (isCustomerService || [self isFriendToSendMessage:message]) {
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+    }
+}
+
 //发送图片
 -(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality {
     UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
@@ -1498,6 +1516,11 @@
         if ([[message.remoteExt objectForKey:@"extendType"]  isEqual: @"card"]) {
             [dic2 setObject:message.remoteExt forKey:@"extend"];
             [dic2 setObject:@"card" forKey:@"msgType"];
+        }
+        
+        if ([[message.remoteExt objectForKey:@"extendType"]  isEqual: @"gif"]) {
+            [dic2 setObject:message.remoteExt forKey:@"extend"];
+            [dic2 setObject:@"image" forKey:@"msgType"];
         }
     }else if (message.messageType  == NIMMessageTypeImage) {
         [dic2 setObject:@"image" forKey:@"msgType"];

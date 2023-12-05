@@ -162,6 +162,20 @@ class NimSession {
     );
   }
 
+  sendGifMessage(
+    url: string,
+    aspectRatio: string,
+    atUserIds?: string[],
+    isCustomerService?: boolean
+  ) {
+    return RNNeteaseIm.sendGifMessage(
+      url,
+      aspectRatio,
+      atUserIds,
+      isCustomerService ?? false
+    );
+  }
+
   /**
    * 发送图片消息
    * @param file 图片文件对象

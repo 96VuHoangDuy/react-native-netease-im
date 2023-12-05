@@ -661,6 +661,25 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
     }
 
+    public void sendGifMessage(String url,String aspectRatio, List<String> selectedMembers, Boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
+
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "gif");
+
+        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+        remoteExt.put("extendType", "gif");
+        remoteExt.put("path", url);
+        remoteExt.put("aspectRatio", aspectRatio);
+
+        message.setRemoteExtension(remoteExt);
+
+        if (selectedMembers != null && !selectedMembers.isEmpty()) {
+            MemberPushOption option = createMemPushOption(selectedMembers, message);
+//            message.setPushContent("有人@了你");
+            message.setMemberPushOption(option);
+        }
+        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+    }
+
     /**
      * @param content
      */

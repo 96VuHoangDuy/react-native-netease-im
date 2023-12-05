@@ -29,6 +29,7 @@ typedef void(^Errors)(id erro);
 - (void)onStartRecording;
 //发送文本，并指定@用户（@仅适用于群组）
 -(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService;
+-(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService;
 //发送图片
 -(void)sendImageMessages:(  NSString *)path displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality;
 //发送音频
