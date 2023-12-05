@@ -203,7 +203,7 @@ RCT_EXPORT_METHOD(fetchUserInfo:(nonnull NSString * )contactId   resolve:(RCTPro
 }
 
 // //????????
-// RCT_EXPORT_METHOD(sendNotiMessage:(nonnull NSString * )sessionId sessionType:(NSString *)sessionType  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+// RCT_EXPORT_METHOD(sendCustomNoti:(nonnull NSString * )sessionId sessionType:(NSString *)sessionType  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
 //     NSDictionary *dict = @{
 //                             NTESNotifyID : @(NTESCustom),
 //                             NTESCustomContent : @"dict test",
