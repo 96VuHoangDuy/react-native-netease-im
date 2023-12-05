@@ -271,6 +271,10 @@ class NimSession {
     return RNNeteaseIm.sendRedPacketMessage(type, comments, serialNo);
   }
 
+  setMessageNotify(contactId: string, needNotify: "0" | "1") {
+    return RNNeteaseIm.setMessageNotify(contactId, needNotify);
+  }
+
   /**
    * 名片
    * @param type 个人名片 群名片 公众号名片
