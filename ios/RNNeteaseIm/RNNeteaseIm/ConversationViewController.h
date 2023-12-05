@@ -99,5 +99,7 @@ typedef void(^Errors)(id erro);
 
 - (NSMutableDictionary *)setNotiTeamObj:(NIMMessage *)message;
 
+- (NSDictionary *)addReaction:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType userId:(NSString *)userId reactionName:(NSString *)reactionName isSendNotification:(BOOL *)isSendNotification;
+
 - (BOOL) isPlayingRecord;
 @end

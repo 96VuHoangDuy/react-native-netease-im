@@ -201,54 +201,6 @@ RCT_EXPORT_METHOD(fetchUserInfo:(nonnull NSString * )contactId   resolve:(RCTPro
         reject(@"-1",error, nil);
     }];
 }
-
-// //????????
-// RCT_EXPORT_METHOD(sendCustomNoti:(nonnull NSString * )sessionId sessionType:(NSString *)sessionType  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-//     NSDictionary *dict = @{
-//                             NTESNotifyID : @(NTESCustom),
-//                             NTESCustomContent : @"dict test",
-//                             @"testData": @"123",
-//                           };
-//     NSData *data = [NSJSONSerialization dataWithJSONObject:dict
-//                                                    options:0
-//                                                      error:nil];
-//     NSString *json = [[NSString alloc] initWithData:data
-//                                            encoding:NSUTF8StringEncoding];
-//     // 初始化自定义系统通知内容，并返回实例
-//     NIMCustomSystemNotification *notification = [[NIMCustomSystemNotification alloc] initWithContent:json];
-//     // 设置推送文案
-//     notification.apnsContent = @"apnsContent test";
-//     // 设置只发给在线用户，若接收者不在线，则收不到。
-//     notification.sendToOnlineUsersOnly = NO;
-
-//     NIMCustomSystemNotificationSetting *setting = [[NIMCustomSystemNotificationSetting alloc] init];
-//     // The default is YES. By default, custom system notifications received by the user will have an unread count on the app icon.
-//     setting.shouldBeCounted = NO;
-//     // Is need apple push
-//     setting.apnsEnabled = NO;
-//     //
-//     setting.apnsWithPrefix = NO;
-    
-//     notification.setting = setting;
-    
-//     NIMSystemNotificationHandler completion = ^(NSError * __nullable error)
-//         {
-//             if (error == nil) {
-//                 NSLog(@"[sendNotiMessage team %@ succeed.]", sessionId);
-//                 resolve(sessionId);
-//                 /// your code ...
-//             } else {
-//                 NSLog(@"[NSError message: %@]", error);
-//                 reject(@"-1",error,nil);
-//             }
-//         };
-    
-//     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
-//     [[[NIMSDK sharedSDK] systemNotificationManager] sendCustomNotification:notification
-//                                                                  toSession:session
-//                                                                 completion:completion];
-// }
-
 //保存好友备注
 RCT_EXPORT_METHOD(updateUserInfo:(nonnull NSString * )contactId  alias:(nonnull NSString *)alias resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     
@@ -348,6 +300,15 @@ RCT_EXPORT_METHOD(searchMessages:(nonnull NSString *)keyWords resolve:(RCTPromis
     } err:^(id erro) {
         reject(@"-1",erro,nil);
     }];
+}
+
+RCT_EXPORT_METHOD(addReaction:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType userId:(nonnull NSString *)userId reactionName:(nonnull NSString *)reactionName isSendNotification:(BOOL *)isSendNotification resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+     NSDictionary *result = [[ConversationViewController initWithConversationViewController] addReaction:messageId sessionId:sessionId sessionType:sessionType userId:userId reactionName:reactionName isSendNotification:isSendNotification];
+    if (result != nil) {
+        resolve(result);
+    } else {
+        reject(@"-1",@"Add reaction failed",nil);
+    }
 }
 
 //search local Messages in session

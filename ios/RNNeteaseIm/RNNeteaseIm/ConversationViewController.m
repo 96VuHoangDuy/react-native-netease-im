@@ -602,7 +602,6 @@
     NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
     NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
     NIMMessage *message = messages.firstObject;
-    NSString *chatBotTypeOfLocalExt = [message.localExt objectForKey:@"chatBotType"];
     
     if (message.localExt != nil && chatBotType != nil) {
         return nil;
@@ -610,6 +609,134 @@
     
     NSDictionary *dict = [self setLocalExtMessage:message key:@"chatBotType" value:chatBotType];
     return dict;
+}
+
+-(NSDictionary *) getLocalReactionByMessage:(NIMMessage *)message {
+    NSDictionary *localExt = message.localExt;
+    if (localExt != nil) {
+        NSString *json = [localExt objectForKey:@"reaction"];
+        NSDictionary *localReaction = [self dictionaryWithJsonString:json];
+        if (localReaction != nil) {
+            return localReaction;
+        }
+    }
+    
+    NSDictionary *reaction = [NSMutableDictionary dictionary];
+    NSDictionary *data = [NSMutableDictionary dictionary];
+    NSNumber *total = @(0);
+    [reaction setValue:data forKey:@"data"];
+    [reaction setValue:total forKey:@"total"];
+    
+    return reaction;
+}
+
+-(NSArray *) updateDataReactionByName:(NSArray *)listReactionByName userId:(NSString *)userId {
+    __block NSDictionary *data;
+    __block NSUInteger index = NSNotFound;
+    if (listReactionByName != nil) {
+        [listReactionByName enumerateObjectsUsingBlock:^(NSDictionary *dic, NSUInteger i, BOOL *stop) {
+            NSString *dicId = [dic objectForKey:@"id"];
+            if ([dicId isEqualToString:userId]) {
+                data = dic;
+                index = i;
+                *stop = YES;
+            }
+        }];
+    }
+    
+    NSMutableArray *updateListReactionByName;
+    if (listReactionByName != nil) {
+        updateListReactionByName = [listReactionByName mutableCopy];
+    } else {
+        updateListReactionByName = [[NSMutableArray alloc] init];
+    }
+    
+    if (data != nil && index != NSNotFound) {
+        NSDictionary *updateData = [data mutableCopy];
+        NSNumber *totalReactionByData = [data objectForKey:@"total"];
+        NSNumber *updateTotalReactionByData;
+        if (totalReactionByData != nil) {
+            updateTotalReactionByData = @([totalReactionByData intValue] + 1);
+        } else {
+            updateTotalReactionByData = @(1);
+        }
+        [updateData setValue:updateTotalReactionByData forKey:@"total"];
+        [updateListReactionByName removeObjectAtIndex:index];
+        [updateListReactionByName insertObject:updateData atIndex:index];
+    } else {
+        NSDictionary *dataReaction = [NSMutableDictionary dictionary];
+        NIMUser   *user = [[NIMSDK sharedSDK].userManager userInfo:userId];
+        [dataReaction setValue:userId forKey:@"id"];
+        [dataReaction setValue:[NSString stringWithFormat:@"%@", user.userInfo.nickName] forKey:@"name"];
+        [dataReaction setValue:[NSString stringWithFormat:@"%@", user.userInfo.avatarUrl] forKey:@"avatar"];
+        [dataReaction setValue:@(1) forKey:@"total"];
+        [updateListReactionByName addObject:dataReaction];
+    }
+    
+    return updateListReactionByName;
+}
+
+-(NSDictionary *) dictionaryWithJsonString:(NSString *)json {
+    NSData *data = [json dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *result = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+    
+    return result;
+}
+
+-(NSDictionary *) addReaction:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType userId:(NSString *)userId reactionName:(NSString *)reactionName isSendNotification:(BOOL *)isSendNotification{
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *message = messages.firstObject;
+    NSDictionary *reaction = [self getLocalReactionByMessage:message];
+    NSMutableDictionary *updateReaction = [reaction mutableCopy];
+    NSNumber *totalReaction = [reaction objectForKey:@"total"];
+    NSDictionary *dataReaction = [reaction objectForKey:@"data"];
+    NSMutableDictionary *updateDataReaction = [dataReaction mutableCopy];
+    NSNumber *updateTotalReaction = @([totalReaction intValue] + 1);
+    NSArray *dataReactionByName = [dataReaction objectForKey:reactionName];
+    NSArray *updateDataReactionByName = [self updateDataReactionByName:dataReactionByName userId:userId];
+    
+    [updateDataReaction setValue:updateDataReactionByName forKey:reactionName];
+    [updateReaction setValue:updateDataReaction forKey:@"data"];
+    [updateReaction setValue:updateTotalReaction forKey:@"total"];
+    
+    NSString *jsonString = [self jsonStringWithDictionary:updateReaction];
+    [self setLocalExtMessage:message key:@"reaction" value:jsonString];
+    
+    if (isSendNotification) {
+        NSMutableDictionary *dataNotification = [NSMutableDictionary dictionary];
+        [dataNotification setValue:messageId forKey:@"messageId"];
+        [dataNotification setValue:sessionId forKey:@"sessionId"];
+        [dataNotification setValue:sessionType forKey:@"sessionType"];
+        [dataNotification setValue:userId forKey:@"userId"];
+        [dataNotification setValue:reactionName forKey:@"reactionName"];
+        [dataNotification setValue:@(2) forKey:@"type"];
+        
+        [self sendCustomNotification:sessionId sessionType:sessionType data:dataNotification];
+    }
+    
+    return updateReaction;
+}
+
+-(void) sendCustomNotification:(NSString *)sessionId sessionType:(NSString *)sessionType data:(NSDictionary *)data {
+    NSString *json = [self jsonStringWithDictionary:data];
+    NIMCustomSystemNotification *notification = [[NIMCustomSystemNotification alloc] initWithContent:json];
+    notification.apnsContent = @"Test notification";
+    notification.sendToOnlineUsersOnly = NO;
+    NIMCustomSystemNotificationSetting *setting = [[NIMCustomSystemNotificationSetting alloc] init];
+    setting.shouldBeCounted = NO;
+    setting.apnsEnabled = YES;
+    setting.apnsWithPrefix = YES;
+    notification.setting = setting;
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    
+    [[[NIMSDK sharedSDK] systemNotificationManager] sendCustomNotification:notification toSession:session completion:^(NSError * __nullable error) {
+        if (error == nil) {
+            NSLog(@"Send custom notification success");
+        } else {
+            NSLog(@"Send custom notification error: %@", error);
+        }
+    }];
 }
 
 -(NSMutableArray *)setTimeArr:(NSArray *)messageArr{

@@ -8,6 +8,17 @@ import {
   NIMTeamOperationTypeUpdateDetail,
 } from '../Team/team.type';
 
+export enum NIMMessageReactionEnum {
+  HEART = 'HEART',
+  LIKE = 'LIKE',
+  HAHA = 'HAHA',
+  SURPRISE = 'SURPRISE',
+  CRY = 'CRY',
+  ANGRY = 'ANGRY',
+}
+
+export type INimMessageReaction = `${NIMMessageReactionEnum}`
+
 export enum NIMMessageTypeEnum {
   TEXT = 'text',
   VOICE = 'voice',
@@ -63,6 +74,17 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   coverPath?: string;
 }
 
+export interface NIMDataReactionByName {
+  id: string;
+  total: number;
+}
+
+export interface NIMReaction {
+  data: Record<INimMessageReaction, NIMDataReactionByName[]>;
+  total: number;
+}
+
+
 export interface NIMMessage {
   extend?: NimMessageTypeExtend;
   //  {
@@ -102,5 +124,6 @@ export interface NIMMessage {
   duration: number;
   localExt?: {
     chatBotType?: NIMMessageChatBotType
+    reaction?: NIMReaction
   }
 }
