@@ -92,6 +92,8 @@ typedef void(^Errors)(id erro);
 // search local Messages
 - (void) searchMessages:(NSString *)keyWords success:(Success)succe err:(Errors)err;
 
+- (void) readAllMessageOnlineServiceByListSession:(NSArray *)listSessionId;
+
 - (void)searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction success:(Success)succe err:(Errors)err;
 
 - (NSString *)teamNotificationSourceName:(NIMMessage *)message;

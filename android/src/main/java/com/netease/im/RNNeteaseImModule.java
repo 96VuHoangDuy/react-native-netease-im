@@ -1774,7 +1774,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                             if (direction == 0) {
                                                 Collections.reverse(messages);
                                             }
-
+                                     
                                             WritableMap messageObjectList = ReactCache.createMessageObjectList(result);
                                             promise.resolve(messageObjectList);
                                             return;
@@ -1787,6 +1787,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 }
             });
         }
+    }
+
+    @ReactMethod
+    public void readAllMessageOnlineServiceByListSession(ReadableArray listSessionId) {
+        ArrayList<String> _listSessionId = (ArrayList<String>)(ArrayList<?>)(listSessionId.toArrayList());
+        SessionService.getInstance().readAllMessageOnlineServiceByListSession(_listSessionId);
     }
 
     /**

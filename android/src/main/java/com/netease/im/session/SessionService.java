@@ -58,6 +58,7 @@ import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MemberPushOption;
 import com.netease.nimlib.sdk.msg.model.MessageReceipt;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
+import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.RevokeMsgNotification;
 import com.netease.nimlib.sdk.team.model.Team;
 
@@ -901,6 +902,15 @@ public class SessionService {
             }
         });
         return 2;
+    }
+
+    public void readAllMessageOnlineServiceByListSession(ArrayList<String> listSessionId) {
+        for(String sessionId : listSessionId) {
+            IMMessage message = NIMClient.getService(MsgService.class).queryLastMessage(sessionId, SessionTypeEnum.P2P);
+            if (message != null) {
+                getMsgService().clearUnreadCount(sessionId, SessionTypeEnum.P2P);
+            }
+        }
     }
 
     public void queryMessage(String selectMessageId, final OnMessageQueryListener messageQueryListener) {

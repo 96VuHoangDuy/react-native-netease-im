@@ -229,6 +229,8 @@ public class ReactCache {
                                 map.putMap(MESSAGE_EXTEND, writableMapExtend);
                                 map.putString(MessageConstant.Message.MSG_TYPE, "notification");
                             }
+                        } else {
+                            map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
                         }
                     } else {
                         map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));

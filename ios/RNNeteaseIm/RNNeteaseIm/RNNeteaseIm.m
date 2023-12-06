@@ -600,6 +600,10 @@ RCT_EXPORT_METHOD(setTeamMemberMute:(nonnull NSString *)teamId contactId:(nonnul
     }];
 }
 
+RCT_EXPORT_METHOD(readAllMessageOnlineServiceByListSession:(nonnull NSArray *)listSessionId) {
+    [[ConversationViewController initWithConversationViewController]readAllMessageOnlineServiceByListSession:listSessionId];
+}
+
 //获取服务器群资料
 RCT_EXPORT_METHOD(fetchTeamInfo:(nonnull NSString *)teamId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[TeamViewController initWithTeamViewController]fetchTeamInfo:teamId Succ:^(id param) {

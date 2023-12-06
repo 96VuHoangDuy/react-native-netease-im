@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native";
+import { NativeModules, Platform } from 'react-native';
 import {
   CustomMessageType,
   NIMSessionTypeEnum,
@@ -6,8 +6,8 @@ import {
   NIMSendAttachmentEnum,
   QueryDirectionType,
   NIMSessionOnlineServiceType,
-} from "./session.type";
-import { NIMMessage, NIMMessageTypeEnum } from "../Message/message.type";
+} from './session.type';
+import { NIMMessage, NIMMessageTypeEnum } from '../Message/message.type';
 const { RNNeteaseIm } = NativeModules;
 
 class NimSession {
@@ -189,7 +189,7 @@ class NimSession {
     isCustomerService?: boolean,
     isHighQuality?: boolean
   ) {
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       return RNNeteaseIm.sendImageMessages(
         file,
         displayName,
@@ -198,7 +198,7 @@ class NimSession {
       );
     }
     return RNNeteaseIm.sendImageMessage(
-      file.replace("file://", ""),
+      file.replace('file://', ''),
       displayName,
       isCustomerService ?? false,
       isHighQuality
@@ -285,7 +285,7 @@ class NimSession {
     return RNNeteaseIm.sendRedPacketMessage(type, comments, serialNo);
   }
 
-  setMessageNotify(contactId: string, needNotify: "0" | "1") {
+  setMessageNotify(contactId: string, needNotify: '0' | '1') {
     return RNNeteaseIm.setMessageNotify(contactId, needNotify);
   }
 
@@ -469,7 +469,7 @@ class NimSession {
    * @returns {*}
    */
   downloadAttachment(messageId: string) {
-    return RNNeteaseIm.downloadAttachment(messageId, "0");
+    return RNNeteaseIm.downloadAttachment(messageId, '0');
   }
 
   /**
@@ -482,7 +482,7 @@ class NimSession {
   }
 
   getLaunch() {
-    if (Platform.OS === "android") {
+    if (Platform.OS === 'android') {
       return RNNeteaseIm.getLaunch();
     }
   }
@@ -513,6 +513,10 @@ class NimSession {
       sessionId,
       chatBotType
     );
+  }
+
+  readAllMessageOnlineServiceByListSession(listSessionId: string[]) {
+    return RNNeteaseIm.readAllMessageOnlineServiceByListSession(listSessionId);
   }
 }
 

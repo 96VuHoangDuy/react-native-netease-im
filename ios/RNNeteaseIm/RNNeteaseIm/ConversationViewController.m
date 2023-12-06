@@ -102,6 +102,22 @@
         }
     }
 }
+
+-(void)readAllMessageOnlineServiceByListSession:(NSArray *)listSessionId {
+    NSLog(@"listSessionId => %@", listSessionId);
+    for(int i = 0; i < [listSessionId count]; i++) {
+        NSString *sessionId = [listSessionId objectAtIndex:i];
+        NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+        if (session != nil) {
+            [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:session completion:^(NSError * __nullable error){
+                if (error != nil) {
+                    NSLog(@"readAllMessageOnlineServiceByListSession error: %@", error);
+                }
+            }];
+        }
+    }
+}
+
 //聊天界面历史记录
 - (void)localSession:(NSInteger)limit currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err{
     [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
