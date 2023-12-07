@@ -1473,7 +1473,23 @@ public class ReactCache {
                         itemMap.putMap(MESSAGE_EXTEND, writableMapExtend);
                         itemMap.putString(MessageConstant.Message.MSG_TYPE, "notification");
                     }
+
+                    if (extendType.equals("gif")) {
+                        WritableMap extend = new WritableNativeMap();
+                        String pathGif = extensionMsg.get("path").toString();
+                        String aspectRatioGif = extensionMsg.get("aspectRatio").toString();
+                        Float aspectRatio = Float.parseFloat(aspectRatioGif);
+
+                        extend.putString("extendType", extendType);
+                        extend.putString("path", pathGif);
+                        extend.putDouble("aspectRatio", aspectRatio);
+
+                        itemMap.putMap(MESSAGE_EXTEND, extend);
+                        itemMap.putString(MessageConstant.Message.MSG_TYPE, "image");
+                    }
                 }
+
+
             } else {
                 itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(), null));
             }
