@@ -1159,7 +1159,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
-    public void sendGifMessage(String url,String aspectRatio, boolean isCustomerService,final Promise promise) {
+    @ReactMethod
+    public void sendGifMessage(String url,String aspectRatio,ReadableArray atUserIds, boolean isCustomerService,final Promise promise) {
         LogUtil.w(TAG, "sendTextMessage" + url);
         sessionService.sendGifMessage(url, aspectRatio, null, isCustomerService,new SessionService.OnSendMessageListener() {
             @Override

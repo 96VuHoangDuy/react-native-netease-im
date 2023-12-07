@@ -1460,7 +1460,7 @@
     NSNumber *isCsrNumber = [recent.localExt objectForKey:@"isCsr"];
     BOOL isChatBot = [isChatBotNumber boolValue];
     BOOL isCsr = [isCsrNumber boolValue];
-    
+
     if (recent.localExt != nil) {
         [dic2 setObject:recent.localExt forKey:@"localExt"];
     }

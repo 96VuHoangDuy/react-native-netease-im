@@ -111,6 +111,26 @@ public class MapUtil {
         return map;
     }
 
+    public static WritableMap readableMapToMap(Map<String, Object> map) {
+        WritableMap readableMap = Arguments.createMap();
+        Iterator<String> iterator = map.keySet().iterator();
+
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            Object value = map.get(key);
+
+            if (value instanceof Boolean) {
+                readableMap.putBoolean(key, (Boolean) map.get(key));
+            } else if (value instanceof Number) {
+                readableMap.putDouble(key, (Double) map.get(key));
+            } else if (value instanceof String) {
+                readableMap.putString(key, (String) map.get(key));
+            }
+        }
+
+        return readableMap;
+    }
+
     public static WritableMap toWritableMap(JSONObject map) {
         WritableMap writableMap = Arguments.createMap();
         Iterator iterator = map.entrySet().iterator();

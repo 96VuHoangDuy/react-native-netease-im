@@ -816,7 +816,7 @@ public class ReactCache {
 
                 IMMessage item = messageList.get(i);
                 if (item != null) {
-                    WritableMap itemMap = createMessage(item);
+                    WritableMap itemMap = createMessage(item, false);
                     if (itemMap != null) {
                         writableArray.pushMap(itemMap);
                     }
@@ -839,7 +839,7 @@ public class ReactCache {
 
                 IMMessage item = messageList.get(i);
                 if (item != null) {
-                    WritableMap itemMap = createMessage(item);
+                    WritableMap itemMap = createMessage(item, false);
                     String sessionId = item.getSessionId();
                     WritableArray newMessages = Arguments.createArray();
 
@@ -1244,7 +1244,7 @@ public class ReactCache {
                         @Override
                         public void onSuccess(Void result) {
                             setLocalExtension(item, "downloadStatus", "success");
-                            ReactCache.createMessage(item);
+                            ReactCache.createMessage(item, true);
                         }
 
                         @Override
@@ -1402,7 +1402,7 @@ public class ReactCache {
      * @param item
      * @return
      */
-    public static WritableMap createMessage(IMMessage item) {
+    public static WritableMap createMessage(IMMessage item,boolean isNoti) {
         WritableMap itemMap = Arguments.createMap();
         itemMap.putString(MessageConstant.Message.MSG_ID, item.getUuid());
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(item.getSessionId(), item.getSessionType());
@@ -1682,6 +1682,13 @@ public class ReactCache {
 //            writableArray.pushMap(itemMap);
 //            ReactCache.emit(ReactCache.observeMsgStatus, writableArray);
 //        }
+
+        if (isNoti) {
+            WritableArray a = Arguments.createArray();
+            a.pushMap(itemMap);
+
+            ReactCache.emit(ReactCache.observeMsgStatus, a);
+        }
 
         return itemMap;
     }

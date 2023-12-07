@@ -368,15 +368,32 @@ public class SessionService {
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
         Map<String, Object> localExtension = message.getLocalExtension();
-        if (localExtension != null && localExtension.containsKey("downloadStatus") && localExtension.get("downloadStatus").equals("downloading")) {
-            return;
-        }
-        if (isMyMessage(message) || isSend) {
+        if (message.getStatus() == MsgStatusEnum.success && message.getDirect() == MsgDirectionEnum.Out) {
             List<IMMessage> list = new ArrayList<>(1);
             list.add(message);
             Object a = ReactCache.createMessageList(list);
             ReactCache.emit(ReactCache.observeMsgStatus, a);
+        } else {
+            if (localExtension != null && localExtension.containsKey("downloadStatus") && localExtension.get("downloadStatus").equals("downloading")) {
+                return;
+            }
+            if (isMyMessage(message) || isSend) {
+                List<IMMessage> list = new ArrayList<>(1);
+                list.add(message);
+                Object a = ReactCache.createMessageList(list);
+                ReactCache.emit(ReactCache.observeMsgStatus, a);
+            }
         }
+//        Map<String, Object> localExtension = message.getLocalExtension();
+//        if (localExtension != null && localExtension.containsKey("downloadStatus") && localExtension.get("downloadStatus").equals("downloading")) {
+//            return;
+//        }
+//        if (isMyMessage(message) || isSend) {
+//            List<IMMessage> list = new ArrayList<>(1);
+//            list.add(message);
+//            Object a = ReactCache.createMessageList(list);
+//            ReactCache.emit(ReactCache.observeMsgStatus, a);
+//        }
     }
 
     /**
@@ -1082,8 +1099,8 @@ public class SessionService {
         ReactCache.DownloadCallback callback = new ReactCache.DownloadCallback() {
             @Override
             public void onSuccess(Void result) {
-                ReactCache.createMessage(message);
                 setLocalExtension(message, "downloadStatus", "success");
+                ReactCache.createMessage(message, true);
                 Log.d("onSuccess download", "onSuccess download" + "");
             }
 
