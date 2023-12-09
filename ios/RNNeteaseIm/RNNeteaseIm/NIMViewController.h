@@ -15,6 +15,8 @@ typedef void(^ERROR)(NSString *error);
 
 @property (copy, nonatomic) NSString *strAccount;
 @property (copy, nonatomic) NSString *strToken;
+@property (copy, nonatomic) NSString *lastMessageId;
+@property (assign, nonatomic) BOOL isUpdated;
 
 +(instancetype)initWithController;
 -(instancetype)initWithNIMController;

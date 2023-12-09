@@ -1406,7 +1406,6 @@ public class ReactCache {
         WritableMap itemMap = Arguments.createMap();
         itemMap.putString(MessageConstant.Message.MSG_ID, item.getUuid());
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(item.getSessionId(), item.getSessionType());
-        Map<String, Object> extension = recent.getExtension();
         Map<String, Object> messageLocalExt = item.getLocalExtension();
 
         Boolean isCsr = false;
@@ -1424,19 +1423,22 @@ public class ReactCache {
             }
         }
 
-        if (extension != null) {
-            Boolean extensionIsCsr = (Boolean) extension.get("isCsr");
-            Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
-            String chatBotType = (String) extension.get("chatBotType");
+        if (recent != null) {
+            Map<String, Object> extension = recent.getExtension();
+            if (extension != null) {
+                Boolean extensionIsCsr = (Boolean) extension.get("isCsr");
+                Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
+                String chatBotType = (String) extension.get("chatBotType");
 
-            isCsr = extensionIsCsr;
-            isChatBot = extensionIsChatBot;
+                isCsr = extensionIsCsr;
+                isChatBot = extensionIsChatBot;
 
-            if (chatBotType != null) {
-                WritableMap localExt = Arguments.createMap();
-                localExt.putString("chatBotType", chatBotType);
+                if (chatBotType != null) {
+                    WritableMap localExt = Arguments.createMap();
+                    localExt.putString("chatBotType", chatBotType);
 
-                itemMap.putMap("localExt", localExt);
+                    itemMap.putMap("localExt", localExt);
+                }
             }
         }
 
@@ -1519,10 +1521,15 @@ public class ReactCache {
             if (item.getSessionType() == SessionTypeEnum.Team && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
                 displayName = getTeamUserDisplayName(item.getSessionId(), fromAccount);
             } else {
-                if (isCsr) {
-                    String csrName = (String) extension.get("name");
+                if (isCsr && recent != null) {
+                    Map<String, Object> extension = recent.getExtension();
+                    if (extension != null) {
+                        String csrName = (String) extension.get("name");
 
-                    displayName = csrName != null ? csrName : "CSR";
+                        displayName = csrName != null ? csrName : "CSR";
+                    } else {
+                        displayName = "CSR";
+                    }
                 } else {
                     displayName = !TextUtils.isEmpty(fromNick) ? fromNick : NimUserInfoCache.getInstance().getUserDisplayName(fromAccount);
                 }
