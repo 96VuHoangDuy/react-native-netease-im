@@ -44,6 +44,7 @@ import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.msg.MessageBuilder;
 import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
+import com.netease.nimlib.sdk.msg.attachment.AudioAttachment;
 import com.netease.nimlib.sdk.msg.attachment.FileAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.attachment.VideoAttachment;
@@ -681,7 +682,7 @@ public class SessionService {
 
     public void sendGifMessage(String url,String aspectRatio, List<String> selectedMembers, Boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
 
-        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "gif");
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "[动图]");
 
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
         remoteExt.put("extendType", "gif");
@@ -823,7 +824,7 @@ public class SessionService {
 
     public void sendCardMessage(String toSessionType,String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, OnSendMessageListener onSendMessageListener) {
         SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(toSessionType);
-        IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "card");
+        IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "[个人名片]");
 
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
         remoteExt.put("extendType", "card");
@@ -1025,7 +1026,6 @@ public class SessionService {
 //        if (customConfig != null) {
 //            String content = customConfig.getPushContent(message);
 //            Map<String, Object> payload = customConfig.getPushPayload(message);
-        message.setPushContent(message.getContent());
         Map<String, Object> payload = new HashMap<>();
         Map<String, Object> body = new HashMap<>();
 
@@ -1034,11 +1034,47 @@ public class SessionService {
             body.put("sessionId", LoginService.getInstance().getAccount());
         } else if (message.getSessionType() == SessionTypeEnum.Team) {
             body.put("sessionId", message.getSessionId());
-
         }
         body.put("sessionName", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
+        String pushContent = message.getContent();
+
+        switch (message.getMsgType()) {
+            case image:
+                pushContent = "[图片]";
+                break;
+            case video:
+                pushContent = "[视频]";
+                break;
+            case audio:
+                MsgAttachment attachment = message.getAttachment();
+                if (attachment instanceof AudioAttachment) {
+                    AudioAttachment audioAttachment = (AudioAttachment) attachment;
+
+                    pushContent = "[语音]" + " " + Long.toString(Math.round(audioAttachment.getDuration() / 1000)) + "s";
+
+                } else {
+                    pushContent = "[语音]";
+                }
+                break;
+            default:
+                pushContent = message.getContent();
+                break;
+        }
+
+        if (message.getSessionType() == SessionTypeEnum.P2P) {
+            payload.put("pushTitle", message.getFromNick());
+            message.setPushContent(pushContent);
+        } else {
+            payload.put("pushTitle", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
+            message.setPushContent(message.getFromNick() + ": " + pushContent);
+        }
+
+
         payload.put("sessionBody", body);
+
         message.setPushPayload(payload);
+
+        Log.d(" ád ád ádad ádas ", payload + "," + message.getPushPayload());
 //        }
     }
 

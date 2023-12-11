@@ -349,8 +349,8 @@ RCT_EXPORT_METHOD(clearSystemMessages){
     [[NoticeViewController initWithNoticeViewController] deleAllNotic];
 }
 //会话开始
-RCT_EXPORT_METHOD(startSession:(nonnull  NSString *)sessionId type:(nonnull  NSString *)type){
-    [[ConversationViewController initWithConversationViewController]startSession:sessionId withType:type];
+RCT_EXPORT_METHOD(startSession:(nonnull  NSString *)sessionId type:(nonnull  NSString *)type myUserName:(NSString *)myUserName myUserID:(NSString *)myUserID){
+    [[ConversationViewController initWithConversationViewController]startSession:sessionId withType:type myUserName:myUserName myUserID:myUserID];
 }
 //会话通知返回按钮
 RCT_EXPORT_METHOD(stopSession){

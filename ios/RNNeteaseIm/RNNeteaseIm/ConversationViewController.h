@@ -15,7 +15,7 @@ typedef void(^Errors)(id erro);
 
 +(instancetype)initWithConversationViewController;
 -(void)localSession:(NSInteger)index currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err;
--(void)startSession:(NSString *)sessionID withType:(NSString *)type;
+-(void)startSession:(NSString *)sessionID withType:(NSString *)type myUserName:(NSString *)myUserName myUserID:(NSString *)myUserID;
 -(void)stopSession;
 //-(void)sendAudioRecode:(NSString *)filePath;
 /**
@@ -43,6 +43,8 @@ typedef void(^Errors)(id erro);
 -(void)forwardMultipleTextMessage:(NSDictionary *)dataDict sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content;
 
 -(void)updateRecentSessionIsCsrOrChatbot:(NSString *)sessionId type:(NSString *)type name:(NSString *)name;
+
+- (NSString *)getUserName:(NSString *)userID;
 
 -(void)addEmptyRecentSessionBySession:(NSString *)sessionId;
 

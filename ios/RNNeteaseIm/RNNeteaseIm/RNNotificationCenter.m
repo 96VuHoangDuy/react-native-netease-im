@@ -140,18 +140,18 @@
 }
 //保存拆红包消息到本地
 - (void)saveTheRedPacketOpenMsg:(NSDictionary *)dict andTime:(NSTimeInterval)times{
-    NSDictionary *datatDict = [dict objectForKey:@"dict"];
-    NSTimeInterval timestamp = times;
-    NSString *sessionId = [dict objectForKey:@"sessionId"];
-    NSInteger sessionType = [[dict objectForKey:@"sessionType"] integerValue];
-    NIMSession *session = [NIMSession session:sessionId type:sessionType];
-    NIMMessage *message;
-    DWCustomAttachment *obj = [[DWCustomAttachment alloc]init];
-    obj.custType = CustomMessgeTypeRedPacketOpenMessage;
-    obj.dataDict = datatDict;
-    message = [NIMMessageMaker msgWithCustomAttachment:obj andeSession:session];
-    message.timestamp = timestamp;
-    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:nil];
+//    NSDictionary *datatDict = [dict objectForKey:@"dict"];
+//    NSTimeInterval timestamp = times;
+//    NSString *sessionId = [dict objectForKey:@"sessionId"];
+//    NSInteger sessionType = [[dict objectForKey:@"sessionType"] integerValue];
+//    NIMSession *session = [NIMSession session:sessionId type:sessionType];
+//    NIMMessage *message;
+//    DWCustomAttachment *obj = [[DWCustomAttachment alloc]init];
+//    obj.custType = CustomMessgeTypeRedPacketOpenMessage;
+//    obj.dataDict = datatDict;
+//    message = [NIMMessageMaker msgWithCustomAttachment:obj andeSession:session];
+//    message.timestamp = timestamp;
+//    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:nil];
 }
 
 // json字符串转dict字典

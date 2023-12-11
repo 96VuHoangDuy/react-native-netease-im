@@ -22,6 +22,8 @@
 #import "NSDictionary+NTESJson.h"
 @interface ConversationViewController ()<NIMMediaManagerDelegate,NIMMediaManagerDelegate,NIMSystemNotificationManagerDelegate>{
     NSString *_sessionID;
+    NSString *_myUserName;
+    NSString *_myUserID;
     NSString *_type;
     NSInteger _index;
     
@@ -75,9 +77,11 @@
 //    return _mediaFetcher;
 //}
 
--(void)startSession:(NSString *)sessionID withType:(NSString *)type{
+-(void)startSession:(NSString *)sessionID withType:(NSString *)type myUserName:(NSString *)myUserName myUserID:(NSString *)myUserID{
     _sessionID = sessionID;
     _type = type;
+    _myUserName = [myUserName length] ? myUserName : @"";
+    _myUserID = [myUserID length] ? myUserID : @"";
     self._session = [NIMSession session:_sessionID type:[_type integerValue]];
     _sessionArr = [NSMutableArray array];
     [self addListener];
@@ -907,7 +911,7 @@
 //发送录音
 -(void)sendAudioMessage:(  NSString *)file duration:(  NSString *)duration isCustomerService:(BOOL *)isCustomerService{
     if (file) {
-        NIMMessage *message = [NIMMessageMaker msgWithAudio:file andeSession:self._session];
+        NIMMessage *message = [NIMMessageMaker msgWithAudio:file andeSession:self._session senderName:_myUserName];
         if (isCustomerService || [self isFriendToSendMessage:message]) {
              [[[NIMSDK sharedSDK] chatManager] sendMessage:message toSession:self._session error:nil];
         }
@@ -915,7 +919,7 @@
 }
 //发送文字消息
 -(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
-    NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session];
+    NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session senderName:_myUserName];
     //发送消息
     if (isCustomerService || [self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
@@ -924,8 +928,8 @@
 
 //发送文字消息
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
-    NIMMessage *message = [NIMMessageMaker msgWithText:@"gif" andApnsMembers:members andeSession:self._session];
-    NSDictionary  *remoteExt = @{@"extendType": @"gif", @"path": url, @"aspectRatio": aspectRatio};
+    NIMMessage *message = [NIMMessageMaker msgWithText:@"gif" andApnsMembers:members andeSession:self._session senderName:_myUserName];
+    NSDictionary  *remoteExt = @{@"extendType": @"[动图]", @"path": url, @"aspectRatio": aspectRatio};
     message.remoteExt = remoteExt;
     NSLog(@"message.remoteExt: %@", message.remoteExt);
     //发送消息
@@ -937,7 +941,7 @@
 //发送图片
 -(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality {
     UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
-    NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session isHighQuality:isHighQuality];
+    NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session isHighQuality:isHighQuality senderName:_myUserName];
 //    NIMMessage *message = [NIMMessageMaker msgWithImagePath:path];
     if (isCustomerService || [self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
@@ -955,7 +959,7 @@
     if ([path hasPrefix:@"file:///private"]) {
         path = [path stringByReplacingOccurrencesOfString:@"file:///private" withString:@""];
     }
-            message = [NIMMessageMaker msgWithVideo:path andeSession:self._session];
+            message = [NIMMessageMaker msgWithVideo:path andeSession:self._session senderName:_myUserName];
 //        }
         if (isCustomerService || [self isFriendToSendMessage:message]) {
             [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
@@ -979,7 +983,7 @@
     NSLog(@"custType %ld", (long)custType);
     obj.custType = custType;
     obj.dataDict = dataDict;
-    message = [NIMMessageMaker msgWithCustomAttachment:obj andeSession:self._session];
+    message = [NIMMessageMaker msgWithCustomAttachment:obj andeSession:self._session senderName:_myUserName];
     if ([self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
@@ -990,7 +994,7 @@
 
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     
-    NIMMessage *message = [NIMMessageMaker msgWithText:[dataDict objectForKey:@"messages"] andApnsMembers:@[] andeSession:session];
+    NIMMessage *message = [NIMMessageMaker msgWithText:[dataDict objectForKey:@"messages"] andApnsMembers:@[] andeSession:session senderName:_myUserName];
     //发送消息
     NSDictionary  *remoteExt = @{@"extendType": @"forwardMultipleText"};
     message.remoteExt = remoteExt;
@@ -1028,7 +1032,7 @@
 -(void)sendLocationMessage:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address{
     NIMLocationObject *locaObj = [[NIMLocationObject alloc]initWithLatitude:[latitude doubleValue] longitude:[longitude doubleValue] title:address];
     NIMKitLocationPoint *locationPoint = [[NIMKitLocationPoint alloc]initWithLocationObject:locaObj];
-    NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:self._session];
+    NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:self._session senderName:_myUserName];
     if ([self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
@@ -1065,7 +1069,7 @@
     DWCustomAttachment *obj = [[DWCustomAttachment alloc]init];
     obj.custType = CustomMessgeTypeRedPacketOpenMessage;
     obj.dataDict = dict;
-    message = [NIMMessageMaker msgWithCustomAttachment:obj andeSession:self._session];
+    message = [NIMMessageMaker msgWithCustomAttachment:obj andeSession:self._session senderName:_myUserName];
     NSTimeInterval timestamp = [[NSDate date] timeIntervalSince1970];
     message.timestamp = timestamp;
     if(![sendId isEqualToString:strMyId]){
@@ -1090,7 +1094,7 @@
 - (void)sendCardMessage:(NSString *)toSessionType sessionId:(NSString *)toSessionId name:(NSString *)name imgPath:(NSString *)strImgPath cardSessionId:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType {
     NIMSession *session = [NIMSession session:toSessionId type:[toSessionType integerValue]];
 
-    NIMMessage *message = [NIMMessageMaker msgWithText:@"card" andApnsMembers:@[] andeSession:session];
+    NIMMessage *message = [NIMMessageMaker msgWithText:@"[个人名片]" andApnsMembers:@[] andeSession:session senderName:_myUserName];
     //发送消息
     NSDictionary  *remoteExt = @{@"extendType": @"card", @"type":cardSessionType, @"name":name, @"imgPath":strImgPath, @"sessionId":cardSessionId};
     message.remoteExt = remoteExt;
@@ -1324,7 +1328,7 @@
 - (void)recordAudio:(NSString *)filePath didCompletedWithError:(NSError *)error {
     if(!error) {
         if ([self recordFileCanBeSend:filePath]) {
-            [[[NIMSDK sharedSDK] chatManager] sendMessage:[NIMMessageMaker msgWithAudio:filePath andeSession:self._session] toSession:self._session error:nil];
+            [[[NIMSDK sharedSDK] chatManager] sendMessage:[NIMMessageMaker msgWithAudio:filePath andeSession:self._session senderName:_myUserName] toSession:self._session error:nil];
         }else{
             [self showRecordFileNotSendReason];
         }
