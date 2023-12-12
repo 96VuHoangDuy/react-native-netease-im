@@ -832,27 +832,30 @@ public class ReactCache {
      */
     public static WritableMap createMessageObjectList(List<IMMessage> messageList) {
         WritableMap objectGroupMessages = Arguments.createMap();
+        Map<String, WritableArray> listHashMap = new HashMap<>();
 
         if (messageList != null) {
-            int size = messageList.size();
-            for (int i = 0; i < size; i++) {
-
-                IMMessage item = messageList.get(i);
+            for (IMMessage item : messageList) {
                 if (item != null) {
                     WritableMap itemMap = createMessage(item, false);
                     String sessionId = item.getSessionId();
-                    WritableArray newMessages = Arguments.createArray();
-
-                    if (objectGroupMessages.hasKey(sessionId)) {
-                        ReadableArray currentMessages = objectGroupMessages.getArray(sessionId);
-                        newMessages = Arguments.fromArray(currentMessages.toArrayList());
+                    WritableArray array = listHashMap.get(sessionId);
+                    if (array == null) {
+                        array = Arguments.createArray();
                     }
 
-                    newMessages.pushMap(itemMap);
-                    objectGroupMessages.putArray(sessionId, newMessages);
+                    array.pushMap(itemMap);
+                    listHashMap.put(sessionId, array);
                 }
             }
         }
+
+        if (listHashMap.size() > 0) {
+            for (Map.Entry<String, WritableArray> entry : listHashMap.entrySet()) {
+                objectGroupMessages.putArray(entry.getKey(), entry.getValue());
+            }
+        }
+
 
         return objectGroupMessages;
     }
