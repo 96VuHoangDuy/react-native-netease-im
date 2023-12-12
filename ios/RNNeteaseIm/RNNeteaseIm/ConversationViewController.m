@@ -928,8 +928,8 @@
 
 //发送文字消息
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
-    NIMMessage *message = [NIMMessageMaker msgWithText:@"gif" andApnsMembers:members andeSession:self._session senderName:_myUserName];
-    NSDictionary  *remoteExt = @{@"extendType": @"[动图]", @"path": url, @"aspectRatio": aspectRatio};
+    NIMMessage *message = [NIMMessageMaker msgWithText:@"[动图]" andApnsMembers:members andeSession:self._session senderName:_myUserName];
+    NSDictionary  *remoteExt = @{@"extendType": @"gif", @"path": url, @"aspectRatio": aspectRatio};
     message.remoteExt = remoteExt;
     NSLog(@"message.remoteExt: %@", message.remoteExt);
     //发送消息
