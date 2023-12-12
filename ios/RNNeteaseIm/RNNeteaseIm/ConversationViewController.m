@@ -425,7 +425,7 @@
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
     
     if (mediaPath != nil) {
-        if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([isDownloadSuccess length] && [isDownloadSuccess isEqual:@"downloadSuccess"]) ){
+        if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) ){
             [imgObj setObject:[NSNumber numberWithBool: true] forKey:@"isFilePathDeleted"];
         } else {
             [imgObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
@@ -468,7 +468,7 @@
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
     
     if (mediaPath != nil) {
-        if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([isDownloadSuccess length] && [isDownloadSuccess isEqual:@"downloadSuccess"])){
+        if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])){
             [videoObj setObject:[NSNumber numberWithBool: true] forKey:@"isFilePathDeleted"];
         } else {
             [videoObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
