@@ -176,7 +176,17 @@
 }
 
 + (void)setupMessagePushBody:(NIMMessage *)message andSession:(NIMSession *)session senderName:(NSString *)senderName{
-    NSLog(@"messagemessage %@", message);
+    NSLog(@"messagemessage => %@", message);
+    NSString *pattern = @"@\\[(.+?)\\]\\((.+?)\\)";
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:nil];
+    NSString *body = [[NSString alloc] initWithString:message.apnsContent];
+    
+    if (regex != nil) {
+        NSRange range = NSMakeRange(0, body.length);
+        NSString *modifiedString = [regex stringByReplacingMatchesInString:body options:NSMatchingReportProgress range:range withTemplate:@"@$1"];
+        body = modifiedString;
+    }
+    
     NSMutableDictionary *payload = [NSMutableDictionary dictionary];
 //    NSMutableDictionary *apsField = [NSMutableDictionary dictionary];
     NSString *strSessionID = @"";
@@ -190,13 +200,15 @@
     
    if ([senderName length]) {
         if (session.sessionType == NIMSessionTypeP2P) {
-            [payload setObject:@{@"alert": @{@"title": senderName, @"body": message.apnsContent}} forKey:@"apsField"];
+            [payload setObject:@{@"alert": @{@"title": senderName, @"body": body}} forKey:@"apsField"];
         } else {
             NIMTeam *team = [[NIMSDK sharedSDK].teamManager teamById:session.sessionId];
             
-            [payload setObject:@{@"alert": @{@"title": team.teamName, @"body": [NSString stringWithFormat:@"%@: %@", senderName, message.apnsContent]}} forKey:@"apsField"];
+            [payload setObject:@{@"alert": @{@"title": team.teamName, @"body": [NSString stringWithFormat:@"%@: %@", senderName, body]}} forKey:@"apsField"];
         }
     }
+    
+    
     
     message.apnsPayload = payload;
 }
