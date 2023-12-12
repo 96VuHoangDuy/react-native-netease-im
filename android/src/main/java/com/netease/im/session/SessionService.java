@@ -1021,6 +1021,18 @@ public class SessionService {
 
     }
 
+    private  String convertMessageContent(String content) {
+        String pattern = "@\\[(.+?)\\]\\(\\w+\\)";
+
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(content);
+
+        String modifiedString = matcher.replaceAll("@$1");
+        Log.e(TAG, "modifiedString => " + modifiedString);
+
+        return modifiedString;
+    }
+
     private void appendPushConfig(IMMessage message) {
 //        CustomPushContentProvider customConfig = null;//NimUIKit.getCustomPushContentProvider();
 //        if (customConfig != null) {
@@ -1036,7 +1048,7 @@ public class SessionService {
             body.put("sessionId", message.getSessionId());
         }
         body.put("sessionName", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
-        String pushContent = message.getContent();
+        String pushContent = convertMessageContent(message.getContent());
 
         switch (message.getMsgType()) {
             case image:
@@ -1057,7 +1069,7 @@ public class SessionService {
                 }
                 break;
             default:
-                pushContent = message.getContent();
+                pushContent = convertMessageContent(message.getContent());
                 break;
         }
 
