@@ -160,17 +160,17 @@
 - (void)didUpdateRecentSession:(NIMRecentSession *)recentSession
               totalUnreadCount:(NSInteger)totalUnreadCount{
     NSString *lastMessageId = [self lastMessageId];
-    if ([lastMessageId isEqualToString:recentSession.lastMessage.messageId]) {
-        if (![self isUpdated]) {
-            return;
-        }
+    // if ([lastMessageId isEqualToString:recentSession.lastMessage.messageId]) {
+    //     if (![self isUpdated]) {
+    //         return;
+    //     }
         
-        [self setIsUpdated:YES];
-    } else {
-        [self setIsUpdated:NO];
-    }
+    //     [self setIsUpdated:YES];
+    // } else {
+    //     [self setIsUpdated:NO];
+    // }
     
-    [self setLastMessageId:recentSession.lastMessage.messageId];
+    // [self setLastMessageId:recentSession.lastMessage.messageId];
     [self getResouces];
 }
 //删除所有会话回调
