@@ -148,7 +148,6 @@ public class ReactCache {
             for (RecentContact contact : recents) {
                 map = Arguments.createMap();
                 String contactId = contact.getContactId();
-                unreadNumTotal += contact.getUnreadCount();
                 map.putString("contactId", contactId);
                 map.putString("unreadCount", String.valueOf(contact.getUnreadCount()));
                 String name = "";
@@ -177,8 +176,11 @@ public class ReactCache {
                     map.putString("teamType", "-1");
                     NimUserInfoCache nimUserInfoCache = NimUserInfoCache.getInstance();
                     imagePath = nimUserInfoCache.getAvatar(contactId);
-
-                    map.putString("mute", boolean2String(NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId)));
+                    Boolean isMuteByP2p = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
+                    if (isMuteByP2p) {
+                        unreadNumTotal += contact.getUnreadCount();
+                    }
+                    map.putString("mute", boolean2String(isMuteByP2p));
                     name = nimUserInfoCache.getUserDisplayName(contactId);
                 } else if (sessionType == SessionTypeEnum.Team) {
                     team = TeamDataCache.getInstance().getTeamById(contactId);
@@ -188,6 +190,9 @@ public class ReactCache {
                         imagePath = team.getIcon();
                         map.putString("memberCount", Integer.toString(team.getMemberCount()));
                         map.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
+                        if (team.getMessageNotifyType() == TeamMessageNotifyTypeEnum.All) {
+                            unreadNumTotal += contact.getUnreadCount();
+                        }
                     }
                 }
                 map.putString("imagePath", imagePath);

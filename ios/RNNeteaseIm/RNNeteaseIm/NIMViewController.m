@@ -159,7 +159,7 @@
 
 - (void)didUpdateRecentSession:(NIMRecentSession *)recentSession
               totalUnreadCount:(NSInteger)totalUnreadCount{
-    NSString *lastMessageId = [self lastMessageId];
+    // NSString *lastMessageId = [self lastMessageId];
     // if ([lastMessageId isEqualToString:recentSession.lastMessage.messageId]) {
     //     if (![self isUpdated]) {
     //         return;
@@ -371,7 +371,6 @@
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
             //未读
             NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
-            allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
             [dic setObject:strUnreadCount forKey:@"unreadCount"];
             //群组名称或者聊天对象名称
             [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
@@ -484,6 +483,9 @@
             [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
             NSString *strMute = user.notifyForNewMsg?@"1":@"0";
+            if (user.notifyForNewMsg) {
+                allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
+            }
             [dic setObject:strMute forKey:@"mute"];
             [sessionList addObject:dic];
             
@@ -495,7 +497,6 @@
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
                 //未读
                 NSString *strUnreadCount = [NSString stringWithFormat:@"%zd", recent.unreadCount];
-                allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
                 [dic setObject:strUnreadCount forKey:@"unreadCount"];
                 //群组名称或者聊天对象名称
                 [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
@@ -609,6 +610,10 @@
                 NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
                 [dic setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
                 NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
+                if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll) {
+                    allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
+                }
+//                allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
                 [dic setObject:strMute forKey:@"mute"];
                 [sessionList addObject:dic];
                 
