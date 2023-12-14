@@ -1744,8 +1744,8 @@
     }
 }
 
--(void)addEmptyRecentSessionBySession:(NSString *)sessionId {
-    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+-(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
 }
 

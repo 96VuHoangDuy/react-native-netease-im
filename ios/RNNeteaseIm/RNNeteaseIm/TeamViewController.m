@@ -176,7 +176,7 @@ NSMutableArray *_myTeams;
         if (!error) {
             switch (applyStatus) {
                 case NIMTeamApplyStatusAlreadyInTeam:
-                    err(@"您已经在群里");
+                    succ(@"200");
                     break;
                 case NIMTeamApplyStatusWaitForPass:
                     succ(@"申请成功，等待验证");

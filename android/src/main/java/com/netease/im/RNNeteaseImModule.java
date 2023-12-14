@@ -2361,8 +2361,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void addEmptyRecentSessionBySession(String sessionId) {
-        NIMSDK.getMsgService().createEmptyRecentContact(sessionId, SessionTypeEnum.P2P, 0, System.currentTimeMillis(), true);
+    public void addEmptyRecentSession(String sessionId, String sessionType) {
+        SessionTypeEnum type = SessionUtil.getSessionType(sessionType);
+        NIMSDK.getMsgService().createEmptyRecentContact(sessionId, type, 0, System.currentTimeMillis(), true);
     }
 
     @ReactMethod

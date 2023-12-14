@@ -495,8 +495,9 @@ class NimSession {
     }
   }
 
-  addEmptyRecentSessionBySession(sessionId: string) {
-    return RNNeteaseIm.addEmptyRecentSessionBySession(sessionId);
+
+  addEmptyRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType)
   }
 
   updateRecentSessionIsCsrOrChatbot(

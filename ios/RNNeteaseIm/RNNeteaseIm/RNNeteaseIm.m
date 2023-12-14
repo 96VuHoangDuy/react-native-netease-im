@@ -435,9 +435,9 @@ RCT_EXPORT_METHOD(updateRecentSessionIsCsrOrChatbot:(nonnull NSString *)sessionI
     [[ConversationViewController initWithConversationViewController]updateRecentSessionIsCsrOrChatbot:sessionId type:type name:name];
 }
 
-RCT_EXPORT_METHOD(addEmptyRecentSessionBySession:(nonnull NSString *)sessionId) {
-    [[ConversationViewController initWithConversationViewController]addEmptyRecentSessionBySession:sessionId];
-    }
+RCT_EXPORT_METHOD(addEmptyRecentSession:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType) {
+    [[ConversationViewController initWithConversationViewController]addEmptyRecentSession:sessionId sessionType:sessionType];
+}
 
 RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(nonnull NSString *)chatBotType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     NSDictionary *dict =  [[ConversationViewController initWithConversationViewController]updateMessageOfChatBot:messageId sessionId:sessionId chatBotType:chatBotType];
