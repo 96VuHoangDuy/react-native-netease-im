@@ -483,12 +483,11 @@
             [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
             NSString *strMute = user.notifyForNewMsg?@"1":@"0";
-            if (user.notifyForNewMsg) {
+            if (user.notifyForNewMsg == NO) {
                 allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
             }
             [dic setObject:strMute forKey:@"mute"];
             [sessionList addObject:dic];
-            
         }
         else{
             // if ( [[NIMSDK sharedSDK].teamManager isMyTeam:recent.lastMessage.session.sessionId]) {
