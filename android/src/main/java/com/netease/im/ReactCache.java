@@ -177,7 +177,7 @@ public class ReactCache {
                     NimUserInfoCache nimUserInfoCache = NimUserInfoCache.getInstance();
                     imagePath = nimUserInfoCache.getAvatar(contactId);
                     Boolean isMuteByP2p = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
-                    if (isMuteByP2p) {
+                    if (isMuteByP2p == false) {
                         unreadNumTotal += contact.getUnreadCount();
                     }
                     map.putString("mute", boolean2String(isMuteByP2p));
