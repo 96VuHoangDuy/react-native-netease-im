@@ -224,6 +224,8 @@
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err{
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
     NSMutableArray *sessionList = [NSMutableArray array];
+    NSInteger allUnreadNum = 0;
+    
     for (NIMRecentSession *recent in NIMlistArr) {
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         if (recent.localExt) {
@@ -237,6 +239,19 @@
         [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
         //账号
         [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
+        
+        NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
+        
+        NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
+        if (user.notifyForNewMsg == NO) {
+            allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
+        }
+        
+        NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
+        if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll) {
+            allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
+        }
+
 //        //消息类型
         if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
             NIMCustomObject *customObject = recent.lastMessage.messageObject;
@@ -351,10 +366,12 @@
        
         [sessionList addObject:dic];
     }
+    
+    NSDictionary *recentDict = @{@"recents":sessionList,@"unreadCount":[NSString stringWithFormat:@"%zd",allUnreadNum]};
     if (sessionList) {
-        suc(sessionList);
+        suc(recentDict);
     }else{
-        err(@"网络异常");
+        err(@"Network error");
     }
     
 }
