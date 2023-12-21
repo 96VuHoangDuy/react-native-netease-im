@@ -1050,7 +1050,7 @@ public class SessionService {
             body.put("sessionId", message.getSessionId());
         }
         body.put("sessionName", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
-        String pushContent = convertMessageContent(message.getContent());
+        String pushContent = message.getContent();
 
         switch (message.getMsgType()) {
             case image:
