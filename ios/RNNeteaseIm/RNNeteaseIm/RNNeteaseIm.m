@@ -450,6 +450,14 @@ RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  
 
 }
 
+RCT_EXPORT_METHOD(pinMessage:(nonnull NSString *)messsageId sessionId:(nonnull NSString *)sessionId sessionType:(NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] pinMessage:messsageId sessionId:sessionId sessionType:sessionType success:^(id param) {
+        resolve(param);
+    } Err:^(id erro) {
+        reject(@"Pin message error",erro, nil);
+    }];
+}
+
 //发送地理位置消息
 RCT_EXPORT_METHOD(sendLocationMessage:(nonnull  NSString *)latitude longitude:(nonnull  NSString *)longitude address:(nonnull  NSString *)address){
    [[ConversationViewController initWithConversationViewController]sendLocationMessage:latitude longitude:longitude address:address];
