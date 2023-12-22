@@ -1421,6 +1421,33 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void pinMessage(String messageId, String sessionId, String sessionType,final Promise promise){
+        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+                NIMClient.getService(MsgService.class).addMsgPin(message,"").setCallback(new RequestCallback<Long>() {
+                    @Override
+                    public void onSuccess(Long param) {
+                        promise.resolve("200");
+                    }
+
+                    @Override
+                    public void onFailed(int code) {
+                        promise.reject("" + code, "fail");
+                    }
+
+                    @Override
+                    public void onException(Throwable exception) {
+                        Log.e(TAG, "pull server message exception:" + exception);
+                    }
+                });
+
+                return 0;
+            };
+        });
+    }
+
+    @ReactMethod
     public void updateAudioMessagePlayStatus(String messageId, final Promise promise) {
         LogUtil.w(TAG, "updateAudioMessagePlayStatus" + messageId);
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {

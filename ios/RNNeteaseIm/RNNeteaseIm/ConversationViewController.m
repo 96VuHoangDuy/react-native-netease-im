@@ -618,7 +618,6 @@
 };
 
 - (NSDictionary *) setLocalExtMessage:(NIMMessage *)message key:(NSString *)key value:(NSString *)value {
-    
     NSDictionary *localExt = message.localExt ? : @{};
     NSMutableDictionary *dict = [localExt mutableCopy];
     [dict setObject:value forKey:key];
@@ -1316,6 +1315,28 @@
 //                                                  [NIMModel initShareMD].deleteMessDict = deleteDict;
 //                                             }];
 //}
+
+- (void)pinMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe Err:(Errors)err{
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NSArray *listMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *currentMessage = listMessage[0];
+    
+    NSLog(@"sessionId ---> %@ %@ %@ %@",messageId,sessionId,sessionType, currentMessage);
+    
+    NIMMessagePinItem *pinItem = [[NIMMessagePinItem alloc] initWithMessage:currentMessage];
+    NSLog(@"pinItem ----> %@",pinItem);
+    
+    [NIMSDK.sharedSDK.chatExtendManager addMessagePin:pinItem completion:^(NSError * _Nullable error, NIMMessagePinItem * _Nullable item) {
+        if (error) {
+            // Handle error
+            err(error);
+            return;
+        }
+        // Do something with {item}
+        succe(@"200");
+    }];
+    
+}
 
 #pragma mark - NIMMediaManagerDelegate
 - (void)recordAudio:(NSString *)filePath didBeganWithError:(NSError *)error {
