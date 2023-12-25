@@ -13,6 +13,65 @@
 
 @implementation NIMMessageMaker
 
++ (NIMMessage*)msgWithCloud:(NIMSession *)session saveMessage:(NIMMessage *)saveMessage senderName:(NSString *)senderName {
+    NIMMessage *message = [[NIMMessage alloc] init];
+    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:saveMessage.from];
+    NSString *strMyId = [NIMSDK sharedSDK].loginManager.currentAccount;
+    BOOL isMe = [user.userId isEqualToString:strMyId];
+    NSString *content;
+    
+    switch (saveMessage.messageType) {
+        case NIMMessageTypeText:
+        {
+            if ([[saveMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
+                if (isMe) {
+                    content = @"forward";
+                } else {
+                    content = [NSString stringWithFormat:@"%@: forward", user.userInfo.nickName];
+                }
+            } else if ([[saveMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"card"]) {
+                if (isMe) {
+                    content = @"card";
+                } else {
+                    content = [NSString stringWithFormat:@"%@: card", user.userInfo.nickName];
+                }
+            } else if ([[saveMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"gif"]) {
+                if (isMe) {
+                    content = @"gif";
+                } else {
+                    content = [NSString stringWithFormat:@"%@: gif", user.userInfo.nickName];
+                }
+            } else {
+                if (isMe) {
+                    content = saveMessage.text;
+                } else {
+                    content = [NSString stringWithFormat:@"%@: %@", user.userInfo.nickName, saveMessage.text];
+                }
+            }
+            break;
+        }
+        
+        case NIMMessageTypeAudio:
+            content = [NSString stringWithFormat:@"%@: voice", user.userInfo.nickName];
+            break;
+            
+        case NIMMessageTypeVideo:
+            content = [NSString stringWithFormat:@"%@: video", user.userInfo.nickName];
+            break;
+        
+        case NIMMessageTypeImage:
+            content = [NSString stringWithFormat:@"%@: image", user.userInfo.nickName];
+            break;
+            
+        default:
+            break;
+    }
+    message.text = content;
+    message.apnsContent = content;
+    
+    return message;
+}
+
 + (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName
 {
     NIMMessage *message = [[NIMMessage alloc] init];

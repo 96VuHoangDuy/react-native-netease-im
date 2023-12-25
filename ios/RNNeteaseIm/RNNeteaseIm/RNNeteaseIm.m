@@ -282,6 +282,10 @@ RCT_EXPORT_METHOD(deleteFriend:(nonnull  NSString *)contactId resolve:(RCTPromis
 }
 
 
+RCT_EXPORT_METHOD(saveCloud:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId) {
+    [[ConversationViewController initWithConversationViewController]saveCloud:sessionId sessionType:sessionType messageId:messageId];
+}
+
 //好友消息提醒开关
 RCT_EXPORT_METHOD(setMessageNotify:(nonnull NSString *)contactId needNotify:(nonnull NSString *)needNotify resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     __weak typeof(self)weakSelf = self;

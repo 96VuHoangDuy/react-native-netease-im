@@ -198,7 +198,11 @@ public class ReactCache {
                 map.putString("imagePath", imagePath);
                 map.putString("imageLocal", ImageLoaderKit.getMemoryCachedAvatar(imagePath));
                 map.putString("name", name);
-                map.putString("sessionType", Integer.toString(contact.getSessionType().getValue()));
+                if (contactId.equals("cloud")) {
+                    map.putString("sessionType", "cloud");
+                } else {
+                    map.putString("sessionType", Integer.toString(contact.getSessionType().getValue()));
+                }
 //                map.putString("msgType", getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
                 if (contact.getMsgType() == MsgTypeEnum.custom) {
                     map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
@@ -1507,7 +1511,11 @@ public class ReactCache {
 
         itemMap.putString(MessageConstant.Message.TIME_STRING, Long.toString(item.getTime() / 1000));
         itemMap.putString(MessageConstant.Message.SESSION_ID, item.getSessionId());
-        itemMap.putString(MessageConstant.Message.SESSION_TYPE, Integer.toString(item.getSessionType().getValue()));
+        if (item.getSessionId().equals("cloud")) {
+            itemMap.putString(MessageConstant.Message.SESSION_TYPE, "cloud");
+        } else {
+            itemMap.putString(MessageConstant.Message.SESSION_TYPE, Integer.toString(item.getSessionType().getValue()));
+        }
 
         itemMap.putBoolean(MessageConstant.Message.IS_OUTGOING, item.getDirect().getValue() == 0);
         itemMap.putString(MessageConstant.Message.STATUS, getMessageStatus(item.getStatus()));

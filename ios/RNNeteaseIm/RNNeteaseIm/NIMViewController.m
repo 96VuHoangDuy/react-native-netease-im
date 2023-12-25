@@ -232,7 +232,11 @@
             [dic setObject:recent.localExt forKey:@"localExt"];
         }
         [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
-        [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
+        if ([recent.session.sessionId isEqualToString:@"cloud"]) {
+            [dic setObject:@"cloud" forKey:@"sessionType"];
+        } else {
+            [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
+        }
         //未读
         [dic setObject:[NSString stringWithFormat:@"%zd", recent.unreadCount] forKey:@"unreadCount"];
         //群组名称或者聊天对象名称
@@ -344,7 +348,11 @@
             }
         }
         //消息状态
-        [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+        if ([recent.session.sessionId isEqualToString:@"cloud"]) {
+            [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+        } else {
+            [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+        }
         //消息ID
         [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
         //消息内容
@@ -385,7 +393,11 @@
         if (recent.session.sessionType == NIMSessionTypeP2P) {
             NSMutableDictionary *dic = [NSMutableDictionary dictionary];
             [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
-            [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
+            if ([recent.session.sessionId isEqualToString:@"cloud"]) {
+                [dic setObject:@"cloud" forKey:@"cloud"];
+            } else {
+                [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
+            }
             //未读
             NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
             [dic setObject:strUnreadCount forKey:@"unreadCount"];
@@ -489,7 +501,11 @@
                 }
             }
             //消息状态
-            [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+            if ([recent.session.sessionId isEqualToString:@"cloud"]) {
+                [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+            } else {
+                [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+            }
             //消息ID
             [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
             //消息内容
@@ -510,7 +526,11 @@
             // if ( [[NIMSDK sharedSDK].teamManager isMyTeam:recent.lastMessage.session.sessionId]) {
                 NSMutableDictionary *dic = [NSMutableDictionary dictionary];
                 [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
+            if ([recent.session.sessionId isEqualToString:@"cloud"]) {
+                [dic setObject:@"cloud" forKey:@"cloud"];
+            } else {
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
+            }
                 //未读
                 NSString *strUnreadCount = [NSString stringWithFormat:@"%zd", recent.unreadCount];
                 [dic setObject:strUnreadCount forKey:@"unreadCount"];
@@ -609,7 +629,11 @@
                     }
                 }
                 //消息状态
-                [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+                if ([recent.session.sessionId isEqualToString:@"cloud"]) {
+                    [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+                } else {
+                    [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+                }
                 //消息ID
                 [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
                 //消息内容

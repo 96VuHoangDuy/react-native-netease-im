@@ -122,6 +122,7 @@
     }
 }
 
+
 //聊天界面历史记录
 - (void)localSession:(NSInteger)limit currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err{
     [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
@@ -658,7 +659,18 @@
         NSDictionary *localExt = message.localExt;
                 
         if (localExt != nil) {
-            [dic setObject:localExt forKey:@"localExt"];
+            NSString *saveFrom = [localExt objectForKey:@"saveFrom"];
+            if (saveFrom != nil) {
+                NSData *objectData = [saveFrom dataUsingEncoding:NSUTF8StringEncoding];
+                NSDictionary *json = [NSJSONSerialization JSONObjectWithData:objectData options:NSJSONReadingMutableContainers error:nil];
+                NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+                
+                [dict setObject:json forKey:@"saveFrom"];
+                [dic setObject:dict forKey:@"localExt"];
+            } else {
+                [dic setObject:localExt forKey:@"localExt"];
+            }
+            
         }
         
         if (recent.localExt != nil) {
@@ -695,13 +707,21 @@
         }
         [dic setObject:[NSString stringWithFormat:@"%@", message.text] forKey:@"text"];
         [dic setObject:[NSString stringWithFormat:@"%@", message.session.sessionId] forKey:@"sessionId"];
-        [dic setObject:[NSString stringWithFormat:@"%ld", message.session.sessionType] forKey:@"sessionType"];
+        if ([message.session.sessionId isEqualToString:@"cloud"]) {
+            [dic setObject:@"cloud" forKey:@"sessionType"];
+        } else {
+            [dic setObject:[NSString stringWithFormat:@"%ld", message.session.sessionType] forKey:@"sessionType"];
+        }
         
         [dic setObject:[NSString stringWithFormat:@"%d",message.isRemoteRead] forKey:@"isRemoteRead"];
 
         switch (message.deliveryState) {
             case NIMMessageDeliveryStateFailed:
-                [dic setObject:@"send_failed" forKey:@"status"];
+                if ([message.session.sessionId isEqualToString:@"cloud"]) {
+                    [dic setObject:@"send_succeed" forKey:@"status"];
+                } else {
+                    [dic setObject:@"send_failed" forKey:@"status"];
+                }
                 break;
             case NIMMessageDeliveryStateDelivering:
                 [dic setObject:@"send_going" forKey:@"status"];
@@ -710,11 +730,15 @@
                 [dic setObject:@"send_succeed" forKey:@"status"];
                 break;
             default:
-                [dic setObject:@"send_failed" forKey:@"status"];
+                if ([message.session.sessionId isEqualToString:@"cloud"]) {
+                    [dic setObject:@"send_succeed" forKey:@"status"];
+                } else {
+                    [dic setObject:@"send_failed" forKey:@"status"];
+                }
                 break;
         }
         NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
-        if ([isFriend length]) {
+        if ([isFriend length] && ![message.session.sessionId isEqualToString:@"cloud"]) {
             if ([isFriend isEqualToString:@"NO"]) {
                 [dic setObject:@"send_failed" forKey:@"status"];
             }
@@ -907,23 +931,30 @@
     return [[NIMSDK sharedSDK].mediaManager isPlaying];
 }
 
+-(void)sendMessageSelf:(NIMMessage *)message isCustomerService:(BOOL *)isCustomerService {
+    BOOL isCloud = [self._session.sessionId isEqualToString:@"cloud"];
+    if (isCloud) {
+        [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
+    } else {
+        if (isCustomerService || [self isFriendToSendMessage:message]) {
+            [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+        }
+    }
+}
+
 
 //发送录音
 -(void)sendAudioMessage:(  NSString *)file duration:(  NSString *)duration isCustomerService:(BOOL *)isCustomerService{
     if (file) {
         NIMMessage *message = [NIMMessageMaker msgWithAudio:file andeSession:self._session senderName:_myUserName];
-        if (isCustomerService || [self isFriendToSendMessage:message]) {
-             [[[NIMSDK sharedSDK] chatManager] sendMessage:message toSession:self._session error:nil];
-        }
+        [self sendMessageSelf:message isCustomerService:isCustomerService];
     }
 }
 //发送文字消息
 -(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
     NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session senderName:_myUserName];
     //发送消息
-    if (isCustomerService || [self isFriendToSendMessage:message]) {
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
-    }
+    [self sendMessageSelf:message isCustomerService:isCustomerService];
 }
 
 //发送文字消息
@@ -933,9 +964,7 @@
     message.remoteExt = remoteExt;
     NSLog(@"message.remoteExt: %@", message.remoteExt);
     //发送消息
-    if (isCustomerService || [self isFriendToSendMessage:message]) {
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
-    }
+    [self sendMessageSelf:message isCustomerService:isCustomerService];
 }
 
 //发送图片
@@ -943,9 +972,7 @@
     UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
     NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session isHighQuality:isHighQuality senderName:_myUserName];
 //    NIMMessage *message = [NIMMessageMaker msgWithImagePath:path];
-    if (isCustomerService || [self isFriendToSendMessage:message]) {
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
-    }
+    [self sendMessageSelf:message isCustomerService:isCustomerService];
 }
 
 //发送视频
@@ -959,11 +986,9 @@
     if ([path hasPrefix:@"file:///private"]) {
         path = [path stringByReplacingOccurrencesOfString:@"file:///private" withString:@""];
     }
-            message = [NIMMessageMaker msgWithVideo:path andeSession:self._session senderName:_myUserName];
+        message = [NIMMessageMaker msgWithVideo:path andeSession:self._session senderName:_myUserName];
 //        }
-        if (isCustomerService || [self isFriendToSendMessage:message]) {
-            [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
-        }
+    [self sendMessageSelf:message isCustomerService:isCustomerService];
 //    }];
 }
 
@@ -1088,6 +1113,21 @@
     }
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
     
+}
+
+- (void)saveCloud:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NIMSession *sessionCloud = [NIMSession session:@"cloud" type:NIMSessionTypeP2P];
+    NSArray *currentMessages = [[[NIMSDK sharedSDK]  conversationManager] messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *message = [NIMMessageMaker msgWithCloud:sessionCloud saveMessage:currentMessages[0] senderName:_myUserName];
+    
+    NSMutableArray *arr = [self setTimeArr:currentMessages];
+    NSDictionary *currentMessage = arr[0];
+    
+    NSString *jsonMessage = [self jsonStringWithDictionary:currentMessage];
+    [self setLocalExtMessage:message key:@"saveFrom" value:jsonMessage];
+    
+    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:sessionCloud completion:nil];
 }
 
 //发送名片
@@ -1501,13 +1541,21 @@
     }
     [dic2 setObject:[NSString stringWithFormat:@"%@", message.text] forKey:@"text"];
     [dic2 setObject:[NSString stringWithFormat:@"%@", message.session.sessionId] forKey:@"sessionId"];
-    [dic2 setObject:[NSString stringWithFormat:@"%ld", message.session.sessionType] forKey:@"sessionType"];
+    if ([message.session.sessionId isEqualToString:@"cloud"]) {
+        [dic2 setObject:@"cloud" forKey:@"sessionType"];
+    } else {
+        [dic2 setObject:[NSString stringWithFormat:@"%ld", message.session.sessionType] forKey:@"sessionType"];
+    }
     
     [dic2 setObject:[NSString stringWithFormat:@"%d", message.isRemoteRead] forKey:@"isRemoteRead"];
 
     switch (message.deliveryState) {
         case NIMMessageDeliveryStateFailed:
-            [dic2 setObject:@"send_failed" forKey:@"status"];
+            if ([message.session.sessionId isEqualToString:@"cloud"]) {
+                [dic2 setObject:@"send_succeed" forKey:@"status"];
+            } else {
+                [dic2 setObject:@"send_failed" forKey:@"status"];
+            }
             break;
         case NIMMessageDeliveryStateDelivering:
             [dic2 setObject:@"send_going" forKey:@"status"];
@@ -1516,11 +1564,15 @@
             [dic2 setObject:@"send_succeed" forKey:@"status"];
             break;
         default:
-            [dic2 setObject:@"send_failed" forKey:@"status"];
+            if ([message.session.sessionId isEqualToString:@"cloud"]) {
+                [dic2 setObject:@"send_succeed" forKey:@"status"];
+            } else {
+                [dic2 setObject:@"send_failed" forKey:@"status"];
+            }
             break;
     }
     NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
-    if ([isFriend length]) {
+    if ([isFriend length] && ![message.session.sessionId isEqualToString:@"cloud"]) {
         if ([isFriend isEqualToString:@"NO"]) {
             [dic2 setObject:@"send_failed" forKey:@"status"];
         }
