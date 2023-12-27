@@ -46,6 +46,7 @@ import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
 import com.netease.nimlib.sdk.msg.attachment.AudioAttachment;
 import com.netease.nimlib.sdk.msg.attachment.FileAttachment;
+import com.netease.nimlib.sdk.msg.attachment.LocationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.attachment.VideoAttachment;
 import com.netease.nimlib.sdk.msg.constant.AttachStatusEnum;
@@ -1069,6 +1070,9 @@ public class SessionService {
                 } else {
                     pushContent = "[语音]";
                 }
+                break;
+            case location:
+                pushContent ="location";
                 break;
             default:
                 pushContent = convertMessageContent(message.getContent());
