@@ -122,15 +122,45 @@
     }
 }
 
+-(NSDictionary *)updateLastReadMessageId:(NIMSession *)session {
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    
+    if (recent != nil) {
+        NIMMessage *lastMessage = recent.lastMessage;
+        NSDictionary *localExt = recent.localExt?:@{};
+        NSString *messageId = [localExt objectForKey:@"lastReadMessageId"];
+        NSInteger unreadCount = recent.unreadCount;
+        NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+        
+        if (messageId != nil) {
+            [result setObject:messageId forKey:@"lastMessageId"];
+        }
+        [result setObject:@(unreadCount) forKey:@"unreadCount"];
+        
+        NSMutableDictionary *dict = [localExt mutableCopy];
+        
+        [dict setObject:lastMessage.messageId forKey:@"lastReadMessageId"];
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
+        
+        return result;
+    }
+    
+    return nil;
+}
+
 //聊天界面历史记录
 - (void)localSession:(NSInteger)limit currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err{
+    NIMSession *session = [sessionId length] && [sessionType length] ? [NIMSession session:sessionId type:[sessionType integerValue]] : self._session;
+    NSDictionary *data;
+    if (currentMessageID.length == 0) {
+        data = [self updateLastReadMessageId:session];
+    }
+    
     [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
     NIMGetMessagesDynamicallyParam *param = [[NIMGetMessagesDynamicallyParam alloc] init];
-    NIMSession *session = [sessionId length] && [sessionType length] ? [NIMSession session:sessionId type:[sessionType integerValue]] : self._session;
     
     param.session = session;
     param.limit = limit;
-    
   
     if (currentMessageID.length != 0) {
         NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[currentMessageID] ];
@@ -161,8 +191,20 @@
                     [[NSUserDefaults standardUserDefaults]setObject:[dic objectForKey:@"time"] forKey:@"timestamp"];
                 }
                 
-                succe([self setTimeArr:messageArr]);
-
+                NSArray *messages = [self setTimeArr:messageArr];
+                
+                if (currentMessageID.length > 0) {
+                    succe(messages);
+                } else {
+                    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+                    if (data != nil) {
+                        [result setObject:data forKey:@"data"];
+                    }
+                    
+                    [result setObject:messages forKey:@"messages"];
+                    
+                    succe(result);
+                }
             }
         }];
 //    }
@@ -176,6 +218,19 @@
     }
 }
 
+//- (void) queryUnreadMessagesInSession:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId {
+//    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+//
+//    NSArray *messageArr = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+//    NIMMessage *message = messageArr.firstObject;
+//}
+
+- (void) getMessageById:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NSArray *messageArr = [self setTimeArr:[[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]]];
+    NIMMessage *message = messageArr.firstObject;
+    success(message);
+}
 //search local Messages
 - (void)searchMessages:(NSString *)keyWords success:(Success)succe err:(Errors)err{
     NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
@@ -1192,6 +1247,13 @@
     if ([message.session.sessionId isEqualToString:_sessionID]) {
         [self refrashMessage:message From:@"receive" ];
         NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:message];
+        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:receipt.session];
+        NSDictionary *localExt = recent.localExt?:@{};
+        
+        NSMutableDictionary *dict = [localExt mutableCopy];
+        
+        [dict setObject:message.messageId forKey:@"lastReadMessageId"];
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
         
         if (message.session.sessionType == NIMSessionTypeTeam) {
             [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
@@ -1213,7 +1275,6 @@
     NSMutableArray *messageIds = [NSMutableArray array];
 
     for (NIMMessageReceipt *receipt in receipts) {
-        
         NSArray *messageArr =  [[[NIMSDK sharedSDK] conversationManager]messagesInSession:receipt.session message:nil limit: 1];
         
         NIMModel *model = [NIMModel initShareMD];

@@ -13,6 +13,8 @@ import android.util.Log;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -136,6 +138,40 @@ public class ReactCache {
         }
     }
 
+//    public  static  WritableMap convertReadableMap(ReadableMap map) {
+//        WritableMap result = Arguments.createMap();
+//        ReadableMapKeySetIterator iterator = map.keySetIterator();
+//        while (iterator.hasNextKey()) {
+//            String key = iterator.nextKey();
+//            switch (map.getType(key)) {
+//                case Null:
+//                    result.putNull(key);
+//                    break;
+//                case Boolean:
+//                    result.putBoolean(key, map.getBoolean(key));
+//                    break;
+//                case Number:
+//                    result.putDouble(key, map.getDouble(key));
+//                    break;
+//                case String:
+//                    result.putString(key, map.getString(key));
+//                    break;
+//                case Map:
+//                    result.putMap(key, map.getMap(key));
+//                    break;
+//                case Array:
+//                    // If the value is a ReadableArray, handle it similarly to ReadableMap
+//                    // For simplicity, this example puts null in the WritableMap
+//                    writableMap.putNull(key);
+//                    break;
+//                // Add more cases for other types if needed
+//                default:
+//                    // Handle other types or skip them as per your use case
+//                    break;
+//            }
+//        }
+//    }
+
     public static Object createRecentList(List<RecentContact> recents, int unreadNum) {
         LogUtil.w(TAG, "size:" + (recents == null ? 0 : recents.size()));
         // recents参数即为最近联系人列表（最近会话列表）
@@ -161,9 +197,15 @@ public class ReactCache {
                     Boolean isUpdated  = (Boolean) extension.get("isUpdated");
                     String nameCsr = (String) extension.get("name");
 
-                    localExt.putBoolean("isCsr", isCsr);
-                    localExt.putBoolean("isChatBot", isChatBot);
-                    localExt.putBoolean("isUpdated", isUpdated);
+                    if (isCsr != null) {
+                        localExt.putBoolean("isCsr", isCsr);
+                    }
+                    if (isChatBot !=  null) {
+                        localExt.putBoolean("isChatBot", isChatBot);
+                    }
+                    if (isUpdated != null) {
+                        localExt.putBoolean("isUpdated", isUpdated);
+                    }
 
                     if (nameCsr != null) {
                         localExt.putString("name", nameCsr);
@@ -812,7 +854,7 @@ public class ReactCache {
      * @param messageList
      * @return Object
      */
-    public static Object createMessageList(List<IMMessage> messageList) {
+    public static WritableArray createMessageList(List<IMMessage> messageList) {
         WritableArray writableArray = Arguments.createArray();
 
         if (messageList != null) {
@@ -1438,8 +1480,12 @@ public class ReactCache {
                 Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
                 String chatBotType = (String) extension.get("chatBotType");
 
-                isCsr = extensionIsCsr;
-                isChatBot = extensionIsChatBot;
+                if (extensionIsCsr != null) {
+                    isCsr = extensionIsCsr;
+                }
+                if (extensionIsChatBot != null) {
+                    isChatBot = extensionIsChatBot;
+                }
 
                 if (chatBotType != null) {
                     WritableMap localExt = Arguments.createMap();

@@ -495,8 +495,9 @@ class NimSession {
     }
   }
 
+
   addEmptyRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
-    return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType);
+    return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType)
   }
 
   updateRecentSessionIsCsrOrChatbot(
@@ -525,6 +526,10 @@ class NimSession {
 
   readAllMessageOnlineServiceByListSession(listSessionId: string[]) {
     return RNNeteaseIm.readAllMessageOnlineServiceByListSession(listSessionId);
+  }
+
+  getMessageById(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string) {
+    return RNNeteaseIm.getMessageById(sessionId, sessionType, messageId);
   }
 }
 

@@ -25,6 +25,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
@@ -1676,6 +1677,73 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public  void getMessageById(String sessionId, String sessionType, String messageId, final  Promise promise) {
+        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+                if (code == ResponseCode.RES_SUCCESS && message != null) {
+                    promise.resolve(message);
+                    return code;
+                }
+
+                promise.reject("", "" + code);
+
+                return code;
+            }
+        });
+//        MsgSearchOption option = new MsgSearchOption();
+//        option.setLimit(1);
+//        List<String> fromIds = new ArrayList<String>();
+//        fromIds.add(messageId);
+//
+//        getMsgService().searchMessage(SessionUtil.getSessionType(sessionType), sessionId, option).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+//            @Override
+//            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+//                if (code == ResponseCode.RES_SUCCESS) {
+//                    WritableArray messageArr = ReactCache.createMessageList(result);
+//
+//                    ReadableMap msg = messageArr.getMap(0);
+//                    WritableMap message = Arguments.createMap();
+//
+//                    ReadableMapKeySetIterator iterator = msg.keySetIterator();
+//
+//                    while (iterator.hasNextKey()) {
+//                        String key = iterator.nextKey();
+//
+//                        switch (msg.getType(key)) {
+//                            case Null:
+//                                message.putNull(key);
+//                                break;
+//                            case Boolean:
+//                                message.putBoolean(key, msg.getBoolean(key));
+//                                break;
+//                            case Number:
+//                                message.putDouble(key, msg.getDouble(key));
+//                                break;
+//                            case String:
+//                                message.putString(key, msg.getString(key));
+//                                break;
+//                            case Map:
+//                                message.putMap(key, msg.getMap(key));
+//                                break;
+//                            case Array:
+//                               message.putArray(key, msg.getArray(key));
+//                                break;
+//                            default:
+//                                break;
+//                        }
+//                    }
+//
+//                    promise.resolve(message);
+//                    return;
+//                }
+//
+//                promise.reject("" + code, "");
+//            }
+//        });
+    }
+
+    @ReactMethod
     public void deleteFiles(ReadableArray sessionIds, final Promise promise) {
         ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
     }
@@ -1811,6 +1879,45 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
         option.setAllMessageTypes(true);
 
+        String _sessionId = sessionId;
+        SessionTypeEnum _sessionType ;
+        if (sessionId == "") {
+            _sessionId = sessionService.getSessionId();
+        }
+        if (sessionType == "") {
+            _sessionType = sessionService.getSessionTypeEnum();
+        } else {
+            _sessionType = SessionUtil.getSessionType(sessionType);
+        }
+
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(_sessionId, _sessionType);
+
+        String lastMessageId= "";
+        Integer unreadCount = 0;
+
+        if (recent != null && (!messageId.isEmpty() || messageId == null || messageId == "")) {
+            unreadCount = recent.getUnreadCount();
+            Map<String, Object> extension = recent.getExtension();
+
+            if (extension == null) {
+                extension = new HashMap<String, Object>();
+            }
+
+            if (extension.get("lastMessageId") != null) {
+                lastMessageId = (String) extension.get("lastMessageId");
+            }
+
+
+            extension.put("lastMessageId", recent.getRecentMessageId());
+            extension.put("unreadCount", unreadCount);
+
+            recent.setExtension(extension);
+
+            NIMSDK.getMsgService().updateRecent(recent);
+        }
+
+        String finalLastMessageId = lastMessageId;
+        Integer finalUnreadCount = unreadCount;
         RequestCallbackWrapper callback = new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> result, Throwable exception) {
@@ -1821,8 +1928,22 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                             Collections.reverse(messages);
                         }
 
-                        Object a = ReactCache.createMessageList(messages);
-                        sessionService.sendMsgReceipt(result);
+                        WritableArray a = ReactCache.createMessageList(messages);
+
+                        if (messageId.isEmpty() || messageId == null || messageId == "") {
+                            WritableMap map = Arguments.createMap();
+                            WritableMap data = Arguments.createMap();
+                            if (!finalLastMessageId.isEmpty()) {
+                                data.putString("lastMessageId", finalLastMessageId);
+                            }
+                            data.putInt("unreadCount", finalUnreadCount);
+                            map.putMap("data", data);
+                            map.putArray("messages", a);
+                            sessionService.sendMsgReceipt(result);
+                            promise.resolve(map);
+                            return;
+                        }
+
                         promise.resolve(a);
                         return;
                     }
