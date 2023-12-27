@@ -161,9 +161,15 @@ public class ReactCache {
                     Boolean isUpdated  = (Boolean) extension.get("isUpdated");
                     String nameCsr = (String) extension.get("name");
 
-                    localExt.putBoolean("isCsr", isCsr);
-                    localExt.putBoolean("isChatBot", isChatBot);
-                    localExt.putBoolean("isUpdated", isUpdated);
+                    if (isCsr != null) {
+                        localExt.putBoolean("isCsr", isCsr);
+                    }
+                    if (isChatBot != null) {
+                        localExt.putBoolean("isChatBot", isChatBot);
+                    }
+                    if (isUpdated != null) {
+                        localExt.putBoolean("isUpdated", isUpdated);
+                    }
 
                     if (nameCsr != null) {
                         localExt.putString("name", nameCsr);
@@ -1294,6 +1300,7 @@ public class ReactCache {
             imageObj.putBoolean("needRefreshMessage", false);
 
             Boolean isFilePathDeleted = false;
+            Boolean isFileDownloading = true;
             Log.d("imageAttachment",imageAttachment.getPath()+"");
             Log.d("localExtension.get()",localExtension.get("isReplacePathSuccess")+"");
 
@@ -1438,8 +1445,12 @@ public class ReactCache {
                 Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
                 String chatBotType = (String) extension.get("chatBotType");
 
-                isCsr = extensionIsCsr;
-                isChatBot = extensionIsChatBot;
+                if (extensionIsChatBot != null) {
+                    isChatBot = extensionIsChatBot;
+                }
+                if (extensionIsCsr != null) {
+                    isCsr = extensionIsCsr;
+                }
 
                 if (chatBotType != null) {
                     WritableMap localExt = Arguments.createMap();
@@ -1547,7 +1558,9 @@ public class ReactCache {
         user.putString(MessageConstant.User.DISPLAY_NAME, displayName);
         user.putString(MessageConstant.User.USER_ID, fromAccount);
         user.putString(MessageConstant.User.AVATAR_PATH, avatar);
+
         user.putBoolean("isChatBot", isChatBot);
+
         if (isCsr) {
             user.putBoolean("isCsr", true);
         }
