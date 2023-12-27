@@ -1,6 +1,5 @@
 import { NativeModules, Platform } from "react-native";
 import {
-  CustomMessageType,
   NIMSessionTypeEnum,
   NIMQueryDirectionEnum,
   NIMSendAttachmentEnum,
@@ -525,6 +524,10 @@ class NimSession {
 
   readAllMessageOnlineServiceByListSession(listSessionId: string[]) {
     return RNNeteaseIm.readAllMessageOnlineServiceByListSession(listSessionId);
+  }
+
+  saveCloud(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string) {
+    return RNNeteaseIm.saveCloud(sessionId, sessionType,messageId);
   }
 }
 

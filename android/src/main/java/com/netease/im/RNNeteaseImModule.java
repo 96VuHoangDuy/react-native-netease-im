@@ -155,6 +155,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         promise.resolve("200");
     }
 
+    @ReactMethod
+    public  void saveCloud(String sessionId, String sessionType, String messageId, final  Promise promise) {
+        SessionService.getInstance().saveCloud(sessionId, sessionType, messageId, promise);
+    }
+
     /**
      * 登陆
      *
@@ -2361,9 +2366,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void addEmptyRecentSession(String sessionId, String sessionType) {
+    public void addEmptyRecentSession(String sessionId, String sessionType,final Promise promise) {
         SessionTypeEnum type = SessionUtil.getSessionType(sessionType);
-        NIMSDK.getMsgService().createEmptyRecentContact(sessionId, type, 0, System.currentTimeMillis(), true);
+        RecentContact recentContact =  NIMSDK.getMsgService().createEmptyRecentContact(sessionId, type, 0, System.currentTimeMillis(), true);
+        promise.resolve(recentContact);
     }
 
     @ReactMethod

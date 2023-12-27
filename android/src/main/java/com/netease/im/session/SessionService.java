@@ -8,7 +8,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.MapBuilder;
 import com.netease.im.IMApplication;
@@ -59,6 +61,7 @@ import com.netease.nimlib.sdk.msg.model.CustomMessageConfig;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MemberPushOption;
 import com.netease.nimlib.sdk.msg.model.MessageReceipt;
+import com.netease.nimlib.sdk.msg.model.NIMMessage;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.RevokeMsgNotification;
@@ -977,15 +980,98 @@ public class SessionService {
         getMsgService().updateIMMessageStatus(message);
     }
 
+    public void saveCloud(String sessionId, String sessionType, String messageId, final Promise promise) {
+        List<String> uuids = new ArrayList<>();
+        uuids.add(messageId);
+        Log.e(TAG, "uuids" + uuids );
+        getMsgService().queryMessageListByUuid(uuids).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> messageList, Throwable throwable) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("error", "");
+                    return;
+                }
+                IMMessage msg = messageList.get(0);
+                WritableMap message = ReactCache.createMessage(msg, false);
+                String sessionName = SessionUtil.getSessionName(sessionId, SessionUtil.getSessionType(sessionType), true);
+                Boolean isMe = TextUtils.equals(LoginService.getInstance().getAccount(), sessionId);
+                String content = msg.getContent();
+
+                switch (msg.getMsgType()) {
+                    case image:
+                        if (isMe) {
+                            content = "image";
+                        } else {
+                            content = sessionName + ": image";
+                        }
+                        break;
+                    case audio:
+                        if (isMe) {
+                            content = "voice";
+                        } else {
+                            content = sessionName + ": voice";
+                        }
+                        break;
+                    case video:
+                        if (isMe) {
+                            content = "video";
+                        } else {
+                            content = sessionName + ": video";
+                        }
+                        break;
+                    default:
+                        Map<String, Object> remoteExt = msg.getRemoteExtension();
+                        if (remoteExt != null) {
+                            String extendType = remoteExt.get("extendType").toString();
+
+                            if (extendType != null) {
+                                if (extendType.equals("forwardMultipleText")) {
+                                    if (isMe) {
+                                        content = "forward";
+                                    } else {
+                                        content = sessionName + ": forward";
+                                    }
+                                }
+
+                                if (extendType.equals("card")) {
+                                    if (isMe) {
+                                        content = "card";
+                                    } else {
+                                        content = sessionName + ": card";
+                                    }
+                                }
+
+                                if (extendType.equals("gif")) {
+                                    if (isMe) {
+                                        content = "gif";
+                                    } else {
+                                        content = sessionName + ": gif";
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                }
+
+                IMMessage newMessage = MessageBuilder.createTextMessage("cloud", SessionTypeEnum.P2P, content);
+                Log.e(TAG, "newMessage" + newMessage);
+                ReactCache.setLocalExtension(newMessage, "saveFrom", message);
+                getMsgService().saveMessageToLocal(newMessage, false);
+                newMessage.setStatus(MsgStatusEnum.success);
+
+                promise.resolve("success");
+            }
+        });
+    }
+
     public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isCustomerService) {
         appendPushConfig(message);
+        Boolean isCloud = sessionId.equals("cloud");
         if (sessionTypeEnum == SessionTypeEnum.P2P) {
             sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
-
-
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
             LogUtil.w(TAG, "isFriend:" + isFriend);
-            if (!isFriend && !isCustomerService) {
+            if (!isFriend && !isCustomerService && !isCloud) {
 
                 message.setStatus(MsgStatusEnum.fail);
                 CustomMessageConfig config = new CustomMessageConfig();
@@ -997,29 +1083,36 @@ public class SessionService {
                 return;
             }
         }
-        getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
 
-            }
+        if (isCloud) {
+            getMsgService().saveMessageToLocal(message, true);
+            message.setStatus(MsgStatusEnum.success);
+        } else {
+            getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
 
-            @Override
-            public void onFailed(int code) {
-                LogUtil.w(TAG, "code:" + code);
-                if (code == ResponseCode.RES_IN_BLACK_LIST) {
-                    Map<String, Object> map = MapBuilder.newHashMap();
-                    map.put("resend", false);
-                    message.setLocalExtension(map);
-                    getMsgService().updateIMMessage(message);
-                    sendTipMessage("消息已发出，但被对方拒收了。", null, true, false);
                 }
-            }
 
-            @Override
-            public void onException(Throwable throwable) {
-                LogUtil.w(TAG, "throwable:" + throwable.getLocalizedMessage());
-            }
-        });
+                @Override
+                public void onFailed(int code) {
+                    LogUtil.w(TAG, "code:" + code);
+                    if (code == ResponseCode.RES_IN_BLACK_LIST) {
+                        Map<String, Object> map = MapBuilder.newHashMap();
+                        map.put("resend", false);
+                        message.setLocalExtension(map);
+                        getMsgService().updateIMMessage(message);
+                        sendTipMessage("消息已发出，但被对方拒收了。", null, true, false);
+                    }
+                }
+
+                @Override
+                public void onException(Throwable throwable) {
+                    LogUtil.w(TAG, "throwable:" + throwable.getLocalizedMessage());
+                }
+            });
+        }
+
         onMessageStatusChange(message, true);
 
     }

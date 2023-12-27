@@ -23,6 +23,7 @@ export enum NIMSessionTypeEnum {
   QChat = "QChat",
   onlineService = "online_service",
   systemMessage = "system_message",
+  cloud = "cloud"
 }
 
 export enum NIMSessionOnlineServiceType {
