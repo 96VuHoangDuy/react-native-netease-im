@@ -1580,7 +1580,19 @@ public class ReactCache {
                 WritableMap videoDic = generateVideoExtend(item);
 
                 itemMap.putMap(MESSAGE_EXTEND, videoDic);
-            } else if (item.getMsgType() == MsgTypeEnum.notification) {
+            } else if(item.getMsgType() == MsgTypeEnum.location){
+                WritableMap locationObj = Arguments.createMap();
+
+                LocationAttachment locationAttachment = (LocationAttachment) item.getAttachment();
+                if (locationAttachment instanceof LocationAttachment) {
+                    locationObj.putString("latitude", String.valueOf(locationAttachment.getLatitude()));
+                    locationObj.putString("longitude", String.valueOf(locationAttachment.getLongitude()));
+                    locationObj.putString("title", locationAttachment.getAddress());
+
+                    itemMap.putMap(MESSAGE_EXTEND, locationObj);
+                }
+            }
+            else if (item.getMsgType() == MsgTypeEnum.notification) {
                 if (item.getSessionType() == SessionTypeEnum.Team) {
                     WritableMap notiObj = Arguments.createMap();
 //                    text = TeamNotificationHelper.getTeamNotificationText(item, item.getSessionId());
