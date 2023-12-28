@@ -91,6 +91,8 @@ typedef void(^Errors)(id erro);
 //重发消息
 - (void)resendMessage:(NSString *)messageID;
 
+-(void)getMessageById:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success;
+
 // search local Messages
 - (void) searchMessages:(NSString *)keyWords success:(Success)succe err:(Errors)err;
 

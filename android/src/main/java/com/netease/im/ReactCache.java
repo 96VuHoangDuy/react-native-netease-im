@@ -13,6 +13,8 @@ import android.util.Log;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -135,6 +137,40 @@ public class ReactCache {
             e.printStackTrace();
         }
     }
+
+//    public  static  WritableMap convertReadableMap(ReadableMap map) {
+//        WritableMap result = Arguments.createMap();
+//        ReadableMapKeySetIterator iterator = map.keySetIterator();
+//        while (iterator.hasNextKey()) {
+//            String key = iterator.nextKey();
+//            switch (map.getType(key)) {
+//                case Null:
+//                    result.putNull(key);
+//                    break;
+//                case Boolean:
+//                    result.putBoolean(key, map.getBoolean(key));
+//                    break;
+//                case Number:
+//                    result.putDouble(key, map.getDouble(key));
+//                    break;
+//                case String:
+//                    result.putString(key, map.getString(key));
+//                    break;
+//                case Map:
+//                    result.putMap(key, map.getMap(key));
+//                    break;
+//                case Array:
+//                    // If the value is a ReadableArray, handle it similarly to ReadableMap
+//                    // For simplicity, this example puts null in the WritableMap
+//                    writableMap.putNull(key);
+//                    break;
+//                // Add more cases for other types if needed
+//                default:
+//                    // Handle other types or skip them as per your use case
+//                    break;
+//            }
+//        }
+//    }
 
     public static Object createRecentList(List<RecentContact> recents, int unreadNum) {
         LogUtil.w(TAG, "size:" + (recents == null ? 0 : recents.size()));
@@ -818,7 +854,7 @@ public class ReactCache {
      * @param messageList
      * @return Object
      */
-    public static Object createMessageList(List<IMMessage> messageList) {
+    public static WritableArray createMessageList(List<IMMessage> messageList) {
         WritableArray writableArray = Arguments.createArray();
 
         if (messageList != null) {

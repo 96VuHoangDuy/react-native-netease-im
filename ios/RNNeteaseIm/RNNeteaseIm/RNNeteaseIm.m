@@ -302,6 +302,12 @@ RCT_EXPORT_METHOD(searchMessages:(nonnull NSString *)keyWords resolve:(RCTPromis
     }];
 }
 
+RCT_EXPORT_METHOD(getMessageById:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] getMessageById:sessionId sessionType:sessionType messageId:messageId success:^(id params) {
+        resolve(params);
+    }];
+}
+
 //search local Messages in session
 RCT_EXPORT_METHOD(searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ConversationViewController initWithConversationViewController] searchMessagesinCurrentSession:keyWords anchorId:anchorId limit:limit messageType:messageType direction:direction success:^(id param) {
