@@ -36,6 +36,7 @@ import com.netease.im.uikit.uinfo.UserInfoHelper;
 import com.netease.im.uikit.uinfo.UserInfoObservable;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.NIMSDK;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
@@ -346,6 +347,25 @@ public class SessionService {
             if (messages == null || messages.isEmpty()) {
                 return;
             }
+
+            for (IMMessage message : messages) {
+                RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(message.getSessionId(), message.getSessionType());
+
+                if (recent != null) {
+                    Map<String, Object> extension = recent.getExtension();
+
+                    if (extension != null) {
+                        extension = new HashMap<String, Object>();
+                    }
+
+                    extension.put("lastReadMessageId", message.getUuid());
+
+                    recent.setExtension(extension);
+
+                    NIMSDK.getMsgService().updateRecent(recent);
+                }
+            }
+
             sendMsgReceipt(messages); // 发送已读回执
             onIncomingMessage(messages);
 
