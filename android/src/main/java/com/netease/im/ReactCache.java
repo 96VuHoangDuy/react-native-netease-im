@@ -200,7 +200,7 @@ public class ReactCache {
                     if (isCsr != null) {
                         localExt.putBoolean("isCsr", isCsr);
                     }
-                    if (isChatBot !=  null) {
+                    if (isChatBot != null) {
                         localExt.putBoolean("isChatBot", isChatBot);
                     }
                     if (isUpdated != null) {
@@ -1336,6 +1336,7 @@ public class ReactCache {
             imageObj.putBoolean("needRefreshMessage", false);
 
             Boolean isFilePathDeleted = false;
+            Boolean isFileDownloading = true;
             Log.d("imageAttachment",imageAttachment.getPath()+"");
             Log.d("localExtension.get()",localExtension.get("isReplacePathSuccess")+"");
 
@@ -1480,11 +1481,11 @@ public class ReactCache {
                 Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
                 String chatBotType = (String) extension.get("chatBotType");
 
-                if (extensionIsCsr != null) {
-                    isCsr = extensionIsCsr;
-                }
                 if (extensionIsChatBot != null) {
                     isChatBot = extensionIsChatBot;
+                }
+                if (extensionIsCsr != null) {
+                    isCsr = extensionIsCsr;
                 }
 
                 if (chatBotType != null) {
@@ -1593,7 +1594,9 @@ public class ReactCache {
         user.putString(MessageConstant.User.DISPLAY_NAME, displayName);
         user.putString(MessageConstant.User.USER_ID, fromAccount);
         user.putString(MessageConstant.User.AVATAR_PATH, avatar);
+
         user.putBoolean("isChatBot", isChatBot);
+
         if (isCsr) {
             user.putBoolean("isCsr", true);
         }
