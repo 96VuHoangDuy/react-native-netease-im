@@ -949,6 +949,8 @@
 - (void)play:(NSString *)filepath {
     [[NIMSDK sharedSDK].mediaManager addDelegate:self];
     if (filepath) {
+        [[NIMSDK sharedSDK].mediaManager setNeedProximityMonitor: NO];
+        [[NIMSDK sharedSDK].mediaManager switchAudioOutputDevice: NIMAudioOutputDeviceSpeaker];
         [[NIMSDK sharedSDK].mediaManager play:filepath];
     }
 }
