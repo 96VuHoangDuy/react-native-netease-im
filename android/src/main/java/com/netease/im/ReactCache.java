@@ -1459,27 +1459,30 @@ public class ReactCache {
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(item.getSessionId(), item.getSessionType());
         Map<String, Object> messageLocalExt = item.getLocalExtension();
 
-        Boolean isCsr = false;
-        Boolean isChatBot = false;
+        WritableMap localExt = Arguments.createMap();
 
         if (messageLocalExt != null) {
             String chatBotType = (String)  messageLocalExt.get("chatBotType");
+            Boolean isCancelResend = (Boolean) messageLocalExt.get("isCancelResend");
 
             if (chatBotType != null) {
-                WritableMap localExt = Arguments.createMap();
-
                 localExt.putString("chatBotType", chatBotType);
+            }
 
-                itemMap.putMap("localExt", localExt);
+            if (isCancelResend != null) {
+                localExt.putBoolean("isCancelResend", isCancelResend);
             }
         }
+
+        Boolean isCsr = false;
+        Boolean isChatBot = false;
+
 
         if (recent != null) {
             Map<String, Object> extension = recent.getExtension();
             if (extension != null) {
                 Boolean extensionIsCsr = (Boolean) extension.get("isCsr");
                 Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
-                String chatBotType = (String) extension.get("chatBotType");
 
                 if (extensionIsChatBot != null) {
                     isChatBot = extensionIsChatBot;
@@ -1487,15 +1490,10 @@ public class ReactCache {
                 if (extensionIsCsr != null) {
                     isCsr = extensionIsCsr;
                 }
-
-                if (chatBotType != null) {
-                    WritableMap localExt = Arguments.createMap();
-                    localExt.putString("chatBotType", chatBotType);
-
-                    itemMap.putMap("localExt", localExt);
-                }
             }
         }
+
+        itemMap.putMap("localExt", localExt);
 
         if (item.getMsgType() == MsgTypeEnum.custom) {
             itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(),(CustomAttachment) item.getAttachment()));

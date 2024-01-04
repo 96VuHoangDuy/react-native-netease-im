@@ -412,6 +412,10 @@ RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArra
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", content);
 }
 
+RCT_EXPORT_METHOD(setCancelResendMessage:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType) {
+    [[ConversationViewController initWithConversationViewController] setCancelResendMessage:messageId sessionId:sessionId sessionType:sessionType];
+}
+
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
 RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString *)aspectRatio atUserIds:(NSArray *)atUserIds isCustomerService:(BOOL *)isCustomerService) {
     [[ConversationViewController initWithConversationViewController]sendGifMessage:url aspectRatio:aspectRatio andApnsMembers:atUserIds isCustomerService:isCustomerService];

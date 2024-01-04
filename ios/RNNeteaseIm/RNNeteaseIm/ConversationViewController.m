@@ -672,6 +672,17 @@
     return nil;
 };
 
+- (void) setCancelResendMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *message = messages.firstObject;
+    NSDictionary *localExt = message.localExt ? : @{};
+    NSMutableDictionary *dict = [localExt mutableCopy];
+    [dict setValue:[NSNumber numberWithBool:YES] forKey:@"isCancelResend"];
+    message.localExt = dict;
+    [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:session completion:nil];
+}
+
 - (NSDictionary *) setLocalExtMessage:(NIMMessage *)message key:(NSString *)key value:(NSString *)value {
     
     NSDictionary *localExt = message.localExt ? : @{};
@@ -1220,7 +1231,9 @@
             tipMessage.timestamp = message.timestamp;
             [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
         }
+        
         message.localExt = @{@"isFriend":@"NO"};
+        
         [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:self._session completion:nil];
         [self refrashMessage:message From:@"send"];
     }
@@ -1950,7 +1963,7 @@
         if ([[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {//判断是否为自己好友
             return YES;
         }else{
-            message.localExt = @{@"isFriend":@"NO"};
+            message.localExt = @{@"isFriend":@"NO", @"isCancelResend":[NSNumber numberWithBool:YES]};
             [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
             NSString *strSessionName = @"";
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:strSessionId];

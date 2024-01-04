@@ -1006,8 +1006,14 @@ public class SessionService {
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
             LogUtil.w(TAG, "isFriend:" + isFriend);
             if (!isFriend && !isCustomerService) {
+                Map<String, Object> localExt = new HashMap<String, Object>();
+
+                if (!isFriend) {
+                    localExt.put("isCancelResend", true);
+                }
 
                 message.setStatus(MsgStatusEnum.fail);
+                message.setLocalExtension(localExt);
                 CustomMessageConfig config = new CustomMessageConfig();
                 config.enablePush = false;
                 config.enableUnreadCount = false;

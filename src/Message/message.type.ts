@@ -107,5 +107,6 @@ export interface NIMMessage {
   duration: number;
   localExt?: {
     chatBotType?: NIMMessageChatBotType;
+    isCancelResend?: boolean
   };
 }

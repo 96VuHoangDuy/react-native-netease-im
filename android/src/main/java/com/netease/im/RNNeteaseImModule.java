@@ -2009,6 +2009,20 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public  void setCancelResendMessage(String messageId, String sessionId, String sessionType) {
+        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    ReactCache.setLocalExtension(message, "isCancelResend", true);
+                }
+
+                return 0;
+            }
+        });
+    }
+
+    @ReactMethod
     public void updateMessageOfChatBot(String messageId, String sessionId, String chatBotType, final Promise promise) {
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
             @Override
