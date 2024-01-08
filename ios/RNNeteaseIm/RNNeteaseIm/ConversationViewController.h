@@ -53,7 +53,7 @@ typedef void(^Errors)(id erro);
 - (void) setCancelResendMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType;
 
 //发送地理位置消息
--(void)sendLocationMessage:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address;
+-(void)sendLocationMessage:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address success:(Success)succe Err:(Errors)err;
 //发送提醒消息
 -(void)sendTipMessage:( NSString *)content;
 //发送红包消息

@@ -1293,6 +1293,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         sessionService.sendLocationMessage(latitude, longitude, address, new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    promise.resolve(code);
+                } else {
+                    promise.reject("" , "" + code);
+                }
+
                 return 0;
             }
         });

@@ -1097,12 +1097,19 @@
 
 
 //发送地理位置消息
--(void)sendLocationMessage:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address{
+-(void)sendLocationMessage:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address success:(Success)succe Err:(Errors)err{
     NIMLocationObject *locaObj = [[NIMLocationObject alloc]initWithLatitude:[latitude doubleValue] longitude:[longitude doubleValue] title:address];
     NIMKitLocationPoint *locationPoint = [[NIMKitLocationPoint alloc]initWithLocationObject:locaObj];
     NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:self._session senderName:_myUserName];
     if ([self isFriendToSendMessage:message]) {
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+        NSError *error;
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&error];
+       
+        if (error != nil) {
+            err(error);
+        } else {
+            succe(@"200");
+        }
     }
 }
 
