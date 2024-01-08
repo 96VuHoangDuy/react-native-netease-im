@@ -461,8 +461,12 @@ RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  
 }
 
 //发送地理位置消息
-RCT_EXPORT_METHOD(sendLocationMessage:(nonnull  NSString *)latitude longitude:(nonnull  NSString *)longitude address:(nonnull  NSString *)address){
-   [[ConversationViewController initWithConversationViewController]sendLocationMessage:latitude longitude:longitude address:address];
+RCT_EXPORT_METHOD(sendLocationMessage:(nonnull  NSString *)latitude longitude:(nonnull  NSString *)longitude address:(nonnull  NSString *)address resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+   [[ConversationViewController initWithConversationViewController]sendLocationMessage:latitude longitude:longitude address:address success:^(id param) {
+       resolve(param);
+   } Err:^(id erro) {
+       reject(@"-1",erro,nil);
+   }];
 }
 //开启录音权限
 RCT_EXPORT_METHOD(onTouchVoice:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){

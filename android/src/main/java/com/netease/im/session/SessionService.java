@@ -1026,7 +1026,7 @@ public class SessionService {
         getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-
+                onSendMessageListener.onResult(ResponseCode.RES_SUCCESS, message);
             }
 
             @Override
@@ -1039,6 +1039,7 @@ public class SessionService {
                     getMsgService().updateIMMessage(message);
                     sendTipMessage("消息已发出，但被对方拒收了。", null, true, false);
                 }
+                onSendMessageListener.onResult(code, message);
             }
 
             @Override
