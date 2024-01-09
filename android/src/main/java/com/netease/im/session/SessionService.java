@@ -354,7 +354,7 @@ public class SessionService {
                 if (recent != null) {
                     Map<String, Object> extension = recent.getExtension();
 
-                    if (extension != null) {
+                    if (extension == null) {
                         extension = new HashMap<String, Object>();
                     }
 
