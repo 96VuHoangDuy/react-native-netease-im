@@ -1070,7 +1070,7 @@
     if ([self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
 
-        if (content != nil) {
+        if ([content length] != 0) {
             NIMMessage *_message = [[NIMMessage alloc] init];
             _message.text    = content;
             [[NIMSDK sharedSDK].chatManager sendMessage:_message toSession:session error:nil];
@@ -1836,14 +1836,17 @@
 -(void)forwardMessage:(NSArray *)messageIds sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content success:(Success)succe{
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     NSArray *currentMessages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:messageIds];
-//    NIMMessage *message = currentMessage[0];
+    //    NIMMessage *message = currentMessage[0];
     for (NIMMessage *message in currentMessages) {
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
-     }
+    }
     //发送消息
-    NIMMessage *messages = [[NIMMessage alloc] init];
-    messages.text    = content;
-    [[NIMSDK sharedSDK].chatManager sendMessage:messages toSession:session error:nil];
+    if([content length] != 0){
+        NIMMessage *messages = [[NIMMessage alloc] init];
+        messages.text    = content;
+        
+        [[NIMSDK sharedSDK].chatManager sendMessage:messages toSession:session error:nil];
+    }
     succe(@"已发送");
 }
 //撤回消息

@@ -877,7 +877,7 @@ public class SessionService {
 
         sendMessageSelf(message, onSendMessageListener, false, false);
 
-        if (content == null) {
+        if (content.isEmpty()) {
             return;
         }
 
@@ -911,8 +911,10 @@ public class SessionService {
             sendMessageSelf(message, onSendMessageListener, false, false);
         }
 
-        IMMessage messageSelf = MessageBuilder.createTextMessage(sessionId, sessionTypeE, content);
-        sendMessageSelf(messageSelf, onSendMessageListener, false, false);
+        if(!content.isEmpty()) {
+            IMMessage messageSelf = MessageBuilder.createTextMessage(sessionId, sessionTypeE, content);
+            sendMessageSelf(messageSelf, onSendMessageListener, false, false);
+        }
         return 2;
     }
 
