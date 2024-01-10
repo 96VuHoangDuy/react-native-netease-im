@@ -96,14 +96,21 @@
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageID] ];
     NIMMessage *currentM = currentMessage[0];
     NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
-    if ([isFriend length]) {
-
-    }else{
-        if (currentM.isReceivedMsg) {
-            [[[NIMSDK sharedSDK] chatManager] fetchMessageAttachment:currentM error:nil];
-        }else{
-            [[[NIMSDK sharedSDK] chatManager] resendMessage:currentM error:nil];
-        }
+    
+    if (self._session.sessionType == NIMSessionTypeP2P && [isFriend length]) {
+        return;
+    }
+    
+    if (currentM.isReceivedMsg) {
+        [[[NIMSDK sharedSDK] chatManager] fetchMessageAttachment:currentM error:nil];
+        return;
+    }
+    
+    NSError *error;
+    [[[NIMSDK sharedSDK] chatManager] resendMessage:currentM error:&error];
+    
+    if (error != nil) {
+        NSLog(@"resendMessage =>>> %@", error);
     }
 }
 
@@ -1603,7 +1610,7 @@
             break;
     }
     NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
-    if ([isFriend length]) {
+    if (message.session.sessionType == NIMSessionTypeP2P && [isFriend length]) {
         if ([isFriend isEqualToString:@"NO"]) {
             [dic2 setObject:@"send_failed" forKey:@"status"];
         }
