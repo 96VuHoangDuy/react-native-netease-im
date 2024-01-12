@@ -810,7 +810,22 @@ public class SessionService {
             e.printStackTrace();
         }
         IMMessage message = MessageBuilder.createLocationMessage(sessionId, sessionTypeEnum, lat, lon, address);
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        NIMClient.getService(MsgService.class).sendMessage(message, false).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void param) {
+                onSendMessageListener.onResult(ResponseCode.RES_SUCCESS,message);
+            }
+
+            @Override
+            public void onFailed(int code) {
+                onSendMessageListener.onResult(code, message);
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
     }
 
     public void sendDefaultMessage(String type, String digst, String content, OnSendMessageListener onSendMessageListener) {
@@ -1028,7 +1043,6 @@ public class SessionService {
         getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                onSendMessageListener.onResult(ResponseCode.RES_SUCCESS, message);
             }
 
             @Override
@@ -1041,7 +1055,6 @@ public class SessionService {
                     getMsgService().updateIMMessage(message);
                     sendTipMessage("消息已发出，但被对方拒收了。", null, true, false);
                 }
-                onSendMessageListener.onResult(code, message);
             }
 
             @Override
