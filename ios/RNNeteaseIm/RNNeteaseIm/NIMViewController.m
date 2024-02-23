@@ -491,6 +491,7 @@
             NSMutableDictionary *dic = [NSMutableDictionary dictionary];
             [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
+            [dic setObject: [NSNumber numberWithBool: recent.lastMessage.isOutgoingMsg] forKey:@"isOutgoing"];
             //未读
             NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
             [dic setObject:strUnreadCount forKey:@"unreadCount"];
@@ -618,6 +619,7 @@
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
                 //未读
                 NSString *strUnreadCount = [NSString stringWithFormat:@"%zd", recent.unreadCount];
+                [dic setObject: [NSNumber numberWithBool: recent.lastMessage.isOutgoingMsg] forKey:@"isOutgoing"];
                 [dic setObject:strUnreadCount forKey:@"unreadCount"];
                 //群组名称或者聊天对象名称
                 [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
