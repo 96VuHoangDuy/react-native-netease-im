@@ -535,6 +535,10 @@ class NimSession {
   setCancelResendMessage(messageId: string, sessionId: string, sessionType: NIMSessionTypeEnum) {
     return RNNeteaseIm.setCancelResendMessage(messageId, sessionId, sessionType);
   }
+
+  onSendFile(account: string, sessionType: NIMSessionTypeEnum, file: any){
+    return RNNeteaseIm.onSendFile(account, sessionType, file)
+  }
 }
 
 export default new NimSession();

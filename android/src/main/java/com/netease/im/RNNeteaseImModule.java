@@ -2544,6 +2544,31 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         NIMSDK.getMsgService().updateRecent(recent);
     }
 
+    @ReactMethod
+    public void onSendFile(String account, String sessionType, String filePath, Promise promise){
+        SessionTypeEnum type = SessionUtil.getSessionType(sessionType);
+        File file = new File(filePath);
+        IMMessage message = MessageBuilder.createFileMessage(account, type, file, file.getName());
+
+        // 发送给对方
+        NIMClient.getService(MsgService.class).sendMessage(message, false).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void param) {
+                promise.resolve("200");
+            }
+
+            @Override
+            public void onFailed(int code) {
+                promise.reject("Send file failed" + code + "");
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
+    }
+
     @Override
     public void onHostResume() {
 
