@@ -495,13 +495,13 @@ RCT_EXPORT_METHOD(updateAudioMessagePlayStatus:(nonnull NSString *)strMessageID)
 }
 
 //开始播放录音
-RCT_EXPORT_METHOD(play:(nonnull NSString *)filepath){
-    [[ConversationViewController initWithConversationViewController]play:filepath];
+RCT_EXPORT_METHOD(play:(nonnull NSString *)filepath isExternalSpeaker:(BOOL *)isExternalSpeaker){
+    [[ConversationViewController initWithConversationViewController]play:filepath isExternalSpeaker:isExternalSpeaker];
 }
 //播放本地资源录音
 RCT_EXPORT_METHOD(playLocal:(nonnull NSString *)name type:(nonnull NSString *)type){
     NSString *path = [[NSBundle mainBundle] pathForResource:name ofType:type];
-    [[ConversationViewController initWithConversationViewController]play:path];
+    [[ConversationViewController initWithConversationViewController]play:path isExternalSpeaker: YES];
 }
 
 RCT_EXPORT_METHOD(getIsPlayingRecord: (RCTResponseSenderBlock)callback){
@@ -513,6 +513,10 @@ RCT_EXPORT_METHOD(getIsPlayingRecord: (RCTResponseSenderBlock)callback){
 //停止播放
 RCT_EXPORT_METHOD(stopPlay){
     [[ConversationViewController initWithConversationViewController]stopPlay];
+}
+
+RCT_EXPORT_METHOD(switchAudioOutputDevice: (BOOL *)isExternalSpeaker){
+    [[ConversationViewController initWithConversationViewController]switchAudioOutputDevice:isExternalSpeaker];
 }
 
 //发送红包消息

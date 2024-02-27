@@ -34,8 +34,8 @@ class NimUtils {
    * 播放录音
    * @returns {*}
    */
-  play(filepath: string) {
-    return RNNeteaseIm.play(filepath);
+  play(filepath: string,isExternalSpeaker?: boolean) {
+    return RNNeteaseIm.play(filepath, isExternalSpeaker);
   }
 
   /**
@@ -73,6 +73,10 @@ class NimUtils {
    */
   fetchNetInfo() {
     return RNNeteaseIm.fetchNetInfo();
+  }
+
+  switchAudioOutputDevice(isExternalSpeaker: boolean){
+    return RNNeteaseIm.switchAudioOutputDevice(isExternalSpeaker)
   }
 }
 

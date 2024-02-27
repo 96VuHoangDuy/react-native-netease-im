@@ -44,8 +44,8 @@ public class AudioPlayService implements SensorEventListener {
         return InstanceHolder.instance;
     }
 
-    public void play(Handler handler, ReactContext context, String filePath) {
-        playAudio(handler, context, -1, SCHEME_FILE, filePath);
+    public void play(Handler handler, ReactContext context, String filePath, Boolean isExternalSpeaker) {
+        playAudio(handler, context,  isExternalSpeaker ? AudioManager.STREAM_MUSIC : AudioManager.STREAM_VOICE_CALL, SCHEME_FILE, filePath);
     }
 
     public void playAudio(Handler handler, ReactContext context, int audioStreamType, String type, String filePath) {
@@ -123,19 +123,19 @@ public class AudioPlayService implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        float value = event.values[0];
+        // float value = event.values[0];
 
-        if (isPlayingAudio()) {
-            if (value == sensor.getMaximumRange()) {
-                updateAudioStreamType(AudioManager.STREAM_MUSIC);
-            } else {
-                updateAudioStreamType(AudioManager.STREAM_VOICE_CALL);
-            }
-        } else {
-            if (value == sensor.getMaximumRange()) {
-                currentAudioStreamType = AudioManager.STREAM_VOICE_CALL;
-            }
-        }
+        // if (isPlayingAudio()) {
+        //     if (value == sensor.getMaximumRange()) {
+        //         updateAudioStreamType(AudioManager.STREAM_MUSIC);
+        //     } else {
+        //        updateAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+        //     }
+        // } else {
+        //     if (value == sensor.getMaximumRange()) {
+        //        currentAudioStreamType = AudioManager.STREAM_VOICE_CALL;
+        //     }
+        // }
     }
 
     @Override
