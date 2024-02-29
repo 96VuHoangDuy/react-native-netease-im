@@ -72,9 +72,12 @@ typedef void(^Errors)(id erro);
 //撤回消息
 -(void)revokeMessage:(NSString *)messageId success:(Success)succe Err:(Errors)err;
 //开始播放录音
-- (void)play:(NSString *)filepath;
+- (void)play:(NSString *)filepath isExternalSpeaker:(BOOL *)isExternalSpeaker;
 //停止播放
 - (void)stopPlay;
+
+- (void)switchAudioOutputDevice:(BOOL *)isExternalSpeaker;
+
 //好友消息提醒
 -(void)muteMessage:(NSString *)contactId mute:(NSString *)mute Succ:(Success)succ Err:(Errors)err;
 //清空本地聊天记录

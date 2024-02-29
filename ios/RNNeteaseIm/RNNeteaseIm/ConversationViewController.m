@@ -964,11 +964,11 @@
                                    duration:duration];
 }
 //开始播放录音
-- (void)play:(NSString *)filepath {
+- (void)play:(NSString *)filepath isExternalSpeaker:(BOOL *)isExternalSpeaker {
     [[NIMSDK sharedSDK].mediaManager addDelegate:self];
     if (filepath) {
         [[NIMSDK sharedSDK].mediaManager setNeedProximityMonitor: NO];
-        [[NIMSDK sharedSDK].mediaManager switchAudioOutputDevice: NIMAudioOutputDeviceSpeaker];
+        [[NIMSDK sharedSDK].mediaManager switchAudioOutputDevice: isExternalSpeaker ? NIMAudioOutputDeviceSpeaker : NIMAudioOutputDeviceReceiver];
         [[NIMSDK sharedSDK].mediaManager play:filepath];
     }
 }
@@ -980,6 +980,10 @@
 //停止播放
 - (BOOL)isPlayingRecord {
     return [[NIMSDK sharedSDK].mediaManager isPlaying];
+}
+
+- (void)switchAudioOutputDevice: (BOOL *)isExternalSpeaker {
+    [[NIMSDK sharedSDK].mediaManager switchAudioOutputDevice: isExternalSpeaker ? NIMAudioOutputDeviceSpeaker : NIMAudioOutputDeviceReceiver];
 }
 
 

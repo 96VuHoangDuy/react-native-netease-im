@@ -110,6 +110,8 @@ import java.util.Set;
 import static com.netease.im.ReceiverMsgParser.getIntent;
 import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
 
+import androidx.annotation.RawRes;
+
 
 public class RNNeteaseImModule extends ReactContextBaseJavaModule implements LifecycleEventListener, ActivityEventListener {
 
@@ -2148,8 +2150,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void play(String audioFile, Promise promise) {
-        audioPlayService.play(handler, reactContext, audioFile);
+    public void play(String audioFile,Boolean isExternalSpeaker, Promise promise) {
+        audioPlayService.play(handler, reactContext, audioFile, isExternalSpeaker);
+    }
+
+    @ReactMethod
+    public void switchAudioOutputDevice(Boolean isExternalSpeaker){
+        audioPlayService.updateAudioStreamType(isExternalSpeaker ? AudioManager.STREAM_MUSIC : AudioManager.STREAM_VOICE_CALL);
     }
 
     @ReactMethod
