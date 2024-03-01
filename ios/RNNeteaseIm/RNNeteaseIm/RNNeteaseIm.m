@@ -703,6 +703,10 @@ RCT_EXPORT_METHOD(addMembers:(nonnull NSString *)teamId accounts:(nonnull NSArra
         reject(@"-1",erro,nil);
     }];
 }
+
+RCT_EXPORT_METHOD(updateIsSeenMessage:(BOOL *)isSeenMessage) {
+    [[ConversationViewController initWithConversationViewController] updateIsSeenMessage:isSeenMessage];
+}
 //踢人出群
 RCT_EXPORT_METHOD(removeMember:(nonnull NSString *)teamId accounts:(nonnull NSArray *)count resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[TeamViewController initWithTeamViewController] removeMember:teamId accounts:count Succ:^(id param) {

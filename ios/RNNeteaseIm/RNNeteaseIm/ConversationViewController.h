@@ -46,6 +46,8 @@ typedef void(^Errors)(id erro);
 
 - (NSString *)getUserName:(NSString *)userID;
 
+-(void)updateIsSeenMessage:(BOOL *)isSeenMessage;
+
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType;
 
 -(NSDictionary *) updateMessageOfChatBot:(NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(NSString *)chatBotType;

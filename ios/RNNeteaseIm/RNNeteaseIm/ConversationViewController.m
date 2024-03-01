@@ -34,6 +34,7 @@
 @property (nonatomic,strong) AVAudioPlayer *redPacketPlayer; //播放提示音
 @property (nonatomic,strong) NIMSession *_session;
 //@property (nonatomic,strong) NIMKitMediaFetcher *mediaFetcher;
+@property (nonatomic) BOOL *isSeenMessage;
 
 @end
 
@@ -76,6 +77,11 @@
 //    }
 //    return _mediaFetcher;
 //}
+
+-(void)updateIsSeenMessage:(BOOL *)isSeenMessage {
+    _isSeenMessage = isSeenMessage;
+}
+
 
 -(void)startSession:(NSString *)sessionID withType:(NSString *)type myUserName:(NSString *)myUserName myUserID:(NSString *)myUserID{
     _sessionID = sessionID;
@@ -163,7 +169,9 @@
         data = [self updateLastReadMessageId:session];
     }
     
+
     [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
+    
     NIMGetMessagesDynamicallyParam *param = [[NIMGetMessagesDynamicallyParam alloc] init];
     
     param.session = session;
@@ -187,10 +195,12 @@
                 NIMMessage *lastMessage = [messageArr lastObject];
                 NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:lastMessage];
 
-                if (lastMessage.session.sessionType == NIMSessionTypeTeam) {
-                   [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
-                } else {
-                   [[[NIMSDK sharedSDK] chatManager] sendMessageReceipt:receipt completion:nil];
+                if ([self isSeenMessage]) {
+                    if (lastMessage.session.sessionType == NIMSessionTypeTeam) {
+                       [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
+                    } else {
+                       [[[NIMSDK sharedSDK] chatManager] sendMessageReceipt:receipt completion:nil];
+                    }
                 }
                 
                 if (currentMessageID.length == 0 && [self setTimeArr:messageArr].count != 0) {
@@ -1275,7 +1285,10 @@
 //接收消息
 - (void)onRecvMessages:(NSArray *)messages
 {
+    
     NIMMessage *message = messages.firstObject;
+    
+    NSLog(@"onRecvMessages >>>>> %@", message);
     
     if ([message.session.sessionId isEqualToString:_sessionID]) {
         [self refrashMessage:message From:@"receive" ];
@@ -1288,14 +1301,17 @@
         [dict setObject:message.messageId forKey:@"lastReadMessageId"];
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
         
-        if (message.session.sessionType == NIMSessionTypeTeam) {
-            [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
-        } else {
-            [[[NIMSDK sharedSDK] chatManager] sendMessageReceipt:receipt completion:nil];
+        if ([self isSeenMessage]) {
+            if (message.session.sessionType == NIMSessionTypeTeam) {
+                [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
+            } else {
+                [[[NIMSDK sharedSDK] chatManager] sendMessageReceipt:receipt completion:nil];
+            }
         }
         
         //标记已读消息
         [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
+        
         
         if (![message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
             [self playTipsMusicWithMessage:message];

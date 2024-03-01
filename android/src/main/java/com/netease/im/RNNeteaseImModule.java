@@ -158,6 +158,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         promise.resolve("200");
     }
 
+    @ReactMethod
+    public  void updateIsSeenMessage(Boolean isSeenMessage) {
+        sessionService.updateIsSeenMessage(isSeenMessage);
+    }
+
     /**
      * 登陆
      *

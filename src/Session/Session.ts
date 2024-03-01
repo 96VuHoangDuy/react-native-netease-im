@@ -535,6 +535,10 @@ class NimSession {
   setCancelResendMessage(messageId: string, sessionId: string, sessionType: NIMSessionTypeEnum) {
     return RNNeteaseIm.setCancelResendMessage(messageId, sessionId, sessionType);
   }
+
+  updateIsSeenMessage(isSeenMessage: boolean) {
+    return RNNeteaseIm.updateIsSeenMessage(isSeenMessage)
+  }
 }
 
 export default new NimSession();
