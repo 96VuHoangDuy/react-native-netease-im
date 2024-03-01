@@ -112,4 +112,6 @@ typedef void(^Errors)(id erro);
 - (NSMutableDictionary *)setNotiTeamObj:(NIMMessage *)message;
 
 - (BOOL) isPlayingRecord;
+
+- (void) sendFileMessage: (NSString *)account sessionType: (NSString *)sessionType file: (NSString *)file success:(Success)succe err:(Errors)err;
 @end

@@ -901,6 +901,15 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
     resolve(@"deleteSuccess");
 }
 
+
+RCT_EXPORT_METHOD(onSendFile:(NSString *)account sessionType:(NSString *)sessionType file:(NSString *)file resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController]sendFileMessage:account sessionType:sessionType file:file success:^(id param) {
+        resolve(param);
+    } err:^(NSString *error) {
+        reject(@"-1",error, nil);
+    }];
+}
+
 //删除文件夹下所有文件
 - (void)deleteFilesWithPath:(NSString *)path andFiles:(NSArray *)files{
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {

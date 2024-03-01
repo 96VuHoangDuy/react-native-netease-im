@@ -830,6 +830,18 @@
             [dic setObject:@"video" forKey:@"msgType"];
             
             [dic setObject:[self makeExtendVideo:message] forKey:@"extend"];
+        }else if(message.messageType == NIMMessageTypeFile){
+            [dic setObject:@"file" forKey:@"msgType"];
+            NIMFileObject *object = message.messageObject;
+            
+            NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:object.fileLength
+                                                                    countStyle:NSByteCountFormatterCountStyleFile];
+            
+            NSMutableDictionary *fileObj = [NSMutableDictionary dictionary];
+            [fileObj setObject:[NSString stringWithFormat:@"%@", object.path ] forKey:@"filePath"];
+            [fileObj setObject:[NSString stringWithFormat:@"%@", object.displayName ] forKey:@"fileName"];
+            [fileObj setObject:[NSString stringWithFormat:@"%@", displayFileSize ] forKey:@"fileSize"];
+            [dic setObject:fileObj forKey:@"extend"];
         }else if(message.messageType == NIMMessageTypeLocation){
             [dic setObject:@"location" forKey:@"msgType"];
             NIMLocationObject *object = message.messageObject;
@@ -996,6 +1008,24 @@
         }
     }
 }
+
+-(void)sendFileMessage:(NSString *)account sessionType: (NSString *)sessionType file: (NSString *)file success:(Success)succe err:(Errors)err {
+    NIMSession *session = [NIMSession session:account type:[sessionType integerValue]];
+    // 获得文件附件对象
+    NIMFileObject *object = [[NIMFileObject alloc] initWithSourcePath:file];
+    NSMutableDictionary *fileObj = [NSMutableDictionary dictionary];
+    
+    [fileObj setObject:[NSString stringWithFormat: @"%@", object.displayName] forKey:@"fileName"];
+    [fileObj setObject:[NSString stringWithFormat: @"%@", object.path] forKey:@"filePath"];
+    // 构造出具体消息并注入附件
+    NIMMessage *message = [[NIMMessage alloc] init];
+    message.messageObject = object;
+    // 错误反馈对象
+    NSError *error = nil;
+    // 发送消息
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
+}
+
 //发送文字消息
 -(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
     NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session senderName:_myUserName];
@@ -1674,7 +1704,20 @@
     }else if (message.messageType == NIMMessageTypeNotification) {
         [dic2 setObject:@"notification" forKey:@"msgType"];
         [dic2 setObject:[self setNotiTeamObj:message] forKey:@"extend"];
-    }else if (message.messageType == NIMMessageTypeCustom) {
+    }else if (message.messageType == NIMMessageTypeFile){
+        [dic2 setObject:@"file" forKey:@"msgType"];
+        NIMFileObject *object = message.messageObject;
+        
+        NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:object.fileLength
+                                                                   countStyle:NSByteCountFormatterCountStyleFile];
+        
+        NSMutableDictionary *fileObj = [NSMutableDictionary dictionary];
+        [fileObj setObject:[NSString stringWithFormat:@"%@", object.path ] forKey:@"filePath"];
+        [fileObj setObject:[NSString stringWithFormat:@"%@", object.displayName ] forKey:@"fileName"];
+        [fileObj setObject:[NSString stringWithFormat:@"%@", displayFileSize ] forKey:@"fileSize"];
+        [dic2 setObject:fileObj forKey:@"extend"];
+    }
+    else if (message.messageType == NIMMessageTypeCustom) {
         NIMCustomObject *customObject = message.messageObject;
         DWCustomAttachment *obj = customObject.attachment;
         if (obj) {

@@ -495,7 +495,6 @@ class NimSession {
     }
   }
 
-
   addEmptyRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
     return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType)
   }
