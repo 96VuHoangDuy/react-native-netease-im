@@ -196,6 +196,7 @@ public class ReactCache {
                     Boolean isChatBot = (Boolean) extension.get("isChatBot");
                     Boolean isUpdated  = (Boolean) extension.get("isUpdated");
                     String nameCsr = (String) extension.get("name");
+                    Boolean isHideSession = (Boolean) extension.get("isHideSession");
 
                     if (isCsr != null) {
                         localExt.putBoolean("isCsr", isCsr);
@@ -209,6 +210,10 @@ public class ReactCache {
 
                     if (nameCsr != null) {
                         localExt.putString("name", nameCsr);
+                    }
+
+                    if (isHideSession != null) {
+                        localExt.putBoolean("isHideSession", isHideSession);
                     }
 
                     map.putMap("localExt", localExt);

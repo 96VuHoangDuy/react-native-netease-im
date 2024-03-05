@@ -1827,6 +1827,24 @@
     return text?text:@" ";
 }
 
+-(void)updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession success:(Success)success error:(Errors)error {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    
+    if (recent) {
+        NSMutableDictionary *dict = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        
+        [dict setObject:[NSNumber numberWithBool:isHideSession] forKey:@"isHideSession"];
+        
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
+        
+        success(@"success");
+        return;
+    }
+    
+    error(@"error");
+}
+
 -(void)updateRecentSessionIsCsrOrChatbot:(NSString *)sessionId type:(NSString *)type name:(NSString *)name {
     NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];

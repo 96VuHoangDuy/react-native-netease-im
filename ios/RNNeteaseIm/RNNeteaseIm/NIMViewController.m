@@ -356,6 +356,10 @@
                 [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
                 //账号
                 [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
+            
+            if (recent.localExt) {
+                [dic setObject:recent.localExt forKey:@"localExt"];
+            }
                 
                 if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                     NIMCustomObject *customObject = recent.lastMessage.messageObject;
@@ -625,6 +629,10 @@
                 [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
                 //账号
                 [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
+            
+                if (recent.localExt) {
+                    [dic setObject:recent.localExt forKey:@"localExt"];
+                }
                 
                 if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                     NIMCustomObject *customObject = recent.lastMessage.messageObject;

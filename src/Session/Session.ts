@@ -539,6 +539,10 @@ class NimSession {
   updateIsSeenMessage(isSeenMessage: boolean) {
     return RNNeteaseIm.updateIsSeenMessage(isSeenMessage)
   }
+
+  updateActionHideRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum, isHideSession: boolean) {
+    return RNNeteaseIm.updateActionHideRecentSession(sessionId, sessionType, isHideSession)
+  }
 }
 
 export default new NimSession();

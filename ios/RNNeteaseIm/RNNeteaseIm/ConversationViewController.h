@@ -34,6 +34,8 @@ typedef void(^Errors)(id erro);
 -(void)sendImageMessages:(  NSString *)path displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality;
 //发送音频
 -(void)sendAudioMessage:(  NSString *)file duration:(  NSString *)duration isCustomerService:(BOOL *)isCustomerService;
+
+-(void)updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession success:(Success)success error:(Errors)error;
 //发送视频
 -(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService;
 //发送自定义消息

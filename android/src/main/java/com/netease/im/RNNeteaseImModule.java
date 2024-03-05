@@ -2520,6 +2520,22 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public  void  updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, final Promise promise) {
+        SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
+        RecentContact recent = NIMClient.getService(MsgServic);
+        if (extension == null) {
+            extension = new HashMap<String, Object>();
+        }e.class).queryRecentContact(sessionId, sessionType);
+        Map<String, Object> extension = recent.getExtension(
+
+        extension.put("isHideSession", isHideSession);
+
+        recent.setExtension(extension);
+        NIMSDK.getMsgService().updateRecent(recent);
+        promise.resolve("success");
+    }
+
+    @ReactMethod
     public  void updateRecentSessionIsCsrOrChatbot(String sessionId,String type, String name ) {
         Boolean isUpdated = type.equals("chatbot") || type.equals("csr");
         if (!isUpdated) return;
