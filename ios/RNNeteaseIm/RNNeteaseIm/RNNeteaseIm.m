@@ -426,6 +426,15 @@ RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString 
 RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality) {
     [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality];
 }
+
+RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController]sendFileMessage:filePath fileName:fileName isCustomerService:isCustomerService success:^(id param) {
+        resolve(param);
+    } Err:^(id erro) {
+        reject(@"-1",erro,nil);
+    }];
+}
+
 //发送音频消息
 RCT_EXPORT_METHOD(sendAudioMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration isCustomerService:(BOOL *)isCustomerService){
     [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isCustomerService:isCustomerService];
@@ -911,15 +920,6 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
     }
     
     resolve(@"deleteSuccess");
-}
-
-
-RCT_EXPORT_METHOD(onSendFile:(NSString *)account sessionType:(NSString *)sessionType file:(NSString *)file resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ConversationViewController initWithConversationViewController]sendFileMessage:account sessionType:sessionType file:file success:^(id param) {
-        resolve(param);
-    } err:^(NSString *error) {
-        reject(@"-1",error, nil);
-    }];
 }
 
 //删除文件夹下所有文件

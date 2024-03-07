@@ -208,11 +208,11 @@
         case NIMMessageTypeRtcCallRecord:
             result = @"callRecord";
             break;
-        case NIMMessageTypeFile:
-            result = @"file";
-            break;
         case NIMMessageTypeCustom:
             result = @"custom";
+            break;
+        case NIMMessageTypeFile:
+            result = @"file";
             break;
             
         default:

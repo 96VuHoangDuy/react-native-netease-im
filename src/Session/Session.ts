@@ -563,8 +563,12 @@ class NimSession {
     );
   }
 
-  onSendFile(account: string, sessionType: NIMSessionTypeEnum, file: any) {
-    return RNNeteaseIm.onSendFile(account, sessionType, file);
+  sendFileMessage(
+    filePath: string,
+    fileName: string,
+    isCustomerService?: boolean
+  ) {
+    return RNNeteaseIm.sendFileMessage(filePath, fileName, isCustomerService);
   }
 }
 

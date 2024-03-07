@@ -117,5 +117,6 @@ typedef void(^Errors)(id erro);
 
 - (BOOL) isPlayingRecord;
 
-- (void) sendFileMessage: (NSString *)account sessionType: (NSString *)sessionType file: (NSString *)file success:(Success)succe err:(Errors)err;
+-(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName isCustomerService:(BOOL *)isCustomerService success:(Success)succe Err:(Errors)err;
+
 @end
