@@ -773,6 +773,13 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false,isCustomerService);
     }
 
+    public void sendFileMessage(String filePath, String fileName, boolean isCustomerService, OnSendMessageListener onSendMessageListener) {
+        File file = new File(filePath);
+        IMMessage message = MessageBuilder.createFileMessage(sessionId, sessionTypeEnum, file, fileName);
+        message.setContent(fileName);
+        sendMessageSelf(message, onSendMessageListener, false,isCustomerService);
+    }
+
     public void sendAudioMessage(String file, long duration, boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);

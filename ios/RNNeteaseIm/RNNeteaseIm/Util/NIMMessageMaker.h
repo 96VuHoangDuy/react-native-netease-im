@@ -29,6 +29,8 @@
 
 + (NIMMessage*)msgWithCustomAttachment:(DWCustomAttachment *)attachment andeSession:(NIMSession *)session senderName:(NSString *)senderName;
 
++ (NIMMessage *)msgWithFile:(NSString *)filePath fileName:(NSString *)fileName andeSession:(NIMSession *)session senderName:(NSString *)senderName;
+
 + (void)setupMessagePushBody:(NIMMessage *)message andSession:(NIMSession *)session senderName:(NSString *)senderName;
 
 @end

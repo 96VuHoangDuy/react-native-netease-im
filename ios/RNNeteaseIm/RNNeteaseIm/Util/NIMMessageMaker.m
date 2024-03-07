@@ -44,6 +44,20 @@
     [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:senderName];
     return message;
 }
+
++ (NIMMessage*)msgWithFile:(NSString*)filePath fileName:(NSString *)fileName andeSession:(NIMSession *)session senderName:(NSString *)senderName
+{
+    
+    NIMFileObject *fileObject = [[NIMFileObject alloc] initWithSourcePath:filePath];
+    NIMMessage *message = [[NIMMessage alloc] init];
+    message.messageObject = fileObject;
+    NSString *content = @"文件";
+    message.text = fileName;
+    message.apnsContent = content;
+    [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:senderName];
+    return message;
+}
+
 + (NIMMessage*)msgWithCustom:(NIMObject *)attachment andeSession:(NIMSession *)session senderName:(NSString *)senderName
 {
     

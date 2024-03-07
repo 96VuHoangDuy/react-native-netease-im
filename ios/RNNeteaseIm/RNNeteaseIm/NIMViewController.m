@@ -211,6 +211,9 @@
         case NIMMessageTypeCustom:
             result = @"custom";
             break;
+        case NIMMessageTypeFile:
+            result = @"file";
+            break;
             
         default:
             break;

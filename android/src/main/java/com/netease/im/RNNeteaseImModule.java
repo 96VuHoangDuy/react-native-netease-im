@@ -178,7 +178,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
         NIMClient.getService(AuthService.class).openLocalCache(contactId);
         LogUtil.w(TAG, "s:" + NIMClient.getStatus().name());
-        LoginService.getInstance().login(new LoginInfo.LoginInfoBuilder(contactId,token,1,"").build(), new RequestCallback<LoginInfo>() {
+        LoginService.getInstance().login(new LoginInfo.LoginInfoBuilder(contactId, token, 1, "").build(), new RequestCallback<LoginInfo>() {
             @Override
             public void onSuccess(LoginInfo loginInfo) {
 
@@ -575,7 +575,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void addManagersToTeam(String teamId, ReadableArray userIds, final Promise promise) {
-        ArrayList<String> strList = (ArrayList<String>)(ArrayList<?>)(userIds.toArrayList());
+        ArrayList<String> strList = (ArrayList<String>) (ArrayList<?>) (userIds.toArrayList());
 
         NIMClient.getService(TeamService.class)
                 .addManagers(teamId, strList)
@@ -605,7 +605,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void removeManagersFromTeam(String teamId, ReadableArray userIds, final Promise promise) {
-        ArrayList<String> strList = (ArrayList<String>)(ArrayList<?>)(userIds.toArrayList());
+        ArrayList<String> strList = (ArrayList<String>) (ArrayList<?>) (userIds.toArrayList());
 
         NIMClient.getService(TeamService.class)
                 .removeManagers(teamId, strList)
@@ -1143,7 +1143,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void sendTextMessage(String content, ReadableArray atUserIds, boolean isCustomerService,final Promise promise) {
+    public void sendTextMessage(String content, ReadableArray atUserIds, boolean isCustomerService, final Promise promise) {
         LogUtil.w(TAG, "sendTextMessage" + content);
 
         List<String> atUserIdList = array2ListString(atUserIds);
@@ -1156,9 +1156,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
-    public void sendTextMessage(String content, boolean isCustomerService,final Promise promise) {
+    public void sendTextMessage(String content, boolean isCustomerService, final Promise promise) {
         LogUtil.w(TAG, "sendTextMessage" + content);
-        sessionService.sendTextMessage(content, null, isCustomerService,new SessionService.OnSendMessageListener() {
+        sessionService.sendTextMessage(content, null, isCustomerService, new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1168,9 +1168,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendGifMessage(String url,String aspectRatio,ReadableArray atUserIds, boolean isCustomerService,final Promise promise) {
+    public void sendGifMessage(String url, String aspectRatio, ReadableArray atUserIds, boolean isCustomerService, final Promise promise) {
         LogUtil.w(TAG, "sendTextMessage" + url);
-        sessionService.sendGifMessage(url, aspectRatio, null, isCustomerService,new SessionService.OnSendMessageListener() {
+        sessionService.sendGifMessage(url, aspectRatio, null, isCustomerService, new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1192,18 +1192,33 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
+    @ReactMethod
+    public void sendFileMessage(String filePath, String fileName, boolean isCustomerService, final Promise promise) {
+        try {
+            sessionService.sendFileMessage(filePath, fileName, isCustomerService, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("200");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send file message: " + e.getMessage());
+        }
+    }
+
     //3.发送音频消息
 //    file, // 音频文件
 //    duration // 音频持续时间，单位是ms
     @ReactMethod
-    public void sendAudioMessage(String file, String duration, boolean isCustomerService,final Promise promise) {
+    public void sendAudioMessage(String file, String duration, boolean isCustomerService, final Promise promise) {
         long durationL = 0;
         try {
             durationL = Long.parseLong(duration);
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-        sessionService.sendAudioMessage(file, durationL, isCustomerService,new SessionService.OnSendMessageListener() {
+        sessionService.sendAudioMessage(file, durationL, isCustomerService, new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
                 return 0;
@@ -1218,8 +1233,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    height, // 视频高度
 //    displayName // 视频显示名，可为空
     @ReactMethod
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService,final Promise promise) {
-        sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService,new SessionService.OnSendMessageListener() {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService, final Promise promise) {
+        sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, new SessionService.OnSendMessageListener() {
             @Override
             public int onResult(int code, IMMessage message) {
                 return 0;
@@ -1248,7 +1263,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendCardMessage(String toSessionType,String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, final Promise promise) {
+    public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, final Promise promise) {
         try {
             sessionService.sendCardMessage(toSessionType, toSessionId, name, imgPath, cardSessionId, cardSessionType, new SessionService.OnSendMessageListener() {
                 @Override
@@ -1258,8 +1273,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             });
 
             promise.resolve("200");
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send card message: " + e.getMessage());
         }
 
@@ -1303,7 +1317,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 if (code == ResponseCode.RES_SUCCESS) {
                     promise.resolve(code);
                 } else {
-                    promise.reject("" , "" + code);
+                    promise.reject("", "" + code);
                 }
 
                 return 0;
@@ -1356,7 +1370,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void forwardMultipleTextMessage(ReadableMap dataDict, final String sessionId, final String sessionType, final String content) {
-        sessionService.forwardMultipleTextMessage(dataDict,sessionId,sessionType,content,(code, message) -> {
+        sessionService.forwardMultipleTextMessage(dataDict, sessionId, sessionType, content, (code, message) -> {
             return code;
         });
     }
@@ -1375,7 +1389,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void sendForwardMessage(ReadableArray messageIds, final String sessionId, final String sessionType, final String content, final Promise promise) {
         LogUtil.w(TAG, "sendForwardMessage" + content);
 
-        ArrayList<String> msgIds = (ArrayList<String>)(ArrayList<?>)(messageIds.toArrayList());
+        ArrayList<String> msgIds = (ArrayList<String>) (ArrayList<?>) (messageIds.toArrayList());
         getMsgService().queryMessageListByUuid(msgIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> messageList, Throwable throwable) {
@@ -1690,7 +1704,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public  void getMessageById(String sessionId, String sessionType, String messageId, final  Promise promise) {
+    public void getMessageById(String sessionId, String sessionType, String messageId, final Promise promise) {
         List<String> fromIds = new ArrayList<String>();
         fromIds.add(messageId);
 
@@ -1730,7 +1744,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                 message.putMap(key, msg.getMap(key));
                                 break;
                             case Array:
-                               message.putArray(key, msg.getArray(key));
+                                message.putArray(key, msg.getArray(key));
                                 break;
                             default:
                                 break;
@@ -1748,7 +1762,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void deleteFiles(ReadableArray sessionIds, final Promise promise) {
-        ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
+        ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
     }
 
     @ReactMethod
@@ -1757,7 +1771,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         option.setSearchContent(keyWords);
 
         NIMClient.getService(MsgService.class).searchAllMessage(option)
-                .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                .setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
                     @Override
                     public void onResult(int code, List<IMMessage> result, Throwable exception) {
                         if (code == ResponseCode.RES_SUCCESS) {
@@ -1774,8 +1788,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void searchMessagesinCurrentSession(String keyWords,String anchorId,int limit,ReadableArray messageTypes,int direction, final Promise promise) {
-        ArrayList<String> _messageTypes = (ArrayList<String>)(ArrayList<?>)(messageTypes.toArrayList());
+    public void searchMessagesinCurrentSession(String keyWords, String anchorId, int limit, ReadableArray messageTypes, int direction, final Promise promise) {
+        ArrayList<String> _messageTypes = (ArrayList<String>) (ArrayList<?>) (messageTypes.toArrayList());
 
         MsgSearchOption option = new MsgSearchOption();
         option.setSearchContent(keyWords);
@@ -1796,7 +1810,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             ArrayList<MsgTypeEnum> arrayListMessageTypes = new ArrayList<>();
 
 
-            for (int i=0; i < _messageTypes.size(); i++) {
+            for (int i = 0; i < _messageTypes.size(); i++) {
                 String type = _messageTypes.get(i);
                 arrayListMessageTypes.add(mockUpKeys.get(type));
             }
@@ -1810,8 +1824,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             option.setStartTime(direction == 1 ? anchor.getTime() : 0);
             option.setEndTime(direction == 0 ? anchor.getTime() : 0);
 
-            NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId() ,option)
-                    .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+            NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
+                    .setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
                         @Override
                         public void onResult(int code, List<IMMessage> result, Throwable exception) {
                             if (code == ResponseCode.RES_SUCCESS) {
@@ -1836,17 +1850,17 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                     option.setStartTime(direction == 1 ? message.getTime() : 0);
                     option.setEndTime(direction == 0 ? message.getTime() : 0);
 
-                    NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId() ,option)
-                            .setCallback(new RequestCallbackWrapper<List<IMMessage>>(){
+                    NIMClient.getService(MsgService.class).searchMessage(sessionService.getSessionTypeEnum(), sessionService.getSessionId(), option)
+                            .setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
                                 @Override
                                 public void onResult(int code, List<IMMessage> result, Throwable exception) {
                                     if (code == ResponseCode.RES_SUCCESS) {
                                         if (result != null && result.size() > 0) {
-                                            List<IMMessage>  messages = result;
+                                            List<IMMessage> messages = result;
                                             if (direction == 0) {
                                                 Collections.reverse(messages);
                                             }
-                                     
+
                                             WritableMap messageObjectList = ReactCache.createMessageObjectList(result);
                                             promise.resolve(messageObjectList);
                                             return;
@@ -1863,7 +1877,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void readAllMessageOnlineServiceByListSession(ReadableArray listSessionId) {
-        ArrayList<String> _listSessionId = (ArrayList<String>)(ArrayList<?>)(listSessionId.toArrayList());
+        ArrayList<String> _listSessionId = (ArrayList<String>) (ArrayList<?>) (listSessionId.toArrayList());
         SessionService.getInstance().readAllMessageOnlineServiceByListSession(_listSessionId);
     }
 
@@ -1928,9 +1942,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void queryMessageListEx(String messageId, final
-    int limit,int direction,String sessionId, String sessionType, final Promise promise) {
+    int limit, int direction, String sessionId, String sessionType, final Promise promise) {
         Boolean isUpdate = messageId == null || messageId.isEmpty() || messageId.equals("");
-        WritableMap data =  updateLastUnreadMessage(sessionId, sessionType, isUpdate);
+        WritableMap data = updateLastUnreadMessage(sessionId, sessionType, isUpdate);
         MsgSearchOption option = new MsgSearchOption();
         option.setLimit(limit);
         option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
@@ -1941,7 +1955,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             public void onResult(int code, List<IMMessage> result, Throwable exception) {
                 if (code == ResponseCode.RES_SUCCESS) {
                     if (result != null && result.size() > 0) {
-                        List<IMMessage>  messages = result;
+                        List<IMMessage> messages = result;
                         if (direction == 0) {
                             Collections.reverse(messages);
                         }
@@ -2022,7 +2036,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public  void setCancelResendMessage(String messageId, String sessionId, String sessionType) {
+    public void setCancelResendMessage(String messageId, String sessionId, String sessionType) {
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
             @Override
             public int onResult(int code, IMMessage message) {
@@ -2155,12 +2169,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void play(String audioFile,Boolean isExternalSpeaker, Promise promise) {
+    public void play(String audioFile, Boolean isExternalSpeaker, Promise promise) {
         audioPlayService.play(handler, reactContext, audioFile, isExternalSpeaker);
     }
 
     @ReactMethod
-    public void switchAudioOutputDevice(Boolean isExternalSpeaker){
+    public void switchAudioOutputDevice(Boolean isExternalSpeaker) {
         audioPlayService.updateAudioStreamType(isExternalSpeaker ? AudioManager.STREAM_MUSIC : AudioManager.STREAM_VOICE_CALL);
     }
 
@@ -2404,18 +2418,18 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void getListSessionsCacheSize(ReadableArray sessionIds, final Promise promise) {
-       try {
+        try {
             ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
             WritableMap result = FileCacheUtil.getSessionsCacheSie(_sessionIds);
             promise.resolve(result);
-        } catch (Error error){
+        } catch (Error error) {
             promise.reject(error);
         }
     }
 
     @ReactMethod
     public void cleanListSessionsCache(ReadableArray sessionIds, final Promise promise) {
-        ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
+        ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
 
         String result = FileCacheUtil.cleanSessionCache(_sessionIds);
 
@@ -2536,7 +2550,24 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public  void updateRecentSessionIsCsrOrChatbot(String sessionId,String type, String name ) {
+    public void updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, final Promise promise) {
+        SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+        Map<String, Object> extension = recent.getExtension();
+        if (extension == null) {
+            extension = new HashMap<String, Object>();
+        }
+        ;
+
+        extension.put("isHideSession", isHideSession);
+
+        recent.setExtension(extension);
+        NIMSDK.getMsgService().updateRecent(recent);
+        promise.resolve("success");
+    }
+
+    @ReactMethod
+    public void updateRecentSessionIsCsrOrChatbot(String sessionId, String type, String name) {
         Boolean isUpdated = type.equals("chatbot") || type.equals("csr");
         if (!isUpdated) return;
 
@@ -2607,9 +2638,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 class LocalExt {
     public Boolean isUpdated = true;
     public Boolean isCsr;
-    public  Boolean isChatBot;
+    public Boolean isChatBot;
 
-    public  LocalExt(Boolean csr, Boolean chatBot) {
+    public LocalExt(Boolean csr, Boolean chatBot) {
         isCsr = csr;
         isChatBot = chatBot;
     }

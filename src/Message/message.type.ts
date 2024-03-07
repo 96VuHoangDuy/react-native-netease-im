@@ -66,6 +66,12 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   latitude?: string;
   longitude?: string;
   title?: string;
+  // file
+  filePath: string;
+  fileName: string;
+  fileSize: string;
+  fileMd5: string;
+  fileUrl: string;
 }
 
 export interface NIMMessage {
@@ -109,4 +115,10 @@ export interface NIMMessage {
     chatBotType?: NIMMessageChatBotType;
     isCancelResend?: boolean
   };
+}
+
+export enum NIMFileType {
+  image = "image/",
+  audio = "audio/",
+  video = "video/",
 }

@@ -34,6 +34,7 @@ import com.netease.im.session.extension.RedPacketOpenAttachement;
 import com.netease.im.uikit.cache.FriendDataCache;
 import com.netease.im.uikit.cache.NimUserInfoCache;
 import com.netease.im.uikit.cache.TeamDataCache;
+import com.netease.im.uikit.common.util.file.FileUtil;
 import com.netease.im.uikit.common.util.log.LogUtil;
 import com.netease.im.uikit.common.util.sys.TimeUtil;
 import com.netease.im.uikit.contact.core.item.AbsContactItem;
@@ -50,6 +51,7 @@ import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.friend.model.AddFriendNotify;
 import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.attachment.AudioAttachment;
+import com.netease.nimlib.sdk.msg.attachment.FileAttachment;
 import com.netease.nimlib.sdk.msg.attachment.ImageAttachment;
 import com.netease.nimlib.sdk.msg.attachment.LocationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
@@ -194,7 +196,7 @@ public class ReactCache {
                     WritableMap localExt = Arguments.createMap();
                     Boolean isCsr = (Boolean) extension.get("isCsr");
                     Boolean isChatBot = (Boolean) extension.get("isChatBot");
-                    Boolean isUpdated  = (Boolean) extension.get("isUpdated");
+                    Boolean isUpdated = (Boolean) extension.get("isUpdated");
                     String nameCsr = (String) extension.get("name");
                     Boolean isHideSession = (Boolean) extension.get("isHideSession");
 
@@ -217,7 +219,7 @@ public class ReactCache {
                     }
 
                     map.putMap("localExt", localExt);
-                 }
+                }
                 Team team = null;
                 if (sessionType == SessionTypeEnum.P2P) {
                     map.putString("teamType", "-1");
@@ -248,7 +250,7 @@ public class ReactCache {
                 map.putString("sessionType", Integer.toString(contact.getSessionType().getValue()));
 //                map.putString("msgType", getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
                 if (contact.getMsgType() == MsgTypeEnum.custom) {
-                    map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
+                    map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), (CustomAttachment) contact.getAttachment()));
                 } else {
                     if (contact.getExtension() != null) {
                         Map<String, Object> extensionMsg = contact.getExtension();
@@ -387,7 +389,7 @@ public class ReactCache {
                                         targetsWritableArray.pushMap(target);
                                     }
 
-                                    if  (operationType == NotificationType.MuteTeamMember) {
+                                    if (operationType == NotificationType.MuteTeamMember) {
                                         MuteMemberAttachment muteMemberAttachment = (MuteMemberAttachment) attachment;
                                         notiObj.putString("isMute", muteMemberAttachment.isMute() ? "mute" : "unmute");
                                     }
@@ -878,7 +880,7 @@ public class ReactCache {
         return writableArray;
     }
 
-      /**
+    /**
      * @param messageList
      * @return Object
      */
@@ -912,13 +914,13 @@ public class ReactCache {
         return objectGroupMessages;
     }
 
-    static String getMessageNotifyType(TeamMessageNotifyTypeEnum notifyTypeEnum){
+    static String getMessageNotifyType(TeamMessageNotifyTypeEnum notifyTypeEnum) {
         String notify = "1";
-        if(notifyTypeEnum==TeamMessageNotifyTypeEnum.All){
+        if (notifyTypeEnum == TeamMessageNotifyTypeEnum.All) {
             notify = "1";
-        }else if(notifyTypeEnum==TeamMessageNotifyTypeEnum.Manager){
+        } else if (notifyTypeEnum == TeamMessageNotifyTypeEnum.Manager) {
             notify = "0";
-        }else if(notifyTypeEnum==TeamMessageNotifyTypeEnum.Mute){
+        } else if (notifyTypeEnum == TeamMessageNotifyTypeEnum.Mute) {
             notify = "0";
         }
         return notify;
@@ -1148,7 +1150,7 @@ public class ReactCache {
 
             byte[] buffer = new byte[BUFFERSIZE];
 
-            while(fin.available() != 0) {
+            while (fin.available() != 0) {
                 int bytesRead = fin.read(buffer);
                 fout.write(buffer, 0, bytesRead);
             }
@@ -1158,7 +1160,7 @@ public class ReactCache {
             System.out.println("File is copied successful!");
         } catch (IOException e) {
             e.printStackTrace();
-        }finally{
+        } finally {
             if (inStream != null) {
                 inStream.close();
             }
@@ -1170,7 +1172,7 @@ public class ReactCache {
         return ismove;
     }
 
-    private static File replaceVideoPath(String path,String sessionId,String type,String extension) {
+    private static File replaceVideoPath(String path, String sessionId, String type, String extension) {
         String currentFileName = path.substring(path.lastIndexOf("/"), path.length());
         int extensionIndex = currentFileName.lastIndexOf(".");
 
@@ -1190,16 +1192,16 @@ public class ReactCache {
         String typeDir = "";
         switch (type) {
             case "video":
-                typeDir        = "/video/";
+                typeDir = "/video/";
                 break;
             case "image":
-                typeDir        = "/image/";
+                typeDir = "/image/";
                 break;
             case "audio":
-                typeDir        = "/audio/";
+                typeDir = "/audio/";
                 break;
             case "file":
-                typeDir        = "/file/";
+                typeDir = "/file/";
                 break;
         }
         Log.d("directory", directory + "......" + directory + "/nim" + typeDir + sessionId + "......." + currentFileName.trim() + extension);
@@ -1219,7 +1221,7 @@ public class ReactCache {
             }
             return null;
         } catch (IOException e) {
-                return null;
+            return null;
         }
     }
 
@@ -1269,9 +1271,9 @@ public class ReactCache {
 
             if (!isFilePathDeleted) {
                 if (videoAttachment.getPath() != null) {
-                    if ( (!videoAttachment.getPath().contains(".mp4")
-                            || !videoAttachment.getPath().contains(item.getSessionId()) )
-                                && item.getStatus() == MsgStatusEnum.success) {
+                    if ((!videoAttachment.getPath().contains(".mp4")
+                            || !videoAttachment.getPath().contains(item.getSessionId()))
+                            && item.getStatus() == MsgStatusEnum.success) {
                         File newFile = replaceVideoPath(videoAttachment.getPath(), item.getSessionId(), "video", ".mp4");
                         if (newFile != null) {
                             videoAttachment.setPath(newFile.getPath());
@@ -1342,12 +1344,12 @@ public class ReactCache {
 
             Boolean isFilePathDeleted = false;
             Boolean isFileDownloading = true;
-            Log.d("imageAttachment",imageAttachment.getPath()+"");
-            Log.d("localExtension.get()",localExtension.get("isReplacePathSuccess")+"");
+            Log.d("imageAttachment", imageAttachment.getPath() + "");
+            Log.d("localExtension.get()", localExtension.get("isReplacePathSuccess") + "");
 
             if (localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {
-                    imageObj.putBoolean("isFilePathDeleted", true);
-                    isFilePathDeleted = true;
+                imageObj.putBoolean("isFilePathDeleted", true);
+                isFilePathDeleted = true;
             }
 
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
@@ -1355,7 +1357,7 @@ public class ReactCache {
             if (!isFilePathDeleted) {
                 if (imageAttachment.getPath() != null
                         && !imageAttachment.getPath().contains(item.getSessionId())
-                            && item.getStatus() == MsgStatusEnum.success) {
+                        && item.getStatus() == MsgStatusEnum.success) {
                     File newFile = replaceVideoPath(imageAttachment.getPath(), item.getSessionId(), "image", "." + imageAttachment.getExtension());
                     if (newFile != null) {
                         imageAttachment.setPath(newFile.getPath());
@@ -1388,6 +1390,66 @@ public class ReactCache {
         return imageObj;
     }
 
+    public static WritableMap generateFileExtend(IMMessage item) {
+        MsgAttachment attachment = item.getAttachment();
+        WritableMap fileObj = Arguments.createMap();
+
+        if (attachment instanceof FileAttachment) {
+            FileAttachment fileAttachment = (FileAttachment) attachment;
+
+            Map<String, Object> localExtension = item.getLocalExtension();
+            fileObj.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            fileObj.putBoolean("needRefreshMessage", false);
+
+            Boolean isFilePathDeleted = false;
+            Boolean isFileDownloading = true;
+
+            if (localExtension.get("isReplacePathSuccess").equals(true) && fileAttachment.getPath() == null) {
+                fileObj.putBoolean("isFilePathDeleted", true);
+                isFilePathDeleted = true;
+            }
+
+            fileObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            if (!isFilePathDeleted) {
+                if (fileAttachment.getPath() != null
+                        && !fileAttachment.getPath().contains(item.getSessionId())
+                        && item.getStatus() == MsgStatusEnum.success) {
+                    File newFile = replaceVideoPath(fileAttachment.getPath(), item.getSessionId(), "file", "." + fileAttachment.getExtension());
+                    if (newFile != null) {
+                        fileAttachment.setPath(newFile.getPath());
+                        item.setAttachment(fileAttachment);
+                        getMsgService().updateIMMessageStatus(item);
+                        fileObj.putString("filePath", fileAttachment.getPath());
+                        fileObj.putString("fileUrl", fileAttachment.getUrl());
+                        fileObj.putString("fileName", item.getContent());
+                        fileObj.putString("fileMd5", fileAttachment.getMd5());
+                        fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
+
+                        setLocalExtension(item, "isReplacePathSuccess", true);
+                        fileObj.putBoolean("isReplacePathSuccess", true);
+                        fileObj.putBoolean("needRefreshMessage", true);
+                    }
+                } else {
+                    if (item.getDirect() == MsgDirectionEnum.Out) {
+                        fileObj.putString(MessageConstant.MediaFile.PATH, fileAttachment.getPath());
+                    } else {
+                        fileObj.putString(MessageConstant.MediaFile.PATH, fileAttachment.getPath());
+                    }
+                    fileObj.putString("filePath", fileAttachment.getPath());
+                    fileObj.putString("fileUrl", fileAttachment.getUrl());
+                    fileObj.putString("fileName", item.getContent());
+                    fileObj.putString("fileMd5", fileAttachment.getMd5());
+                    fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
+                }
+
+                SessionService.getInstance().downloadAttachment(item, fileAttachment.getThumbPath() == null);
+            }
+        }
+
+        return fileObj;
+    }
+
     public static WritableMap generateRecordExtend(IMMessage item) {
         MsgAttachment attachment = item.getAttachment();
         WritableMap audioObj = Arguments.createMap();
@@ -1408,11 +1470,11 @@ public class ReactCache {
 
             audioObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
-            if(!isFilePathDeleted) {
+            if (!isFilePathDeleted) {
                 if (audioAttachment.getPath() != null
                         && !audioAttachment.getPath().contains(item.getSessionId())
-                         && item.getStatus() == MsgStatusEnum.success) {
-                    File newFile = replaceVideoPath(audioAttachment.getPath(), item.getSessionId(), "audio","." + audioAttachment.getExtension());
+                        && item.getStatus() == MsgStatusEnum.success) {
+                    File newFile = replaceVideoPath(audioAttachment.getPath(), item.getSessionId(), "audio", "." + audioAttachment.getExtension());
                     if (newFile != null) {
                         audioAttachment.setPath(newFile.getPath());
                         item.setAttachment(audioAttachment);
@@ -1440,7 +1502,7 @@ public class ReactCache {
             }
         }
 
-       return audioObj;
+        return audioObj;
     }
 
     /**
@@ -1458,7 +1520,7 @@ public class ReactCache {
      * @param item
      * @return
      */
-    public static WritableMap createMessage(IMMessage item,boolean isNoti) {
+    public static WritableMap createMessage(IMMessage item, boolean isNoti) {
         WritableMap itemMap = Arguments.createMap();
         itemMap.putString(MessageConstant.Message.MSG_ID, item.getUuid());
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(item.getSessionId(), item.getSessionType());
@@ -1467,7 +1529,7 @@ public class ReactCache {
         WritableMap localExt = Arguments.createMap();
 
         if (messageLocalExt != null) {
-            String chatBotType = (String)  messageLocalExt.get("chatBotType");
+            String chatBotType = (String) messageLocalExt.get("chatBotType");
             Boolean isCancelResend = (Boolean) messageLocalExt.get("isCancelResend");
 
             if (chatBotType != null) {
@@ -1501,7 +1563,7 @@ public class ReactCache {
         itemMap.putMap("localExt", localExt);
 
         if (item.getMsgType() == MsgTypeEnum.custom) {
-            itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(),(CustomAttachment) item.getAttachment()));
+            itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(), (CustomAttachment) item.getAttachment()));
         } else {
             if (item.getRemoteExtension() != null) {
                 Map<String, Object> extensionMsg = item.getRemoteExtension();
@@ -1632,7 +1694,11 @@ public class ReactCache {
                 WritableMap videoDic = generateVideoExtend(item);
 
                 itemMap.putMap(MESSAGE_EXTEND, videoDic);
-            } else if(item.getMsgType() == MsgTypeEnum.location){
+            } else if (item.getMsgType() == MsgTypeEnum.file) {
+                WritableMap fileObj = generateFileExtend(item);
+
+                itemMap.putMap(MESSAGE_EXTEND, fileObj);
+            } else if (item.getMsgType() == MsgTypeEnum.location) {
                 WritableMap locationObj = Arguments.createMap();
 
                 LocationAttachment locationAttachment = (LocationAttachment) item.getAttachment();
@@ -1643,8 +1709,7 @@ public class ReactCache {
 
                     itemMap.putMap(MESSAGE_EXTEND, locationObj);
                 }
-            }
-            else if (item.getMsgType() == MsgTypeEnum.notification) {
+            } else if (item.getMsgType() == MsgTypeEnum.notification) {
                 if (item.getSessionType() == SessionTypeEnum.Team) {
                     WritableMap notiObj = Arguments.createMap();
 //                    text = TeamNotificationHelper.getTeamNotificationText(item, item.getSessionId());
@@ -1684,7 +1749,7 @@ public class ReactCache {
                                 targetsWritableArray.pushMap(target);
                             }
 
-                            if  (operationType == NotificationType.MuteTeamMember) {
+                            if (operationType == NotificationType.MuteTeamMember) {
                                 MuteMemberAttachment muteMemberAttachment = (MuteMemberAttachment) attachment;
                                 notiObj.putString("isMute", muteMemberAttachment.isMute() ? "mute" : "unmute");
                             }
