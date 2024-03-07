@@ -522,12 +522,6 @@
     return imgObj;
 }
 
-//[fileObj setObject:[NSString stringWithFormat:@"%@", object.path ] forKey:@"filePath"];
-//[fileObj setObject:[NSString stringWithFormat:@"%@", message.text ] forKey:@"fileName"];
-//[fileObj setObject:[NSString stringWithFormat:@"%@", displayFileSize ] forKey:@"fileSize"];
-//[fileObj setObject:[NSString stringWithFormat:@"%@", object.md5 ] forKey:@"fileMd5"];
-//[fileObj setObject:[NSString stringWithFormat:@"%@", object.url ] forKey:@"fileUrl"];
-
 -(NSDictionary *) makeExtendFile:(NIMMessage *)message {
     NIMFileObject *object = message.messageObject;
     NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:object.fileLength countStyle:NSByteCountFormatterCountStyleFile];
