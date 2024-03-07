@@ -496,7 +496,7 @@ class NimSession {
   }
 
   addEmptyRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
-    return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType)
+    return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType);
   }
 
   updateRecentSessionIsCsrOrChatbot(
@@ -527,16 +527,44 @@ class NimSession {
     return RNNeteaseIm.readAllMessageOnlineServiceByListSession(listSessionId);
   }
 
-  getMessageById(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string) {
+  getMessageById(
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    messageId: string
+  ) {
     return RNNeteaseIm.getMessageById(sessionId, sessionType, messageId);
   }
 
-  setCancelResendMessage(messageId: string, sessionId: string, sessionType: NIMSessionTypeEnum) {
-    return RNNeteaseIm.setCancelResendMessage(messageId, sessionId, sessionType);
+  setCancelResendMessage(
+    messageId: string,
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum
+  ) {
+    return RNNeteaseIm.setCancelResendMessage(
+      messageId,
+      sessionId,
+      sessionType
+    );
   }
 
-  onSendFile(account: string, sessionType: NIMSessionTypeEnum, file: any){
-    return RNNeteaseIm.onSendFile(account, sessionType, file)
+  updateIsSeenMessage(isSeenMessage: boolean) {
+    return RNNeteaseIm.updateIsSeenMessage(isSeenMessage);
+  }
+
+  updateActionHideRecentSession(
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    isHideSession: boolean
+  ) {
+    return RNNeteaseIm.updateActionHideRecentSession(
+      sessionId,
+      sessionType,
+      isHideSession
+    );
+  }
+
+  onSendFile(account: string, sessionType: NIMSessionTypeEnum, file: any) {
+    return RNNeteaseIm.onSendFile(account, sessionType, file);
   }
 }
 

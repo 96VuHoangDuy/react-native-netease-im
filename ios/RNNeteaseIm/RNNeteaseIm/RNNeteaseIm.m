@@ -703,6 +703,18 @@ RCT_EXPORT_METHOD(addMembers:(nonnull NSString *)teamId accounts:(nonnull NSArra
         reject(@"-1",erro,nil);
     }];
 }
+
+RCT_EXPORT_METHOD(updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] updateActionHideRecentSession:sessionId sessionType:sessionType isHideSession:isHideSession success:^(id param) {
+        resolve(param);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(updateIsSeenMessage:(BOOL *)isSeenMessage) {
+    [[ConversationViewController initWithConversationViewController] updateIsSeenMessage:isSeenMessage];
+}
 //踢人出群
 RCT_EXPORT_METHOD(removeMember:(nonnull NSString *)teamId accounts:(nonnull NSArray *)count resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[TeamViewController initWithTeamViewController] removeMember:teamId accounts:count Succ:^(id param) {

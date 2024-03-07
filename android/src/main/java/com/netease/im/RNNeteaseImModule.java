@@ -158,6 +158,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         promise.resolve("200");
     }
 
+    @ReactMethod
+    public  void updateIsSeenMessage(Boolean isSeenMessage) {
+        sessionService.updateIsSeenMessage(isSeenMessage);
+    }
+
     /**
      * 登陆
      *
@@ -2512,6 +2517,22 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void addEmptyRecentSession(String sessionId, String sessionType) {
         SessionTypeEnum type = SessionUtil.getSessionType(sessionType);
         NIMSDK.getMsgService().createEmptyRecentContact(sessionId, type, 0, System.currentTimeMillis(), true);
+    }
+
+    @ReactMethod
+    public  void  updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, final Promise promise) {
+        SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+        Map<String, Object> extension = recent.getExtension();
+        if (extension == null) {
+            extension = new HashMap<String, Object>();
+        };
+
+        extension.put("isHideSession", isHideSession);
+
+        recent.setExtension(extension);
+        NIMSDK.getMsgService().updateRecent(recent);
+        promise.resolve("success");
     }
 
     @ReactMethod

@@ -111,6 +111,8 @@ public class SessionService {
     private String sessionName = "";
     private boolean isFriend = true;
 
+    private boolean isSeenMessage = true;
+
     private SessionService() {
     }
 
@@ -126,6 +128,10 @@ public class SessionService {
 
     public String getSessionId() {
         return sessionId;
+    }
+
+    public void updateIsSeenMessage(Boolean isSeen) {
+        isSeenMessage = isSeen;
     }
 
     public SessionTypeEnum getSessionTypeEnum() {
@@ -326,7 +332,7 @@ public class SessionService {
      */
 
     public void sendMsgReceipt(@NonNull List<IMMessage> messageList) {
-        if (sessionId == null || sessionTypeEnum != SessionTypeEnum.P2P) {
+        if (sessionId == null || sessionTypeEnum != SessionTypeEnum.P2P || !isSeenMessage) {
             return;
         }
 
