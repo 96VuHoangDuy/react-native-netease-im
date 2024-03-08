@@ -737,7 +737,11 @@ public class SessionService {
     public void createNotificationBirthday(String sessionId, String type) {
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
         IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(sessionId, sessionType);
-        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, lastMessage.getContent());
+        String content = "";
+        if (lastMessage != null) {
+            content = lastMessage.getContent();
+        }
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, content);
 
         Map<String, Object> localExt = new HashMap<String, Object>();
 
