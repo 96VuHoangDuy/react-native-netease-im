@@ -44,6 +44,10 @@ typedef void(^Errors)(id erro);
 // just forward multiple message text
 -(void)forwardMultipleTextMessage:(NSDictionary *)dataDict sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content;
 
+-(void)createNotificationBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success err:(Errors)err;
+
+-(void)updateMessageSentStickerBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err;
+
 -(void)updateRecentSessionIsCsrOrChatbot:(NSString *)sessionId type:(NSString *)type name:(NSString *)name;
 
 - (NSString *)getUserName:(NSString *)userID;

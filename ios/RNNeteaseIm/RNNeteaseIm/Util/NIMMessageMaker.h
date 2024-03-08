@@ -13,6 +13,8 @@
 
 @interface NIMMessageMaker : NSObject
 
++ (NIMMessage *)msgWithNotificationBirthday:(NIMMessage *)lastMessage;
+
 + (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName;
 
 + (NIMMessage *)msgWithAudio:(NSString *)filePath andeSession:(NIMSession *)session senderName:(NSString *)senderName;

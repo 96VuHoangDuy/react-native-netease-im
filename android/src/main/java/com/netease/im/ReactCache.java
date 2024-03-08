@@ -219,7 +219,7 @@ public class ReactCache {
                     }
 
                     map.putMap("localExt", localExt);
-                }
+                 }
                 Team team = null;
                 if (sessionType == SessionTypeEnum.P2P) {
                     map.putString("teamType", "-1");
@@ -880,7 +880,7 @@ public class ReactCache {
         return writableArray;
     }
 
-    /**
+      /**
      * @param messageList
      * @return Object
      */
@@ -1221,7 +1221,7 @@ public class ReactCache {
             }
             return null;
         } catch (IOException e) {
-            return null;
+                return null;
         }
     }
 
@@ -1273,7 +1273,7 @@ public class ReactCache {
                 if (videoAttachment.getPath() != null) {
                     if ((!videoAttachment.getPath().contains(".mp4")
                             || !videoAttachment.getPath().contains(item.getSessionId()))
-                            && item.getStatus() == MsgStatusEnum.success) {
+                                && item.getStatus() == MsgStatusEnum.success) {
                         File newFile = replaceVideoPath(videoAttachment.getPath(), item.getSessionId(), "video", ".mp4");
                         if (newFile != null) {
                             videoAttachment.setPath(newFile.getPath());
@@ -1348,8 +1348,8 @@ public class ReactCache {
             Log.d("localExtension.get()", localExtension.get("isReplacePathSuccess") + "");
 
             if (localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {
-                imageObj.putBoolean("isFilePathDeleted", true);
-                isFilePathDeleted = true;
+                    imageObj.putBoolean("isFilePathDeleted", true);
+                    isFilePathDeleted = true;
             }
 
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
@@ -1357,7 +1357,7 @@ public class ReactCache {
             if (!isFilePathDeleted) {
                 if (imageAttachment.getPath() != null
                         && !imageAttachment.getPath().contains(item.getSessionId())
-                        && item.getStatus() == MsgStatusEnum.success) {
+                            && item.getStatus() == MsgStatusEnum.success) {
                     File newFile = replaceVideoPath(imageAttachment.getPath(), item.getSessionId(), "image", "." + imageAttachment.getExtension());
                     if (newFile != null) {
                         imageAttachment.setPath(newFile.getPath());
@@ -1473,8 +1473,8 @@ public class ReactCache {
             if (!isFilePathDeleted) {
                 if (audioAttachment.getPath() != null
                         && !audioAttachment.getPath().contains(item.getSessionId())
-                        && item.getStatus() == MsgStatusEnum.success) {
-                    File newFile = replaceVideoPath(audioAttachment.getPath(), item.getSessionId(), "audio", "." + audioAttachment.getExtension());
+                         && item.getStatus() == MsgStatusEnum.success) {
+                        File newFile = replaceVideoPath(audioAttachment.getPath(), item.getSessionId(), "audio", "." + audioAttachment.getExtension());
                     if (newFile != null) {
                         audioAttachment.setPath(newFile.getPath());
                         item.setAttachment(audioAttachment);
@@ -1502,7 +1502,7 @@ public class ReactCache {
             }
         }
 
-        return audioObj;
+       return audioObj;
     }
 
     /**
@@ -1531,6 +1531,8 @@ public class ReactCache {
         if (messageLocalExt != null) {
             String chatBotType = (String) messageLocalExt.get("chatBotType");
             Boolean isCancelResend = (Boolean) messageLocalExt.get("isCancelResend");
+            Boolean isSentBirthday = (Boolean) messageLocalExt.get("isSentBirthday");
+            String notificationType = (String) messageLocalExt.get("notificationType");
 
             if (chatBotType != null) {
                 localExt.putString("chatBotType", chatBotType);
@@ -1538,6 +1540,14 @@ public class ReactCache {
 
             if (isCancelResend != null) {
                 localExt.putBoolean("isCancelResend", isCancelResend);
+            }
+
+            if (isSentBirthday != null) {
+                localExt.putBoolean("isSentBirthday", isSentBirthday);
+            }
+
+            if (notificationType != null) {
+                localExt.putString("notificationType", notificationType);
             }
         }
 

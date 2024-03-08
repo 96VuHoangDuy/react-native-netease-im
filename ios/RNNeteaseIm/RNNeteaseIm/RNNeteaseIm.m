@@ -392,6 +392,23 @@ RCT_EXPORT_METHOD(revokeMessage:(nonnull NSString *)messageId resolve:(RCTPromis
         reject(@"-1",erro,nil);
     }];
 }
+
+RCT_EXPORT_METHOD(updateMessageSentStickerBirthday:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] updateMessageSentStickerBirthday:sessionId sessionType:sessionType messageId:messageId success:^(id param) {
+        resolve(param);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(createNotificationBirthday:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] createNotificationBirthday:sessionId sessionType:sessionType success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //重发消息
 RCT_EXPORT_METHOD(resendMessage:(nonnull NSString *)messageId){
     [[ConversationViewController initWithConversationViewController]resendMessage:messageId];

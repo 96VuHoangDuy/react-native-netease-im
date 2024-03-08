@@ -8,6 +8,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.MapBuilder;
@@ -60,6 +61,7 @@ import com.netease.nimlib.sdk.msg.model.CustomMessageConfig;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MemberPushOption;
 import com.netease.nimlib.sdk.msg.model.MessageReceipt;
+import com.netease.nimlib.sdk.msg.model.NIMMessage;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.RevokeMsgNotification;
@@ -692,6 +694,65 @@ public class SessionService {
 //                appendPushConfig(item);
 //                getMsgService().sendMessage(item, true);
         sendMessageSelf(item, null, true, false);
+    }
+
+    public void updateMessageSentStickerBirthday(String sessionId, String type, String messageId, OnMessageQueryListener onMessageQueryListener) {
+        List<String> listMessageId = new ArrayList<String>();
+        listMessageId.add(messageId);
+        NIMSDK.getMsgService().queryMessageListByUuid(listMessageId).setCallback(new RequestCallback<List<IMMessage>>() {
+            @Override
+            public void onSuccess(List<IMMessage> result) {
+                if (result.size() != 1) {
+                    onMessageQueryListener.onResult(0, null);
+                }
+
+                IMMessage message = result.get(0);
+
+                Map<String, Object> localExt = message.getLocalExtension();
+                if (localExt == null) {
+                    localExt = new HashMap<String, Object>();
+                }
+
+                localExt.put("isSentBirthday", true);
+
+                message.setLocalExtension(localExt);
+
+                NIMSDK.getMsgService().updateIMMessage(message);
+
+                onMessageQueryListener.onResult(1, message);
+            }
+
+            @Override
+            public void onFailed(int code) {
+                onMessageQueryListener.onResult(0, null);
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                onMessageQueryListener.onResult(0, null);
+            }
+        });
+    }
+
+    public void createNotificationBirthday(String sessionId, String type) {
+        SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
+        IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(sessionId, sessionType);
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, lastMessage.getContent());
+
+        Map<String, Object> localExt = new HashMap<String, Object>();
+
+        localExt.put("notificationType", "BIRTHDAY");
+        localExt.put("isSentBirthday", false);
+
+        CustomMessageConfig config = new CustomMessageConfig();
+        config.enablePush = false;
+        config.enableUnreadCount = true;
+
+        message.setConfig(config);
+        message.setLocalExtension(localExt);
+        message.setStatus(MsgStatusEnum.success);
+
+        NIMSDK.getMsgService().saveMessageToLocal(message, true);
     }
 
     /**

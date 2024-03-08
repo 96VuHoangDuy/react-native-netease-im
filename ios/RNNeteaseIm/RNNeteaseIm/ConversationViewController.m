@@ -97,6 +97,27 @@
     // NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc]init];
 }
 
+-(void)updateMessageSentStickerBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *message = messages[0];
+    
+    NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    
+    [localExt setObject:@(YES) forKey:@"isSentBirthday"];
+    
+    message.localExt = localExt;
+    
+    [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:session completion:^(NSError * _Nullable error) {
+        if (error != nil) {
+            err(error);
+            return;
+        }
+        
+        success(@"success");
+    }];
+}
+
 //重发消息
 - (void)resendMessage:(NSString *)messageID{
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageID] ];
@@ -1055,6 +1076,23 @@
         }
     }
 }
+
+-(void)createNotificationBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success err:(Errors)err {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    NIMMessage *lastMessage = recent.lastMessage;
+    NIMMessage *message = [NIMMessageMaker msgWithNotificationBirthday:lastMessage];
+    
+    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:^(NSError * _Nullable error) {
+        if (error != nil) {
+            err(error);
+            return;
+        }
+        
+        success(@"success");
+    }];
+}
+
 //发送文字消息
 -(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
     NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session senderName:_myUserName];

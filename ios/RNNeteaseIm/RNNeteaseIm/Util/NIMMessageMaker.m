@@ -31,6 +31,24 @@
     return message;
 }
 
++(NIMMessage *) msgWithNotificationBirthday:(NIMMessage *)lastMessage {
+    NIMMessage *message = [[NIMMessage alloc] init];
+    
+    message.text = @"";
+    if (lastMessage != nil) {
+        message.text = lastMessage.text;
+    }
+    
+    NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
+    
+    [localExt setObject:@"BIRTHDAY" forKey:@"notificationType"];
+    [localExt setObject:@(NO) forKey:@"isSentBirthday"];
+    
+    message.localExt = localExt;
+    
+    return message;
+}
+
 + (NIMMessage*)msgWithAudio:(NSString*)filePath andeSession:(NIMSession *)session senderName:(NSString *)senderName
 {
     AVAudioPlayer * sound = [[AVAudioPlayer alloc] initWithContentsOfURL:[NSURL fileURLWithPath:filePath] error:nil];

@@ -159,6 +159,29 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void createNotificationBirthday(String sessionId, String sessionType, final  Promise promise) {
+        sessionService.createNotificationBirthday(sessionId, sessionType);
+        promise.resolve("success");
+    }
+
+    @ReactMethod
+    public void updateMessageSentStickerBirthday(String sessionId, String sessionType, String messageId,  Promise promise) {
+        sessionService.updateMessageSentStickerBirthday(sessionId, sessionType, messageId, new SessionService.OnMessageQueryListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+                if (message == null) {
+                    promise.reject("error");
+                    return code;
+                }
+
+                promise.resolve("success");
+
+                return code;
+            }
+        });
+    }
+
+    @ReactMethod
     public  void updateIsSeenMessage(Boolean isSeenMessage) {
         sessionService.updateIsSeenMessage(isSeenMessage);
     }
@@ -1744,7 +1767,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                 message.putMap(key, msg.getMap(key));
                                 break;
                             case Array:
-                                message.putArray(key, msg.getArray(key));
+                               message.putArray(key, msg.getArray(key));
                                 break;
                             default:
                                 break;
@@ -1860,7 +1883,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                             if (direction == 0) {
                                                 Collections.reverse(messages);
                                             }
-
+                                     
                                             WritableMap messageObjectList = ReactCache.createMessageObjectList(result);
                                             promise.resolve(messageObjectList);
                                             return;
@@ -2418,18 +2441,18 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void getListSessionsCacheSize(ReadableArray sessionIds, final Promise promise) {
-        try {
+       try {
             ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
             WritableMap result = FileCacheUtil.getSessionsCacheSie(_sessionIds);
             promise.resolve(result);
-        } catch (Error error) {
+        } catch (Error error){
             promise.reject(error);
         }
     }
 
     @ReactMethod
     public void cleanListSessionsCache(ReadableArray sessionIds, final Promise promise) {
-        ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
+        ArrayList<String> _sessionIds = (ArrayList<String>)(ArrayList<?>)(sessionIds.toArrayList());
 
         String result = FileCacheUtil.cleanSessionCache(_sessionIds);
 
@@ -2534,14 +2557,14 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, final Promise promise) {
+    public  void  updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, final Promise promise) {
+        Log.e(TAG, "updateActionHideRecentSession");
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
         Map<String, Object> extension = recent.getExtension();
         if (extension == null) {
             extension = new HashMap<String, Object>();
-        }
-        ;
+        };
 
         extension.put("isHideSession", isHideSession);
 
@@ -2551,7 +2574,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void updateRecentSessionIsCsrOrChatbot(String sessionId, String type, String name) {
+    public  void updateRecentSessionIsCsrOrChatbot(String sessionId,String type, String name ) {
         Boolean isUpdated = type.equals("chatbot") || type.equals("csr");
         if (!isUpdated) return;
 
@@ -2622,9 +2645,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 class LocalExt {
     public Boolean isUpdated = true;
     public Boolean isCsr;
-    public Boolean isChatBot;
+    public  Boolean isChatBot;
 
-    public LocalExt(Boolean csr, Boolean chatBot) {
+    public  LocalExt(Boolean csr, Boolean chatBot) {
         isCsr = csr;
         isChatBot = chatBot;
     }
