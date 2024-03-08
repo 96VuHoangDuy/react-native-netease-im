@@ -1425,6 +1425,7 @@ public class ReactCache {
                         fileObj.putString("fileName", item.getContent());
                         fileObj.putString("fileMd5", fileAttachment.getMd5());
                         fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
+                        fileObj.putString("fileType", fileAttachment.getExtension());
 
                         setLocalExtension(item, "isReplacePathSuccess", true);
                         fileObj.putBoolean("isReplacePathSuccess", true);
@@ -1441,6 +1442,7 @@ public class ReactCache {
                     fileObj.putString("fileName", item.getContent());
                     fileObj.putString("fileMd5", fileAttachment.getMd5());
                     fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
+                    fileObj.putString("fileType", fileAttachment.getExtension());
                 }
 
                 SessionService.getInstance().downloadAttachment(item, fileAttachment.getThumbPath() == null);
