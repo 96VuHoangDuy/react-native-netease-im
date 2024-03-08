@@ -72,6 +72,7 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   fileSize: string;
   fileMd5: string;
   fileUrl: string;
+  fileType: string;
 }
 
 export interface NIMMessage {
