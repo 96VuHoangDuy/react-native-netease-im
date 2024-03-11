@@ -31,7 +31,7 @@
     return message;
 }
 
-+(NIMMessage *) msgWithNotificationBirthday:(NIMMessage *)lastMessage {
++(NIMMessage *) msgWithNotificationBirthday:(NIMMessage *)lastMessage memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName {
     NIMMessage *message = [[NIMMessage alloc] init];
     
     message.text = @"";
@@ -43,6 +43,14 @@
     
     [localExt setObject:@"BIRTHDAY" forKey:@"notificationType"];
     [localExt setObject:@(NO) forKey:@"isSentBirthday"];
+    
+    if (memberName != nil) {
+        [localExt setObject:memberName forKey:@"birthdayMemberName"];
+    }
+    
+    if (memberContactId != nil) {
+        [localExt setObject:memberContactId forKey:@"birthdayMemberContactId"];
+    }
     
     message.localExt = localExt;
     

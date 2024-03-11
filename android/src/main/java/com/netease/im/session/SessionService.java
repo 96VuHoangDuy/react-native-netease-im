@@ -735,6 +735,9 @@ public class SessionService {
     }
 
     public void createNotificationBirthday(String sessionId, String type) {
+        this.createNotificationBirthday(sessionId, type, null, null);
+    }
+    public void createNotificationBirthday(String sessionId, String type, String memberContactId, String memberName) {
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
         IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(sessionId, sessionType);
         String content = "";
@@ -747,6 +750,13 @@ public class SessionService {
 
         localExt.put("notificationType", "BIRTHDAY");
         localExt.put("isSentBirthday", false);
+
+        if (memberContactId != null) {
+            localExt.put("birthdayMemberContactId", memberContactId);
+        }
+        if (memberName != null) {
+            localExt.put("birthdayMemberName", memberName);
+        }
 
         CustomMessageConfig config = new CustomMessageConfig();
         config.enablePush = false;

@@ -13,7 +13,7 @@
 
 @interface NIMMessageMaker : NSObject
 
-+ (NIMMessage *)msgWithNotificationBirthday:(NIMMessage *)lastMessage;
++ (NIMMessage *)msgWithNotificationBirthday:(NIMMessage *)lastMessage memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName;
 
 + (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName;
 

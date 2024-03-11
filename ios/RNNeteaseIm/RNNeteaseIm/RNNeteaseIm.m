@@ -401,8 +401,8 @@ RCT_EXPORT_METHOD(updateMessageSentStickerBirthday:(nonnull NSString *)sessionId
     }];
 }
 
-RCT_EXPORT_METHOD(createNotificationBirthday:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] createNotificationBirthday:sessionId sessionType:sessionType success:^(id params) {
+RCT_EXPORT_METHOD(createNotificationBirthday:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] createNotificationBirthday:sessionId sessionType:sessionType memberContactId:memberContactId memberName:memberName success:^(id params) {
         resolve(params);
     } err:^(id error) {
         reject(@"-1", error, nil);

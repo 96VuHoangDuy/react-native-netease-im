@@ -1,11 +1,11 @@
 import {
   NIMMessageStatusEnum,
   NIMMessageTypeEnum,
-} from "../Message/message.type";
+} from '../Message/message.type';
 import {
   NIMTeamOperationType,
   NIMTeamOperationTypeUpdateDetail,
-} from "../Team/team.type";
+} from '../Team/team.type';
 
 export enum QueryDirectionType {
   NEW = 1,
@@ -13,51 +13,51 @@ export enum QueryDirectionType {
 }
 
 export enum NIMSessionTypeEnum {
-  None = "None",
-  P2P = "0",
-  Team = "1",
-  SUPER_TEAM = "SUPER_TEAM",
-  System = "System",
-  Ysf = "Ysf",
-  ChatRoom = "ChatRoom",
-  QChat = "QChat",
-  onlineService = "online_service",
-  systemMessage = "system_message",
+  None = 'None',
+  P2P = '0',
+  Team = '1',
+  SUPER_TEAM = 'SUPER_TEAM',
+  System = 'System',
+  Ysf = 'Ysf',
+  ChatRoom = 'ChatRoom',
+  QChat = 'QChat',
+  onlineService = 'online_service',
+  systemMessage = 'system_message',
 }
 
 export enum NIMSessionOnlineServiceType {
   CHATBOT = 'chatbot',
-  CSR = 'csr'
+  CSR = 'csr',
 }
 
 export enum NIMQueryDirectionEnum {
-  QUERY_OLD = "QUERY_OLD",
-  QUERY_NEW = "QUERY_NEW",
+  QUERY_OLD = 'QUERY_OLD',
+  QUERY_NEW = 'QUERY_NEW',
 }
 
 export enum NIMCustomAttachmentEnum {
-  RedPacket = "redpacket",
-  BankTransfer = "transfer",
-  BankTransferSystem = "system",
-  RedPacketOpen = "redpacketOpen",
-  ProfileCard = "ProfileCard",
-  Collection = "Collection",
-  SystemImageText = "SystemImageText",
-  LinkUrl = "url",
-  AccountNotice = "account_notice",
-  Card = "card",
+  RedPacket = 'redpacket',
+  BankTransfer = 'transfer',
+  BankTransferSystem = 'system',
+  RedPacketOpen = 'redpacketOpen',
+  ProfileCard = 'ProfileCard',
+  Collection = 'Collection',
+  SystemImageText = 'SystemImageText',
+  LinkUrl = 'url',
+  AccountNotice = 'account_notice',
+  Card = 'card',
 }
 
 export enum NIMMessageChatBotType {
-  OFFLINE = "offline",
-  FIND_CSR = "find_csr",
-  OUT_SESSION = 'out_session'
+  OFFLINE = 'offline',
+  FIND_CSR = 'find_csr',
+  OUT_SESSION = 'out_session',
 }
 
 export enum NIMSendAttachmentEnum {
-  ONE_TO_ONE = "0",
-  ONE_TO_MANY_FIXED_AMOUNT = "1",
-  ONE_TO_MANY_RANDOM_AMOUNT = "2",
+  ONE_TO_ONE = '0',
+  ONE_TO_MANY_FIXED_AMOUNT = '1',
+  ONE_TO_MANY_RANDOM_AMOUNT = '2',
 }
 
 export interface CustomMessageType {
@@ -72,7 +72,7 @@ export interface NimSessionTypeExtend {
   sourceId?: { sourceId: string; sourceName: string };
   targets?: Array<{ targetId: string; targetName: string }>;
   operationType?: NIMTeamOperationType;
-  isMute?: "mute" | "unmute";
+  isMute?: 'mute' | 'unmute';
   updateDetail?: {
     type: NIMTeamOperationTypeUpdateDetail;
     value: any;
@@ -92,13 +92,13 @@ export interface NimSessionType {
   imagePath: string;
   name: string;
   extend?: NimSessionTypeExtend;
-  localExt?:{
-    isChatBot:boolean;
+  localExt?: {
+    isChatBot: boolean;
     isCsr: boolean;
     isUpdated: boolean;
-    name?: string
-  }
-  isOutgoing: boolean
+    name?: string;
+  };
+  isOutgoing: boolean;
 }
 
 export type SessionCache = {
@@ -110,4 +110,9 @@ export type SessionCache = {
 export type ListSessionCacheType = {
   data: SessionCache[];
   totalSize: string;
+};
+
+export type NIMBirthdayMemberType = {
+  contactId: string;
+  name: string;
 };

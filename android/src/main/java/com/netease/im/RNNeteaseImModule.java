@@ -159,8 +159,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void createNotificationBirthday(String sessionId, String sessionType, final  Promise promise) {
-        sessionService.createNotificationBirthday(sessionId, sessionType);
+    public void createNotificationBirthday(String sessionId, String sessionType, String memberContactId, String memberName,final  Promise promise) {
+        if (memberContactId != null && memberName != null) {
+            sessionService.createNotificationBirthday(sessionId,sessionType, memberContactId, memberName);
+        } else {
+            sessionService.createNotificationBirthday(sessionId, sessionType);
+        }
+
         promise.resolve("success");
     }
 

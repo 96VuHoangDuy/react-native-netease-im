@@ -76,6 +76,7 @@ import com.netease.nimlib.sdk.team.model.MuteMemberAttachment;
 import com.netease.nimlib.sdk.team.model.Team;
 import com.netease.nimlib.sdk.team.model.TeamMember;
 import com.netease.nimlib.sdk.team.model.UpdateTeamAttachment;
+import com.netease.nimlib.sdk.uinfo.UserService;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 
@@ -216,6 +217,18 @@ public class ReactCache {
 
                     if (isHideSession != null) {
                         localExt.putBoolean("isHideSession", isHideSession);
+                    }
+
+                    IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
+                    if (lastMessage != null) {
+                        Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
+                        if (messageLocalExt != null) {
+                            String notificationType = (String) messageLocalExt.get("notificationType");
+
+                            if (notificationType != null) {
+                                localExt.putString("notificationType", notificationType);
+                            }
+                        }
                     }
 
                     map.putMap("localExt", localExt);
@@ -961,7 +974,6 @@ public class ReactCache {
             //            writableMap.putString("name", TeamDataCache.getInstance().getTeamMemberDisplayName(teamMember.getTid(), teamMember.getAccount()));
             writableMap.putString("name", NimUserInfoCache.getInstance().getUserDisplayName(teamMember.getAccount()));
             writableMap.putString("nickname", teamMember.getTeamNick());
-
             writableMap.putString("joinTime", TimeUtil.getTimeShowString(teamMember.getJoinTime(), true));
             String avatar = NimUserInfoCache.getInstance().getAvatar(teamMember.getAccount());
             writableMap.putString("avatar", avatar);
@@ -970,6 +982,19 @@ public class ReactCache {
             writableMap.putString("isMute", boolean2String(teamMember.isMute()));
             writableMap.putString("teamId", teamMember.getTid());
             writableMap.putString("isMe", boolean2String(TextUtils.equals(teamMember.getAccount(), LoginService.getInstance().getAccount())));
+
+            NimUserInfo memberInfo = NIMClient.getService(UserService.class).getUserInfo(teamMember.getAccount());
+            if (memberInfo != null) {
+                String birthday = memberInfo.getBirthday();
+
+                if (birthday != null && !birthday.isEmpty()) {
+                    writableMap.putString("birthday", birthday);
+                } else {
+                    writableMap.putString("birthday", "");
+                }
+            } else {
+                writableMap.putString("birthday", "");
+            }
         }
         return writableMap;
     }
@@ -1535,6 +1560,8 @@ public class ReactCache {
             Boolean isCancelResend = (Boolean) messageLocalExt.get("isCancelResend");
             Boolean isSentBirthday = (Boolean) messageLocalExt.get("isSentBirthday");
             String notificationType = (String) messageLocalExt.get("notificationType");
+            String birthdayMemberContactId = (String) messageLocalExt.get("birthdayMemberContactId");
+            String birthdayMemberName = (String) messageLocalExt.get("birthdayMemberName");
 
             if (chatBotType != null) {
                 localExt.putString("chatBotType", chatBotType);
@@ -1550,6 +1577,14 @@ public class ReactCache {
 
             if (notificationType != null) {
                 localExt.putString("notificationType", notificationType);
+            }
+
+            if (birthdayMemberName != null) {
+                localExt.putString("birthdayMemberName", birthdayMemberName);
+            }
+
+            if (birthdayMemberContactId != null) {
+                localExt.putString("birthdayMemberContactId", birthdayMemberContactId);
             }
         }
 

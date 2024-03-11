@@ -6,6 +6,7 @@ import {
   NIMSendAttachmentEnum,
   QueryDirectionType,
   NIMSessionOnlineServiceType,
+  NIMBirthdayMemberType,
 } from './session.type';
 import { NIMMessage, NIMMessageTypeEnum } from '../Message/message.type';
 const { RNNeteaseIm } = NativeModules;
@@ -573,9 +574,15 @@ class NimSession {
 
   createNotificationBirthday(
     sessonId: string,
-    sessionType: NIMSessionTypeEnum
+    sessionType: NIMSessionTypeEnum,
+    member?: NIMBirthdayMemberType
   ) {
-    return RNNeteaseIm.createNotificationBirthday(sessonId, sessionType);
+    return RNNeteaseIm.createNotificationBirthday(
+      sessonId,
+      sessionType,
+      member?.contactId,
+      member?.name
+    );
   }
 
   updateMessageSentStickerBirthday(
