@@ -65,6 +65,7 @@ import com.netease.nimlib.sdk.msg.model.NIMMessage;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.RevokeMsgNotification;
+import com.netease.nimlib.sdk.team.TeamService;
 import com.netease.nimlib.sdk.team.model.Team;
 
 import java.io.File;

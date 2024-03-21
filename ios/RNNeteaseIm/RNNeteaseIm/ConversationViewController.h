@@ -46,6 +46,10 @@ typedef void(^Errors)(id erro);
 
 -(void)createNotificationBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName success:(Success)success err:(Errors)err;
 
+-(void)queryTeamByName:(NSString *)search success:(Success)success err:(Errors)err;
+
+-(void)queryAllTeams:(Success)success err:(Errors)err;
+
 -(void)updateMessageSentStickerBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err;
 
 -(void)updateRecentSessionIsCsrOrChatbot:(NSString *)sessionId type:(NSString *)type name:(NSString *)name;

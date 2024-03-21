@@ -341,7 +341,12 @@
             [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
             NSString *strMute = user.notifyForNewMsg?@"1":@"0";
-            if (user.notifyForNewMsg == NO) {
+            BOOL isHideSession = FALSE;
+            if (recent.localExt) {
+                isHideSession = [recent.localExt objectForKey:@"isHideSession"];
+            }
+            
+            if (user.notifyForNewMsg == NO && !isHideSession) {
                 allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
             }
             [dic setObject:strMute forKey:@"mute"];
@@ -471,7 +476,12 @@
                 NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
                 [dic setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
                 NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
-                if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll) {
+                BOOL isHideSession = FALSE;
+                if (recent.localExt) {
+                    isHideSession = [recent.localExt objectForKey:@"isHideSession"];
+                }
+            
+                if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
                     allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
                 }
                 [dic setObject:strMute forKey:@"mute"];
@@ -613,7 +623,11 @@
             [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
             NSString *strMute = user.notifyForNewMsg?@"1":@"0";
-            if (user.notifyForNewMsg == NO) {
+            BOOL isHideSession = FALSE;
+            if (recent.localExt) {
+                isHideSession = [recent.localExt objectForKey:@"isHideSession"];
+            }
+            if (user.notifyForNewMsg == NO && !isHideSession) {
                 allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
             }
             [dic setObject:strMute forKey:@"mute"];
@@ -744,7 +758,12 @@
                 NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
                 [dic setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
                 NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
-                if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll) {
+            
+                BOOL isHideSession = FALSE;
+                if (recent.localExt) {
+                    isHideSession = [recent.localExt objectForKey:@"isHideSession"];
+                }
+                if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
                     allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
                 }
 //                allUnreadNum = allUnreadNum + [strUnreadCount integerValue];

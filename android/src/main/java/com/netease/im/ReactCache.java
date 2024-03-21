@@ -193,6 +193,7 @@ public class ReactCache {
                 SessionTypeEnum sessionType = contact.getSessionType();
                 String imagePath = "";
                 Map<String, Object> extension = contact.getExtension();
+                Boolean isHideRecent = false;
                 if (extension != null) {
                     WritableMap localExt = Arguments.createMap();
                     Boolean isCsr = (Boolean) extension.get("isCsr");
@@ -216,6 +217,7 @@ public class ReactCache {
                     }
 
                     if (isHideSession != null) {
+                        isHideRecent = isHideSession;
                         localExt.putBoolean("isHideSession", isHideSession);
                     }
 
@@ -239,7 +241,7 @@ public class ReactCache {
                     NimUserInfoCache nimUserInfoCache = NimUserInfoCache.getInstance();
                     imagePath = nimUserInfoCache.getAvatar(contactId);
                     Boolean isMuteByP2p = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
-                    if (isMuteByP2p == false) {
+                    if (isMuteByP2p == false && !isHideRecent) {
                         unreadNumTotal += contact.getUnreadCount();
                     }
                     map.putString("mute", boolean2String(isMuteByP2p));
@@ -252,7 +254,7 @@ public class ReactCache {
                         imagePath = team.getIcon();
                         map.putString("memberCount", Integer.toString(team.getMemberCount()));
                         map.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
-                        if (team.getMessageNotifyType() == TeamMessageNotifyTypeEnum.All) {
+                        if (team.getMessageNotifyType() == TeamMessageNotifyTypeEnum.All && !isHideRecent) {
                             unreadNumTotal += contact.getUnreadCount();
                         }
                     }

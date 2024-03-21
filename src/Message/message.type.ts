@@ -29,6 +29,7 @@ export enum NIMMessageTypeEnum {
   MULTIPLE_TEXT = 'forwardMultipleText',
   GIF = 'gif',
   UNKNOWN = 'unknown',
+  EMPTY_SESSION = "EMPTY_SESSION"
 }
 
 export enum NIMMessageStatusEnum {

@@ -97,6 +97,7 @@ export interface NimSessionType {
     isCsr: boolean;
     isUpdated: boolean;
     name?: string;
+    isHideSession?: boolean
   };
   isOutgoing: boolean;
 }

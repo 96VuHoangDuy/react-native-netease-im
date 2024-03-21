@@ -29,6 +29,7 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.common.ResourceUtil;
 import com.netease.im.contact.BlackListObserver;
 import com.netease.im.contact.FriendListService;
@@ -48,6 +49,7 @@ import com.netease.im.uikit.cache.TeamDataCache;
 import com.netease.im.uikit.common.util.file.FileUtil;
 import com.netease.im.uikit.common.util.log.LogUtil;
 import com.netease.im.uikit.common.util.sys.NetworkUtil;
+import com.netease.im.uikit.common.util.sys.TimeUtil;
 import com.netease.im.uikit.contact.core.model.ContactDataList;
 import com.netease.im.uikit.permission.MPermission;
 import com.netease.im.uikit.permission.annotation.OnMPermissionDenied;
@@ -513,6 +515,76 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
         Team team = TeamDataCache.getInstance().getTeamById(teamId);
         promise.resolve(ReactCache.createTeamInfo(team));
+    }
+
+    @ReactMethod
+    public void queryAllTeams(final  Promise promise) {
+        NIMClient.getService(TeamService.class).queryTeamList().setCallback(new RequestCallbackWrapper<List<Team>>() {
+            @Override
+            public void onResult(int code, List<Team> result, Throwable exception) {
+                WritableArray arr = Arguments.createArray();
+
+                for(Team team : result) {
+                    WritableMap teamInfo = Arguments.createMap();
+
+                    teamInfo.putString("teamId", team.getId());
+                    teamInfo.putString("name", team.getName());
+                    teamInfo.putString("avatar", team.getIcon());
+                    teamInfo.putString("avatarLocal", ImageLoaderKit.getMemoryCachedAvatar(team.getIcon()));
+                    teamInfo.putString("type", Integer.toString(team.getType().getValue()));
+                    teamInfo.putString("introduce", team.getIntroduce());
+                    teamInfo.putString("createTime", TimeUtil.getTimeShowString(team.getCreateTime(), true));
+                    teamInfo.putString("creator", team.getCreator());
+                    teamInfo.putString("mute", ReactCache.getMessageNotifyType(team.getMessageNotifyType()));
+                    teamInfo.putString("memberCount", Integer.toString(team.getMemberCount()));
+                    teamInfo.putString("memberLimit", Integer.toString(team.getMemberLimit()));
+
+                    arr.pushMap(teamInfo);
+                }
+
+                promise.resolve(arr);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void queryTeamByName(String name, final Promise promise) {
+        NIMClient.getService(TeamService.class).searchTeamsByKeyword(name).setCallback(new RequestCallback<List<Team>>() {
+            @Override
+            public void onSuccess(List<Team> result) {
+                WritableArray arr = Arguments.createArray();
+
+                for(Team team : result) {
+                    WritableMap teamInfo = Arguments.createMap();
+
+                    teamInfo.putString("teamId", team.getId());
+                    teamInfo.putString("name", team.getName());
+                    teamInfo.putString("avatar", team.getIcon());
+                    teamInfo.putString("avatarLocal", ImageLoaderKit.getMemoryCachedAvatar(team.getIcon()));
+                    teamInfo.putString("type", Integer.toString(team.getType().getValue()));
+                    teamInfo.putString("introduce", team.getIntroduce());
+                    teamInfo.putString("createTime", TimeUtil.getTimeShowString(team.getCreateTime(), true));
+                    teamInfo.putString("creator", team.getCreator());
+                    teamInfo.putString("mute", ReactCache.getMessageNotifyType(team.getMessageNotifyType()));
+                    teamInfo.putString("memberCount", Integer.toString(team.getMemberCount()));
+                    teamInfo.putString("memberLimit", Integer.toString(team.getMemberLimit()));
+
+                    arr.pushMap(teamInfo);
+                }
+
+                promise.resolve(arr);
+            }
+
+            @Override
+            public void onFailed(int code) {
+                promise.reject("error", "" + code);
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                promise.reject("error", exception.getMessage());
+            }
+        });
     }
 
     /**

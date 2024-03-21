@@ -1102,6 +1102,87 @@
     }
 }
 
+-(void)queryAllTeams:(Success)success err:(Errors)err {
+    NSTimeInterval timeInterval = 0;
+    NIMTeamFetchTeamsHandler completion = ^(NSError * __nullable error, NSArray<NIMTeam *> * __nullable teams){
+        if(error == nil) {
+            NSMutableArray *arr = [[NSMutableArray alloc] init];
+            
+            for(NIMTeam *team in teams) {
+                NSMutableDictionary *teamDic = [[NSMutableDictionary alloc] init];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.level] forKey:@"memberLimit"];
+                [teamDic setObject:[NSString stringWithFormat:@"%f", team.createTime ] forKey:@"createTime"];
+                NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
+                [teamDic setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.joinMode] forKey:@"verifyType"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
+                
+                [arr addObject:teamDic];
+            }
+            
+            success(arr);
+        } else {
+            err(error);
+        }
+    };
+    
+    [[[NIMSDK sharedSDK] teamManager] fetchTeamsWithTimestamp:timeInterval completion:completion];
+}
+
+-(void)queryTeamByName:(NSString *)search success:(Success)success err:(Errors)err {
+    NIMTeamSearchOption *option = [NIMTeamSearchOption new];
+    /// 设置搜索选项为 匹配TeamID
+    [option setSearchContentOption:NIMTeamSearchContentOptiontName];
+    /// 设置搜索内容为 @"6271272396"
+    [option setSearchContent:search];
+    /// completion 完成后的回调
+    NIMTeamSearchHandler completion = ^(NSError * __nullable error, NSArray<NIMTeam *> * __nullable teams)
+    {
+        if (error == nil) {
+            NSMutableArray *arr = [[NSMutableArray alloc] init];
+            
+            for(NIMTeam *team in teams) {
+                NSMutableDictionary *teamDic = [[NSMutableDictionary alloc] init];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.level] forKey:@"memberLimit"];
+                [teamDic setObject:[NSString stringWithFormat:@"%f", team.createTime ] forKey:@"createTime"];
+                NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
+                [teamDic setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.joinMode] forKey:@"verifyType"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
+                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
+                
+                [arr addObject:teamDic];
+            }
+            
+            success(arr);
+        } else {
+            err(error);
+        }
+    };
+    /// 查询群信息
+    [[[NIMSDK sharedSDK] teamManager] searchTeamWithOption:option
+                                                completion:completion];
+}
+
 //发送文字消息
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
     NIMMessage *message = [NIMMessageMaker msgWithText:@"[动图]" andApnsMembers:members andeSession:self._session senderName:_myUserName];

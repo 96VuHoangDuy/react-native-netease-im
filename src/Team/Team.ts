@@ -265,6 +265,14 @@ class NimTeam {
   ): Promise<string> {
     return RNNeteaseIm.removeManagersFromTeam(teamId, userIds);
   }
+
+  queryTeamByName(search: string) {
+    return RNNeteaseIm.queryTeamByName(search);
+  }
+
+  queryAllTeams() {
+    return RNNeteaseIm.queryAllTeams()
+  }
 }
 
 export default new NimTeam();

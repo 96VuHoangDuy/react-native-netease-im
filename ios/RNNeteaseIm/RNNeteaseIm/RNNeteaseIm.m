@@ -494,6 +494,23 @@ RCT_EXPORT_METHOD(sendLocationMessage:(nonnull  NSString *)latitude longitude:(n
        reject(@"-1",erro,nil);
    }];
 }
+
+RCT_EXPORT_METHOD(queryAllTeams:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] queryAllTeams:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(queryTeamByName:(nonnull NSString *)search resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] queryTeamByName:search success:^(id params){
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //开启录音权限
 RCT_EXPORT_METHOD(onTouchVoice:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ConversationViewController initWithConversationViewController]onTouchVoiceSucc:^(id param) {

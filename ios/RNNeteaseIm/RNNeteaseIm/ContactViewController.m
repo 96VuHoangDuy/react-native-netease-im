@@ -282,6 +282,7 @@
     }];
 
 }
+
 //添加好友
 -(void)adduserId:(NSString *)userId andVerifyType:(NSString *)strType andMag:(NSString *)msg Friends:(Error)err  Success:(Error )success{
     __weak typeof(self)weakSelf = self;
