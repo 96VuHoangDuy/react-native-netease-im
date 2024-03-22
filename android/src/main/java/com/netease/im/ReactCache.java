@@ -324,7 +324,7 @@ public class ReactCache {
                 String content = contact.getContent();
                 switch (contact.getMsgType()) {
                     case text:
-                        if (contact.getContent().equals("[动图]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                        if (contact.getContent() != null && contact.getContent().equals("[动图]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
                             content = name + " : [动图]";
                             break;
                         }
