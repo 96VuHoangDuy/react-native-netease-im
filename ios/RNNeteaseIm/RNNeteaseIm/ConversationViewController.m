@@ -1104,11 +1104,11 @@
     }
 }
 
--(void)createNotificationBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success err:(Errors)err {
+-(void)createNotificationBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
     NIMMessage *lastMessage = recent.lastMessage;
-    NIMMessage *message = [NIMMessageMaker msgWithNotificationBirthday:lastMessage];
+    NIMMessage *message = [NIMMessageMaker msgWithNotificationBirthday:lastMessage memberContactId:memberContactId memberName:memberName];
     
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:^(NSError * _Nullable error) {
         if (error != nil) {
