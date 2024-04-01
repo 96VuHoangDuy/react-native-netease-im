@@ -131,6 +131,14 @@ RCT_EXPORT_METHOD(autoLogin:(nonnull NSString *)account token:(nonnull NSString 
     
     [NIMViewController initWithController].strToken = token;
     [NIMViewController initWithController].strAccount = account;
+    
+    if ([account length] && [token length]) {
+        resolve(account);
+    }else{
+        NSString *strEorr = @"登录失败";
+        reject(@"-1",strEorr, nil);
+        NSLog(@"%@:%@",strEorr,@"''");
+    }
 }
 
 // //手动登录
@@ -410,8 +418,12 @@ RCT_EXPORT_METHOD(createNotificationBirthday:(nonnull NSString *)sessionId sessi
 }
 
 //重发消息
-RCT_EXPORT_METHOD(resendMessage:(nonnull NSString *)messageId){
-    [[ConversationViewController initWithConversationViewController]resendMessage:messageId];
+RCT_EXPORT_METHOD(resendMessage:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController]resendMessage:messageId success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
     
 }
 

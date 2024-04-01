@@ -119,12 +119,12 @@
 }
 
 //重发消息
-- (void)resendMessage:(NSString *)messageID{
+- (void)resendMessage:(NSString *)messageID success:(Success)succe err:(Errors)err{
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageID] ];
     NIMMessage *currentM = currentMessage[0];
-    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
+//    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
     
-    if (self._session.sessionType == NIMSessionTypeP2P && [isFriend length]) {
+    if (self._session.sessionType == NIMSessionTypeP2P && ![self isFriendToSendMessage:currentM]) {
         return;
     }
     
@@ -138,6 +138,9 @@
     
     if (error != nil) {
         NSLog(@"resendMessage =>>> %@", error);
+        err(error);
+    } else {
+        succe(@"200");
     }
 }
 
@@ -563,15 +566,12 @@
     NSString *mediaPath = [self moveFiletoSessionDir:message isThumb:nil];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
-    
     if ([downloadAttStatus length]) {
         [fileObj setObject:downloadAttStatus forKey:@"downloadAttStatus"];
     }
     if ([isReplaceSuccess length]) {
         [fileObj setObject:isReplaceSuccess forKey:@"isReplaceSuccess"];
     }
-    
-
     
     if (mediaPath != nil) {
         if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) ){
@@ -618,7 +618,6 @@
     if ([isReplaceSuccess length]) {
         [videoObj setObject:isReplaceSuccess forKey:@"isReplaceSuccess"];
     }
-
     if (mediaPath != nil) {
         if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])){
             [videoObj setObject:[NSNumber numberWithBool: true] forKey:@"isFilePathDeleted"];
@@ -888,11 +887,10 @@
                 break;
         }
         NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
-        if ([isFriend length]) {
-            if ([isFriend isEqualToString:@"NO"]) {
-                [dic setObject:@"send_failed" forKey:@"status"];
-            }
-        }
+        NSString *strSessionId = self._session.sessionId;
+          if (![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {
+                  [dic setObject:@"send_failed" forKey:@"status"];
+          }
         [dic setObject: [NSNumber numberWithBool:message.isOutgoingMsg] forKey:@"isOutgoing"];
         [dic setObject:[NSString stringWithFormat:@"%f", message.timestamp] forKey:@"timeString"];
         [dic setObject:[NSNumber numberWithBool:NO] forKey:@"isShowTime"];
@@ -1457,6 +1455,7 @@
 //发送结果
 - (void)sendMessage:(NIMMessage *)message didCompleteWithError:(NSError *)error
 {
+    NSLog(@"sendMessage didCompleteWithError %@", error);
     if (!error) {
         [self refrashMessage:message From:@"send"];
         [[NSUserDefaults standardUserDefaults]setObject: [NSString stringWithFormat:@"%f", message.timestamp] forKey:@"timestamp"];
@@ -1839,12 +1838,12 @@
             [dic2 setObject:@"send_failed" forKey:@"status"];
             break;
     }
-    NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
-    if (message.session.sessionType == NIMSessionTypeP2P && [isFriend length]) {
-        if ([isFriend isEqualToString:@"NO"]) {
+    
+    NSString *strSessionId = self._session.sessionId;
+    if (message.session.sessionType == NIMSessionTypeP2P && ![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {
             [dic2 setObject:@"send_failed" forKey:@"status"];
-        }
     }
+    
     [dic2 setObject: [NSNumber numberWithBool:message.isOutgoingMsg] forKey:@"isOutgoing"];
     [dic2 setObject:[NSString stringWithFormat:@"%f", message.timestamp] forKey:@"timeString"];
     [dic2 setObject:[NSNumber numberWithBool:NO] forKey:@"isShowTime"];

@@ -106,7 +106,7 @@ typedef void(^Errors)(id erro);
 //更具提示生成撤回消息
 - (NIMMessage *)msgWithTip:(NSString *)tip;
 //重发消息
-- (void)resendMessage:(NSString *)messageID;
+- (void)resendMessage:(NSString *)messageID success:(Success)succe err:(Errors)err;
 
 -(void)getMessageById:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success;
 
