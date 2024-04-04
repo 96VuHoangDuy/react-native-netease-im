@@ -234,6 +234,40 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
+    @ReactMethod
+    public void autoLogin(String contactId, String token, final Promise promise) {
+        LogUtil.w(TAG, "_id:" + contactId);
+        LogUtil.w(TAG, "t:" + token);
+//        LogUtil.w(TAG, "md5:" + MD5.getStringMD5(token));
+
+        NIMClient.getService(AuthService.class).openLocalCache(contactId);
+        LogUtil.w(TAG, "s:" + NIMClient.getStatus().name());
+        LoginService.getInstance().login(new LoginInfo.LoginInfoBuilder(contactId, token, 1, "").build(), new RequestCallback<LoginInfo>() {
+            @Override
+            public void onSuccess(LoginInfo loginInfo) {
+
+                promise.resolve(loginInfo == null ? "" : loginInfo.getAccount());
+            }
+
+            @Override
+            public void onFailed(int code) {
+                String msg;
+                if (code == 302 || code == 404) {
+                    msg = ResourceUtil.getString(R.string.login_failed);
+                } else {
+                    msg = ResourceUtil.getString(R.string.login_erro) + code;
+                }
+                promise.reject(Integer.toString(code), msg);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                promise.reject(Integer.toString(ResponseCode.RES_EXCEPTION), ResourceUtil.getString(R.string.login_exception));
+
+            }
+        });
+    }
+
     /**
      * 退出
      */

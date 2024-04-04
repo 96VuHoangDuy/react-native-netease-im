@@ -240,11 +240,11 @@ public class ReactCache {
                     map.putString("teamType", "-1");
                     NimUserInfoCache nimUserInfoCache = NimUserInfoCache.getInstance();
                     imagePath = nimUserInfoCache.getAvatar(contactId);
-                    Boolean isMuteByP2p = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
-                    if (isMuteByP2p == false && !isHideRecent) {
+                    Boolean isNeedMessageNotify = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
+                    if (isNeedMessageNotify == true && !isHideRecent) {
                         unreadNumTotal += contact.getUnreadCount();
                     }
-                    map.putString("mute", boolean2String(isMuteByP2p));
+                    map.putString("mute", boolean2String(!isNeedMessageNotify));
                     name = nimUserInfoCache.getUserDisplayName(contactId);
                 } else if (sessionType == SessionTypeEnum.Team) {
                     team = TeamDataCache.getInstance().getTeamById(contactId);
@@ -735,7 +735,7 @@ public class ReactCache {
 //            writableMap.putString("isMyFriend", boolean2String(NIMClient.getService(FriendService.class).isMyFriend(userInfo.getAccount())));
             writableMap.putString("isMe", boolean2String(userInfo.getAccount() != null && userInfo.getAccount().equals(LoginService.getInstance().getAccount())));
             writableMap.putString("isInBlackList", boolean2String(NIMClient.getService(FriendService.class).isInBlackList(userInfo.getAccount())));
-            writableMap.putString("mute", boolean2String(NIMClient.getService(FriendService.class).isNeedMessageNotify(userInfo.getAccount())));
+            writableMap.putString("mute", boolean2String(!NIMClient.getService(FriendService.class).isNeedMessageNotify(userInfo.getAccount())));
 
             writableMap.putString("contactId", userInfo.getAccount());
             writableMap.putString("name", userInfo.getName());
