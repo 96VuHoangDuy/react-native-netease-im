@@ -34,9 +34,18 @@
 +(NIMMessage *) msgWithNotificationBirthday:(NIMMessage *)lastMessage memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName {
     NIMMessage *message = [[NIMMessage alloc] init];
     
-    message.text = @"";
+    NSMutableString *text = [[NSMutableString alloc] init];
+    [text appendString:@"NOTIFICATION_BIRTHDAY"];
     if (lastMessage != nil) {
-        message.text = lastMessage.text;
+        [text appendFormat:@":%ld", (long)lastMessage.messageType];
+        
+        if ([lastMessage.text isEqual:@""]) {
+            [text appendFormat:@":(NO_TEXT)"];
+        } else {
+            [text appendFormat:@":(%@)", lastMessage.text];
+        }
+    } else {
+        [text appendString:@"::(NO_TEXT)"];
     }
     
     NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
@@ -46,12 +55,14 @@
     
     if (memberName != nil) {
         [localExt setObject:memberName forKey:@"birthdayMemberName"];
+        [text appendFormat:@"(%@)", memberName];
     }
     
     if (memberContactId != nil) {
         [localExt setObject:memberContactId forKey:@"birthdayMemberContactId"];
     }
     
+    message.text = text;    
     message.localExt = localExt;
     
     return message;

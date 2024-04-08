@@ -888,7 +888,7 @@
         }
         NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
         NSString *strSessionId = self._session.sessionId;
-          if (![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {
+          if (message.session.sessionType == NIMSessionTypeP2P && ![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {
                   [dic setObject:@"send_failed" forKey:@"status"];
           }
         [dic setObject: [NSNumber numberWithBool:message.isOutgoingMsg] forKey:@"isOutgoing"];
