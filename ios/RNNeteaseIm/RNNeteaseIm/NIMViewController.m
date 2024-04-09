@@ -241,28 +241,9 @@
             //账号
             [dic setObject:[NSString stringWithFormat:@"%@",recent.lastMessage.session.sessionId] forKey:@"account"];
             
-            NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
-            
             if (recent.localExt) {
-                localExt = [recent.localExt copy];
+                [dic setObject:recent.localExt forKey:@"localExt"];
             }
-            
-            NIMMessage *lastMessage = recent.lastMessage;
-            
-            if (lastMessage && lastMessage.localExt) {
-                NSString *notificationType = [lastMessage.localExt valueForKey:@"notificationType"];
-                NSString *birthdayMemberName = [lastMessage.localExt valueForKey:@"birthdayMemberName"];
-                
-                if (notificationType) {
-                    [localExt setObject:notificationType forKey:@"notificationType"];
-                }
-                
-                if (birthdayMemberName) {
-                    [localExt setObject:birthdayMemberName forKey:@"birthdayMemberName"];
-                }
-            }
-            
-            [dic setObject:localExt forKey:@"localExt"];
             
             if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                 NIMCustomObject *customObject = recent.lastMessage.messageObject;
