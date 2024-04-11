@@ -27,6 +27,7 @@ export enum NIMTeamOperationType {
   NIMTeamOperationTypeRemoveManager = 8,
   NIMTeamOperationTypeAcceptInvitation = 9,
   NIMTeamOperationTypeMute = 10,
+  CustomTeamOperationTypeRequestJoinList = 11,
 }
 
 export enum NIMTeamOperationTypeUpdateDetail {
@@ -93,7 +94,7 @@ export interface NIMTeamItemType {
 }
 
 export interface NIMTeamDetailType {
-  announcement: string;
+  announcement?: string;
   avatar: string;
   createTime: string;
   creator: string;
@@ -102,10 +103,10 @@ export interface NIMTeamDetailType {
   memberLimit: string;
   mute: NIMCommonBooleanType;
   name: string;
-  teamBeInviteMode: NIMTeamBeInviteModeEnum;
+  teamBeInviteMode?: NIMTeamBeInviteModeEnum;
   teamId: string;
   type: NIMCreateTeamTypeEnum;
-  verifyType: NIMCreateTeamVerifyEnum;
+  verifyType?: NIMCreateTeamVerifyEnum;
 }
 
 export enum NIMTeamMemberEnum {

@@ -9,10 +9,12 @@ import android.widget.Toast;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.MapBuilder;
 import com.netease.im.IMApplication;
+import com.netease.im.MapUtil;
 import com.netease.im.MessageConstant;
 import com.netease.im.MessageUtil;
 import com.netease.im.ReactCache;
@@ -812,6 +814,26 @@ public class SessionService {
             message.setMemberPushOption(option);
         }
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+    }
+
+
+    public void sendMessageTeamNotificationRequestJoin(ReadableMap sourceId, ReadableArray targets, OnSendMessageListener onSendMessageListener) {
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "TEAM_NOTIFICATION_MESSAGE");
+
+        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+        remoteExt.put("extendType", "TEAM_NOTIFICATION_MESSAGE");
+        remoteExt.put("operationType", 11);
+        remoteExt.put("sourceId", MapUtil.readableMaptoMap(sourceId));
+        remoteExt.put("targets", MapUtil.readableArrayToArray(targets));
+
+        message.setRemoteExtension(remoteExt);
+
+        CustomMessageConfig config = new CustomMessageConfig();
+        config.enablePush = false; // 不推送
+        config.enableUnreadCount = false;
+        message.setConfig(config);
+
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
     /**

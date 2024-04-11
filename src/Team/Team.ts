@@ -273,6 +273,16 @@ class NimTeam {
   queryAllTeams() {
     return RNNeteaseIm.queryAllTeams()
   }
+
+  sendMessageTeamNotificationRequestJoin(sourceId: {
+    sourceId: string;
+    sourceName: string;
+  }, targets: {
+    targetName: string;
+    targetId: string;
+  }[]): Promise<string> {
+    return RNNeteaseIm.sendMessageTeamNotificationRequestJoin(sourceId, targets)
+  }
 }
 
 export default new NimTeam();

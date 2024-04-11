@@ -194,6 +194,8 @@ public class ReactCache {
                 String imagePath = "";
                 Map<String, Object> extension = contact.getExtension();
                 Boolean isHideRecent = false;
+                IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
+
                 if (extension != null) {
                     WritableMap localExt = Arguments.createMap();
                     Boolean isCsr = (Boolean) extension.get("isCsr");
@@ -221,7 +223,6 @@ public class ReactCache {
                         localExt.putBoolean("isHideSession", isHideSession);
                     }
 
-                    IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
                     if (lastMessage != null) {
                         Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
                         if (messageLocalExt != null) {
@@ -267,8 +268,8 @@ public class ReactCache {
                 if (contact.getMsgType() == MsgTypeEnum.custom) {
                     map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), (CustomAttachment) contact.getAttachment()));
                 } else {
-                    if (contact.getExtension() != null) {
-                        Map<String, Object> extensionMsg = contact.getExtension();
+                    if (lastMessage != null && lastMessage.getRemoteExtension() != null) {
+                        Map<String, Object> extensionMsg = lastMessage.getRemoteExtension();
 
                         if (extensionMsg.containsKey("extendType")) {
                             String extendType = extensionMsg.get("extendType").toString();
@@ -296,6 +297,11 @@ public class ReactCache {
                                 writableMapExtend.putString("tipMsg", contact.getContent());
 
                                 map.putMap(MESSAGE_EXTEND, writableMapExtend);
+                                map.putString(MessageConstant.Message.MSG_TYPE, "notification");
+                            }
+
+                            if (extendType.equals("TEAM_NOTIFICATION_MESSAGE")) {
+                                map.putMap(MESSAGE_EXTEND, MapUtil.mapToReadableMap(extensionMsg));
                                 map.putString(MessageConstant.Message.MSG_TYPE, "notification");
                             }
                         } else {
@@ -1661,6 +1667,13 @@ public class ReactCache {
 
                         itemMap.putMap(MESSAGE_EXTEND, extend);
                         itemMap.putString(MessageConstant.Message.MSG_TYPE, "image");
+                    }
+
+                    if (extendType.equals("TEAM_NOTIFICATION_MESSAGE")) {
+                        WritableMap extend = new WritableNativeMap();
+
+                        itemMap.putMap(MESSAGE_EXTEND, MapUtil.mapToReadableMap(extensionMsg));
+                        itemMap.putString(MessageConstant.Message.MSG_TYPE, "notification");
                     }
                 }
 

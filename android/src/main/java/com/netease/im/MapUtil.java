@@ -8,17 +8,25 @@ package com.netease.im;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableArray;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.bridge.WritableNativeMap;
+
 import org.json.JSONException;
 
 public class MapUtil {
@@ -111,24 +119,50 @@ public class MapUtil {
         return map;
     }
 
-    public static WritableMap readableMapToMap(Map<String, Object> map) {
-        WritableMap readableMap = Arguments.createMap();
-        Iterator<String> iterator = map.keySet().iterator();
-
-        while (iterator.hasNext()) {
-            String key = iterator.next();
-            Object value = map.get(key);
-
-            if (value instanceof Boolean) {
-                readableMap.putBoolean(key, (Boolean) map.get(key));
-            } else if (value instanceof Number) {
-                readableMap.putDouble(key, (Double) map.get(key));
-            } else if (value instanceof String) {
-                readableMap.putString(key, (String) map.get(key));
+    public static WritableMap mapToReadableMap(Map<String, Object> map) {
+        WritableMap writableMap = new WritableNativeMap();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (entry.getValue() instanceof String) {
+                writableMap.putString(entry.getKey(), (String) entry.getValue());
+            } else if (entry.getValue() instanceof Integer) {
+                writableMap.putInt(entry.getKey(), (Integer) entry.getValue());
+            } else if (entry.getValue() instanceof Double) {
+                writableMap.putDouble(entry.getKey(), (Double) entry.getValue());
+            } else if (entry.getValue() instanceof Float) {
+                writableMap.putDouble(entry.getKey(), (Float) entry.getValue());
+            } else if (entry.getValue() instanceof Boolean) {
+                writableMap.putBoolean(entry.getKey(), (Boolean) entry.getValue());
+            } else if (entry.getValue() instanceof List) {
+                writableMap.putArray(entry.getKey(), arrayMaptoWritableArray((List<Object>) entry.getValue()));
+            } else if (entry.getValue() instanceof Map) {
+                writableMap.putMap(entry.getKey(), mapToReadableMap((Map<String, Object>) entry.getValue()));
             }
+            // Add more conditions for other data types as needed
         }
+        return writableMap;
+    }
 
-        return readableMap;
+    public static WritableArray arrayMaptoWritableArray(List<Object> list) {
+        WritableArray writableArray = new WritableNativeArray();
+        for (Object item : list) {
+            if (item instanceof String) {
+                writableArray.pushString((String) item);
+            } else if (item instanceof Integer) {
+                writableArray.pushInt((Integer) item);
+            } else if (item instanceof Double) {
+                writableArray.pushDouble((Double) item);
+            } else if (item instanceof Float) {
+                writableArray.pushDouble((Float) item);
+            } else if (item instanceof Boolean) {
+                writableArray.pushBoolean((Boolean) item);
+            } else if (item instanceof List) {
+                writableArray.pushArray(arrayMaptoWritableArray((List<Object>) item));
+            } else if (item instanceof Map) {
+                writableArray.pushMap(mapToReadableMap((Map<String, Object>) item));
+            }
+            // Add more conditions for other data types as needed
+        }
+        return writableArray;
     }
 
     public static WritableMap toWritableMap(JSONObject map) {
@@ -162,5 +196,61 @@ public class MapUtil {
         }
 //        Log.d("toWritableMap", "" + writableMap.toString());
         return writableMap;
+    }
+
+    public static Map<String, Object> readableMaptoMap(ReadableMap readableMap) {
+        Map<String, Object> map = new HashMap<>();
+        ReadableMapKeySetIterator iterator = readableMap.keySetIterator();
+        while (iterator.hasNextKey()) {
+            String key = iterator.nextKey();
+            switch (readableMap.getType(key)) {
+                case Null:
+                    map.put(key, null);
+                    break;
+                case Boolean:
+                    map.put(key, readableMap.getBoolean(key));
+                    break;
+                case Number:
+                    map.put(key, readableMap.getDouble(key));
+                    break;
+                case String:
+                    map.put(key, readableMap.getString(key));
+                    break;
+                case Map:
+                    map.put(key, readableMaptoMap(readableMap.getMap(key)));
+                    break;
+                case Array:
+                    map.put(key, readableArrayToArray(readableMap.getArray(key)));
+                    break;
+            }
+        }
+        return map;
+    }
+
+    public static List<Object> readableArrayToArray(ReadableArray readableArray) {
+        List<Object> list = new ArrayList<>();
+        for (int i = 0; i < readableArray.size(); i++) {
+            switch (readableArray.getType(i)) {
+                case Null:
+                    list.add(null);
+                    break;
+                case Boolean:
+                    list.add(readableArray.getBoolean(i));
+                    break;
+                case Number:
+                    list.add(readableArray.getDouble(i));
+                    break;
+                case String:
+                    list.add(readableArray.getString(i));
+                    break;
+                case Map:
+                    list.add(readableMaptoMap(readableArray.getMap(i)));
+                    break;
+                case Array:
+                    list.add(readableArrayToArray(readableArray.getArray(i)));
+                    break;
+            }
+        }
+        return list;
     }
 }

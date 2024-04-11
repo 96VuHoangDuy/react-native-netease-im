@@ -464,6 +464,14 @@ RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnul
     }];
 }
 
+RCT_EXPORT_METHOD(sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController]sendMessageTeamNotificationRequestJoin:sourceId targets:targets success:^(id param) {
+        resolve(param);
+    } Err:^(id erro) {
+        reject(@"-1",erro,nil);
+    }];
+}
+
 //发送音频消息
 RCT_EXPORT_METHOD(sendAudioMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration isCustomerService:(BOOL *)isCustomerService){
     [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isCustomerService:isCustomerService];

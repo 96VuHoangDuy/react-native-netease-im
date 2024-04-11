@@ -1341,6 +1341,21 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         }
     }
 
+    @ReactMethod
+    public void sendMessageTeamNotificationRequestJoin(ReadableMap sourceId, ReadableArray targets, final Promise promise) {
+        try {
+            sessionService.sendMessageTeamNotificationRequestJoin(sourceId, targets, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("200");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send sendMessageTeamNotificationRequestJoin message: " + e.getMessage());
+        }
+    }
+
     //3.发送音频消息
 //    file, // 音频文件
 //    duration // 音频持续时间，单位是ms

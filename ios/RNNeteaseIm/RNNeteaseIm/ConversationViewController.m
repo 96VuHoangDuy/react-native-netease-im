@@ -916,6 +916,11 @@
                 [dic setObject:message.remoteExt forKey:@"extend"];
                 [dic setObject:@"image" forKey:@"msgType"];
             }
+            
+            if ([[message.remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
+                [dic setObject:message.remoteExt forKey:@"extend"];
+                [dic setObject:@"notification" forKey:@"msgType"];
+            }
         }else if (message.messageType  == NIMMessageTypeImage) {
             // image coming is not have object.path, just have thumb_path.
             [dic setObject:@"image" forKey:@"msgType"];
@@ -1208,7 +1213,7 @@
                                                 completion:completion];
 }
 
-//发送文字消息
+//send gif message
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
     NIMMessage *message = [NIMMessageMaker msgWithText:@"[动图]" andApnsMembers:members andeSession:self._session senderName:_myUserName];
     NSDictionary  *remoteExt = @{@"extendType": @"gif", @"path": url, @"aspectRatio": aspectRatio};
@@ -1217,6 +1222,28 @@
     //发送消息
     if (isCustomerService || [self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+    }
+}
+
+//send gif message
+-(void)sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets success:(Success)succe Err:(Errors)err{
+    NIMMessage *message = [NIMMessageMaker msgWithText:@"TEAM_NOTIFICATION_MESSAGE" andApnsMembers:@[] andeSession:self._session senderName:_myUserName];
+    NSDictionary  *remoteExt = @{@"extendType": @"TEAM_NOTIFICATION_MESSAGE",@"operationType": @11, @"sourceId": sourceId, @"targets": targets};
+    message.remoteExt = remoteExt;
+    NIMMessageSetting *seting = [[NIMMessageSetting alloc]init];
+    seting.apnsEnabled = NO;
+    seting.shouldBeCounted = NO;
+    message.setting = seting;
+    NSLog(@"sendMessageTeamNotificationRequestJoin message.remoteExt: %@", message.remoteExt);
+
+    NSError *error;
+
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&error];
+   
+    if (error != nil) {
+        err(error);
+    } else {
+        succe(@"200");
     }
 }
 
@@ -1869,6 +1896,11 @@
         if ([[message.remoteExt objectForKey:@"extendType"]  isEqual: @"gif"]) {
             [dic2 setObject:message.remoteExt forKey:@"extend"];
             [dic2 setObject:@"image" forKey:@"msgType"];
+        }
+        
+        if ([[message.remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
+            [dic2 setObject:message.remoteExt forKey:@"extend"];
+            [dic2 setObject:@"notification" forKey:@"msgType"];
         }
     }else if (message.messageType  == NIMMessageTypeImage) {
         [dic2 setObject:@"image" forKey:@"msgType"];
