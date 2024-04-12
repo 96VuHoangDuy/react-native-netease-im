@@ -264,69 +264,8 @@ public class ReactCache {
                 map.putString("imageLocal", ImageLoaderKit.getMemoryCachedAvatar(imagePath));
                 map.putString("name", name);
                 map.putString("sessionType", Integer.toString(contact.getSessionType().getValue()));
-//                map.putString("msgType", getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
-                if (contact.getMsgType() == MsgTypeEnum.custom) {
-                    map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), (CustomAttachment) contact.getAttachment()));
-                } else {
-                    if (lastMessage != null && lastMessage.getRemoteExtension() != null) {
-                        Map<String, Object> extensionMsg = lastMessage.getRemoteExtension();
-
-                        if (extensionMsg.containsKey("extendType")) {
-                            String extendType = extensionMsg.get("extendType").toString();
-                            if (extendType.equals("forwardMultipleText")) {
-                                WritableMap extend = Arguments.createMap();
-
-                                extend.putString("messages", contact.getContent());
-                                map.putMap(MESSAGE_EXTEND, extend);
-                                map.putString(MessageConstant.Message.MSG_TYPE, "forwardMultipleText");
-                            }
-
-                            if (extendType.equals("card")) {
-                                WritableMap writableMapExtend = new WritableNativeMap();
-
-                                for (Map.Entry<String, Object> entry : extensionMsg.entrySet()) {
-                                    writableMapExtend.putString(entry.getKey(), entry.getValue().toString());
-                                }
-
-                                map.putMap(MESSAGE_EXTEND, writableMapExtend);
-                                map.putString(MessageConstant.Message.MSG_TYPE, "card");
-                            }
-
-                            if (extendType.equals("revoked_success")) {
-                                WritableMap writableMapExtend = new WritableNativeMap();
-                                writableMapExtend.putString("tipMsg", contact.getContent());
-
-                                map.putMap(MESSAGE_EXTEND, writableMapExtend);
-                                map.putString(MessageConstant.Message.MSG_TYPE, "notification");
-                            }
-
-                            if (extendType.equals("TEAM_NOTIFICATION_MESSAGE")) {
-                                map.putMap(MESSAGE_EXTEND, MapUtil.mapToReadableMap(extensionMsg));
-                                map.putString(MessageConstant.Message.MSG_TYPE, "notification");
-                            }
-                        } else {
-                            map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
-                        }
-                    } else {
-                        map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
-                    }
-
-//                    if (contact.getExtension() != null) {
-//                        WritableMap extend = Arguments.createMap();
-//
-//                        extend.putString("messages", contact.getContent());
-//                        map.putMap(MESSAGE_EXTEND, extend);
-//                        map.putString(MessageConstant.Message.MSG_TYPE, "forwardMultipleText");
-//                    } else {
-//                        map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
-//                    }
-                }
-                map.putString("msgStatus", Integer.toString(contact.getMsgStatus().getValue()));
-                map.putString("messageId", contact.getRecentMessageId());
 
                 String fromAccount = contact.getFromAccount();
-                map.putString("fromAccount", fromAccount);
-
                 String content = contact.getContent();
                 switch (contact.getMsgType()) {
                     case text:
@@ -457,6 +396,69 @@ public class ReactCache {
                     default:
                         break;
                 }
+//                map.putString("msgType", getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
+                if (contact.getMsgType() == MsgTypeEnum.custom) {
+                    map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), (CustomAttachment) contact.getAttachment()));
+                } else {
+                    if (lastMessage != null && lastMessage.getRemoteExtension() != null) {
+                        Map<String, Object> extensionMsg = lastMessage.getRemoteExtension();
+
+                        if (extensionMsg.containsKey("extendType")) {
+                            String extendType = extensionMsg.get("extendType").toString();
+                            if (extendType.equals("forwardMultipleText")) {
+                                WritableMap extend = Arguments.createMap();
+
+
+                                content = "[聊天记录]";
+                                extend.putString("messages", contact.getContent());
+                                map.putMap(MESSAGE_EXTEND, extend);
+                                map.putString(MessageConstant.Message.MSG_TYPE, "forwardMultipleText");
+                            }
+
+                            if (extendType.equals("card")) {
+                                WritableMap writableMapExtend = new WritableNativeMap();
+
+                                for (Map.Entry<String, Object> entry : extensionMsg.entrySet()) {
+                                    writableMapExtend.putString(entry.getKey(), entry.getValue().toString());
+                                }
+
+                                map.putMap(MESSAGE_EXTEND, writableMapExtend);
+                                map.putString(MessageConstant.Message.MSG_TYPE, "card");
+                            }
+
+                            if (extendType.equals("revoked_success")) {
+                                WritableMap writableMapExtend = new WritableNativeMap();
+                                writableMapExtend.putString("tipMsg", contact.getContent());
+
+                                map.putMap(MESSAGE_EXTEND, writableMapExtend);
+                                map.putString(MessageConstant.Message.MSG_TYPE, "notification");
+                            }
+
+                            if (extendType.equals("TEAM_NOTIFICATION_MESSAGE")) {
+                                map.putMap(MESSAGE_EXTEND, MapUtil.mapToReadableMap(extensionMsg));
+                                map.putString(MessageConstant.Message.MSG_TYPE, "notification");
+                            }
+                        } else {
+                            map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
+                        }
+                    } else {
+                        map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
+                    }
+
+//                    if (contact.getExtension() != null) {
+//                        WritableMap extend = Arguments.createMap();
+//
+//                        extend.putString("messages", contact.getContent());
+//                        map.putMap(MESSAGE_EXTEND, extend);
+//                        map.putString(MessageConstant.Message.MSG_TYPE, "forwardMultipleText");
+//                    } else {
+//                        map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
+//                    }
+                }
+                map.putString("msgStatus", Integer.toString(contact.getMsgStatus().getValue()));
+                map.putString("messageId", contact.getRecentMessageId());
+
+                map.putString("fromAccount", fromAccount);
                 map.putString("time", TimeUtil.getTimeShowString(contact.getTime(), true));
 
 

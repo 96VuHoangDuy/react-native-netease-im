@@ -25,9 +25,8 @@
         apnsMemberOption.apnsContent = @"有人@了你";
         message.apnsMemberOption = apnsMemberOption;
     }
-    message.apnsContent = text;
+    
     [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:senderName];
-    NSLog(@"message >>>>>>> message %@", message);
     return message;
 }
 
