@@ -317,6 +317,7 @@
                 }
             } else {
                 if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
+                    recent.lastMessage.text = @"[聊天记录]";
                     NSMutableDictionary *extend = [NSMutableDictionary dictionary];
                     [extend setObject:recent.lastMessage.text forKey:@"messages"];
                     
@@ -444,6 +445,7 @@
                 }
             } else {
                 if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
+                    recent.lastMessage.text = @"[聊天记录]";
                     NSMutableDictionary *extend = [NSMutableDictionary dictionary];
                     [extend setObject:recent.lastMessage.text forKey:@"messages"];
                     [dic setObject:extend forKey:@"extend"];
@@ -602,6 +604,7 @@
                 }
             } else {
                 if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
+                    recent.lastMessage.text = @"[聊天记录]";
                     NSMutableDictionary *extend = [NSMutableDictionary dictionary];
                     [extend setObject:recent.lastMessage.text forKey:@"messages"];
                     
@@ -731,6 +734,7 @@
                     }
                 } else {
                     if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
+                        recent.lastMessage.text = @"[聊天记录]";
                         NSMutableDictionary *extend = [NSMutableDictionary dictionary];
                         [extend setObject:recent.lastMessage.text forKey:@"messages"];
                         

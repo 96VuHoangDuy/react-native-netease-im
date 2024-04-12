@@ -1322,6 +1322,7 @@
     //发送消息
     NSDictionary  *remoteExt = @{@"extendType": @"forwardMultipleText"};
     message.remoteExt = remoteExt;
+    message.apnsContent = @"[聊天记录]";
     
     if ([self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];

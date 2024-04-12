@@ -998,12 +998,6 @@ public class SessionService {
     }
 
     public void forwardMultipleTextMessage(ReadableMap dataDict,  String sessionId,  String sessionType,  String content, OnSendMessageListener onSendMessageListener) {
-//        CustomMessageConfig config = new CustomMessageConfig();
-//        ForwardMultipleTextAttachment attachment = new ForwardMultipleTextAttachment();
-
-//        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
-//        attachment.setParams(dataDict.getString("messages"));
-//        IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeE, "", attachment, config);
         SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeE, dataDict.getString("messages"));
 
@@ -1235,12 +1229,24 @@ public class SessionService {
                 }
                 break;
             case location:
-                pushContent ="location";
+                pushContent ="[地点]";
                 break;
             default:
                 pushContent = convertMessageContent(message.getContent());
                 break;
         }
+
+        if (message != null && message.getRemoteExtension() != null) {
+            Map<String, Object> extensionMsg = message.getRemoteExtension();
+
+            if (extensionMsg.containsKey("extendType")) {
+                String extendType = extensionMsg.get("extendType").toString();
+                if (extendType.equals("forwardMultipleText")) {
+                    pushContent = "[聊天记录]";
+                }
+            }
+        }
+
 
         if (message.getSessionType() == SessionTypeEnum.P2P) {
             payload.put("pushTitle", message.getFromNick());
@@ -1250,13 +1256,8 @@ public class SessionService {
             message.setPushContent(message.getFromNick() + ": " + pushContent);
         }
 
-
         payload.put("sessionBody", body);
-
         message.setPushPayload(payload);
-
-        Log.d(" ád ád ádad ádas ", payload + "," + message.getPushPayload());
-//        }
     }
 
     private MemberPushOption createMemPushOption(List<String> selectedMembers, IMMessage message) {
