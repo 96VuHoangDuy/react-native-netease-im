@@ -464,8 +464,8 @@ RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnul
     }];
 }
 
-RCT_EXPORT_METHOD(sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController]sendMessageTeamNotificationRequestJoin:sourceId targets:targets success:^(id param) {
+RCT_EXPORT_METHOD(sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets type:(nonnull NSNumber*)type resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController]sendMessageTeamNotificationRequestJoin:sourceId targets:targets type:type success:^(id param) {
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);

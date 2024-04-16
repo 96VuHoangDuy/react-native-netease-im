@@ -27,7 +27,8 @@ export enum NIMTeamOperationType {
   NIMTeamOperationTypeRemoveManager = 8,
   NIMTeamOperationTypeAcceptInvitation = 9,
   NIMTeamOperationTypeMute = 10,
-  CustomTeamOperationTypeRequestJoinList = 11,
+  CustomTeamOperationTypeAddUsersToRequestList = 11,
+  CustomTeamOperationTypeAcceptUsersInRequestList = 12,
 }
 
 export enum NIMTeamOperationTypeUpdateDetail {

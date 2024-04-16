@@ -1226,9 +1226,9 @@
 }
 
 //send gif message
--(void)sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets success:(Success)succe Err:(Errors)err{
+-(void)sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets type:(nonnull NSNumber*)type success:(Success)succe Err:(Errors)err{
     NIMMessage *message = [NIMMessageMaker msgWithText:@"TEAM_NOTIFICATION_MESSAGE" andApnsMembers:@[] andeSession:self._session senderName:_myUserName];
-    NSDictionary  *remoteExt = @{@"extendType": @"TEAM_NOTIFICATION_MESSAGE",@"operationType": @11, @"sourceId": sourceId, @"targets": targets};
+    NSDictionary  *remoteExt = @{@"extendType": @"TEAM_NOTIFICATION_MESSAGE",@"operationType": type, @"sourceId": sourceId, @"targets": targets};
     message.remoteExt = remoteExt;
     NIMMessageSetting *seting = [[NIMMessageSetting alloc]init];
     seting.apnsEnabled = NO;
