@@ -596,6 +596,12 @@ class NimSession {
       messageId
     );
   }
+
+  setStrangerRecentReplyed(sessionId: string) {
+    return RNNeteaseIm.setStrangerRecentReplyed(
+      sessionId,
+    );
+  }
 }
 
 export default new NimSession();

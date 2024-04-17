@@ -23,6 +23,7 @@ export enum NIMSessionTypeEnum {
   QChat = 'QChat',
   onlineService = 'online_service',
   systemMessage = 'system_message',
+  listStranger = 'listStranger',
 }
 
 export enum NIMSessionOnlineServiceType {
@@ -92,6 +93,7 @@ export interface NimSessionType {
   imagePath: string;
   name: string;
   extend?: NimSessionTypeExtend;
+  isMyFriend?: boolean;
   localExt?: {
     isChatBot: boolean;
     isCsr: boolean;

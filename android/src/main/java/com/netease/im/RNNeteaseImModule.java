@@ -1342,9 +1342,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendMessageTeamNotificationRequestJoin(ReadableMap sourceId, ReadableArray targets, final Promise promise) {
+    public void sendMessageTeamNotificationRequestJoin(ReadableMap sourceId, ReadableArray targets, Integer type, final Promise promise) {
         try {
-            sessionService.sendMessageTeamNotificationRequestJoin(sourceId, targets, new SessionService.OnSendMessageListener() {
+            sessionService.sendMessageTeamNotificationRequestJoin(sourceId, targets,type, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
