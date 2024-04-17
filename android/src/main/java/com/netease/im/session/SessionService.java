@@ -767,7 +767,11 @@ public class SessionService {
         }
         if (memberName != null) {
             localExt.put("birthdayMemberName", memberName);
-            content += "(" + memberName + ")";
+            content += "[" + memberName + "]";
+        }else {
+            String name = NimUserInfoCache.getInstance().getUserDisplayName(sessionId);
+
+            content += "[" + name + "]";
         }
         message.setContent(content);
 

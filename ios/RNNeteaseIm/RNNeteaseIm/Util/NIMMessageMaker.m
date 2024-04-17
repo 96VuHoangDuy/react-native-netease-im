@@ -38,7 +38,7 @@
     if (lastMessage != nil) {
         [text appendFormat:@":%ld", (long)lastMessage.messageType];
         
-        if ([lastMessage.text isEqual:@""]) {
+        if (lastMessage.text == nil || [lastMessage.text isEqual:@""] || [lastMessage.text isEqual:@"(null)"]) {
             [text appendFormat:@":(NO_TEXT)"];
         } else {
             [text appendFormat:@":(%@)", lastMessage.text];
@@ -54,7 +54,7 @@
     
     if (memberName != nil) {
         [localExt setObject:memberName forKey:@"birthdayMemberName"];
-        [text appendFormat:@"(%@)", memberName];
+        [text appendFormat:@"[%@]", memberName];
     }
     
     if (memberContactId != nil) {
