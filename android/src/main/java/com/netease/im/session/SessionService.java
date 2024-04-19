@@ -782,8 +782,8 @@ public class SessionService {
         message.setConfig(config);
         message.setLocalExtension(localExt);
         message.setStatus(MsgStatusEnum.success);
-
-        NIMSDK.getMsgService().saveMessageToLocal(message, true);
+        
+        NIMSDK.getMsgService().insertLocalMessage(message, sessionId);
     }
 
     /**
