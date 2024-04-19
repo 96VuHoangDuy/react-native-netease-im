@@ -246,6 +246,11 @@ public class ReactCache {
                         unreadNumTotal += contact.getUnreadCount();
                     }
                     map.putString("mute", boolean2String(!isNeedMessageNotify));
+                    map.putBoolean("isMyFriend", NIMClient.getService(FriendService.class).isMyFriend(contactId));
+
+                    Boolean isReplyStranger = extension != null ? (Boolean) extension.get("isReplyStranger") : false;
+                    map.putBoolean("isReplyStranger", isReplyStranger != null ? isReplyStranger : false);
+
                     name = nimUserInfoCache.getUserDisplayName(contactId);
                 } else if (sessionType == SessionTypeEnum.Team) {
                     team = TeamDataCache.getInstance().getTeamById(contactId);

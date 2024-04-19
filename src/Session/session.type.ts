@@ -94,6 +94,7 @@ export interface NimSessionType {
   name: string;
   extend?: NimSessionTypeExtend;
   isMyFriend?: boolean;
+  isReplyStranger?: boolean;
   localExt?: {
     isChatBot: boolean;
     isCsr: boolean;

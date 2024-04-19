@@ -1757,6 +1757,25 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void setStrangerRecentReplyed(String rContactId) {
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(rContactId, SessionTypeEnum.P2P);
+
+        if (recent == null) return;
+
+        Map<String, Object> extension = recent.getExtension();
+
+        if (extension == null) {
+            extension = new HashMap<String, Object>();
+        }
+
+        extension.put("isReplyStranger", true);
+
+        recent.setExtension(extension);
+
+        NIMSDK.getMsgService().updateRecent(recent);
+    }
+
+    @ReactMethod
     public void getTeamList(String keyword, final Promise promise) {
         TeamListService teamListService = TeamListService.getInstance();
         teamListService.setOnLoadListener(new TeamListService.OnLoadListener() {

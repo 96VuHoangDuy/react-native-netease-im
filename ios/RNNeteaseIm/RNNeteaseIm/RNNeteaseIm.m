@@ -329,7 +329,7 @@ RCT_EXPORT_METHOD(searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(
 
 //刷新最近会话列表
 - (void)updateMessageList{
-    [[NIMViewController initWithController]getResouces:@"contact"];
+    [[NIMViewController initWithController]getResouces];
     NSLog(@"---updateMessageList");
 }
 
@@ -472,6 +472,11 @@ RCT_EXPORT_METHOD(sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary 
     }];
 }
 
+//RCT_EXPORT_METHOD(checkIsMyFriend:(nonnull  NSString *)sessionId callBack:(RCTResponseSenderBlock)callback) {
+//    BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:sessionId];
+//    callBack(isMyFriend);
+//}
+
 //发送音频消息
 RCT_EXPORT_METHOD(sendAudioMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration isCustomerService:(BOOL *)isCustomerService){
     [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isCustomerService:isCustomerService];
@@ -514,7 +519,7 @@ RCT_EXPORT_METHOD(setStrangerRecentReplyed:(nonnull  NSString *)sessionId) {
     
     NSDictionary *localExt = recent.localExt?:@{};
     NSMutableDictionary *dict = [localExt mutableCopy];
-    [dict setObject:@(YES) forKey:@"isReply"];
+    [dict setObject:@(YES) forKey:@"isReplyStranger"];
     [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
 }
 

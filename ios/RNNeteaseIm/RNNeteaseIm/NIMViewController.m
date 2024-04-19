@@ -53,7 +53,7 @@
         case NIMLoginStepLinkOK://连接服务器成功
             strStatus = @"5";
 //            [self backLogin];
-            [self getResouces:@"contact"];
+            [self getResouces];
             break;
         case NIMLoginStepLinkFailed://连接服务器失败
             strStatus = @"2";
@@ -70,11 +70,11 @@
             break;
         case NIMLoginStepSyncing://开始同步
             strStatus = @"13";
-            [self getResouces:@"contact"];
+            [self getResouces];
             break;
         case NIMLoginStepSyncOK://同步完成
             strStatus = @"14";
-            [self getResouces:@"contact"];
+            [self getResouces];
             break;
         case NIMLoginStepLoseConnection://连接断开
             strStatus = @"2";
@@ -102,7 +102,7 @@
             option.removeSession = YES;
             [manager deleteAllmessagesInSession:recent.session option:option];
             //清除历史记录
-            [self getResouces:@"contact"];
+            [self getResouces];
         }
     }
 }
@@ -158,11 +158,11 @@
     if (!isMyFriend && isSessionP2P) {
         NSDictionary *localExt = recentSession.localExt?:@{};
         NSMutableDictionary *dict = [localExt mutableCopy];
-        [dict setObject:@(NO) forKey:@"isReply"];
+        [dict setObject:@(NO) forKey:@"isReplyStranger"];
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recentSession];
     }
     
-    [self getResouces:!isMyFriend && isSessionP2P ? @"stranger" : @"contact"];
+    [self getResouces];
 }
 
 
@@ -180,14 +180,11 @@
     // }
     
     // [self setLastMessageId:recentSession.lastMessage.messageId];
-    BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recentSession.session.sessionId];
-    BOOL isSessionP2P = recentSession.session.sessionType == NIMSessionTypeP2P;
-    
-    [self getResouces:!isMyFriend && isSessionP2P ? @"stranger" : @"contact"];
+    [self getResouces];
 }
 //删除所有会话回调
 - (void)allMessagesDeleted{
-    [self getResouces:@"contact"];
+    [self getResouces];
 }
 
 - (NSString *)getMessageType:(NIMMessageType)messageType{
@@ -247,6 +244,8 @@
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
             BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recent.session.sessionId];
             [dic setObject: [NSNumber numberWithBool: isMyFriend] forKey:@"isMyFriend"];
+            BOOL isReplyRecent = [recent.localExt[@"isReplyStranger"] isEqual:@(YES)];
+            [dic setObject: [NSNumber numberWithBool: isReplyRecent] forKey:@"isReplyStranger"];
             //未读
             NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
             [dic setObject:strUnreadCount forKey:@"unreadCount"];
@@ -516,31 +515,12 @@
     }
     
 }
--(void)getResouces: (nullable NSString *)typeGet {
-//    NSString *currentAccout = [[NIMSDK sharedSDK].loginManager currentAccount];
+-(void)getResouces {
     NSInteger allUnreadNum = 0;
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
     
-    NSArray *NIMlistFilter = [NIMlistArr filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NIMRecentSession* recent, NSDictionary *bindings) {
-        BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recent.session.sessionId];
-        BOOL isReplyRecent = [recent.localExt objectForKey:@"isReply"] && [[recent.localExt objectForKey:@"isReply"] isEqual:@(YES)];
-        
-        if ([typeGet isEqual:@"stranger"]) {
-            NSLog(@"stranger");
-            return !isMyFriend && recent.session.sessionType == NIMSessionTypeP2P;
-        }
-        
-        if ([typeGet isEqual:@"contact"]) {
-            NSLog(@"contact");
-            return (recent.session.sessionType == NIMSessionTypeP2P || isReplyRecent || (recent.session.sessionType == NIMSessionTypeP2P && isMyFriend));
-        }
-        
-        return YES;
-    }]];
-    
-    
     NSMutableArray *sessionList = [NSMutableArray array];
-    for (NIMRecentSession *recent in NIMlistFilter) {
+    for (NIMRecentSession *recent in NIMlistArr) {
         if (recent.session.sessionType == NIMSessionTypeP2P) {
             NSMutableDictionary *dic = [NSMutableDictionary dictionary];
             [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
@@ -548,6 +528,9 @@
             [dic setObject: [NSNumber numberWithBool: recent.lastMessage.isOutgoingMsg] forKey:@"isOutgoing"];
             BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recent.session.sessionId];
             [dic setObject: [NSNumber numberWithBool: isMyFriend] forKey:@"isMyFriend"];
+            BOOL isReplyRecent = [recent.localExt[@"isReplyStranger"] isEqual:@(YES)];
+            [dic setObject: [NSNumber numberWithBool: isReplyRecent] forKey:@"isReplyStranger"];
+
 
             //未读
             NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
@@ -817,7 +800,7 @@
         }
     }
     
-    NSDictionary *recentDict = @{@"recents":sessionList,@"unreadCount":[NSString stringWithFormat:@"%zd",allUnreadNum], @"typeGet": typeGet};
+    NSDictionary *recentDict = @{@"recents":sessionList,@"unreadCount":[NSString stringWithFormat:@"%zd",allUnreadNum]};
     [NIMModel initShareMD].recentDict = recentDict;
 }
 //会话标题

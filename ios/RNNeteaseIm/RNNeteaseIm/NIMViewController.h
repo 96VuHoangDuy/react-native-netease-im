@@ -24,5 +24,5 @@ typedef void(^ERROR)(NSString *error);
 //获取最近聊天列表回调
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err;
 -(void)addDelegate;
-- (void)getResouces:(nullable NSString *)typeGet;
+- (void)getResouces;
 @end

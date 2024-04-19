@@ -14,11 +14,13 @@ import com.netease.im.uikit.cache.SimpleCallback;
 import com.netease.im.uikit.cache.TeamDataCache;
 import com.netease.im.uikit.common.util.log.LogUtil;
 import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.NIMSDK;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.StatusCode;
 import com.netease.nimlib.sdk.auth.AuthServiceObserver;
 import com.netease.nimlib.sdk.auth.constant.LoginSyncStatus;
+import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
 import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
@@ -33,7 +35,9 @@ import com.netease.nimlib.sdk.team.model.Team;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.netease.nimlib.sdk.StatusCode.PWD_ERROR;
 
@@ -136,6 +140,20 @@ public class RecentContactObserver {
 
             if (index >= 0) {
                 items.remove(index);
+            }
+
+            if (index == -1 && r.getSessionType() == SessionTypeEnum.P2P && !NIMClient.getService(FriendService.class).isMyFriend(r.getContactId())) {
+                Map<String, Object> extension = r.getExtension();
+
+                if (extension == null) {
+                    extension = new HashMap<String, Object>();
+                }
+
+                extension.put("isReplyStranger", false);
+
+                r.setExtension(extension);
+
+                NIMSDK.getMsgService().updateRecent(r);
             }
 
             doAddDeleteQuitTeamMessage(r, false);
