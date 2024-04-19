@@ -1110,8 +1110,16 @@
 -(void)createNotificationBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    NSString *name = memberName;
+    if (name == nil) {
+        NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
+        if (user != nil) {
+            name = user.userInfo.nickName;
+        }
+    }
+    
     NIMMessage *lastMessage = recent.lastMessage;
-    NIMMessage *message = [NIMMessageMaker msgWithNotificationBirthday:lastMessage memberContactId:memberContactId memberName:memberName];
+    NIMMessage *message = [NIMMessageMaker msgWithNotificationBirthday:lastMessage memberContactId:memberContactId memberName:name];
     
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:^(NSError * _Nullable error) {
         if (error != nil) {

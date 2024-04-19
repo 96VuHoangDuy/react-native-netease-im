@@ -767,7 +767,11 @@ public class SessionService {
         }
         if (memberName != null) {
             localExt.put("birthdayMemberName", memberName);
-            content += "(" + memberName + ")";
+            content += "[" + memberName + "]";
+        }else {
+            String name = NimUserInfoCache.getInstance().getUserDisplayName(sessionId);
+
+            content += "[" + name + "]";
         }
         message.setContent(content);
 
@@ -778,8 +782,8 @@ public class SessionService {
         message.setConfig(config);
         message.setLocalExtension(localExt);
         message.setStatus(MsgStatusEnum.success);
-
-        NIMSDK.getMsgService().saveMessageToLocal(message, true);
+        
+        NIMSDK.getMsgService().insertLocalMessage(message, sessionId);
     }
 
     /**
