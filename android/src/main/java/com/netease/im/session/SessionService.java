@@ -821,12 +821,12 @@ public class SessionService {
     }
 
 
-    public void sendMessageTeamNotificationRequestJoin(ReadableMap sourceId, ReadableArray targets, OnSendMessageListener onSendMessageListener) {
+    public void sendMessageTeamNotificationRequestJoin(ReadableMap sourceId, ReadableArray targets,Integer type, OnSendMessageListener onSendMessageListener) {
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "TEAM_NOTIFICATION_MESSAGE");
 
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
         remoteExt.put("extendType", "TEAM_NOTIFICATION_MESSAGE");
-        remoteExt.put("operationType", 11);
+        remoteExt.put("operationType", type);
         remoteExt.put("sourceId", MapUtil.readableMaptoMap(sourceId));
         remoteExt.put("targets", MapUtil.readableArrayToArray(targets));
 

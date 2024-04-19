@@ -181,7 +181,7 @@ RCT_EXPORT_METHOD(deleteRecentContact:(nonnull NSString * )recentContactId resol
 }
 //回调最近聊天列表
 RCT_EXPORT_METHOD(getRecentContactList:(RCTPromiseResolveBlock)resolve
-                  reject:(RCTPromiseRejectBlock)reject){
+                  reject:(RCTPromiseRejectBlock)reject) {
     [[NIMViewController initWithController]getRecentContactListsuccess:^(id param) {
         resolve(param);
     } andError:^(NSString *error) {
@@ -329,7 +329,7 @@ RCT_EXPORT_METHOD(searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(
 
 //刷新最近会话列表
 - (void)updateMessageList{
-    [[NIMViewController initWithController]getResouces];
+    [[NIMViewController initWithController]getResouces:@"contact"];
     NSLog(@"---updateMessageList");
 }
 
@@ -503,7 +503,19 @@ RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId
 //发送视频消息
 RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
     [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService];
+}
 
+//
+RCT_EXPORT_METHOD(setStrangerRecentReplyed:(nonnull  NSString *)sessionId) {
+    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    
+    if (!session) return;
+    
+    NSDictionary *localExt = recent.localExt?:@{};
+    NSMutableDictionary *dict = [localExt mutableCopy];
+    [dict setObject:@(YES) forKey:@"isReply"];
+    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
 }
 
 //发送地理位置消息

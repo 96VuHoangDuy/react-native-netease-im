@@ -272,27 +272,19 @@ class NimTeam {
   }
 
   queryAllTeams() {
-    return RNNeteaseIm.queryAllTeams();
+    return RNNeteaseIm.queryAllTeams()
   }
 
-  sendMessageTeamNotificationRequestJoin(
-    sourceId: {
-      sourceId: string;
-      sourceName: string;
-    },
-    targets: {
-      targetName: string;
-      targetId: string;
-    }[],
-    type:
-      | NIMTeamOperationType.CustomTeamOperationTypeAddUsersToRequestList
-      | NIMTeamOperationType.CustomTeamOperationTypeAcceptUsersInRequestList
-  ): Promise<string> {
-    return RNNeteaseIm.sendMessageTeamNotificationRequestJoin(
-      sourceId,
-      targets,
-      type
-    );
+  sendMessageTeamNotificationRequestJoin(sourceId: {
+    sourceId: string;
+    sourceName: string;
+  }, targets: {
+    targetName: string;
+    targetId: string;
+  }[], type: 
+      NIMTeamOperationType.CustomTeamOperationTypeAddUsersToRequestList 
+      | NIMTeamOperationType.CustomTeamOperationTypeAcceptUsersInRequestList): Promise<string> {
+    return RNNeteaseIm.sendMessageTeamNotificationRequestJoin(sourceId, targets, type)
   }
 }
 
