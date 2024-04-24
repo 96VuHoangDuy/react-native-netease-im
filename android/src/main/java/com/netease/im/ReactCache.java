@@ -248,7 +248,7 @@ public class ReactCache {
                     map.putString("mute", boolean2String(!isNeedMessageNotify));
                     map.putBoolean("isMyFriend", NIMClient.getService(FriendService.class).isMyFriend(contactId));
 
-                    Boolean isReplyStranger = extension != null ? (Boolean) extension.get("isReplyStranger") : false;
+                    Boolean isReplyStranger = extension != null && extension.containsKey("isReplyStranger") ? (Boolean) extension.get("isReplyStranger") : false;
                     map.putBoolean("isReplyStranger", isReplyStranger != null ? isReplyStranger : false);
 
                     name = nimUserInfoCache.getUserDisplayName(contactId);
