@@ -855,9 +855,11 @@
     NSString *text = @"";
     switch (lastMessage.messageType) {
         case NIMMessageTypeText:
-            if ([lastMessage.text isEqual:@"[动图]"]) {
-                return [self convertMessageMedia:lastMessage contentMessage:@"[动图]"];
+            if ([lastMessage.text isEqual:@"[动图]"] || [lastMessage.text isEqual:@"[个人名片]"]) {
+                return [self convertMessageMedia:lastMessage contentMessage:lastMessage.text];
             }
+            
+            
             text = lastMessage.text;
             break;
         case NIMMessageTypeAudio:
