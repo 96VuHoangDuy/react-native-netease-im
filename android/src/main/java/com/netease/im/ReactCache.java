@@ -195,6 +195,7 @@ public class ReactCache {
                 Map<String, Object> extension = contact.getExtension();
                 Boolean isHideRecent = false;
                 IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
+                String notifyType = "";
 
                 if (extension != null) {
                     WritableMap localExt = Arguments.createMap();
@@ -230,6 +231,7 @@ public class ReactCache {
 
                             if (notificationType != null) {
                                 localExt.putString("notificationType", notificationType);
+                                notifyType = notificationType;
                             }
                         }
                     }
@@ -278,6 +280,11 @@ public class ReactCache {
                             content = name + " : [动图]";
                             break;
                         }
+                        if (contact.getContent() != null && contact.getContent().equals("[个人名片]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                            content = name + " : [个人名片]";
+                            break;
+                        }
+
                         content = contact.getContent();
                         break;
                     case image:
@@ -556,7 +563,12 @@ public class ReactCache {
                             break;
                     }
                 }
-                content = teamNick + content;
+                if (notifyType.equals("BIRTHDAY")) {
+                    content =  contact.getContent();
+                } else {
+                    content = teamNick + content;
+                }
+
                 map.putString("content", content);
                 array.pushMap(map);
             }
