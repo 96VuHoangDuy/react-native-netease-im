@@ -555,12 +555,14 @@ class NimSession {
   updateActionHideRecentSession(
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
-    isHideSession: boolean
+    isHideSession: boolean,
+    isPinCode: boolean
   ) {
     return RNNeteaseIm.updateActionHideRecentSession(
       sessionId,
       sessionType,
-      isHideSession
+      isHideSession,
+      isPinCode
     );
   }
 

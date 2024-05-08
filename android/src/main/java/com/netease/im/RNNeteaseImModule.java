@@ -1278,39 +1278,54 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void sendTextMessage(String content, ReadableArray atUserIds, boolean isCustomerService, final Promise promise) {
-        LogUtil.w(TAG, "sendTextMessage" + content);
+       try {
+           LogUtil.w(TAG, "sendTextMessage" + content);
 
-        List<String> atUserIdList = array2ListString(atUserIds);
-        sessionService.sendTextMessage(content, atUserIdList, isCustomerService, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
+           List<String> atUserIdList = array2ListString(atUserIds);
+           sessionService.sendTextMessage(content, atUserIdList, isCustomerService, new SessionService.OnSendMessageListener() {
+               @Override
+               public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
-                return 0;
-            }
-        });
+                   return 0;
+               }
+           });
+           promise.resolve("success");
+       } catch (Exception e) {
+           promise.reject("SEND_ERROR", "Failed to send text message: " + e.getMessage());
+       }
     }
 
     public void sendTextMessage(String content, boolean isCustomerService, final Promise promise) {
-        LogUtil.w(TAG, "sendTextMessage" + content);
-        sessionService.sendTextMessage(content, null, isCustomerService, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
+       try {
+           LogUtil.w(TAG, "sendTextMessage" + content);
+           sessionService.sendTextMessage(content, null, isCustomerService, new SessionService.OnSendMessageListener() {
+               @Override
+               public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
-                return 0;
-            }
-        });
+                   return 0;
+               }
+           });
+           promise.resolve("success");
+       } catch (Exception e) {
+           promise.reject("SEND_ERROR", "Failed to send text message: " + e.getMessage());
+       }
     }
 
     @ReactMethod
     public void sendGifMessage(String url, String aspectRatio, ReadableArray atUserIds, boolean isCustomerService, final Promise promise) {
-        LogUtil.w(TAG, "sendTextMessage" + url);
-        sessionService.sendGifMessage(url, aspectRatio, null, isCustomerService, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
+        try {
+            LogUtil.w(TAG, "sendTextMessage" + url);
+            sessionService.sendGifMessage(url, aspectRatio, null, isCustomerService, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
-                return 0;
-            }
-        });
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send gif message: " + e.getMessage());
+        }
     }
 
     //2.发送图片消息
@@ -1318,12 +1333,17 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    displayName // 文件显示名字，如果第三方 APP 不关注，可以为 null
     @ReactMethod
     public void sendImageMessage(String file, String displayName, boolean isCustomerService, boolean isHighQuality, final Promise promise) {
-        sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
-                return 0;
-            }
-        });
+        try {
+            sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send image message: " + e.getMessage());
+        }
     }
 
     @ReactMethod
@@ -1367,12 +1387,17 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-        sessionService.sendAudioMessage(file, durationL, isCustomerService, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
-                return 0;
-            }
-        });
+        try {
+            sessionService.sendAudioMessage(file, durationL, isCustomerService, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch ( Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send audio message: " + e.getMessage());
+        }
     }
 
     //4.发送视频消息
@@ -1383,12 +1408,17 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    displayName // 视频显示名，可为空
     @ReactMethod
     public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService, final Promise promise) {
-        sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
-                return 0;
-            }
-        });
+        try {
+            sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send video message: " + e.getMessage());
+        }
     }
 
     @ReactMethod
@@ -1460,18 +1490,23 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    address // 地址信息描述
     @ReactMethod
     public void sendLocationMessage(String latitude, String longitude, String address, final Promise promise) {
-        sessionService.sendLocationMessage(latitude, longitude, address, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
-                if (code == ResponseCode.RES_SUCCESS) {
-                    promise.resolve(code);
-                } else {
-                    promise.reject("", "" + code);
-                }
+        try {
+            sessionService.sendLocationMessage(latitude, longitude, address, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    if (code == ResponseCode.RES_SUCCESS) {
+                        promise.resolve(code);
+                    } else {
+                        promise.reject("", "" + code);
+                    }
 
-                return 0;
-            }
-        });
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch ( Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send location message: " + e.getMessage());
+        }
     }
 
     //7.发送提醒消息
@@ -2702,7 +2737,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public  void  updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, final Promise promise) {
+    public  void  updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, Boolean isPinCode, final Promise promise) {
         Log.e(TAG, "updateActionHideRecentSession");
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
@@ -2711,7 +2746,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             extension = new HashMap<String, Object>();
         };
 
-        extension.put("isHideSession", isHideSession);
+        if (isHideSession) {
+            extension.put("isHideSession", true);
+            extension.put("isPinCode", isPinCode);
+        } else {
+            extension.put("isHideSession", false);
+            extension.put("isPinCode", false);
+        }
 
         recent.setExtension(extension);
         NIMSDK.getMsgService().updateRecent(recent);

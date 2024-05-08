@@ -2083,14 +2083,20 @@
     return text?text:@" ";
 }
 
--(void)updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession success:(Success)success error:(Errors)error {
+-(void)updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession isPinCode:(BOOL *)isPinCode success:(Success)success error:(Errors)error {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
     
     if (recent) {
         NSMutableDictionary *dict = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
         
-        [dict setObject:[NSNumber numberWithBool:isHideSession] forKey:@"isHideSession"];
+        if (isHideSession) {
+            [dict setObject:[NSNumber numberWithBool:YES] forKey:@"isHideSession"];
+            [dict setObject:[NSNumber numberWithBool:isPinCode] forKey:@"isPinCode"];
+        } else {
+            [dict setObject:[NSNumber numberWithBool:NO] forKey:@"isHideSession"];
+            [dict setObject:[NSNumber numberWithBool:NO] forKey:@"isPinCode"];
+        }
         
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
         

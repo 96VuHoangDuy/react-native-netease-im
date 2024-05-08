@@ -784,8 +784,8 @@ RCT_EXPORT_METHOD(addMembers:(nonnull NSString *)teamId accounts:(nonnull NSArra
     }];
 }
 
-RCT_EXPORT_METHOD(updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] updateActionHideRecentSession:sessionId sessionType:sessionType isHideSession:isHideSession success:^(id param) {
+RCT_EXPORT_METHOD(updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession isPinCode:(BOOL *)isPinCode resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] updateActionHideRecentSession:sessionId sessionType:sessionType isHideSession:isHideSession isPinCode:isPinCode success:^(id param) {
         resolve(param);
     } error:^(id error) {
         reject(@"-1", error, nil);
