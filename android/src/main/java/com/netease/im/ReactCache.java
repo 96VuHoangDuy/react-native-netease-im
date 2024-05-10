@@ -563,7 +563,7 @@ public class ReactCache {
                             break;
                     }
                 }
-                if (notifyType.equals("BIRTHDAY")) {
+                if (notifyType.equals("BIRTHDAY") || (contact.getContent() != null && contact.getContent().contains("NOTIFICATION_BIRTHDAY"))) {
                     content =  contact.getContent();
                 } else {
                     content = teamNick + content;
