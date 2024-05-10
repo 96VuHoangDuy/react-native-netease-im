@@ -54,7 +54,7 @@
     
     if (memberName != nil) {
         [localExt setObject:memberName forKey:@"birthdayMemberName"];
-        [text appendFormat:@"[%@]", memberName];
+        [text appendFormat:@":[%@]", memberName];
     }
     
     if (memberContactId != nil) {

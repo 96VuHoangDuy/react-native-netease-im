@@ -2741,6 +2741,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         Log.e(TAG, "updateActionHideRecentSession");
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+        if (recent == null) {
+            addEmptyRecentSession(sessionId, type);
+        }
+
+        recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+
         Map<String, Object> extension = recent.getExtension();
         if (extension == null) {
             extension = new HashMap<String, Object>();
