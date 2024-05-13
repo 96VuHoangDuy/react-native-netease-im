@@ -2197,6 +2197,15 @@
     }];
     
 }
+
+-(void)removeMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *message = messages[0];
+    
+    [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
+}
+
 //删除一条信息
 -(void)deleteMsg:(NSString *)messageId{
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageId]];

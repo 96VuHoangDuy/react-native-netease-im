@@ -1645,6 +1645,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
+    @ReactMethod
+    public void removeMessage(String messageId, String sessionId, String sessionType, final  Promise promise) {
+        deleteMessage(messageId, promise);
+    }
+
     /**
      * 消息删除
      *

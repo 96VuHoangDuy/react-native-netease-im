@@ -409,7 +409,11 @@ RCT_EXPORT_METHOD(updateMessageSentStickerBirthday:(nonnull NSString *)sessionId
     }];
 }
 
-RCT_EXPORT_METHOD(createNotificationBirthday:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+RCT_EXPORT_METHOD(removeMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType) {
+    [[ConversationViewController initWithConversationViewController] removeMessage:messageId sessionId:sessionId sessionType:sessionType];
+}
+
+RCT_EXPORT_METHOD(createNotificationBirthday:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
     [[ConversationViewController initWithConversationViewController] createNotificationBirthday:sessionId sessionType:sessionType memberContactId:memberContactId memberName:memberName success:^(id params) {
         resolve(params);
     } err:^(id error) {

@@ -49,6 +49,8 @@ typedef void(^Errors)(id erro);
 
 -(void)queryTeamByName:(NSString *)search success:(Success)success err:(Errors)err;
 
+-(void)removeMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType;
+
 -(void)queryAllTeams:(Success)success err:(Errors)err;
 
 -(void)updateMessageSentStickerBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err;
