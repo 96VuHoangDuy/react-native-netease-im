@@ -25,4 +25,6 @@ typedef void(^ERROR)(NSString *error);
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err;
 -(void)addDelegate;
 - (void)getResouces;
+
+- (NSString *)messageContent:(NIMMessage*)lastMessage;
 @end

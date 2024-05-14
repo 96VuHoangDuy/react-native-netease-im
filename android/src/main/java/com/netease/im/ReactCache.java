@@ -228,10 +228,15 @@ public class ReactCache {
                         Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
                         if (messageLocalExt != null) {
                             String notificationType = (String) messageLocalExt.get("notificationType");
+                            Map<String, Object> notificationExtend = (Map<String, Object>) messageLocalExt.get("notificationExtend");
 
                             if (notificationType != null) {
                                 localExt.putString("notificationType", notificationType);
                                 notifyType = notificationType;
+                            }
+
+                            if (notificationExtend != null) {
+                                localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
                             }
                         }
                     }

@@ -377,9 +377,13 @@
             //账号
             [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
             
-            if (recent.localExt) {
-                [dic setObject:recent.localExt forKey:@"localExt"];
+            NSMutableDictionary *localExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+            
+            if (recent.lastMessage != nil && recent.lastMessage.localExt != nil && [recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
+                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
             }
+            
+            [dic setObject:localExt forKey:@"localExt"];
                 
             if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                 NIMCustomObject *customObject = recent.lastMessage.messageObject;
@@ -670,9 +674,14 @@
                 //账号
                 [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
             
-                if (recent.localExt) {
-                    [dic setObject:recent.localExt forKey:@"localExt"];
+            
+                NSMutableDictionary *localExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+                
+                if (recent.lastMessage != nil && recent.lastMessage.localExt != nil && [recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
+                    [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
                 }
+                
+                [dic setObject:localExt forKey:@"localExt"];
                 
                 if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                     NIMCustomObject *customObject = recent.lastMessage.messageObject;

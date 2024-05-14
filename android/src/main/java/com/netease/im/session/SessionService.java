@@ -35,6 +35,7 @@ import com.netease.im.uikit.common.util.media.ImageUtil;
 import com.netease.im.uikit.common.util.string.MD5;
 import com.netease.im.uikit.session.helper.MessageHelper;
 import com.netease.im.uikit.session.helper.MessageListPanelHelper;
+import com.netease.im.uikit.session.helper.TeamNotificationHelper;
 import com.netease.im.uikit.uinfo.UserInfoHelper;
 import com.netease.im.uikit.uinfo.UserInfoObservable;
 import com.netease.nimlib.sdk.AbortableFuture;
@@ -52,12 +53,15 @@ import com.netease.nimlib.sdk.msg.attachment.AudioAttachment;
 import com.netease.nimlib.sdk.msg.attachment.FileAttachment;
 import com.netease.nimlib.sdk.msg.attachment.LocationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
+import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.VideoAttachment;
 import com.netease.nimlib.sdk.msg.constant.AttachStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgDirectionEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
+import com.netease.nimlib.sdk.msg.constant.NotificationType;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
+import com.netease.nimlib.sdk.msg.constant.SystemMessageType;
 import com.netease.nimlib.sdk.msg.model.AttachmentProgress;
 import com.netease.nimlib.sdk.msg.model.CustomMessageConfig;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
@@ -68,9 +72,14 @@ import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.RevokeMsgNotification;
 import com.netease.nimlib.sdk.team.TeamService;
+import com.netease.nimlib.sdk.team.constant.TeamFieldEnum;
+import com.netease.nimlib.sdk.team.model.MemberChangeAttachment;
+import com.netease.nimlib.sdk.team.model.MuteMemberAttachment;
 import com.netease.nimlib.sdk.team.model.Team;
+import com.netease.nimlib.sdk.team.model.UpdateTeamAttachment;
 
 import java.io.File;
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -743,37 +752,206 @@ public class SessionService {
     public void createNotificationBirthday(String sessionId, String type, String memberContactId, String memberName) {
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
         IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(sessionId, sessionType);
-        String content = "NOTIFICATION_BIRTHDAY";
-        if (lastMessage == null) {
-            content += "::(NO_TEXT)";
-        } else {
-            content += ":" + lastMessage.getMsgType();
-
-            if (lastMessage.getContent() != null && lastMessage.getContent().isEmpty()) {
-                content += ":(" + lastMessage.getContent() + ")";
-            } else {
-                content += ":(NO_TEXT)";
-            }
+        RecentContact contact = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+        String name = memberName;
+        if (memberName == null) {
+            name = NimUserInfoCache.getInstance().getUserDisplayName(sessionId);
         }
-        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, content);
 
+        String content = "NO_TEXT";
+        String msgType =  "text";
         Map<String, Object> localExt = new HashMap<String, Object>();
+        Map<String, Object> msgExtend = new HashMap<String, Object>();
+        Team team = null;
+        if (sessionType == SessionTypeEnum.Team) {
+            team = TeamDataCache.getInstance().getTeamById(sessionId);
+        }
 
         localExt.put("notificationType", "BIRTHDAY");
         localExt.put("isSentBirthday", false);
+        localExt.put("birthdayMemberName", name);
 
         if (memberContactId != null) {
             localExt.put("birthdayMemberContactId", memberContactId);
         }
-        if (memberName != null) {
-            localExt.put("birthdayMemberName", memberName);
-            content += ":[" + memberName + "]";
-        }else {
-            String name = NimUserInfoCache.getInstance().getUserDisplayName(sessionId);
 
-            content += ":[" + name + "]";
+        if (lastMessage != null) {
+            MsgAttachment msgAttachment = lastMessage.getAttachment();
+
+            switch (lastMessage.getMsgType()) {
+                case text:
+                {
+                    if (lastMessage.getContent() != null && !lastMessage.getContent().isEmpty() && !lastMessage.getContent().equals("(null)")) {
+                        content = lastMessage.getContent();
+                    }
+
+                    Map<String, Object> extend = lastMessage.getRemoteExtension();
+
+                    if (extend != null && extend.containsKey("extendType")) {
+                        String extendType = (String) extend.get("extendType");
+
+                        if (extendType != null) {
+                            if (extendType.equals("forwardMultipleText")) {
+                                msgType = "forwardMultipleText";
+                                content = "[聊天记录]";
+                            }
+
+                            if (extendType.equals("TEAM_NOTIFICATION_MESSAGE")) {
+                                msgType = "notification";
+                                msgExtend = extend;
+                            }
+
+                            if (extendType.equals("card")) {
+                                msgType = "card";
+                                content = "[个人名片]";
+                            }
+
+                            if (extendType.equals("gif")) {
+                                msgType = "gif";
+                                content = "[动图]";
+                            }
+                        }
+                    }
+                    break;
+                }
+                case image:
+                    msgType = "image";
+                    content = "[图片]";
+                    break;
+                case video:
+                    msgType = "video";
+                    content = "[视频]";
+                    break;
+                case audio:
+                    msgType = "voice";
+                    content = "[语音消息]";
+                    break;
+                case location:
+                    msgType = "location";
+                    content = "[位置]";
+                    break;
+                case tip:
+                    List<String> uuids = new ArrayList<>();
+                    uuids.add(contact.getRecentMessageId());
+                    List<IMMessage> messages = NIMClient.getService(MsgService.class).queryMessageListByUuidBlock(uuids);
+                    if (messages != null && !messages.isEmpty()) {
+                        content = messages.get(0).getContent();
+                    }
+                    msgType = "tip";
+                    break;
+                case file:
+                    content = "[文件]";
+                    msgType = "file";
+                    break;
+                case notification:
+                    if (sessionType == SessionTypeEnum.Team && team != null) {
+                        msgType = "notification";
+                        NotificationAttachment attachment = (NotificationAttachment) contact.getAttachment();
+                        NotificationType operationType = attachment.getType();
+                        String sourceId = lastMessage.getFromAccount();
+
+                        Map<String, Object> sourceIdMap = new HashMap<String, Object>();
+                        sourceIdMap.put("sourceName", TeamDataCache.getInstance().getTeamMemberDisplayName(sessionId, sourceId));
+                        sourceIdMap.put("sourceId", sourceId);
+
+                        msgExtend.put("operationType", operationType.getValue());
+                        msgExtend.put("sourceId", sourceIdMap);
+
+                        switch (operationType) {
+                            case InviteMember:
+                            case KickMember:
+                            case PassTeamApply:
+                            case TransferOwner:
+                            case AddTeamManager:
+                            case RemoveTeamManager:
+                            case AcceptInvite:
+                            case MuteTeamMember:
+                            {
+                                MemberChangeAttachment memberAttachment = (MemberChangeAttachment) attachment;
+                                ArrayList<String> targets = memberAttachment.getTargets();
+
+                                ArrayList<Map<String, Object>> listTargets = new ArrayList<Map<String, Object>>();
+
+                                for (String targetId : targets) {
+                                    String targetName = TeamDataCache.getInstance().getTeamMemberDisplayName(sessionId, targetId);
+
+                                    Map<String, Object> target = new HashMap<String, Object>();
+                                    target.put("targetName", targetName);
+                                    target.put("targetId", targetId);
+
+                                    listTargets.add(target);
+                                }
+
+                                if (operationType == NotificationType.MuteTeamMember && msgAttachment != null) {
+                                    MuteMemberAttachment muteMemberAttachment = (MuteMemberAttachment) msgAttachment;
+                                    msgExtend.put("isMute", muteMemberAttachment.isMute() ? "mute" : "unmute");
+                                }
+
+                                msgExtend.put("target", listTargets);
+                                break;
+                            }
+                        case UpdateTeam:
+                            Map<TeamFieldEnum, String> mockUpKeys = new HashMap<TeamFieldEnum, String>();
+                            mockUpKeys.put(TeamFieldEnum.Name, "NIMTeamUpdateTagName");
+                            mockUpKeys.put(TeamFieldEnum.Introduce, "NIMTeamUpdateTagIntro");
+                            mockUpKeys.put(TeamFieldEnum.Announcement, "NIMTeamUpdateTagAnouncement");
+                            mockUpKeys.put(TeamFieldEnum.VerifyType, "NIMTeamUpdateTagJoinMode");
+                            mockUpKeys.put(TeamFieldEnum.ICON, "NIMTeamUpdateTagAvatar");
+                            mockUpKeys.put(TeamFieldEnum.InviteMode, "NIMTeamUpdateTagInviteMode");
+                            mockUpKeys.put(TeamFieldEnum.BeInviteMode, "NIMTeamUpdateTagBeInviteMode");
+                            mockUpKeys.put(TeamFieldEnum.TeamUpdateMode, "NIMTeamUpdateTagUpdateInfoMode");
+                            mockUpKeys.put(TeamFieldEnum.AllMute, "NIMTeamUpdateTagMuteMode");
+
+                            UpdateTeamAttachment updateTeamAttachment = (UpdateTeamAttachment) msgAttachment;
+                            Set<Map.Entry<TeamFieldEnum, Object>> updateTeamAttachmentDetail = updateTeamAttachment.getUpdatedFields().entrySet();
+                            HashMap<String, Object> updateDetail = new HashMap<String, Object>();
+
+                            for (Map.Entry<TeamFieldEnum, Object> field : updateTeamAttachmentDetail) {
+                                updateDetail.put("type", mockUpKeys.get(field.getKey()));
+                                updateDetail.put("value", field.getValue().toString());
+                            }
+
+                            msgExtend.put("updateDetail", updateDetail);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    break;
+                default:
+                    msgType = "unknown";
+                    break;
+
+            }
+
+            String fromAccount = contact.getFromAccount();
+            if (fromAccount != null && !fromAccount.isEmpty() && !content.equals("NO_TEXT")) {
+                if (sessionType == SessionTypeEnum.P2P && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                    String sessionName = NimUserInfoCache.getInstance().getUserDisplayName(sessionId);
+
+                    if (sessionName != null && !sessionName.isEmpty()) {
+                        content = sessionName + " : " + content;
+                    }
+                }
+
+                if (sessionType == SessionTypeEnum.Team && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                    String teamMemberName = TeamDataCache.getInstance().getTeamMemberDisplayName(sessionId, fromAccount);
+
+                    if (teamMemberName != null && !teamMemberName.isEmpty()) {
+                        content = teamMemberName + " : " + content;
+                    }
+                }
+            }
         }
-        message.setContent(content);
+
+        if (!msgExtend.isEmpty()) {
+            localExt.put("notificationExtend", msgExtend);
+        }
+
+        String text = "NOTIFICATION_BIRTHDAY:"+msgType+":("+content+"):["+name+"]";
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, text);
+
+        message.setContent(text);
 
         CustomMessageConfig config = new CustomMessageConfig();
         config.enablePush = false;
@@ -782,7 +960,7 @@ public class SessionService {
         message.setConfig(config);
         message.setLocalExtension(localExt);
         message.setStatus(MsgStatusEnum.success);
-        
+
         NIMSDK.getMsgService().insertLocalMessage(message, sessionId);
     }
 

@@ -10,6 +10,7 @@
 #import "NSString+NIMKit.h"
 #import "NIMKitLocationPoint.h"
 #import "ConversationViewController.h"
+#import "NIMViewController.h"
 
 @implementation NIMMessageMaker
 
@@ -30,36 +31,92 @@
     return message;
 }
 
++(NSString *)getMsgType:(NIMMessage *)lastMessage {
+    NSString *msgType = @"text";
+    switch (lastMessage.messageType) {
+        case NIMMessageTypeText:
+        {
+            NSDictionary *remoteExt = lastMessage.remoteExt;
+            
+            if (remoteExt != nil && [[remoteExt objectForKey:@"extendType"] isEqual:@"TEAM_NOTIFICATION_MESSAGE"]) {
+                msgType = @"notification";
+            }
+            
+            if (remoteExt != nil && [[remoteExt objectForKey:@"extendType"] isEqual:@"forwardMultipleText"]) {
+                msgType = @"forwardMultipleText";
+            }
+            
+            if (remoteExt != nil && [[remoteExt objectForKey:@"extendType"] isEqual:@"card"]) {
+                msgType = @"card";
+            }
+            
+            if (remoteExt != nil && [[remoteExt objectForKey:@"extendType"] isEqual:@"gif"]) {
+                msgType = @"gif";
+            }
+            break;
+        }
+        case NIMMessageTypeImage:
+            msgType = @"image";
+            break;
+        case NIMMessageTypeVideo:
+            msgType = @"video";
+            break;
+        case NIMMessageTypeFile:
+            msgType = @"file";
+            break;
+        case NIMMessageTypeAudio:
+            msgType = @"voice";
+            break;
+        case NIMMessageTypeLocation:
+            msgType = @"location";
+            break;
+        case NIMMessageTypeNotification:
+            msgType = @"notification";
+            break;
+        default:
+            msgType = @"unknown";
+            break;
+    }
+    
+    return msgType;
+}
+
 +(NIMMessage *) msgWithNotificationBirthday:(NIMMessage *)lastMessage memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName {
     NIMMessage *message = [[NIMMessage alloc] init];
     
-    NSMutableString *text = [[NSMutableString alloc] init];
-    [text appendString:@"NOTIFICATION_BIRTHDAY"];
-    if (lastMessage != nil) {
-        [text appendFormat:@":%ld", (long)lastMessage.messageType];
-        
-        if (lastMessage.text == nil || [lastMessage.text isEqual:@""] || [lastMessage.text isEqual:@"(null)"]) {
-            [text appendFormat:@":(NO_TEXT)"];
-        } else {
-            [text appendFormat:@":(%@)", lastMessage.text];
-        }
-    } else {
-        [text appendString:@"::(NO_TEXT)"];
-    }
-    
+    NSString *msgType = @"text";
     NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
+    NSString *content = @"(NO_TEXT)";
     
     [localExt setObject:@"BIRTHDAY" forKey:@"notificationType"];
     [localExt setObject:@(NO) forKey:@"isSentBirthday"];
     
-    if (memberName != nil) {
-        [localExt setObject:memberName forKey:@"birthdayMemberName"];
-        [text appendFormat:@":[%@]", memberName];
-    }
-    
     if (memberContactId != nil) {
         [localExt setObject:memberContactId forKey:@"birthdayMemberContactId"];
     }
+    
+    if (lastMessage != nil) {
+        NSDictionary *remoteExt = lastMessage.remoteExt;
+        msgType = [self getMsgType:lastMessage];
+        
+        if (remoteExt != nil && [[remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
+            [localExt setObject:remoteExt forKey:@"notificationExtend"];
+        }
+        
+        if (lastMessage.messageType == NIMMessageTypeNotification) {
+            [localExt setObject:[[ConversationViewController initWithConversationViewController] setNotiTeamObj:lastMessage] forKey:@"notificationExtend"];
+        }
+        
+        if (lastMessage.text != nil && ![lastMessage.text isEqual:@""] && ![lastMessage.text isEqual:@"(null)"]) {
+            content = [NSString stringWithFormat:@"(%@)", [[NIMViewController initWithController] messageContent:lastMessage]];
+        }
+    }
+    
+    if (memberName != nil) {
+        [localExt setObject:memberName forKey:@"birthdayMemberName"];
+    }
+    
+    NSString *text = [NSString stringWithFormat:@"NOTIFICATION_BIRTHDAY:%@:%@:[%@]", msgType, content,memberName];
     
     message.text = text;    
     message.localExt = localExt;
