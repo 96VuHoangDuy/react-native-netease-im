@@ -169,6 +169,10 @@
         NSInteger unreadCount = recent.unreadCount;
         NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
         
+        if (messageId != nil && [messageId isEqual:lastMessage.messageId]) {
+            return nil;
+        }
+        
         if (messageId != nil) {
             [result setObject:messageId forKey:@"lastMessageId"];
         }
@@ -1331,7 +1335,8 @@
     NSDictionary  *remoteExt = @{@"extendType": @"forwardMultipleText"};
     message.remoteExt = remoteExt;
     message.apnsContent = @"[聊天记录]";
-    
+    [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
+
     if ([self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
 
