@@ -1977,6 +1977,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void searchMessages(String keyWords, final Promise promise) {
         MsgSearchOption option = new MsgSearchOption();
         option.setSearchContent(keyWords);
+        option.setAllMessageTypes(true);
 
         NIMClient.getService(MsgService.class).searchAllMessage(option)
                 .setCallback(new RequestCallbackWrapper<List<IMMessage>>() {

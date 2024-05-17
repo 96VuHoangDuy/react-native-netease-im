@@ -74,6 +74,8 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   fileMd5: string;
   fileUrl: string;
   fileType: string;
+
+  downloadAttStatus?: string
 }
 
 export interface NIMMessage {

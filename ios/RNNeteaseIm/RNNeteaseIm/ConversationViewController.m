@@ -281,6 +281,7 @@
     NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
     option.limit = 100;
     option.searchContent = keyWords;
+    option.allMessageTypes = YES;
 
     [[NIMSDK sharedSDK].conversationManager searchAllMessages:option result:^(NSError * _Nullable error, NSDictionary<NIMSession *,NSArray<NIMMessage *> *> * _Nullable messages) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
