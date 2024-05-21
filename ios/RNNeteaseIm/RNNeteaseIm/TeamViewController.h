@@ -36,7 +36,7 @@ typedef void(^Errors)(id erro);
 //解散群组
 -(void)dismissTeam:(NSString *)teamId Succ:(Success)succ Err:(Errors)err;
 //拉人入群
--(void)addMembers:(NSString *)teamId accounts:(NSArray *)count Succ:(Success)succ Err:(Errors)err;
+-(void)addMembers:(NSString *)teamId accounts:(NSArray *)count type:(NSString *)type Succ:(Success)succ Err:(Errors)err;
 //踢人出群
 -(void)removeMember:(NSString *)teamId accounts:(NSArray *)count Succ:(Success)succ Err:(Errors)err;
 //主动退群

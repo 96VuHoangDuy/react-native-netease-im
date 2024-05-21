@@ -198,8 +198,8 @@ class NimTeam {
    * @param accounts ['abc11','abc12','abc13']
    * @returns {*}
    */
-  addMembers(teamId: string, accounts: string[]): Promise<NIMResponseCode> {
-    return RNNeteaseIm.addMembers(teamId, accounts);
+  addMembers(teamId: string, accounts: string[], type?: string | 'from_request'): Promise<NIMResponseCode> {
+    return RNNeteaseIm.addMembers(teamId, accounts, type);
   }
 
   /**

@@ -435,8 +435,6 @@
     NSMutableDictionary *notiObj = [NSMutableDictionary dictionary];
     NIMNotificationObject *messageObject = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)messageObject.content;
-                
-//    NSString *sourceId = content.sourceID;
     NSMutableArray *targets = [[NSMutableArray alloc] init];
     for (NSString *item in content.targetIDs) {
         [targets addObject:item];
@@ -450,6 +448,7 @@
             NSNumber *operationtype = [self getTypeOpretationType:content.operationType];
             [notiObj setObject:[self teamNotificationSourceName:message] forKey:@"sourceId"];
             [notiObj setObject:[self teamNotificationTargetNames:message] forKey:@"targets"];
+
             if ([operationtype isEqualToNumber:@10]) {
                 id attachment = [content attachment];
                 if ([attachment isKindOfClass:[NIMMuteTeamMemberAttachment class]]) {
@@ -459,6 +458,10 @@
                 }
             }
             [notiObj setObject:operationtype  forKey:@"operationType"];
+            
+            if ([content.notifyExt isEqual:@"from_request"]) {
+                [notiObj setObject:@12  forKey:@"operationType"];
+            }
             
             if (content.operationType == NIMTeamOperationTypeUpdate) {
                 id attachment = [content attachment];
@@ -749,7 +752,7 @@
     if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
         NSError *copyError = nil;
         if (![[NSFileManager defaultManager] copyItemAtPath:originPath toPath:cacheMediaPath error:&copyError]) {
-            NSLog(@"[copyError description]: %@", [copyError description]);
+       NSLog(@"[copyError description]: %@", [copyError description]);
             return nil;
         }
         [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];

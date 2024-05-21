@@ -1151,10 +1151,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void addMembers(String teamId, ReadableArray accounts, final Promise promise) {
+    public void addMembers(String teamId, ReadableArray accounts,String type,final Promise promise) {
 
 
-        NIMClient.getService(TeamService.class).addMembers(teamId, array2ListString(accounts))
+        NIMClient.getService(TeamService.class).addMembersEx(teamId, array2ListString(accounts), "", type)
                 .setCallback(new RequestCallbackWrapper<List<String>>() {
                     @Override
                     public void onResult(int code, List<String> strings, Throwable throwable) {

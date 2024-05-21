@@ -477,9 +477,7 @@
                     [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
                 }
             }
-            if ([recent.session.sessionId isEqual:@"14951812288"]) {
-                NSLog(@"recent.session.sessionId recent.session.sessionId %@", recent.lastMessage.remoteExt);
-            }
+            
             //消息状态
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
             //消息ID

@@ -408,9 +408,8 @@ NSMutableArray *_myTeams;
 
 }
 //拉人入群
--(void)addMembers:(NSString *)teamId accounts:(NSArray *)count Succ:(Success)succ Err:(Errors)err{
-    NSString *postscript = @"邀请你加入群组";
-    [[NIMSDK sharedSDK].teamManager addUsers:count toTeam:teamId postscript:postscript attach:@""  completion:^(NSError *error, NSArray *members) {
+-(void)addMembers:(NSString *)teamId accounts:(NSArray *)count type:(NSString *)type Succ:(Success)succ Err:(Errors)err{
+    [[NIMSDK sharedSDK].teamManager addUsers:count toTeam:teamId postscript:@"" attach:type  completion:^(NSError *error, NSArray *members) {
         if (!error) {
             succ(@"200");
         }else{

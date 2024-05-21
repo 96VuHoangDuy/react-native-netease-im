@@ -376,6 +376,9 @@ public class ReactCache {
                                     }
 
                                     notiObj.putArray("targets", targetsWritableArray);
+                                    if (memberAttachment.getExtension() != null && memberAttachment.getExtension().containsKey("ext") && memberAttachment.getExtension().get("ext").equals("from_request")) {
+                                        notiObj.putInt("operationType", 12);
+                                    }
                                     break;
                                 case LeaveTeam:
                                 case DismissTeam:
@@ -1826,7 +1829,6 @@ public class ReactCache {
                         case MuteTeamMember:
                             MemberChangeAttachment memberAttachment = (MemberChangeAttachment) notiAttachment;
                             ArrayList<String> targets = memberAttachment.getTargets();
-
                             WritableArray targetsWritableArray = Arguments.createArray();
 
                             for (String targetId : targets) {
@@ -1845,6 +1847,9 @@ public class ReactCache {
                             }
 
                             notiObj.putArray("targets", targetsWritableArray);
+                            if (memberAttachment.getExtension() != null && memberAttachment.getExtension().containsKey("ext") && memberAttachment.getExtension().get("ext").equals("from_request")) {
+                                notiObj.putInt("operationType", 12);
+                            }
                             break;
                         case LeaveTeam:
                         case DismissTeam:
