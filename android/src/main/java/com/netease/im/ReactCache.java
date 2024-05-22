@@ -185,10 +185,19 @@ public class ReactCache {
 
             WritableMap map;
             for (RecentContact contact : recents) {
+                Boolean isMessageAfterRevoke = contact.getContent() == "" && contact.getFromAccount() == null && contact.getRecentMessageId() == "" && contact.getMsgType() == MsgTypeEnum.text;
+
+                int recentUnreadCount = contact.getUnreadCount();
+                int updatedUnreadCount = contact.getUnreadCount() - 1;
+                if(contact.getUnreadCount() < 0){
+                    updatedUnreadCount = 0;
+                }
+                int _unreadCount = isMessageAfterRevoke ? updatedUnreadCount : recentUnreadCount;
+
                 map = Arguments.createMap();
                 String contactId = contact.getContactId();
                 map.putString("contactId", contactId);
-                map.putString("unreadCount", String.valueOf(contact.getUnreadCount()));
+                map.putString("unreadCount", String.valueOf(_unreadCount));
                 String name = "";
                 SessionTypeEnum sessionType = contact.getSessionType();
                 String imagePath = "";
@@ -244,13 +253,14 @@ public class ReactCache {
                     map.putMap("localExt", localExt);
                  }
                 Team team = null;
+
                 if (sessionType == SessionTypeEnum.P2P) {
                     map.putString("teamType", "-1");
                     NimUserInfoCache nimUserInfoCache = NimUserInfoCache.getInstance();
                     imagePath = nimUserInfoCache.getAvatar(contactId);
                     Boolean isNeedMessageNotify = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
                     if (isNeedMessageNotify == true && !isHideRecent) {
-                        unreadNumTotal += contact.getUnreadCount();
+                          unreadNumTotal += _unreadCount;
                     }
                     map.putString("mute", boolean2String(!isNeedMessageNotify));
                     map.putBoolean("isMyFriend", NIMClient.getService(FriendService.class).isMyFriend(contactId));
@@ -268,7 +278,7 @@ public class ReactCache {
                         map.putString("memberCount", Integer.toString(team.getMemberCount()));
                         map.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
                         if (team.getMessageNotifyType() == TeamMessageNotifyTypeEnum.All && !isHideRecent) {
-                            unreadNumTotal += contact.getUnreadCount();
+                            unreadNumTotal += _unreadCount;
                         }
                     }
                 }
@@ -450,6 +460,7 @@ public class ReactCache {
                                 WritableMap writableMapExtend = new WritableNativeMap();
                                 writableMapExtend.putString("tipMsg", contact.getContent());
 
+                                map.putString("unreadCount", String.valueOf(_unreadCount));
                                 map.putMap(MESSAGE_EXTEND, writableMapExtend);
                                 map.putString(MessageConstant.Message.MSG_TYPE, "notification");
                             }
@@ -1678,6 +1689,7 @@ public class ReactCache {
                         WritableMap writableMapExtend = new WritableNativeMap();
                         writableMapExtend.putString("tipMsg", item.getContent());
 
+                        itemMap.putString("unreadCount", String.valueOf(recent.getUnreadCount()));
                         itemMap.putMap(MESSAGE_EXTEND, writableMapExtend);
                         itemMap.putString(MessageConstant.Message.MSG_TYPE, "notification");
                     }
