@@ -99,8 +99,6 @@
 {
     NIMModel *mode = [NIMModel initShareMD];
     mode.unreadCount = unreadCount;
-
-
 }
 - (void)onReceiveSystemNotification:(NIMSystemNotification *)notification{
     

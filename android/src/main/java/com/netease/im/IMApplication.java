@@ -9,11 +9,14 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.common.sys.SystemUtil;
 import com.netease.im.contact.DefalutUserInfoProvider;
 import com.netease.im.contact.DefaultContactProvider;
 import com.netease.im.login.LoginService;
+import com.netease.im.session.SessionService;
 import com.netease.im.session.SessionUtil;
 import com.netease.im.session.extension.CustomAttachParser;
 import com.netease.im.uikit.LoginSyncDataStatusObserver;
@@ -303,8 +306,18 @@ public class IMApplication {
                     return;
                 }
 
-                MessageHelper.getInstance().onRevokeMessage(message.getMessage());
+//                MessageHelper.getInstance().onRevokeMessage(message.getMessage());
+
+                SessionService.getInstance().deleteItem(message.getMessage(), true);
+
+                WritableMap msg = Arguments.createMap();
+                msg.putString(MessageConstant.Message.MSG_ID, message.getMessage().getUuid());
+                msg.putString(MessageConstant.Message.SESSION_ID, message.getMessage().getSessionId());
+                msg.putBoolean("isObserveReceiveRevokeMessage", true);
+
+                ReactCache.emit(ReactCache.observeDeleteMessage,msg);
             }
+
         }, true);
     }
 

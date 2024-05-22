@@ -209,15 +209,11 @@ public class RecentContactObserver {
 
         if (unreadChanged) {
 
-            // 方式一：累加每个最近联系人的未读（快）
+            for (RecentContact r : items) {
+                unreadNum += r.getUnreadCount();
+            }
 
-
-//            for (RecentContact r : items) {
-//                unreadNum += r.getUnreadCount();
-//            }
-
-            // 方式二：直接从SDK读取（相对慢）
-//            unreadNum = NIMClient.getService(MsgService.class).getTotalUnreadCount();
+            unreadNum = NIMClient.getService(MsgService.class).getTotalUnreadCount();
 
 //            if (callback != null) {
 //                callback.onUnreadCountChange(unreadNum);
@@ -255,6 +251,7 @@ public class RecentContactObserver {
 
         @Override
         public void onEvent(List<IMMessage> imMessages) {
+            Log.d("imMessages", imMessages.toString());
             if (imMessages == null || imMessages.isEmpty()) {
                 return;
             }

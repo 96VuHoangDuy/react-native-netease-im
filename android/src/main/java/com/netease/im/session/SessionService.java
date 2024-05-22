@@ -312,7 +312,7 @@ public class SessionService {
         if (messageItem == null) {
             return;
         }
-        getMsgService().deleteChattingHistory(messageItem);
+        getMsgService().deleteChattingHistory(messageItem, true);
     }
 
     /**
@@ -502,8 +502,7 @@ public class SessionService {
             }
 
             deleteItem(message, false);
-            revokMessage(message);
-//            MessageHelper.getInstance().onRevokeMessage(message);
+//            revokMessage(message);
         }
     };
     private UserInfoObservable.UserInfoObserver uinfoObserver;
@@ -613,7 +612,6 @@ public class SessionService {
         service.observeMessageReceipt(messageReceiptObserver, register);
 
         service.observeMsgStatus(messageStatusObserver, register);
-//        service.observeAttachmentProgress(attachmentProgressObserver, register);
         service.observeRevokeMessage(revokeMessageObserver, register);
         observerAttachProgress(register);
         if (register) {
@@ -1243,11 +1241,13 @@ public class SessionService {
         if (MessageUtil.shouldIgnoreRevoke(selectMessage)) {
             return 1;
         }
+
         getMsgService().revokeMessage(selectMessage).setCallback(new RequestCallbackWrapper<Void>() {
             @Override
             public void onResult(int code, Void aVoid, Throwable throwable) {
                 if (code == ResponseCode.RES_SUCCESS) {
                     deleteItem(selectMessage, false);
+//                    getMsgService().deleteChattingHistory(selectMessage,false);
                     revokMessage(selectMessage);
                     MessageHelper.getInstance().onRevokeMessage(selectMessage);
                 }
