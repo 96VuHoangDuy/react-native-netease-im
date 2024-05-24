@@ -42,6 +42,8 @@ typedef void(^Errors)(id erro);
 //发送自定义消息
 -(void)sendCustomMessage:(NSInteger )custType data:(NSDictionary *)dataDict;
 
+-(void) sendMultiMediaMessage:(NSArray *)listMedia isCustomerService:(BOOL *)isCustomerService success:(Success)succes error:(Errors)error;
+
 // just forward multiple message text
 -(void)forwardMultipleTextMessage:(NSDictionary *)dataDict sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content;
 

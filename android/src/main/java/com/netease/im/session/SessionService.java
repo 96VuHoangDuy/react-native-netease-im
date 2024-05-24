@@ -1,6 +1,7 @@
 package com.netease.im.session;
 
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -1048,6 +1049,87 @@ public class SessionService {
         }
     }
 
+    public void sendMultiMediaMessage(ReadableArray data,Boolean isCustomerService, final Promise promise) {
+        List<Object> listMedia = MapUtil.readableArrayToArray(data);
+        for (Object dataMedia : listMedia) {
+            Map<String, Object> media = (Map<String, Object>) dataMedia;
+
+            String mediaType = (String) media.get("type");
+            if (mediaType == null || (!mediaType.equals("image") && !mediaType.equals("video"))) {
+                promise.reject("-1", "media type is invalid");
+                return;
+            }
+
+            Map<String, Object> mediaData = (Map<String, Object>) media.get("data");
+            if (mediaData == null) {
+                promise.reject("-1", "media data is invalid");
+                return;
+            }
+
+            if (mediaType.equals("image")) {
+                String file = (String) mediaData.get("file");
+                if (file == null) {
+                    continue;
+                }
+
+                String displayName = (String) mediaData.get("displayName");
+                if (displayName == null) {
+                    displayName = "";
+                }
+
+                Boolean isHighQuality = (Boolean) mediaData.get("isHighQuality");
+                if (isHighQuality == null) {
+                    isHighQuality = false;
+                }
+
+                sendImageMessage(file, displayName, isCustomerService, isHighQuality, null);
+                continue;
+            }
+
+            String file = (String) mediaData.get("file");
+            if (file == null) {
+                continue;
+            }
+
+            String displayName = (String) mediaData.get("displayName");
+            if (displayName == null) {
+                displayName = "";
+            }
+
+            Integer width = (Integer) mediaData.get("width");
+            Integer height = (Integer) mediaData.get("height");
+            String duration = (String) mediaData.get("duration");
+            if (width == null || height == null || duration == null) {
+                try {
+                    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                    retriever.setDataSource(file);
+                    duration = Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) + "";
+                    width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+                    height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+                    String metaRotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+                    int rotation = metaRotation == null ? 0 : Integer.parseInt(metaRotation);
+
+                    if (rotation == 90 || rotation == 270) {
+                        Integer widthTemp = width;
+                        width = height;
+                        height = widthTemp;
+                    }
+
+                    retriever.release();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    promise.reject("-1", e.getMessage());
+                    return;
+                }
+            }
+
+
+            sendVideoMessage(file, duration, width, height, displayName, isCustomerService, null);
+        }
+
+        promise.resolve("success");
+    }
+
     public void sendImageMessage(String file, String displayName, boolean isCustomerService,boolean isHighQuality, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
@@ -1333,7 +1415,7 @@ public class SessionService {
                 config.enableUnreadCount = false;
                 message.setConfig(config);
                 getMsgService().saveMessageToLocal(message, true);
-                sendTipMessage(sessionName + "开启了朋友验证，你还不是他（她）朋友。请先发送朋友验证请求，对方验证通过后，才能聊天。发送朋友验证", null, true, false);
+                sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
                 return;
             }
         }

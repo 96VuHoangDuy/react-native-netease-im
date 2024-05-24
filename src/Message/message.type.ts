@@ -8,6 +8,39 @@ import {
   NIMTeamOperationTypeUpdateDetail,
 } from '../Team/team.type';
 
+export enum NIMMessageMediaType {
+  IMAGE = "image",
+  VIDEO = "video"
+}
+
+export interface NIMMessageMediaImageData {
+  file: string;
+  displayName?: string;
+  isHighQuality?: boolean;
+}
+
+export interface NIMMessageMediaVideoData {
+  file: string;
+  duration: string;
+  width: number;
+  height: number;
+  displayName?: string;
+}
+
+interface NIMMessageMediaImage {
+  type: NIMMessageMediaType.IMAGE;
+  data: NIMMessageMediaImageData;
+}
+
+interface NIMMessageMediaVideo {
+  type: NIMMessageMediaType.VIDEO;
+  data: NIMMessageMediaVideoData;
+}
+
+export type NIMMessageMedia = NIMMessageMediaImage | NIMMessageMediaVideo
+
+// interface 
+
 export enum NIMMessageTypeEnum {
   TEXT = 'text',
   VOICE = 'voice',
@@ -75,7 +108,15 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   fileUrl: string;
   fileType: string;
 
-  downloadAttStatus?: string
+  downloadAttStatus?: string;
+
+  // Size IOS
+  coverSizeWidth?: number;
+  coverSizeHeight?: number;
+
+  // Size Android
+  imageWidth?: number;
+  imageHeight?: number;
 }
 
 export interface NIMMessage {

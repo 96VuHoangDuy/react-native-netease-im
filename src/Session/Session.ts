@@ -10,6 +10,7 @@ import {
 } from './session.type';
 import {
   NIMMessage,
+  NIMMessageMedia,
   NIMMessageTypeEnum,
   NimMessageTypeExtend,
 } from '../Message/message.type';
@@ -233,6 +234,10 @@ class NimSession {
       duration,
       isCustomerService ?? false
     );
+  }
+
+  sendMultiMediaMessage(listMedia: NIMMessageMedia[], isCustomerService?: boolean) {
+    return RNNeteaseIm.sendMultiMediaMessage(listMedia, isCustomerService);
   }
 
   /**

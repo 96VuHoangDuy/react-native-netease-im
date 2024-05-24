@@ -1600,6 +1600,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
+    @ReactMethod
+    public void sendMultiMediaMessage(ReadableArray listMedia, Boolean isCustomerService, final Promise promise) {
+        sessionService.sendMultiMediaMessage(listMedia, isCustomerService, promise);
+    }
+
     /**
      * 消息撤回
      *
@@ -2578,7 +2583,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 public void onResult(int code, Void aVoid, Throwable throwable) {
                     if (code == ResponseCode.RES_SUCCESS) {
                         if (toPass) {
-                            IMMessage message = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "我们已经是好友啦，一起来聊天吧！");
+                            IMMessage message = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "AGREE_FRIEND_REQUEST");
                             NIMClient.getService(MsgService.class).sendMessage(message, false);
                         }
                         promise.resolve("" + code);

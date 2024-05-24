@@ -1273,6 +1273,33 @@
     }
 }
 
+-(void) sendMultiMediaMessage:(NSArray *)listMedia isCustomerService:(BOOL *)isCustomerService success:(Success)succes error:(Errors)error {
+    for (NSDictionary *media in listMedia) {
+        NSString *mediaType = [media objectForKey:@"type"];
+        if (mediaType == nil || (![mediaType isEqual:@"image"] && ![mediaType isEqual:@"video"])) {
+            error(@"media type is invalid");
+            return;
+        }
+        
+        NSDictionary *mediaData = [media objectForKey:@"data"];
+        if (mediaData == nil) {
+            error(@"media data is invalid");
+            return;
+        }
+        
+        if ([mediaType isEqual:@"image"]) {
+            BOOL isHighQuality = [mediaData objectForKey:@"isHighQuality"];
+            
+            [self sendImageMessages:[mediaData objectForKey:@"file"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService isHighQuality:&isHighQuality];
+            continue;
+        }
+        
+        [self sendVideoMessage:[mediaData objectForKey:@"data"] duration:[mediaData objectForKey:@"duration"] width:[mediaData objectForKey:@"width"] height:[mediaData objectForKey:@"height"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService];
+    }
+    
+    succes(@"success");
+}
+
 //发送视频
 -(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService{
 //    __weak typeof(self) weakSelf = self;
@@ -2343,7 +2370,7 @@
                 strSessionName = userInfo.nickName;
             }
             
-            NSString * tip = [NSString stringWithFormat:@"%@开启了朋友验证，你还不是他（她）朋友。请先发送朋友验证请求，对方验证通过后，才能聊天。发送朋友验证",strSessionName];
+            NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
             NIMMessage *tipMessage = [self msgWithTip:tip];
             tipMessage.timestamp = message.timestamp+1;
             [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];

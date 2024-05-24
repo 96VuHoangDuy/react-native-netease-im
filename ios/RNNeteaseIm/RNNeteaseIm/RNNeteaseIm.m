@@ -455,6 +455,14 @@ RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString 
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", url);
 }
 
+RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia isCustomerService:isCustomerService success:^(id params) {
+        resolve(params);
+    } error:^(id err) {
+        reject(@"-1", err, nil);
+    }];
+}
+
 //发送图片消息
 RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality) {
     [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality];

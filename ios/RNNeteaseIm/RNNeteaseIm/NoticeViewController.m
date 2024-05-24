@@ -384,7 +384,7 @@
 //发送成为好友提醒
 - (void)sendMakeFriendSucessMessgae:(NSString *)strUserId{
     NIMMessage *message = [[NIMMessage alloc] init];
-    message.text    = @"我们已经是朋友啦，一起来聊天吧！";
+    message.text    = @"AGREE_FRIEND_REQUEST";
     NIMMessageSetting *setting = [[NIMMessageSetting alloc]init];
     setting.apnsEnabled = NO;
     message.setting = setting;
