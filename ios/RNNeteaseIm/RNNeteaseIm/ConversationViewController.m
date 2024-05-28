@@ -1160,7 +1160,11 @@
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"introduce"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                }
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
@@ -1203,7 +1207,11 @@
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"introduce"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                }
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
@@ -1294,7 +1302,7 @@
             continue;
         }
         
-        [self sendVideoMessage:[mediaData objectForKey:@"data"] duration:[mediaData objectForKey:@"duration"] width:[mediaData objectForKey:@"width"] height:[mediaData objectForKey:@"height"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService];
+        [self sendVideoMessage:[mediaData objectForKey:@"file"] duration:[mediaData objectForKey:@"duration"] width:[mediaData objectForKey:@"width"] height:[mediaData objectForKey:@"height"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService];
     }
     
     succes(@"success");

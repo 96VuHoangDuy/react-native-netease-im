@@ -208,7 +208,6 @@ NSMutableArray *_myTeams;
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
@@ -218,6 +217,11 @@ NSMutableArray *_myTeams;
                 [teamDic setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.joinMode] forKey:@"verifyType"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
+                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"introduce"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                }
                 NSArray *keys = [teamDic allKeys];
                 for (NSString *tem  in keys) {
                     if ([[teamDic objectForKey:tem] isEqualToString:@"(null)"]) {

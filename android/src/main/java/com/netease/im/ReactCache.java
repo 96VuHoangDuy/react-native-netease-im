@@ -997,12 +997,18 @@ public class ReactCache {
             writableMap.putString("avatar", team.getIcon());
             writableMap.putString("avatarLocal", ImageLoaderKit.getMemoryCachedAvatar(team.getIcon()));
             writableMap.putString("type", Integer.toString(team.getType().getValue()));
-            writableMap.putString("introduce", team.getIntroduce());
             writableMap.putString("createTime", TimeUtil.getTimeShowString(team.getCreateTime(), true));
             writableMap.putString("creator", team.getCreator());
             writableMap.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
             writableMap.putString("memberCount", Integer.toString(team.getMemberCount()));
             writableMap.putString("memberLimit", Integer.toString(team.getMemberLimit()));
+            String introduce = team.getIntroduce();
+            if (introduce == null || introduce.equals("(null)")) {
+                writableMap.putString("introduce", "");
+            } else {
+                writableMap.putString("introduce", team.getIntroduce());
+            }
+
         }
         return writableMap;
     }
