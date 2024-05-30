@@ -545,6 +545,10 @@ class NimSession {
     return RNNeteaseIm.readAllMessageOnlineServiceByListSession(listSessionId);
   }
 
+  readAllMessageBySession(sessionId: string, sessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.readAllMessageBySession(sessionId, sessionType)
+  }
+
   getMessageById(
     sessionId: string,
     sessionType: NIMSessionTypeEnum,

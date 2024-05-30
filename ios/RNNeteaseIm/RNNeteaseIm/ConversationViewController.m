@@ -144,6 +144,18 @@
     }
 }
 
+-(void)readAllMessageBySession:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success error:(Errors)error {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    
+    [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:session completion:^(NSError * __nullable err){
+        if (err != nil) {
+            error(err);
+        } else {
+            success(@"success");
+        }
+    }];
+}
+
 -(void)readAllMessageOnlineServiceByListSession:(NSArray *)listSessionId {
     NSLog(@"listSessionId => %@", listSessionId);
     for(int i = 0; i < [listSessionId count]; i++) {

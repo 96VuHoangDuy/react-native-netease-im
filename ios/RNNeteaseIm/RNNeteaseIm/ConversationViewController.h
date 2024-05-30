@@ -41,7 +41,7 @@ typedef void(^Errors)(id erro);
 -(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService;
 //发送自定义消息
 -(void)sendCustomMessage:(NSInteger )custType data:(NSDictionary *)dataDict;
-
+-(void)readAllMessageBySession:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success error:(Errors)error;
 -(void) sendMultiMediaMessage:(NSArray *)listMedia isCustomerService:(BOOL *)isCustomerService success:(Success)succes error:(Errors)error;
 
 // just forward multiple message text

@@ -1002,7 +1002,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void updateTeam(String teamId, String fieldType, String value, final Promise promise) {
 
-        if (TextUtils.isEmpty(teamId) || TextUtils.isEmpty(fieldType) || TextUtils.isEmpty(value)) {
+        if (TextUtils.isEmpty(teamId) || TextUtils.isEmpty(fieldType) || (!TextUtils.equals(fieldType, "introduce") && TextUtils.isEmpty(value))) {
             promise.reject("-1", "不能为空");
             return;
         }
@@ -1874,6 +1874,22 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void stopSession(final Promise promise) {
         LogUtil.w(TAG, "stopSession");
         sessionService.stopSession();
+    }
+
+    @ReactMethod
+    public void readAllMessageBySession(String sessionId, String type, final Promise promise) {
+        SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
+        NIMClient.getService(MsgService.class).clearUnreadCount(sessionId, sessionType).setCallback(new RequestCallbackWrapper<Void>() {
+            @Override
+            public void onResult(int code, Void result, Throwable exception) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    promise.resolve("success");
+                    return;
+                }
+
+                promise.reject("error", "");
+            }
+        });
     }
 
     /**

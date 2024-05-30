@@ -690,6 +690,14 @@ RCT_EXPORT_METHOD(getTeamInfo:(nonnull NSString *)teamId resolve:(RCTPromiseReso
     }];
 }
 
+RCT_EXPORT_METHOD(readAllMessageBySession:(NSString *)sessionId sessionType:(NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] readAllMessageBySession:sessionId sessionType:sessionType success:^(id params) {
+        resolve(params);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //开启/关闭群组消息提醒
 RCT_EXPORT_METHOD(setTeamNotify:(nonnull NSString *)teamId needNotify:(nonnull NSString *)needNotify resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     __weak typeof(self)weakSelf = self;
