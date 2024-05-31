@@ -144,18 +144,6 @@
     }
 }
 
--(void)readAllMessageBySession:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success error:(Errors)error {
-    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
-    
-    [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:session completion:^(NSError * __nullable err){
-        if (err != nil) {
-            error(err);
-        } else {
-            success(@"success");
-        }
-    }];
-}
-
 -(void)readAllMessageOnlineServiceByListSession:(NSArray *)listSessionId {
     NSLog(@"listSessionId => %@", listSessionId);
     for(int i = 0; i < [listSessionId count]; i++) {
@@ -1418,13 +1406,15 @@
 
 
 //发送地理位置消息
--(void)sendLocationMessage:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address success:(Success)succe Err:(Errors)err{
+-(void)sendLocationMessage:(NSString *)sessionId sessionType:(NSString *)sessionType latitude:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address success:(Success)succe Err:(Errors)err{
     NIMLocationObject *locaObj = [[NIMLocationObject alloc]initWithLatitude:[latitude doubleValue] longitude:[longitude doubleValue] title:address];
     NIMKitLocationPoint *locationPoint = [[NIMKitLocationPoint alloc]initWithLocationObject:locaObj];
-    NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:self._session senderName:_myUserName];
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    
+    NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:session senderName:_myUserName];
     if ([self isFriendToSendMessage:message]) {
         NSError *error;
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&error];
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
        
         if (error != nil) {
             err(error);

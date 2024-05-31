@@ -536,12 +536,12 @@ RCT_EXPORT_METHOD(setStrangerRecentReplyed:(nonnull  NSString *)sessionId) {
 }
 
 //发送地理位置消息
-RCT_EXPORT_METHOD(sendLocationMessage:(nonnull  NSString *)latitude longitude:(nonnull  NSString *)longitude address:(nonnull  NSString *)address resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-   [[ConversationViewController initWithConversationViewController]sendLocationMessage:latitude longitude:longitude address:address success:^(id param) {
-       resolve(param);
-   } Err:^(id erro) {
-       reject(@"-1",erro,nil);
-   }];
+RCT_EXPORT_METHOD(sendLocationMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType latitude:(nonnull  NSString *)latitude longitude:(nonnull  NSString *)longitude address:(nonnull  NSString *)address resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] sendLocationMessage:sessionId sessionType: sessionType latitude:latitude longitude:longitude address:address success:^(id param) {
+        resolve(param);
+    } Err:^(id erro) {
+        reject(@"-1",erro,nil);
+    }];
 }
 
 RCT_EXPORT_METHOD(queryAllTeams:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
@@ -687,14 +687,6 @@ RCT_EXPORT_METHOD(getTeamInfo:(nonnull NSString *)teamId resolve:(RCTPromiseReso
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(readAllMessageBySession:(NSString *)sessionId sessionType:(NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] readAllMessageBySession:sessionId sessionType:sessionType success:^(id params) {
-        resolve(params);
-    } error:^(id error) {
-        reject(@"-1", error, nil);
     }];
 }
 

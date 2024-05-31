@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, Platform } from "react-native";
 import {
   CustomMessageType,
   NIMSessionTypeEnum,
@@ -7,13 +7,13 @@ import {
   QueryDirectionType,
   NIMSessionOnlineServiceType,
   NIMBirthdayMemberType,
-} from './session.type';
+} from "./session.type";
 import {
   NIMMessage,
   NIMMessageMedia,
   NIMMessageTypeEnum,
   NimMessageTypeExtend,
-} from '../Message/message.type';
+} from "../Message/message.type";
 const { RNNeteaseIm } = NativeModules;
 
 class NimSession {
@@ -67,10 +67,10 @@ class NimSession {
   startSession(
     sessionId: string,
     type: NIMSessionTypeEnum,
-    myUserName: string = '',
-    myUserID: string = ''
+    myUserName: string = "",
+    myUserID: string = ""
   ) {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       return RNNeteaseIm.startSession(sessionId, type, myUserName, myUserID);
     }
     return RNNeteaseIm.startSession(sessionId, type);
@@ -203,7 +203,7 @@ class NimSession {
     isCustomerService?: boolean,
     isHighQuality?: boolean
   ) {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       return RNNeteaseIm.sendImageMessages(
         file,
         displayName,
@@ -212,7 +212,7 @@ class NimSession {
       );
     }
     return RNNeteaseIm.sendImageMessage(
-      file.replace('file://', ''),
+      file.replace("file://", ""),
       displayName,
       isCustomerService ?? false,
       isHighQuality
@@ -236,7 +236,10 @@ class NimSession {
     );
   }
 
-  sendMultiMediaMessage(listMedia: NIMMessageMedia[], isCustomerService?: boolean) {
+  sendMultiMediaMessage(
+    listMedia: NIMMessageMedia[],
+    isCustomerService?: boolean
+  ) {
     return RNNeteaseIm.sendMultiMediaMessage(listMedia, isCustomerService);
   }
 
@@ -268,13 +271,27 @@ class NimSession {
   }
   /**
    * 发送地理位置消息
+   * @param sessionId
+   * @param sessionType
    * @param latitude 纬度
    * @param longitude 经度
    * @param address 地址信息描述
    * @returns {*}
    */
-  sendLocationMessage(latitude: string, longitude: string, address: string) {
-    return RNNeteaseIm.sendLocationMessage(latitude, longitude, address);
+  sendLocationMessage(
+    sessionId: string,
+    sessionType: string,
+    latitude: string,
+    longitude: string,
+    address: string
+  ) {
+    return RNNeteaseIm.sendLocationMessage(
+      sessionId,
+      sessionType,
+      latitude,
+      longitude,
+      address
+    );
   }
   /**
    * 发送系统通知
@@ -303,7 +320,7 @@ class NimSession {
     return RNNeteaseIm.sendRedPacketMessage(type, comments, serialNo);
   }
 
-  setMessageNotify(contactId: string, needNotify: '0' | '1') {
+  setMessageNotify(contactId: string, needNotify: "0" | "1") {
     return RNNeteaseIm.setMessageNotify(contactId, needNotify);
   }
 
@@ -487,7 +504,7 @@ class NimSession {
    * @returns {*}
    */
   downloadAttachment(messageId: string) {
-    return RNNeteaseIm.downloadAttachment(messageId, '0');
+    return RNNeteaseIm.downloadAttachment(messageId, "0");
   }
 
   /**
@@ -500,7 +517,7 @@ class NimSession {
   }
 
   getLaunch() {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       return RNNeteaseIm.getLaunch();
     }
   }
@@ -546,7 +563,7 @@ class NimSession {
   }
 
   readAllMessageBySession(sessionId: string, sessionType: NIMSessionTypeEnum) {
-    return RNNeteaseIm.readAllMessageBySession(sessionId, sessionType)
+    return RNNeteaseIm.readAllMessageBySession(sessionId, sessionType);
   }
 
   getMessageById(
