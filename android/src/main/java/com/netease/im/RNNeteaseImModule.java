@@ -1489,9 +1489,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    longitude, // 经度
 //    address // 地址信息描述
     @ReactMethod
-    public void sendLocationMessage(String latitude, String longitude, String address, final Promise promise) {
+    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, final Promise promise) {
         try {
-            sessionService.sendLocationMessage(latitude, longitude, address, new SessionService.OnSendMessageListener() {
+            sessionService.sendLocationMessage(sessionId, sessionType, latitude, longitude, address, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     if (code == ResponseCode.RES_SUCCESS) {

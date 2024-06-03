@@ -1179,7 +1179,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
     }
 
-    public void sendLocationMessage(String latitude, String longitude, String address, OnSendMessageListener onSendMessageListener) {
+    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, OnSendMessageListener onSendMessageListener) {
         double lat = 23.12504;
         try {
             lat = Double.parseDouble(latitude);
@@ -1192,7 +1192,8 @@ public class SessionService {
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-        IMMessage message = MessageBuilder.createLocationMessage(sessionId, sessionTypeEnum, lat, lon, address);
+        SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(sessionType);
+        IMMessage message = MessageBuilder.createLocationMessage(sessionId, sessionTypeE, lat, lon, address);
         NIMClient.getService(MsgService.class).sendMessage(message, false).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void param) {
