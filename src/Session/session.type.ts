@@ -1,3 +1,4 @@
+import { NIMCommonBooleanType } from 'react-native-netease-im/src/utils/common.type';
 import {
   NIMMessageStatusEnum,
   NIMMessageTypeEnum,
@@ -100,9 +101,11 @@ export interface NimSessionType {
     isCsr: boolean;
     isUpdated: boolean;
     name?: string;
-    isHideSession?: boolean
+    isHideSession?: boolean;
+    isPinCode?: boolean;
   };
   isOutgoing: boolean;
+  mute: NIMCommonBooleanType;
 }
 
 export type SessionCache = {
