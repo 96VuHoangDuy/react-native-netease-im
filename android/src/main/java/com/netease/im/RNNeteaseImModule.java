@@ -108,6 +108,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.netease.im.ReceiverMsgParser.getIntent;
 import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
@@ -2599,8 +2600,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 public void onResult(int code, Void aVoid, Throwable throwable) {
                     if (code == ResponseCode.RES_SUCCESS) {
                         if (toPass) {
-                            IMMessage message = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "AGREE_FRIEND_REQUEST");
-                            NIMClient.getService(MsgService.class).sendMessage(message, false);
+                            try {
+                                IMMessage message = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "AGREE_FRIEND_REQUEST");
+                                TimeUnit.SECONDS.sleep(1);
+                                NIMClient.getService(MsgService.class).sendMessage(message, false);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
                         promise.resolve("" + code);
                     } else {

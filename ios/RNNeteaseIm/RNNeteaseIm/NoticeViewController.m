@@ -273,20 +273,21 @@
         request.operation = NIMUserOperationReject;
     }
    
-    [[[NIMSDK sharedSDK] userManager] requestFriend:request
-                                         completion:^(NSError *error) {
-                                             if (!error) {
-                                                 if ([isAccept isEqualToString:@"1"]) {
-                                                     success(@"success");
-                                                     [self sendMakeFriendSucessMessgae:request.userId];
-                                                     [self refrash];
-                                                 } else {
-                                                     success(@"remove done");
-                                                 }
-                                             } else {
-                                                 err(@"网络问题，请重试");
-                                             }
-                                         }];
+    [[[NIMSDK sharedSDK] userManager] requestFriend:request completion:^(NSError *error) {
+        if (!error) {
+            if ([isAccept isEqualToString:@"1"]) {
+                success(@"success");
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                    [self sendMakeFriendSucessMessgae:request.userId];
+                    [self refrash];
+                });
+            } else {
+                success(@"remove done");
+            }
+        } else {
+            err(@"网络问题，请重试");
+        }
+    }];
 }
 
 
