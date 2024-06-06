@@ -1436,6 +1436,8 @@ public class ReactCache {
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
             if (!isFilePathDeleted) {
+                imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
+                imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
                 if (imageAttachment.getPath() != null
                         && !imageAttachment.getPath().contains(item.getSessionId())
                             && item.getStatus() == MsgStatusEnum.success) {
@@ -1460,8 +1462,6 @@ public class ReactCache {
                     imageObj.putString(MessageConstant.MediaFile.PATH, imageAttachment.getPath());
                     imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
                     imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
-                    imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
-                    imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
                 }
 
                 SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
@@ -1650,7 +1650,7 @@ public class ReactCache {
 
         if (recent != null) {
             Map<String, Object> extension = recent.getExtension();
-            if (extension != null) {
+            if (extension != null && item.getSessionId().equals(item.getUuid())) {
                 Boolean extensionIsCsr = (Boolean) extension.get("isCsr");
                 Boolean extensionIsChatBot = (Boolean) extension.get("isChatBot");
 

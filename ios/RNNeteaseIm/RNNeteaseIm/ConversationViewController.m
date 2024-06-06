@@ -828,8 +828,7 @@
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         NSMutableDictionary *fromUser = [NSMutableDictionary dictionary];
         NIMUser   *messageUser = [[NIMSDK sharedSDK].userManager userInfo:message.from];
-        NIMSession *session = [NIMSession session:messageUser.userId type:NIMSessionTypeP2P];
-        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:message.session];
             
         NSNumber *isCsrNumber = [recent.localExt objectForKey:@"isCsr"];
         NSNumber *isChatBotNumber = [recent.localExt objectForKey:@"isChatBot"];
@@ -842,7 +841,7 @@
             [dic setObject:localExt forKey:@"localExt"];
         }
         
-        if (recent.localExt != nil) {
+        if (recent.localExt != nil && [messageUser.userId isEqual:message.session.sessionId]) {
             [fromUser setObject:[NSString stringWithFormat:@"%@", @(isChatBot)] forKey:@"isChatBot"];
             
             [fromUser setObject:[NSString stringWithFormat:@"%@", @(isCsr)] forKey:@"isCsr"];
@@ -896,7 +895,7 @@
         }
         NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
         NSString *strSessionId = self._session.sessionId;
-          if (message.session.sessionType == NIMSessionTypeP2P && ![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {
+          if (message.session.sessionType == NIMSessionTypeP2P && ![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId] && !isCsr && !isChatBot) {
                   [dic setObject:@"send_failed" forKey:@"status"];
           }
         [dic setObject: [NSNumber numberWithBool:message.isOutgoingMsg] forKey:@"isOutgoing"];
@@ -1851,18 +1850,13 @@
     NSMutableDictionary *dic2 = [NSMutableDictionary dictionary];
     NIMUser   *user = [[NIMSDK sharedSDK].userManager userInfo:message.from];
     NSMutableDictionary *fromUser = [NSMutableDictionary dictionary];
-    NIMSession *session = [NIMSession session:user.userId type:NIMSessionTypeP2P];
-    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:message.session];
     NSNumber *isChatBotNumber = [recent.localExt objectForKey:@"isChatBot"];
     NSNumber *isCsrNumber = [recent.localExt objectForKey:@"isCsr"];
     BOOL isChatBot = [isChatBotNumber boolValue];
     BOOL isCsr = [isCsrNumber boolValue];
-
-    if (recent.localExt != nil) {
-        [dic2 setObject:recent.localExt forKey:@"localExt"];
-    }
     
-    if (recent.localExt != nil) {
+    if (recent.localExt != nil && [user.userId isEqual:message.session.sessionId]) {
         [fromUser setObject:[NSString stringWithFormat:@"%@", isChatBot ? @"true" : @"false"] forKey:@"isChatBot"];
         [fromUser setObject:[NSString stringWithFormat:@"%@", isCsr ? @"true" : @"false"] forKey:@"isCsr"];
     }
@@ -1905,7 +1899,7 @@
     }
     
     NSString *strSessionId = self._session.sessionId;
-    if (message.session.sessionType == NIMSessionTypeP2P && ![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {
+    if (message.session.sessionType == NIMSessionTypeP2P && ![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId] && !isCsr && !isChatBot) {
             [dic2 setObject:@"send_failed" forKey:@"status"];
     }
     
