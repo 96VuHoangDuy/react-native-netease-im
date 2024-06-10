@@ -893,10 +893,12 @@
                 [dic setObject:@"send_failed" forKey:@"status"];
                 break;
         }
-        NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
         NSString *strSessionId = self._session.sessionId;
-          if (message.session.sessionType == NIMSessionTypeP2P && ![[NIMSDK sharedSDK].userManager isMyFriend:strSessionId] && !isCsr && !isChatBot) {
+          if (message.session.sessionType == NIMSessionTypeP2P && !isCsr && !isChatBot && message.localExt != nil) {
+              NSString *isFriend = [message.localExt objectForKey:@"isFriend"];
+              if (isFriend != nil && [isFriend isEqual:@"NO"]) {
                   [dic setObject:@"send_failed" forKey:@"status"];
+              }
           }
         [dic setObject: [NSNumber numberWithBool:message.isOutgoingMsg] forKey:@"isOutgoing"];
         [dic setObject:[NSString stringWithFormat:@"%f", message.timestamp] forKey:@"timeString"];
