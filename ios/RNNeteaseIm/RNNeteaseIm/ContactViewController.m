@@ -117,13 +117,16 @@
 //获取本地用户资料
 -(void)getUserInFo:(NSString *)userId Success:(Success )success{
     NIMUser  *user = [[NIMSDK sharedSDK].userManager userInfo:userId];
-    if (!user.userInfo) {
+//    if (!user.userInfo) {
         [[NIMSDK sharedSDK].userManager fetchUserInfos:@[userId] completion:^(NSArray *users, NSError *error) {
             //从服务器获取用户信息，会自动缓存到本地
+            if (users.count) {
+                NSMutableDictionary *userDict = [self setupUserDict:[users firstObject] andUserId:userId];
+                success(userDict);
+            }
         }];
-    }
-    NSMutableDictionary *userDict = [self setupUserDict:user andUserId:userId];
-    success(userDict);
+//    }
+   
 
 }
 
