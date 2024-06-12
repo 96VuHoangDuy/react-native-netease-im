@@ -2189,6 +2189,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         List<IMMessage> messages = result;
                         if (direction == 0) {
                             Collections.reverse(messages);
+                            getMsgService().sendMessageReceipt(sessionId, messages.get(0));
+                        } else {
+                            getMsgService().sendMessageReceipt(sessionId, messages.get(messages.size() - 1));
                         }
 
                         WritableArray a = ReactCache.createMessageList(messages);

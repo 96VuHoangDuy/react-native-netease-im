@@ -220,7 +220,7 @@
             if (error) {
                 err(@"暂无更多");
             } else {
-                NIMMessage *lastMessage = [messageArr lastObject];
+                NIMMessage *lastMessage = direction == 0 ? [messageArr firstObject] : [messageArr lastObject];
                 NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:lastMessage];
 
                 if ([self isSeenMessage]) {
