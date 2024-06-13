@@ -105,6 +105,14 @@ class NimSession {
     );
   }
 
+  searchFileMessages(): Promise<Record<string, NIMMessage[]>> {
+    return RNNeteaseIm.searchFileMessages()
+  }
+
+  searchTextMessages(searchContent: string): Promise<Record<string, NIMMessage[]>> {
+    return RNNeteaseIm.searchTextMessages(searchContent)
+  }
+
   searchMessages(keyWords: string): Promise<Record<string, NIMMessage[]>> {
     return RNNeteaseIm.searchMessages(keyWords);
   }

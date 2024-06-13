@@ -301,6 +301,30 @@ RCT_EXPORT_METHOD(setMessageNotify:(nonnull NSString *)contactId needNotify:(non
     }];
 }
 
+RCT_EXPORT_METHOD(searchFileMessages:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] searchFileMessages:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(updateTeamAvatar:(NSString *)teamId avatarUrl:(NSString *)avatarUrl resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[TeamViewController initWithTeamViewController] updateTeamAvatar:teamId avatarUrl:avatarUrl success:^(id params){
+        resolve(params);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(searchTextMessages:(NSString *)searchContent resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] searchTextMessages:searchContent success:^(id params) {
+        resolve(params);
+    } err:^(id err) {
+        reject(@"-1", err, nil);
+    }];
+}
+
 //search local Messages
 RCT_EXPORT_METHOD(searchMessages:(nonnull NSString *)keyWords resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ConversationViewController initWithConversationViewController] searchMessages:keyWords success:^(id param) {

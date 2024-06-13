@@ -276,6 +276,51 @@
     NIMMessage *message = messageArr.firstObject;
     success(message);
 }
+
+-(void) searchTextMessages:(NSString *)searchContent success:(Success)success err:(Errors)err {
+    NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
+    option.searchContent = searchContent;
+    option.messageTypes = @[[NSNumber numberWithInt:NIMMessageTypeText]];
+    option.order = NIMMessageSearchOrderDesc;
+    
+    [[NIMSDK sharedSDK].conversationManager searchAllMessages:option result:^(NSError * _Nullable error, NSDictionary<NIMSession *,NSArray<NIMMessage *> *> * _Nullable messages) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+
+        if (!error) {
+           for (NIMSession* key in messages) {
+                id value = [messages objectForKey:key];
+                
+                [dict setValue:[self setTimeArr:value] forKey:key.sessionId];
+            }
+            success(dict);
+        } else {
+            err(error);
+        }
+    }];
+}
+
+-(void) searchFileMessages:(Success)success err:(Errors)err {
+    NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
+    option.searchContent = @"";
+    option.messageTypes = @[[NSNumber numberWithInt:NIMMessageTypeFile]];
+    option.order = NIMMessageSearchOrderDesc;
+    
+    [[NIMSDK sharedSDK].conversationManager searchAllMessages:option result:^(NSError * _Nullable error, NSDictionary<NIMSession *,NSArray<NIMMessage *> *> * _Nullable messages) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+
+        if (!error) {
+           for (NIMSession* key in messages) {
+                id value = [messages objectForKey:key];
+                
+                [dict setValue:[self setTimeArr:value] forKey:key.sessionId];
+            }
+            success(dict);
+        } else {
+            err(error);
+        }
+    }];
+}
+
 //search local Messages
 - (void)searchMessages:(NSString *)keyWords success:(Success)succe err:(Errors)err{
     NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
@@ -1160,12 +1205,6 @@
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
-                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
-                    [teamDic setObject:@"" forKey:@"introduce"];
-                } else {
-                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
-                }
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
@@ -1177,7 +1216,16 @@
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
-                
+                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"introduce"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                }
+                if (team.avatarUrl == nil || [team.avatarUrl isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"avatar"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
+                }
                 [arr addObject:teamDic];
             }
             
@@ -1207,12 +1255,6 @@
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
-                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
-                    [teamDic setObject:@"" forKey:@"introduce"];
-                } else {
-                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
-                }
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
@@ -1224,7 +1266,16 @@
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
-                
+                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"introduce"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                }
+                if (team.avatarUrl == nil || [team.avatarUrl isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"avatar"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
+                }
                 [arr addObject:teamDic];
             }
             

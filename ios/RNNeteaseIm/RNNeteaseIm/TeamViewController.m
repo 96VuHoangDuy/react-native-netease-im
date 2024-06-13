@@ -207,7 +207,6 @@ NSMutableArray *_myTeams;
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
@@ -221,6 +220,11 @@ NSMutableArray *_myTeams;
                     [teamDic setObject:@"" forKey:@"introduce"];
                 } else {
                     [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+                }
+                if (team.avatarUrl == nil || [team.avatarUrl isEqual:@"(null)"]) {
+                    [teamDic setObject:@"" forKey:@"avatar"];
+                } else {
+                    [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
                 }
                 NSArray *keys = [teamDic allKeys];
                 for (NSString *tem  in keys) {
@@ -270,8 +274,6 @@ NSMutableArray *_myTeams;
             [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
             [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
             [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
-            [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
-            [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
             [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
             [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
             [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
@@ -283,6 +285,16 @@ NSMutableArray *_myTeams;
             [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
             [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
             [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
+            if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
+                [teamDic setObject:@"" forKey:@"introduce"];
+            } else {
+                [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+            }
+            if (team.avatarUrl == nil || [team.avatarUrl isEqual:@"(null)"]) {
+                [teamDic setObject:@"" forKey:@"avatar"];
+            } else {
+                [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
+            }
             NSArray *keys = [teamDic allKeys];
             for (NSString *tem  in keys) {
                 if ([[teamDic objectForKey:tem] isEqualToString:@"(null)"]) {
@@ -459,6 +471,17 @@ NSMutableArray *_myTeams;
         }
     }];
 }
+
+-(void)updateTeamAvatar:(NSString *)teamId avatarUrl:(NSString *)avatarUrl success:(Success)success error:(Errors)error {
+    [[NIMSDK sharedSDK].teamManager updateTeamAvatar:avatarUrl teamId:teamId completion:^(NSError * _Nullable err) {
+        if (!err) {
+            success(@"200");
+        }else{
+            error(err);
+        }
+    }];
+}
+
 //修改群昵称
 -(void)updateTeamName:(NSString *)teamId nick:(NSString *)nick Succ:(Success)succ Err:(Errors)err{
   [[NIMSDK sharedSDK].teamManager updateTeamName:nick teamId:teamId completion:^(NSError * _Nullable error) {

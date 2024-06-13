@@ -1245,6 +1245,20 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 });
     }
 
+    @ReactMethod
+    public void updateTeamAvatar(String teamId, String avatarUrl, final Promise promise) {
+        NIMClient.getService(TeamService.class).updateTeam(teamId, TeamFieldEnum.ICON, avatarUrl).setCallback(new RequestCallbackWrapper<Void>() {
+            @Override
+            public void onResult(int code, Void result, Throwable exception) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    promise.resolve("success");
+                } else {
+                    promise.reject("" + code, "");
+                }
+            }
+        });
+    }
+
     /**
      * 修改的群名称
      *
@@ -1993,6 +2007,56 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void deleteFiles(ReadableArray sessionIds, final Promise promise) {
         ArrayList<String> _sessionIds = (ArrayList<String>) (ArrayList<?>) (sessionIds.toArrayList());
+    }
+
+    @ReactMethod
+    public void searchFileMessages(final Promise promise) {
+        MsgSearchOption option = new MsgSearchOption();
+        ArrayList<MsgTypeEnum> messageTypes = new ArrayList<MsgTypeEnum>();
+        messageTypes.add(MsgTypeEnum.file);
+        option.setSearchContent("");
+        option.setMessageTypes(messageTypes);
+        option.setOrder(SearchOrderEnum.DESC);
+
+        NIMClient.getService(MsgService.class).searchAllMessage(option).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    if (result != null && result.size() > 0) {
+                        WritableMap a = ReactCache.createMessageObjectList(result);
+
+                        promise.resolve(a);
+                        return;
+                    }
+                }
+                promise.reject("" + code, "");
+            }
+        });
+    }
+
+    @ReactMethod
+    public void searchTextMessages(String searchContent, final Promise promise) {
+        MsgSearchOption option = new MsgSearchOption();
+        ArrayList<MsgTypeEnum> messageTypes = new ArrayList<MsgTypeEnum>();
+        messageTypes.add(MsgTypeEnum.text);
+        option.setSearchContent(searchContent);
+        option.setMessageTypes(messageTypes);
+        option.setOrder(SearchOrderEnum.DESC);
+
+        NIMClient.getService(MsgService.class).searchAllMessage(option).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    if (result != null && result.size() > 0) {
+                        WritableMap a = ReactCache.createMessageObjectList(result);
+
+                        promise.resolve(a);
+                        return;
+                    }
+                }
+                promise.reject("" + code, "");
+            }
+        });
     }
 
     @ReactMethod

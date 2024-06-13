@@ -115,8 +115,12 @@ typedef void(^Errors)(id erro);
 
 -(void)getMessageById:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success;
 
+-(void) searchTextMessages:(NSString *)searchContent success:(Success)success err:(Errors)err;
+
 // search local Messages
 - (void) searchMessages:(NSString *)keyWords success:(Success)succe err:(Errors)err;
+
+-(void) searchFileMessages:(Success)success err:(Errors)err;
 
 - (void) readAllMessageOnlineServiceByListSession:(NSArray *)listSessionId;
 

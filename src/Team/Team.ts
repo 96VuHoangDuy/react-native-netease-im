@@ -173,6 +173,10 @@ class NimTeam {
     return RNNeteaseIm.updateTeam(teamId, fieldType, value);
   }
 
+  updateTeamAvatar(teamId: string, avatarUrl: string) {
+    return RNNeteaseIm.updateTeamAvatar(teamId, avatarUrl)
+  }
+
   /**
    * 申请加入群组
    * @param teamId

@@ -26,6 +26,8 @@ typedef void(^Errors)(id erro);
 //获取远程群资料
 -(void)fetchTeamInfo:(NSString *)teamId Succ:(Success)succ Err:(Errors)err;
 //获取群成员
+-(void)updateTeamAvatar:(NSString *)teamId avatarUrl:(NSString *)avatarUrl success:(Success)success error:(Errors)error;
+
 -(void)getTeamMemberList:(NSString *)teamId Succ:(Success)succ Err:(Errors)err;
 //申请加入群组
 -(void)applyJoinTeam:(NSString *)teamId message:(NSString *)message Succ:(Success)succ Err:(Errors)err;
