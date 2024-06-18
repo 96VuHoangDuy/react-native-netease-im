@@ -445,6 +445,14 @@ RCT_EXPORT_METHOD(createNotificationBirthday:(nonnull NSString *)sessionId sessi
     }];
 }
 
+RCT_EXPORT_METHOD(cancelSendingMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] cancelSendingMessage:sessionId sessionType:sessionType messageId:messageId success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //重发消息
 RCT_EXPORT_METHOD(resendMessage:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ConversationViewController initWithConversationViewController]resendMessage:messageId success:^(id params) {

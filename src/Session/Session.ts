@@ -534,6 +534,10 @@ class NimSession {
     return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType);
   }
 
+  cancelSendingMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string) {
+    return RNNeteaseIm.cancelSendingMessage(sessionId, sessionType, messageId)
+  }
+
   updateRecentSessionIsCsrOrChatbot(
     sessionId: string,
     type: `${NIMSessionOnlineServiceType}`,

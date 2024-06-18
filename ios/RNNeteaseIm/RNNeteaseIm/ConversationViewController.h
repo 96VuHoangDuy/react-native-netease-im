@@ -124,6 +124,8 @@ typedef void(^Errors)(id erro);
 
 - (void) readAllMessageOnlineServiceByListSession:(NSArray *)listSessionId;
 
+-(void)cancelSendingMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err;
+
 - (void)searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction success:(Success)succe err:(Errors)err;
 
 - (NSString *)teamNotificationSourceName:(NIMMessage *)message;

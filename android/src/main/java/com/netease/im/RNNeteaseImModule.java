@@ -1281,6 +1281,46 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 });
     }
 
+    @ReactMethod
+    public void cancelSendingMessage(String sessionId, String sessionType, String messageId, final Promise promise) {
+        List<String> messageIds = new ArrayList<String>();
+        messageIds.add(messageId);
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("CANCEL_SENDING_MESSAGE", "error");
+                    return;
+                }
+
+                IMMessage message = result.get(0);
+
+                NIMClient.getService(MsgService.class).cancelUploadAttachment(message);
+
+
+                Log.e(TAG, "test message status =>>>>>>." + message.getStatus());
+
+                NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+                    @Override
+                    public void onResult(int c, List<IMMessage> r, Throwable exception) {
+                        if (c == ResponseCode.RES_SUCCESS) {
+                            IMMessage msg = r.get(0);
+
+                            if (msg.getStatus() == MsgStatusEnum.fail) {
+                                List<IMMessage> list = new ArrayList<>(1);
+                                list.add(msg);
+                                Object a = ReactCache.createMessageList(list);
+                                ReactCache.emit(ReactCache.observeMsgStatus, a);
+                            }
+                        }
+                    }
+                });
+
+                promise.resolve("success");
+            }
+        });
+    }
+
     /*************Session send message 聊天***********/
     /***sessionId,   聊天对象的 ID，如果是单聊，为用户帐号，如果是群聊，为群组 ID***/
     /***   sessionType,   聊天类型，单聊或群组***/

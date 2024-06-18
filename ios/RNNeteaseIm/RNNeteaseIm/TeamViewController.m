@@ -474,7 +474,7 @@ NSMutableArray *_myTeams;
 
 -(void)updateTeamAvatar:(NSString *)teamId avatarUrl:(NSString *)avatarUrl success:(Success)success error:(Errors)error {
     [[NIMSDK sharedSDK].teamManager updateTeamAvatar:avatarUrl teamId:teamId completion:^(NSError * _Nullable err) {
-        if (!err) {
+        if (err == nil) {
             success(@"200");
         }else{
             error(err);

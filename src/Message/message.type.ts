@@ -84,6 +84,7 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   isFilePathDeleted: boolean;
   needRefreshMessage: boolean;
   isReplacePathSuccess: boolean;
+  isFileDownloading: boolean
 
   // have when message type is "card"
   extendType?: string;
