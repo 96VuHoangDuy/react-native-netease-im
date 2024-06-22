@@ -1487,8 +1487,6 @@ public class ReactCache {
                     imageObj.putString(MessageConstant.MediaFile.PATH, imageAttachment.getPath());
                     imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
                     imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
-                    imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
-                    imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
                 }
 
                 SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
