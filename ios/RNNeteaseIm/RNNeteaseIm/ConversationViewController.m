@@ -2262,71 +2262,81 @@
 //    option.apnsContent = @"";
 //    option.shouldBeCounted = NO;
 
-    [[NIMSDK sharedSDK].chatManager revokeMessage:currentmessage completion:^(NSError * _Nullable error) {
-        if (error) {
-            if (error.code == NIMRemoteErrorCodeDomainExpireOld) {
-                err(@"expired");
-            }else{
-                err(@"fail");
-            }
-        }
-        else
-        {
-            succe(@"success");
-            
-            NSString *tip = [self tipOnMessageRevoked:currentmessage];
-            
-            NIMMessage *tipMessage = [self msgWithTip:tip];
-            tipMessage.timestamp = currentmessage.timestamp;
-            
-            NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
-            tipMessage.remoteExt = remoteExt;
-        
-            NSDictionary *deleteDict = @{@"msgId":messageId};
-            [NIMModel initShareMD].deleteMessDict = deleteDict;
-            
-//            update unread count of current session
-//            NIMRecentSession *recentSession = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:self._session];
-//
-//            if (recentSession) {
-//                // Calculate the updated unread count
-//                NSInteger updatedUnreadCount = recentSession.unreadCount - 1;
-//                if (updatedUnreadCount < 0) {
-//                    updatedUnreadCount = 0;
-//                }
-//                
-//                // Create a dictionary to hold the updated unread count
-//                NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-//                [dict setObject:@(updatedUnreadCount) forKey:@"unreadCount"];
-//
-//                // Convert the dictionary to a JSON string (if required by the SDK)
-//                NSError *error;
-//                NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:0 error:&error];
-//                if (error) {
-//                    NSLog(@"Failed to serialize dictionary to JSON: %@", error);
-//                    return;
-//                }
-//                NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-//
-//                // Update the session on the server
-//                [[NIMSDK sharedSDK].conversationManager updateServerSessionExt:jsonString session:self._session completion:^(NSError * _Nullable error) {
-//                    if (error) {
-//                        NSLog(@"Failed to update server session: %@", error);
-//                    } else {
-//                        NSLog(@"Successfully updated unread count to %ld", (long)updatedUnreadCount);
-//                    }
-//                }];
-//            } else {
-//                NSLog(@"No recent session found for the current session");
+//    [[NIMSDK sharedSDK].chatManager revokeMessage:currentmessage completion:^(NSError * _Nullable error) {
+//        WARNIING: DOT NOT DELETE THIS COMMENT CODE
+//        if (error) {
+//            if (error.code == NIMRemoteErrorCodeDomainExpireOld) {
+//                err(@"expired");
+//            }else{
+//                err(@"fail");
 //            }
-
+//        }
+//        else
+//        {
+//            succe(@"success");
+//            
+//            NSString *tip = [self tipOnMessageRevoked:currentmessage];
+//            
+//            NIMMessage *tipMessage = [self msgWithTip:tip];
+//            tipMessage.timestamp = currentmessage.timestamp;
+//            
+//            NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
+//            tipMessage.remoteExt = remoteExt;
+//        
+//            NSDictionary *deleteDict = @{@"msgId":messageId};
+//            [NIMModel initShareMD].deleteMessDict = deleteDict;
 //
-
-            // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
-            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
-        }
-    }];
+//            // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
+//            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+//        }
+//    }];
     
+    BOOL isOutOfTime;
+    NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+    NSTimeInterval timeInterval = currentTime - currentmessage.timestamp;
+    
+    if (timeInterval > 300) {
+        isOutOfTime = YES;
+    } else {
+        isOutOfTime = NO;
+    }
+    
+    if (isOutOfTime) {
+        err(@"expired");
+    }
+    else
+    {
+        
+//        send custom notification
+        NSDictionary *dataDict = @{
+            @"data":@{
+            @"type":@(1),
+            @"messageId":messageId,
+            @"sessionId":self._session.sessionId,
+            @"isObserveReceiveRevokeMessage": @(YES)}
+        };
+        
+        NSString *content = [self jsonStringWithDictionary:dataDict];
+        
+        NIMCustomSystemNotification *notifi = [[NIMCustomSystemNotification alloc]initWithContent:content];
+        
+        [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notifi toSession:self._session completion:nil];
+//        save tip message
+        NSString *tip = [self tipOnMessageRevoked:currentmessage];
+        
+        NIMMessage *tipMessage = [self msgWithTip:tip];
+        tipMessage.timestamp = currentmessage.timestamp;
+        
+        NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
+        tipMessage.remoteExt = remoteExt;
+        
+        [[NIMSDK sharedSDK].conversationManager deleteMessage:currentmessage];
+        
+        // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
+        [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+        
+        succe(@"success");
+    }
 }
 
 -(void)removeMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType {

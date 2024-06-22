@@ -1166,6 +1166,11 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
                 //下载视频完成通知
                 [_bridge.eventDispatcher sendDeviceEventWithName:@"observeDownloadVideoNotice" body:param];
                 break;
+                
+            case 18:
+                //custom notification
+                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeCustomNotification" body:param];
+                break;
             default:
                 break;
         }
