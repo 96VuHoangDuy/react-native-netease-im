@@ -2218,6 +2218,18 @@
     }
 }
 
+-(void)cancelSendingMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[messageId]];
+    NIMMessage *message = messages.firstObject;
+    
+    if ([[NIMSDK sharedSDK].chatManager cancelSendingMessage:message]) {
+        success(@"success");
+    } else {
+        err(@"error");
+    }
+}
+
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
