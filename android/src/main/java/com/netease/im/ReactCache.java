@@ -10,6 +10,8 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
@@ -66,6 +68,7 @@ import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.SystemMessageStatus;
 import com.netease.nimlib.sdk.msg.constant.SystemMessageType;
 import com.netease.nimlib.sdk.msg.model.AttachmentProgress;
+import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.SystemMessage;
@@ -111,7 +114,8 @@ public class ReactCache {
     public final static String observeReceiveMessage = "observeReceiveMessage";//'接收消息'
 
     public final static String observeDeleteMessage = "observeDeleteMessage";//'撤销后删除消息'
-    public final static String observeReceiveSystemMsg = "observeReceiveSystemMsg";//'系统通知'
+    public final static String observeReceiveSystemMsg = "observeReceiveSystemMsg";
+    public final static String observeCustomNotification = "observeCustomNotification";//'系统通知'
     public final static String observeMsgStatus = "observeMsgStatus";//'发送消息状态变化'
     public final static String observeAudioRecord = "observeAudioRecord";//'录音状态'
     public final static String observeUnreadCountChange = "observeUnreadCountChange";//'未读数变化'
@@ -827,6 +831,27 @@ public class ReactCache {
         return writableArray;
     }
 
+    public static Object createCustomSystemMsg(CustomNotification customNotification) {
+        String content = customNotification.getContent();
+
+        WritableMap notification = Arguments.createMap();
+
+        JSONObject object = JSON.parseObject(content);
+        JSONObject data = object.getJSONObject("data");
+
+        Integer type = data.getInteger("type");
+        String messageId = data.getString("messageId");
+        String sessionId = data.getString("sessionId");
+        Boolean isObserveReceiveRevokeMessage = data.getBoolean("isObserveReceiveRevokeMessage");
+
+        notification.putInt("type",type);
+        notification.putString("messageId", messageId);
+        notification.putString("sessionId",sessionId);
+        notification.putBoolean("isObserveReceiveRevokeMessage",isObserveReceiveRevokeMessage);
+
+        return notification;
+    }
+
     private static String getVerifyNotificationText(SystemMessage message) {
         StringBuilder sb = new StringBuilder();
         String fromAccount = NimUserInfoCache.getInstance().getUserDisplayNameYou(message.getFromAccount());
@@ -1462,6 +1487,8 @@ public class ReactCache {
                     imageObj.putString(MessageConstant.MediaFile.PATH, imageAttachment.getPath());
                     imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
                     imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
+                    imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
+                    imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
                 }
 
                 SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);

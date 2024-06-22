@@ -118,14 +118,26 @@
 }
 #pragma mark - NIMSystemNotificationManagerDelegate
 - (void)onReceiveCustomSystemNotification:(NIMCustomSystemNotification *)notification{//接收自定义通知
-//    NSString *content = notification.content;
     NSDictionary *notiDict = [self jsonDictWithString:notification.content];
     NSTimeInterval timestamp = notification.timestamp;
     if (notiDict){
         NSInteger notiType = [[notiDict objectForKey:@"type"] integerValue];
-        switch (notiType) {
-            case 1://加好友
                 
+        switch (notiType) {
+            case 1://revoke messages
+            {
+                NSString *sessionId = [notiDict objectForKey:@"sessionId"];
+                NSString *messageId = [notiDict objectForKey:@"messageId"];
+                
+                NIMSession *session = [NIMSession session:sessionId type:[@(notification.receiverType) integerValue]];
+                
+                NSArray *currentMessages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+                NIMMessage *revokedMessge = currentMessages[0];
+                
+                [[NIMSDK sharedSDK].conversationManager deleteMessage:revokedMessge];
+            
+                [NIMModel initShareMD].customNotification = notiDict;
+            }
                 break;
             case 2://拆红包消息
             {

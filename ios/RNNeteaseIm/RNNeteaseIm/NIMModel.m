@@ -160,4 +160,10 @@
     }
 }
 
+- (void)setCustomNotification:(NSDictionary *)customNotification{
+    if (self.myBlock) {
+        self.myBlock(18, customNotification);
+    }
+}
+
 @end

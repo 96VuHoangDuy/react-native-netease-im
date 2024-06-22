@@ -65,6 +65,7 @@ import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.SystemMessageType;
 import com.netease.nimlib.sdk.msg.model.AttachmentProgress;
 import com.netease.nimlib.sdk.msg.model.CustomMessageConfig;
+import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MemberPushOption;
 import com.netease.nimlib.sdk.msg.model.MessageReceipt;
@@ -81,6 +82,7 @@ import com.netease.nimlib.sdk.team.model.UpdateTeamAttachment;
 
 import java.io.File;
 import java.lang.annotation.Target;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1325,20 +1327,45 @@ public class SessionService {
             return 1;
         }
 
-        getMsgService().revokeMessage(selectMessage).setCallback(new RequestCallbackWrapper<Void>() {
-            @Override
-            public void onResult(int code, Void aVoid, Throwable throwable) {
-                if (code == ResponseCode.RES_SUCCESS) {
-                    deleteItem(selectMessage, false);
-//                    getMsgService().deleteChattingHistory(selectMessage,false);
-                    revokMessage(selectMessage);
-                    MessageHelper.getInstance().onRevokeMessage(selectMessage);
-                }
+        Boolean isOutOfTime;
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        Long periodOfTime = timestamp.getTime() - selectMessage.getTime();
+        if(periodOfTime > 30000){
+            isOutOfTime = true;
+        }else {
+            isOutOfTime = false;
+        }
+
+        if(isOutOfTime){
+            onSendMessageListener.onResult(ResponseCode.RES_OVERDUE, selectMessage);
+        }else {
+            try{
+                WritableMap contentObject = Arguments.createMap();
+                contentObject.putInt("type",1);
+                contentObject.putString("messageId", selectMessage.getUuid());
+                contentObject.putString("sessionId", selectMessage.getSessionId());
+                contentObject.putBoolean("isObserveReceiveRevokeMessage", true);
+
+                deleteItem(selectMessage, false);
+                revokMessage(selectMessage);
+
+                CustomNotification notification = new CustomNotification();
+                notification.setContent(contentObject.toString());
+                notification.setSessionId(selectMessage.getSessionId());
+                notification.setSessionType(selectMessage.getSessionType());
+
+                NIMClient.getService(MsgService.class).sendCustomNotification(notification);
+
+                MessageHelper.getInstance().onRevokeMessage(selectMessage);
+
                 if (onSendMessageListener != null) {
-                    onSendMessageListener.onResult(code, selectMessage);
+                    onSendMessageListener.onResult(ResponseCode.RES_SUCCESS, selectMessage);
                 }
             }
-        });
+            catch(Exception error){
+            }
+        }
+
         return 2;
     }
 

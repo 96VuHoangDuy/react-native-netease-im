@@ -4,10 +4,14 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 import com.netease.im.IMApplication;
+import com.netease.im.ReactCache;
 import com.netease.im.login.LoginService;
 import com.netease.im.session.extension.RedPacketOpenAttachement;
 import com.netease.im.uikit.cache.NimUserInfoCache;
@@ -22,6 +26,7 @@ import com.netease.nimlib.sdk.msg.model.CustomMessageConfig;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.CustomNotificationConfig;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
+import com.nostra13.universalimageloader.utils.L;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -125,30 +130,50 @@ public class SessionUtil {
         } else {
             String content = customNotification.getContent();
             if (!TextUtils.isEmpty(content)) {
+//                WritableMap notification = Arguments.createMap();
                 JSONObject object = JSON.parseObject(content);
                 JSONObject data = object.getJSONObject("data");
 
-                JSONObject dict = data.getJSONObject("dict");
-                String sendId = dict.getString("sendId");
-                String openId = dict.getString("openId");
-                String hasRedPacket = dict.getString("hasRedPacket");
-                String serialNo = dict.getString("serialNo");
+//                JSONObject dict = data.getJSONObject("dict");
+//                String sendId = dict.getString("sendId");
+//                String openId = dict.getString("openId");
+//                String hasRedPacket = dict.getString("hasRedPacket");
+//                String serialNo = dict.getString("serialNo");
+//
+////                String timestamp = data.getString("timestamp");
+//                long t = customNotification.getTime() / 1000;
+////                try {
+////                    t = Long.parseLong(timestamp);
+////                } catch (NumberFormatException e) {
+////                    t = System.currentTimeMillis() / 1000;
+////                    e.printStackTrace();
+////                }
+////                LogUtil.w("timestamp","timestamp:"+timestamp);
+////                LogUtil.w("timestamp","t:"+t);
+////                LogUtil.w("timestamp",""+data);
+//                String sessionId = data.getString("sessionId");
+//                String sessionType = data.getString("sessionType");
+//                final String id = sessionId;//getSessionType(sessionType) == SessionTypeEnum.P2P ? openId :
+//                sendRedPacketOpenLocal(id, getSessionType(sessionType), sendId, openId, hasRedPacket, serialNo, t);
 
-//                String timestamp = data.getString("timestamp");
-                long t = customNotification.getTime() / 1000;
-//                try {
-//                    t = Long.parseLong(timestamp);
-//                } catch (NumberFormatException e) {
-//                    t = System.currentTimeMillis() / 1000;
-//                    e.printStackTrace();
-//                }
-//                LogUtil.w("timestamp","timestamp:"+timestamp);
-//                LogUtil.w("timestamp","t:"+t);
-//                LogUtil.w("timestamp",""+data);
-                String sessionId = data.getString("sessionId");
-                String sessionType = data.getString("sessionType");
-                final String id = sessionId;//getSessionType(sessionType) == SessionTypeEnum.P2P ? openId :
-                sendRedPacketOpenLocal(id, getSessionType(sessionType), sendId, openId, hasRedPacket, serialNo, t);
+                Integer customNotificationType = data.getInteger("type");
+                Log.d("customNotificationType",String.valueOf(customNotificationType));
+
+                if(customNotificationType == 1) {
+                    String messageId = data.getString("messageId");
+                    SessionService.getInstance().queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+                        @Override
+                        public int onResult(int code, IMMessage message) {
+                            Log.d("message-->",String.valueOf(message));
+
+                            if (message != null) {
+                                SessionService.getInstance().deleteItem(message, true);
+                            }
+                            return 0;
+                        }
+                    });
+                }
+                ReactCache.emit(ReactCache.observeCustomNotification, ReactCache.createCustomSystemMsg(customNotification));
             }
         }
 
