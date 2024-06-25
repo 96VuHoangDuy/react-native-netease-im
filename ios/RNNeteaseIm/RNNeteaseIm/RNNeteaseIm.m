@@ -425,6 +425,15 @@ RCT_EXPORT_METHOD(revokeMessage:(nonnull NSString *)messageId resolve:(RCTPromis
     }];
 }
 
+RCT_EXPORT_METHOD(sendCustomNotification:( NSDictionary *)dataDict toSessionId:(NSString*)toSessionId toSessionType:(NSString*)toSessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController]sendCustomNotification:dataDict toSessionId:toSessionId toSessionType:toSessionType success:^(id param) {
+        resolve(param);
+    } Err:^(id erro) {
+        reject(@"-1",erro,nil);
+    }];
+}
+
+
 RCT_EXPORT_METHOD(updateMessageSentStickerBirthday:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
     [[ConversationViewController initWithConversationViewController] updateMessageSentStickerBirthday:sessionId sessionType:sessionType messageId:messageId success:^(id param) {
         resolve(param);

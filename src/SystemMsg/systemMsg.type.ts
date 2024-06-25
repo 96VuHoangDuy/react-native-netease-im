@@ -43,3 +43,16 @@ export interface NIMSystemMsgType {
   verifyResult: string;
   verifyText: string;
 }
+
+export enum NIMCustomNotificationTypeEnum {
+  OBSERVE_RECEIVE_REVOKE_MESSAGE = 1,
+  OBSERVE_RECEIVE_FRIEND_REMOVED_ME = 2,
+}
+
+export interface ICustomNotificationDataDict {
+  type: NIMCustomNotificationTypeEnum;
+  sessionId: string;
+  messageId?: string;
+  isObserveReceiveRevokeMessage?: string;
+  isObserveFriendRemovedMe?: string;
+}

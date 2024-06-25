@@ -1702,6 +1702,26 @@ public class SessionService {
         future.setCallback(callback);
     }
 
+    public void sendCustomNotification(ReadableMap dataDict, String toSessionId, String toSessionType, final OnCustomNotificationListener onCustomNotificationListener){
+        CustomNotification notification = new CustomNotification();
+
+        try {
+            SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(toSessionType);
+
+            notification.setContent(dataDict.getMap("data").toString());
+            notification.setSessionId(toSessionId);
+            notification.setSessionType(sessionTypeEnum);
+
+            NIMClient.getService(MsgService.class).sendCustomNotification(notification);
+            if(onCustomNotificationListener != null){
+                onCustomNotificationListener.onResult(ResponseCode.RES_SUCCESS, notification);
+            }
+        } catch (Exception exception){
+            onCustomNotificationListener.onResult(ResponseCode.RES_EUNKNOWN, notification);
+        }
+
+    }
+
     public interface OnSendMessageListener {
         int onResult(int code, IMMessage message);
     }
@@ -1712,5 +1732,9 @@ public class SessionService {
 
     public interface OnMessageQueryListener {
         public int onResult(int code, IMMessage message);
+    }
+
+    public interface OnCustomNotificationListener {
+        public int onResult(int code, CustomNotification customNotification);
     }
 }

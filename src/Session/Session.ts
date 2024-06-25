@@ -14,6 +14,7 @@ import {
   NIMMessageTypeEnum,
   NimMessageTypeExtend,
 } from "../Message/message.type";
+import { ICustomNotificationDataDict } from "../SystemMsg/systemMsg.type";
 const { RNNeteaseIm } = NativeModules;
 
 class NimSession {
@@ -106,11 +107,13 @@ class NimSession {
   }
 
   searchFileMessages(): Promise<Record<string, NIMMessage[]>> {
-    return RNNeteaseIm.searchFileMessages()
+    return RNNeteaseIm.searchFileMessages();
   }
 
-  searchTextMessages(searchContent: string): Promise<Record<string, NIMMessage[]>> {
-    return RNNeteaseIm.searchTextMessages(searchContent)
+  searchTextMessages(
+    searchContent: string
+  ): Promise<Record<string, NIMMessage[]>> {
+    return RNNeteaseIm.searchTextMessages(searchContent);
   }
 
   searchMessages(keyWords: string): Promise<Record<string, NIMMessage[]>> {
@@ -534,8 +537,12 @@ class NimSession {
     return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType);
   }
 
-  cancelSendingMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string) {
-    return RNNeteaseIm.cancelSendingMessage(sessionId, sessionType, messageId)
+  cancelSendingMessage(
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    messageId: string
+  ) {
+    return RNNeteaseIm.cancelSendingMessage(sessionId, sessionType, messageId);
   }
 
   updateRecentSessionIsCsrOrChatbot(
@@ -651,6 +658,18 @@ class NimSession {
 
   setStrangerRecentReplyed(sessionId: string) {
     return RNNeteaseIm.setStrangerRecentReplyed(sessionId);
+  }
+
+  sendCustomNotification(
+    dataDict: ICustomNotificationDataDict,
+    toSessionId: string,
+    toSessionType: NIMSessionTypeEnum
+  ) {
+    return RNNeteaseIm.sendCustomNotification(
+      dataDict,
+      toSessionId,
+      toSessionType
+    );
   }
 }
 

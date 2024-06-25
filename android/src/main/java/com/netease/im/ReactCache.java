@@ -846,14 +846,24 @@ public class ReactCache {
         JSONObject data = object.getJSONObject("data");
 
         Integer type = data.getInteger("type");
-        String messageId = data.getString("messageId");
         String sessionId = data.getString("sessionId");
+        String messageId = data.getString("messageId");
         Boolean isObserveReceiveRevokeMessage = data.getBoolean("isObserveReceiveRevokeMessage");
+        Boolean isObserveFriendRemovedMe = data.getBoolean("isObserveFriendRemovedMe");
 
         notification.putInt("type",type);
-        notification.putString("messageId", messageId);
         notification.putString("sessionId",sessionId);
-        notification.putBoolean("isObserveReceiveRevokeMessage",isObserveReceiveRevokeMessage);
+        if(messageId != null) {
+            notification.putString("messageId", messageId);
+        }
+
+        if(isObserveReceiveRevokeMessage != null) {
+            notification.putBoolean("isObserveReceiveRevokeMessage", isObserveReceiveRevokeMessage);
+        }
+
+        if(isObserveFriendRemovedMe != null){
+            notification.putBoolean("isObserveFriendRemovedMe",isObserveFriendRemovedMe);
+        }
 
         return notification;
     }

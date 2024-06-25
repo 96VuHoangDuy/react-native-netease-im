@@ -90,6 +90,8 @@ typedef void(^Errors)(id erro);
 -(void)localSessionList:(NSString *)sessionId sessionType:(NSString *)sessionType timeLong:(NSString *)timeLong direction:(NSString *)direction limit:(NSString *)limit asc:(BOOL)asc success:(Success)succe;
 //撤回消息
 -(void)revokeMessage:(NSString *)messageId success:(Success)succe Err:(Errors)err;
+
+-(void)sendCustomNotification:(NSDictionary *)dataDict toSessionId:(NSString *)toSessionId toSessionType:(NSString *)toSessionType success:(Success)succe Err:(Errors)err;
 //开始播放录音
 - (void)play:(NSString *)filepath isExternalSpeaker:(BOOL *)isExternalSpeaker;
 //停止播放

@@ -12,6 +12,7 @@ export enum NIMEventListenerEnum {
   observeDeleteMessage = "observeDeleteMessage",
   observeAttachmentProgress = "observeAttachmentProgress",
   observeOnKick = "observeOnKick",
+  observeCustomNotification = "observeCustomNotification",
 }
 
 export enum NIMAudioMsgStatusType {
