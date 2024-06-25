@@ -135,19 +135,20 @@
                 NIMMessage *revokedMessge = currentMessages[0];
                 
                 [[NIMSDK sharedSDK].conversationManager deleteMessage:revokedMessge];
-            
-                [NIMModel initShareMD].customNotification = notiDict;
             }
                 break;
-            case 2://拆红包消息
-            {
-                [self saveTheRedPacketOpenMsg:[notiDict objectForKey:@"data"] andTime:timestamp];
-            }
+            case 2:
+                break;
+            case 3://拆红包消息
+//            {
+//                [self saveTheRedPacketOpenMsg:[notiDict objectForKey:@"data"] andTime:timestamp];
+//            }
                 break;
                 
             default:
                 break;
         }
+        [NIMModel initShareMD].customNotification = notiDict;
     }
 }
 //保存拆红包消息到本地

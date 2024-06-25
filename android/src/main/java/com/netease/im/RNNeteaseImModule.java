@@ -73,6 +73,7 @@ import com.netease.nimlib.sdk.msg.SystemMessageService;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
+import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
@@ -1686,6 +1687,22 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         return 0;
                     }
                 });
+                return 0;
+            }
+        });
+
+    }
+
+    @ReactMethod
+    public void sendCustomNotification(ReadableMap dataDict, String toSessionId,String toSessionType, final Promise promise) {
+        sessionService.sendCustomNotification(dataDict, toSessionId, toSessionType, new SessionService.OnCustomNotificationListener() {
+            @Override
+            public int onResult(int code, CustomNotification customNotification) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    promise.resolve("success");
+                }else {
+                    promise.reject("" + code, "fail");
+                }
                 return 0;
             }
         });

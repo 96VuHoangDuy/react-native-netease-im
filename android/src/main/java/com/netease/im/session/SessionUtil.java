@@ -157,21 +157,23 @@ public class SessionUtil {
 //                sendRedPacketOpenLocal(id, getSessionType(sessionType), sendId, openId, hasRedPacket, serialNo, t);
 
                 Integer customNotificationType = data.getInteger("type");
-                Log.d("customNotificationType",String.valueOf(customNotificationType));
 
-                if(customNotificationType == 1) {
-                    String messageId = data.getString("messageId");
-                    SessionService.getInstance().queryMessage(messageId, new SessionService.OnMessageQueryListener() {
-                        @Override
-                        public int onResult(int code, IMMessage message) {
-                            Log.d("message-->",String.valueOf(message));
+                switch (customNotificationType){
+                    case 1:
+                        String messageId = data.getString("messageId");
+                        SessionService.getInstance().queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+                            @Override
+                            public int onResult(int code, IMMessage message) {
 
-                            if (message != null) {
-                                SessionService.getInstance().deleteItem(message, true);
+                                if (message != null) {
+                                    SessionService.getInstance().deleteItem(message, true);
+                                }
+                                return 0;
                             }
-                            return 0;
-                        }
-                    });
+                        });
+                        break;
+                    case 2:
+                        break;
                 }
                 ReactCache.emit(ReactCache.observeCustomNotification, ReactCache.createCustomSystemMsg(customNotification));
             }
