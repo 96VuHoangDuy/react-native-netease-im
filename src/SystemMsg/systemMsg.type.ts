@@ -53,6 +53,6 @@ export interface ICustomNotificationDataDict {
   type: NIMCustomNotificationTypeEnum;
   sessionId: string;
   messageId?: string;
-  isObserveReceiveRevokeMessage?: string;
-  isObserveFriendRemovedMe?: string;
+  isObserveReceiveRevokeMessage?: boolean;
+  isObserveFriendRemovedMe?: boolean;
 }
