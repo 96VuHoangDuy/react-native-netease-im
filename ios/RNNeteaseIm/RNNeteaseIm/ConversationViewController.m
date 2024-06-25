@@ -572,6 +572,11 @@
     NSString *mediaCoverPath = [self moveFiletoSessionDir:message isThumb:@1];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
+    
+    if ([message.remoteExt objectForKey:@"parentId"] != nil) {
+        [imgObj setObject:[message.remoteExt objectForKey:@"parentId"] forKey:@"parentId"];
+    }
+
     if ([downloadAttStatus length]) {
         [imgObj setObject:downloadAttStatus forKey:@"downloadAttStatus"];
     }
@@ -665,6 +670,11 @@
     NSString *mediaThumbPath = [self moveFiletoSessionDir:message isThumb:@1];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
+    
+    if ([message.remoteExt objectForKey:@"parentId"] != nil) {
+        [videoObj setObject:[message.remoteExt objectForKey:@"parentId"] forKey:@"parentId"];
+    }
+    
     if ([downloadAttStatus length]) {
         [videoObj setObject:downloadAttStatus forKey:@"downloadAttStatus"];
     }
@@ -1324,16 +1334,38 @@
 }
 
 //发送图片
--(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality {
+-(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality parentId:(nullable NSString *)parentId {
     UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
     NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session isHighQuality:isHighQuality senderName:_myUserName];
+    if (parentId != nil) {
+        message.remoteExt = @{@"parentId": parentId};
+    }
 //    NIMMessage *message = [NIMMessageMaker msgWithImagePath:path];
     if (isCustomerService || [self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
 
--(void) sendMultiMediaMessage:(NSArray *)listMedia isCustomerService:(BOOL *)isCustomerService success:(Success)succes error:(Errors)error {
+-(void) sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isCustomerService:(BOOL *)isCustomerService success:(Success)succes error:(Errors)error {
+    if (parentId != nil) {
+        NIMMessage *message = [[NIMMessage alloc] init];
+        message.text    = parentId;
+        message.localExt = @{@"isLocalMsg": @YES, @"parentMediaId": parentId };
+        NIMMessageSetting *seting = [[NIMMessageSetting alloc]init];
+        seting.apnsEnabled = NO;
+        seting.shouldBeCounted = NO;
+        message.setting = seting;
+        
+        [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:^(NSError * _Nullable error) {
+            if (error != nil) {
+    //            err(error);s
+                return;
+            }
+            
+    //        success(@"success");
+        }];
+    }
+    
     for (NSDictionary *media in listMedia) {
         NSString *mediaType = [media objectForKey:@"type"];
         if (mediaType == nil || (![mediaType isEqual:@"image"] && ![mediaType isEqual:@"video"])) {
@@ -1350,18 +1382,18 @@
         if ([mediaType isEqual:@"image"]) {
             BOOL isHighQuality = [mediaData objectForKey:@"isHighQuality"];
             
-            [self sendImageMessages:[mediaData objectForKey:@"file"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService isHighQuality:&isHighQuality];
+            [self sendImageMessages:[mediaData objectForKey:@"file"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService isHighQuality:&isHighQuality parentId:parentId];
             continue;
         }
         
-        [self sendVideoMessage:[mediaData objectForKey:@"file"] duration:[mediaData objectForKey:@"duration"] width:[mediaData objectForKey:@"width"] height:[mediaData objectForKey:@"height"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService];
+        [self sendVideoMessage:[mediaData objectForKey:@"file"] duration:[mediaData objectForKey:@"duration"] width:[mediaData objectForKey:@"width"] height:[mediaData objectForKey:@"height"] displayName:[mediaData objectForKey:@"displayName"] isCustomerService:isCustomerService parentId:parentId];
     }
     
     succes(@"success");
 }
 
 //发送视频
--(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService{
+-(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService parentId:(nullable NSString *)parentId {
 //    __weak typeof(self) weakSelf = self;
 //    [self.mediaFetcher fetchMediaFromCamera:^(NSString *path, UIImage *image) {
         NIMMessage *message;
@@ -1371,11 +1403,17 @@
     if ([path hasPrefix:@"file:///private"]) {
         path = [path stringByReplacingOccurrencesOfString:@"file:///private" withString:@""];
     }
-            message = [NIMMessageMaker msgWithVideo:path andeSession:self._session senderName:_myUserName];
+    
+    message = [NIMMessageMaker msgWithVideo:path andeSession:self._session senderName:_myUserName];
 //        }
-        if (isCustomerService || [self isFriendToSendMessage:message]) {
-            [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
-        }
+    
+    if (parentId != nil) {
+        message.remoteExt = @{@"parentId": parentId};
+    }
+    
+    if (isCustomerService || [self isFriendToSendMessage:message]) {
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+    }
 //    }];
 }
 
@@ -1575,6 +1613,53 @@
     }];
 }
 
+-(void)handleInComeMultiMediaMessage:(NIMMessage *)message callFrom:(NSString *)callFrom
+{    
+    if ([message.session.sessionId isEqual:self._session.sessionId] && [callFrom isEqual:@"NIMViewController"]) return;
+    
+    if ([message.remoteExt objectForKey:@"parentId"] == nil) return;
+    
+    NSString *parentMediaId = [message.remoteExt objectForKey:@"parentId"];
+    NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
+    option.searchContent = parentMediaId;
+//    NIMSession *session = [NIMSession session:message.session type:message.session];
+
+    
+    [[NIMSDK sharedSDK].conversationManager searchMessages:message.session option:option result:^(NSError * _Nullable error, NSArray<NIMMessage *> * __nullable messages) {        
+        BOOL isParentMessageExits = NO;
+        
+        for (NIMMessage *messageResult in messages) {
+            if ([messageResult.text isEqual:parentMediaId]) {
+                isParentMessageExits = YES;
+                break;
+            }
+        }
+        if (isParentMessageExits == YES) return;
+        NIMMessage *localMessage = [[NIMMessage alloc] init];
+        localMessage.text    = parentMediaId;
+        localMessage.timestamp = message.timestamp - 1;
+        localMessage.localExt = @{@"isLocalMsg": @YES, @"parentMediaId": parentMediaId };
+        NIMMessageSetting *seting = [[NIMMessageSetting alloc]init];
+        seting.apnsEnabled = NO;
+        seting.shouldBeCounted = NO;
+        localMessage.setting = seting;
+        
+        [[NIMSDK sharedSDK].conversationManager saveMessage:localMessage forSession:message.session completion:^(NSError * _Nullable error) {
+            if (error != nil) {
+                NSLog(@"?????? %@", error);
+                return;
+            }
+            
+            [[NIMSDK sharedSDK].conversationManager updateMessage:localMessage forSession:message.session completion:^(NSError * _Nullable error) {
+                if (error != nil) {
+                    NSLog(@"?????? %@", error);
+                    return;
+                }
+            }];
+        }];
+    }];
+}
+
 #pragma mark - NIMChatManagerDelegate
 
 - (void)willSendMessage:(NIMMessage *)message
@@ -1632,6 +1717,7 @@
     NIMMessage *message = messages.firstObject;
     
     NSLog(@"onRecvMessages >>>>> %@", message);
+    [self handleInComeMultiMediaMessage: message callFrom:@""];
     
     if ([message.session.sessionId isEqualToString:_sessionID]) {
         [self refrashMessage:message From:@"receive" ];
@@ -1664,8 +1750,6 @@
 
 - (void)onRecvMessageReceipts:(NSArray<NIMMessageReceipt *> *)receipts
 {
-    NSMutableArray *messageIds = [NSMutableArray array];
-
     for (NIMMessageReceipt *receipt in receipts) {
         NSArray *messageArr =  [[[NIMSDK sharedSDK] conversationManager]messagesInSession:receipt.session message:nil limit: 1];
         
@@ -1914,6 +1998,12 @@
         [fromUser setObject:[NSString stringWithFormat:@"%@", isCsr ? @"true" : @"false"] forKey:@"isCsr"];
     }
     
+    NSDictionary *localExt = message.localExt;
+            
+    if (localExt != nil) {
+        [dic2 setObject:localExt forKey:@"localExt"];
+    }
+    
     [fromUser setObject:[NSString stringWithFormat:@"%@",user.userInfo.avatarUrl] forKey:@"avatar"];
     NSString *strAlias = user.alias;
     if (strAlias.length) {
@@ -1989,7 +2079,7 @@
         }
     }else if (message.messageType  == NIMMessageTypeImage) {
         [dic2 setObject:@"image" forKey:@"msgType"];
-
+        
         [dic2 setObject:[self makeExtendImage:message] forKey:@"extend"];
     }
     else if (message.messageType  == NIMMessageTypeFile) {
@@ -2427,6 +2517,7 @@
 
 -(void)stopSession;
 {
+    self._session = nil;
     [[NIMSDK sharedSDK].chatManager removeDelegate:self];
     [[NIMSDK sharedSDK].conversationManager removeDelegate:self];
     [[NIMSDK sharedSDK].systemNotificationManager removeDelegate:self];

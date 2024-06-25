@@ -7,6 +7,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.netease.im.RNNeteaseImModule;
 import com.netease.im.ReactCache;
+import com.netease.im.session.SessionService;
 import com.netease.im.session.extension.AccountNoticeAttachment;
 import com.netease.im.session.extension.CustomAttachment;
 import com.netease.im.session.extension.CustomAttachmentType;
@@ -17,6 +18,7 @@ import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.NIMSDK;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
+import com.netease.nimlib.sdk.ResponseCode;
 import com.netease.nimlib.sdk.StatusCode;
 import com.netease.nimlib.sdk.auth.AuthServiceObserver;
 import com.netease.nimlib.sdk.auth.constant.LoginSyncStatus;
@@ -24,6 +26,7 @@ import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
 import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
+import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.NotificationType;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
@@ -160,7 +163,7 @@ public class RecentContactObserver {
 
         }
 
-        refreshMessages(true);
+        refreshMessagesRecentContact(true);
     }
 
     void doAddDeleteQuitTeamMessage(final RecentContact r, boolean isDelete) {
@@ -205,7 +208,56 @@ public class RecentContactObserver {
 
     public void refreshMessages(boolean unreadChanged) {
         sortRecentContacts(items);
+        String lastMessageId = items.get(0).getRecentMessageId();
+        if (lastMessageId != null || !lastMessageId.isEmpty() ) {
+            List<String> messageIds = new ArrayList<String>();
+            messageIds.add(lastMessageId);
+            NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+                @Override
+                public void onResult(int c, List<IMMessage> r, Throwable exception) {
 
+                    if (c == ResponseCode.RES_SUCCESS && r.size() > 0) {
+                        IMMessage msg = r.get(0);
+                        SessionService.getInstance().handleInComeMultiMediaMessage(msg, "");
+                    }
+                }
+            });
+
+        }
+
+        if (unreadChanged) {
+
+            for (RecentContact r : items) {
+                unreadNum += r.getUnreadCount();
+            }
+
+            unreadNum = NIMClient.getService(MsgService.class).getTotalUnreadCount();
+
+//            if (callback != null) {
+//                callback.onUnreadCountChange(unreadNum);
+//            }
+        }
+        ReactCache.emit(ReactCache.observeRecentContact, ReactCache.createRecentList(items, unreadNum));
+    }
+
+    public void refreshMessagesRecentContact(boolean unreadChanged) {
+        sortRecentContacts(items);
+        String lastMessageId = items.get(0).getRecentMessageId();
+        if (lastMessageId != null || !lastMessageId.isEmpty() ) {
+            List<String> messageIds = new ArrayList<String>();
+            messageIds.add(lastMessageId);
+            NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+                @Override
+                public void onResult(int c, List<IMMessage> r, Throwable exception) {
+
+                    if (c == ResponseCode.RES_SUCCESS && r.size() > 0) {
+                        IMMessage msg = r.get(0);
+                        SessionService.getInstance().handleInComeMultiMediaMessage(msg, "NIMViewController");
+                    }
+                }
+            });
+
+        }
 
         if (unreadChanged) {
 

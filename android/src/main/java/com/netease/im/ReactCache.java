@@ -251,6 +251,12 @@ public class ReactCache {
                             if (notificationExtend != null) {
                                 localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
                             }
+
+                            String parentMediaId = (String) messageLocalExt.get("parentMediaId");
+
+                            if (parentMediaId != null) {
+                                localExt.putString("parentMediaId", parentMediaId);
+                            }
                         }
                     }
 
@@ -1368,6 +1374,11 @@ public class ReactCache {
             Boolean isFilePathDeleted = false;
             Log.d("videoAttachment.", videoAttachment.getPath() + "");
 
+            Map<String, Object> remoteExtension = item.getRemoteExtension();
+            if (remoteExtension != null && remoteExtension.containsKey("parentId") && remoteExtension.get("parentId") != null) {
+                videoDic.putString("parentId", (String) remoteExtension.get("parentId"));
+            }
+
             if (localExtension.get("isReplacePathSuccess").equals(true) && videoAttachment.getPath() == null) {
                 videoDic.putBoolean("isFilePathDeleted", true);
                 isFilePathDeleted = true;
@@ -1445,6 +1456,7 @@ public class ReactCache {
             ImageAttachment imageAttachment = (ImageAttachment) attachment;
 
             Map<String, Object> localExtension = item.getLocalExtension();
+
             imageObj.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
             imageObj.putBoolean("needRefreshMessage", false);
 
@@ -1452,6 +1464,11 @@ public class ReactCache {
             Boolean isFileDownloading = true;
             Log.d("imageAttachment", imageAttachment.getPath() + "");
             Log.d("localExtension.get()", localExtension.get("isReplacePathSuccess") + "");
+
+            Map<String, Object> remoteExtension = item.getRemoteExtension();
+            if (remoteExtension != null && remoteExtension.containsKey("parentId") && remoteExtension.get("parentId") != null) {
+                imageObj.putString("parentId", (String) remoteExtension.get("parentId"));
+            }
 
             if (localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {
                     imageObj.putBoolean("isFilePathDeleted", true);
@@ -1643,6 +1660,11 @@ public class ReactCache {
             String notificationType = (String) messageLocalExt.get("notificationType");
             String birthdayMemberContactId = (String) messageLocalExt.get("birthdayMemberContactId");
             String birthdayMemberName = (String) messageLocalExt.get("birthdayMemberName");
+            String parentMediaId = (String) messageLocalExt.get("parentMediaId");
+
+            if (parentMediaId != null) {
+                localExt.putString("parentMediaId", parentMediaId);
+            }
 
             if (chatBotType != null) {
                 localExt.putString("chatBotType", chatBotType);
@@ -1693,9 +1715,9 @@ public class ReactCache {
         if (item.getMsgType() == MsgTypeEnum.custom) {
             itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(), (CustomAttachment) item.getAttachment()));
         } else {
-            if (item.getRemoteExtension() != null) {
-                Map<String, Object> extensionMsg = item.getRemoteExtension();
+            Map<String, Object> extensionMsg = item.getRemoteExtension();
 
+            if (extensionMsg != null && extensionMsg.containsKey("extendType")) {
                 if (extensionMsg.containsKey("extendType")) {
                     String extendType = extensionMsg.get("extendType").toString();
                     if (extendType.equals("forwardMultipleText")) {

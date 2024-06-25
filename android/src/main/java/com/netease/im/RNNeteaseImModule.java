@@ -1389,7 +1389,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void sendImageMessage(String file, String displayName, boolean isCustomerService, boolean isHighQuality, final Promise promise) {
         try {
-            sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, new SessionService.OnSendMessageListener() {
+            sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1464,7 +1464,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService, final Promise promise) {
         try {
-            sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, new SessionService.OnSendMessageListener() {
+            sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1656,8 +1656,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendMultiMediaMessage(ReadableArray listMedia, Boolean isCustomerService, final Promise promise) {
-        sessionService.sendMultiMediaMessage(listMedia, isCustomerService, promise);
+    public void sendMultiMediaMessage(ReadableArray listMedia, String parentId, Boolean isCustomerService, final Promise promise) {
+        sessionService.sendMultiMediaMessage(listMedia, isCustomerService, parentId, promise);
     }
 
     /**

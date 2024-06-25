@@ -12,6 +12,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.MapBuilder;
 import com.netease.im.IMApplication;
@@ -69,6 +70,7 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MemberPushOption;
 import com.netease.nimlib.sdk.msg.model.MessageReceipt;
+import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
 import com.netease.nimlib.sdk.msg.model.NIMMessage;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
@@ -100,6 +102,7 @@ import androidx.annotation.NonNull;
 
 import static com.netease.im.ReactCache.setLocalExtension;
 import static com.netease.nimlib.sdk.NIMClient.getService;
+import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
 
 /**
  * Created by dowin on 2017/5/10.
@@ -201,7 +204,6 @@ public class SessionService {
             }
         }
         refreshMessageList(r);
-
     }
 
     boolean showMsg(IMMessage m) {
@@ -333,6 +335,52 @@ public class SessionService {
         return lastMessage;
     }
 
+    public void handleInComeMultiMediaMessage(IMMessage message, String callFrom) {
+        if (callFrom.equals("NIMViewController") && message.getSessionId().equals(sessionId)) return;
+
+        Map<String, Object> msgLocalExt = message.getRemoteExtension();
+
+        if (msgLocalExt == null || (msgLocalExt != null && !msgLocalExt.containsKey("parentId"))) return;
+
+        String parentMediaId = (String) msgLocalExt.get("parentId");
+        MsgSearchOption option = new MsgSearchOption();
+        option.setSearchContent(parentMediaId);
+
+        RequestCallbackWrapper callback = new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                Boolean isParentMessageExits = false;
+
+                for (IMMessage  messageResult: result) {
+                    if (messageResult.getContent().equals(parentMediaId)) {
+                        isParentMessageExits = true;
+                        break;
+                    }
+                }
+                if (isParentMessageExits) return;
+
+                IMMessage localMessage = MessageBuilder.createTextMessage(message.getSessionId(), message.getSessionType(), parentMediaId);
+                Map<String, Object> localExt = MapBuilder.newHashMap();
+                localExt.put("isLocalMsg", true);
+                localExt.put("parentMediaId", parentMediaId);
+                localMessage.setLocalExtension(localExt);
+                localMessage.setFromAccount(message.getFromAccount());
+                localMessage.setDirect(message.getDirect());
+
+                CustomMessageConfig config = new CustomMessageConfig();
+                config.enablePush = false;
+                config.enableUnreadCount = false;
+                localMessage.setConfig(config);
+                NIMSDK.getMsgService().insertLocalMessage(localMessage, message.getSessionId());
+
+                NIMSDK.getMsgService().updateIMMessage(localMessage);
+            }
+        };
+
+        NIMClient.getService(MsgService.class).searchMessage(sessionTypeEnum, message.getSessionId(), option)
+                .setCallback(callback);
+    }
+
     private boolean sendReceiptCheck(final IMMessage msg) {
         if (msg == null || msg.getDirect() != MsgDirectionEnum.In ||
                 msg.getMsgType() == MsgTypeEnum.tip || msg.getMsgType() == MsgTypeEnum.notification) {
@@ -372,6 +420,7 @@ public class SessionService {
             }
 
             for (IMMessage message : messages) {
+                handleInComeMultiMediaMessage(message, "");
                 RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(message.getSessionId(), message.getSessionType());
 
                 if (recent != null) {
@@ -479,9 +528,9 @@ public class SessionService {
     MessageListPanelHelper.LocalMessageObserver incomingLocalMessageObserver = new MessageListPanelHelper.LocalMessageObserver() {
         @Override
         public void onAddMessage(IMMessage message) {
-            if (message == null || !sessionId.equals(message.getSessionId())) {
-                return;
-            }
+           if (message == null || !sessionId.equals(message.getSessionId())) {
+               return;
+           }
 
             onMsgSend(message);
         }
@@ -1051,7 +1100,17 @@ public class SessionService {
         }
     }
 
-    public void sendMultiMediaMessage(ReadableArray data,Boolean isCustomerService, final Promise promise) {
+    public void sendMultiMediaMessage(ReadableArray data,Boolean isCustomerService, String parentId, final Promise promise) {
+        if (parentId != null) {
+            IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, parentId);
+            Map<String, Object> localExt = MapBuilder.newHashMap();
+            localExt.put("isLocalMsg", true);
+            localExt.put("parentMediaId", parentId);
+            message.setLocalExtension(localExt);
+
+            NIMClient.getService(MsgService.class).saveMessageToLocalEx(message, true, message.getTime());
+        }
+
         List<Object> listMedia = MapUtil.readableArrayToArray(data);
         for (Object dataMedia : listMedia) {
             Map<String, Object> media = (Map<String, Object>) dataMedia;
@@ -1084,7 +1143,7 @@ public class SessionService {
                     isHighQuality = false;
                 }
 
-                sendImageMessage(file, displayName, isCustomerService, isHighQuality, null);
+                sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId, null);
                 continue;
             }
 
@@ -1126,13 +1185,13 @@ public class SessionService {
             }
 
 
-            sendVideoMessage(file, duration, width, height, displayName, isCustomerService, null);
+            sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, null);
         }
 
         promise.resolve("success");
     }
 
-    public void sendImageMessage(String file, String displayName, boolean isCustomerService,boolean isHighQuality, OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessage(String file, String displayName, boolean isCustomerService,boolean isHighQuality, String parentId, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
@@ -1142,6 +1201,12 @@ public class SessionService {
         }
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
         IMMessage message = MessageBuilder.createImageMessage(sessionId, sessionTypeEnum, f, TextUtils.isEmpty(displayName) ? f.getName() : displayName);
+        if (parentId != null) {
+            Map<String, Object> remoteExt = MapBuilder.newHashMap();
+            remoteExt.put("parentId", parentId);
+            message.setRemoteExtension(remoteExt);
+        }
+
         sendMessageSelf(message, onSendMessageListener, false,isCustomerService);
     }
 
@@ -1165,7 +1230,7 @@ public class SessionService {
 //        long duration = mediaPlayer == null ? 0 : mediaPlayer.getDuration();
 //        int height = mediaPlayer == null ? 0 : mediaPlayer.getVideoHeight();
 //        int width = mediaPlayer == null ? 0 : mediaPlayer.getVideoWidth();
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService,String parentId,  OnSendMessageListener onSendMessageListener) {
 
 //        String filename = md5 + "." + FileUtil.getExtensionName(file);
         file = Uri.parse(file).getPath();
@@ -1178,6 +1243,13 @@ public class SessionService {
             e.printStackTrace();
         }
         IMMessage message = MessageBuilder.createVideoMessage(sessionId, sessionTypeEnum, f, durationL, width, height, md5);
+
+        if (parentId != null) {
+            Map<String, Object> remoteExt = MapBuilder.newHashMap();
+            remoteExt.put("parentId", parentId);
+            message.setRemoteExtension(remoteExt);
+        }
+
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
     }
 

@@ -487,8 +487,8 @@ RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString 
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", url);
 }
 
-RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia isCustomerService:isCustomerService success:^(id params) {
+RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia parentId:parentId isCustomerService:isCustomerService success:^(id params) {
         resolve(params);
     } error:^(id err) {
         reject(@"-1", err, nil);
@@ -497,7 +497,7 @@ RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia isCustomerService:(
 
 //发送图片消息
 RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality) {
-    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality];
+    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality parentId:nil];
 }
 
 RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
@@ -551,7 +551,7 @@ RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId
 
 //发送视频消息
 RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
-    [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService];
+    [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService parentId:nil];
 }
 
 //

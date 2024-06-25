@@ -162,6 +162,8 @@
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recentSession];
     }
     
+    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
+    
     [self getResouces];
 }
 
@@ -180,6 +182,9 @@
     // }
     
     // [self setLastMessageId:recentSession.lastMessage.messageId];
+
+    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
+
     [self getResouces];
 }
 //删除所有会话回调
