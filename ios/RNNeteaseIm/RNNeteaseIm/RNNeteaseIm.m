@@ -341,8 +341,8 @@ RCT_EXPORT_METHOD(getMessageById:(nonnull NSString *)sessionId sessionType:(nonn
 }
 
 //search local Messages in session
-RCT_EXPORT_METHOD(searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ConversationViewController initWithConversationViewController] searchMessagesinCurrentSession:keyWords anchorId:anchorId limit:limit messageType:messageType direction:direction success:^(id param) {
+RCT_EXPORT_METHOD(searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction messageSubTypes:(NSArray *)messageSubTypes resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] searchMessagesinCurrentSession:keyWords anchorId:anchorId limit:limit messageType:messageType direction:direction messageSubTypes:messageSubTypes success:^(id param) {
         NSLog(@"paramparamparamparam %@", param);
         resolve(param);
     } err:^(id erro) {
@@ -481,8 +481,8 @@ RCT_EXPORT_METHOD(clearMessage:(nonnull  NSString *)sessionId sessionId:(nonnull
     [[ConversationViewController initWithConversationViewController] clearMsg:sessionId type:type];
 }
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
-RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds isCustomerService:(BOOL *)isCustomerService) {
-    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds isCustomerService:isCustomerService];
+RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds isCustomerService:(BOOL *)isCustomerService messageSubType:(NSInteger )messageSubType) {
+    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds isCustomerService:isCustomerService messageSubType:messageSubType];
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", content);
 }
 

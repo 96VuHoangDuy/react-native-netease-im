@@ -1017,9 +1017,12 @@ public class SessionService {
     /**
      * @param content
      */
-    public void sendTextMessage(String content, List<String> selectedMembers, Boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
+    public void sendTextMessage(String content, List<String> selectedMembers, Boolean isCustomerService, Integer messageSubType,OnSendMessageListener onSendMessageListener) {
 
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
+        if (!messageSubType.equals(0)) {
+            message.setSubtype(messageSubType);
+        }
 
         if (selectedMembers != null && !selectedMembers.isEmpty()) {
             MemberPushOption option = createMemPushOption(selectedMembers, message);

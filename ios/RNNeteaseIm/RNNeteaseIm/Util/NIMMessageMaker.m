@@ -14,11 +14,15 @@
 
 @implementation NIMMessageMaker
 
-+ (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName
++ (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName messageSubType:(NSInteger)messageSubType
 {
     NIMMessage *message = [[NIMMessage alloc] init];
     message.text    = text;
     message.apnsContent = text;
+    if (messageSubType != 0) {
+        message.messageSubType = messageSubType;
+    }
+    
     if (members.count) {
         NIMMessageApnsMemberOption *apnsMemberOption = [[NIMMessageApnsMemberOption alloc]init];
         apnsMemberOption.userIds = members;

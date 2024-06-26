@@ -13,6 +13,10 @@ export enum QueryDirectionType {
   OLD = 0,
 }
 
+export enum NIMMessageSubTypeEnum {
+  LINK = 1
+}
+
 export enum NIMSessionTypeEnum {
   None = 'None',
   P2P = '0',
