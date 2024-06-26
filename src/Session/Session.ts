@@ -255,9 +255,14 @@ class NimSession {
 
   sendMultiMediaMessage(
     listMedia: NIMMessageMedia[],
+    parentId: string,
     isCustomerService?: boolean
   ) {
-    return RNNeteaseIm.sendMultiMediaMessage(listMedia, isCustomerService);
+    return RNNeteaseIm.sendMultiMediaMessage(
+      listMedia,
+      parentId,
+      isCustomerService
+    );
   }
 
   /**

@@ -193,11 +193,11 @@ public class NimUserInfoCache {
     }
 
     public NimUserInfo getUserInfo(String account) {
-        if (!hasUser(account)) {
-            LogUtil.e(TAG, "getUserInfo null, account=" + account + ", account2UserMap=" + account2UserMap);
+//        if (!hasUser(account)) {
+//            LogUtil.e(TAG, "getUserInfo null, account=" + account + ", account2UserMap=" + account2UserMap);
             getUserInfoFromRemote(account, null);
-            return null;
-        }
+//            return null;
+//        }
 
         return account2UserMap.get(account);
     }
