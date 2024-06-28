@@ -1385,8 +1385,14 @@ public class ReactCache {
             Log.d("videoAttachment.", videoAttachment.getPath() + "");
 
             Map<String, Object> remoteExtension = item.getRemoteExtension();
-            if (remoteExtension != null && remoteExtension.containsKey("parentId") && remoteExtension.get("parentId") != null) {
-                videoDic.putString("parentId", (String) remoteExtension.get("parentId"));
+            if (remoteExtension != null) {
+                if (remoteExtension.containsKey("parentId") && remoteExtension.get("parentId") != null) {
+                    videoDic.putString("parentId", (String) remoteExtension.get("parentId"));
+                }
+
+                if (remoteExtension.containsKey("indexCount") && remoteExtension.get("indexCount") != null) {
+                    videoDic.putInt("indexCount", (int) remoteExtension.get("indexCount"));
+                }
             }
 
             if (localExtension.get("isReplacePathSuccess").equals(true) && videoAttachment.getPath() == null) {
@@ -1476,8 +1482,14 @@ public class ReactCache {
             Log.d("localExtension.get()", localExtension.get("isReplacePathSuccess") + "");
 
             Map<String, Object> remoteExtension = item.getRemoteExtension();
-            if (remoteExtension != null && remoteExtension.containsKey("parentId") && remoteExtension.get("parentId") != null) {
-                imageObj.putString("parentId", (String) remoteExtension.get("parentId"));
+            if (remoteExtension != null) {
+                if (remoteExtension.containsKey("parentId") && remoteExtension.get("parentId") != null) {
+                    imageObj.putString("parentId", (String) remoteExtension.get("parentId"));
+                }
+
+                if (remoteExtension.containsKey("indexCount") && remoteExtension.get("indexCount") != null) {
+                    imageObj.putInt("indexCount", (int) remoteExtension.get("indexCount"));
+                }
             }
 
             if (localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {

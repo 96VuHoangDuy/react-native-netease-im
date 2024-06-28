@@ -129,7 +129,14 @@ public class RecentContactObserver {
     }
 
     private void onRecentContactChanged(List<RecentContact> recentContacts) {
-        // Log.d("onRecentContactChanged", recentContacts.toString());
+         Log.d("onRecentContactChanged", recentContacts.get(0).getContent() + "...." +  NIMClient.getService(MsgService.class).queryLastMessage(recentContacts.get(0).getContactId(), recentContacts.get(0).getSessionType()));
+        RecentContact updatedRecent = recentContacts.get(0);
+        if (updatedRecent != null ) {
+            IMMessage msg = NIMClient.getService(MsgService.class).queryLastMessage(updatedRecent.getContactId(), updatedRecent.getSessionType());
+            if (msg != null) {
+                SessionService.getInstance().handleInComeMultiMediaMessage(msg, "NIMViewController");
+            }
+        }
         int index;
         for (RecentContact r : recentContacts) {
             index = -1;
@@ -163,6 +170,7 @@ public class RecentContactObserver {
 
         }
 
+        Log.d(">>>>>>>>>>>>>", "...");
         refreshMessagesRecentContact(true);
     }
 
@@ -218,7 +226,7 @@ public class RecentContactObserver {
 
                     if (c == ResponseCode.RES_SUCCESS && r.size() > 0) {
                         IMMessage msg = r.get(0);
-                        SessionService.getInstance().handleInComeMultiMediaMessage(msg, "");
+                       SessionService.getInstance().handleInComeMultiMediaMessage(msg, "");
                     }
                 }
             });
@@ -242,22 +250,6 @@ public class RecentContactObserver {
 
     public void refreshMessagesRecentContact(boolean unreadChanged) {
         sortRecentContacts(items);
-        String lastMessageId = items.get(0).getRecentMessageId();
-        if (lastMessageId != null || !lastMessageId.isEmpty() ) {
-            List<String> messageIds = new ArrayList<String>();
-            messageIds.add(lastMessageId);
-            NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
-                @Override
-                public void onResult(int c, List<IMMessage> r, Throwable exception) {
-
-                    if (c == ResponseCode.RES_SUCCESS && r.size() > 0) {
-                        IMMessage msg = r.get(0);
-                        SessionService.getInstance().handleInComeMultiMediaMessage(msg, "NIMViewController");
-                    }
-                }
-            });
-
-        }
 
         if (unreadChanged) {
 

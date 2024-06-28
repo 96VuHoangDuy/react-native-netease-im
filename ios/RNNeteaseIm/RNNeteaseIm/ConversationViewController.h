@@ -32,13 +32,13 @@ typedef void(^Errors)(id erro);
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService;
 -(void)sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets type:(nonnull NSNumber*)type success:(Success)succe Err:(Errors)err;
 //发送图片
--(void)sendImageMessages:(  NSString *)path displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality parentId:(nullable NSString *)parentId;
+-(void)sendImageMessages:(  NSString *)path displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber*)indexCount;
 //发送音频
 -(void)sendAudioMessage:(  NSString *)file duration:(  NSString *)duration isCustomerService:(BOOL *)isCustomerService;
 
 -(void)updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession isPinCode:(BOOL *)isPinCode success:(Success)success error:(Errors)error;
 //发送视频
--(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService parentId:(nullable NSString *)parentId;
+-(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber*)indexCount;
 //发送自定义消息
 -(void)sendCustomMessage:(NSInteger )custType data:(NSDictionary *)dataDict;
 
@@ -84,7 +84,7 @@ typedef void(^Errors)(id erro);
 //发送名片消息
 - (void)sendCardMessage:(NSString *)toSessionType sessionId:(NSString *)toSessionId name:(NSString *)name imgPath:(NSString *)strImgPath cardSessionId:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType;
 //转发消息
--(void)forwardMessage:(NSArray *)messageIds sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content success:(Success)succe;
+-(void)forwardMessage:(NSArray *)messageIds sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content parentId:(NSString *)parentId isHaveMultiMedia:(BOOL *)isHaveMultiMedia success:(Success)succe;
 
 //本地历史记录
 -(void)localSessionList:(NSString *)sessionId sessionType:(NSString *)sessionType timeLong:(NSString *)timeLong direction:(NSString *)direction limit:(NSString *)limit asc:(BOOL)asc success:(Success)succe;

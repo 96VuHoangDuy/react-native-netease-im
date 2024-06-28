@@ -1391,7 +1391,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void sendImageMessage(String file, String displayName, boolean isCustomerService, boolean isHighQuality, final Promise promise) {
         try {
-            sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, null, new SessionService.OnSendMessageListener() {
+            sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, null, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1466,7 +1466,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService, final Promise promise) {
         try {
-            sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, null, new SessionService.OnSendMessageListener() {
+            sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, null, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1627,8 +1627,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void sendForwardMessage(ReadableArray messageIds, final String sessionId, final String sessionType, final String content, final Promise promise) {
-        LogUtil.w(TAG, "sendForwardMessage" + content);
+    public void sendForwardMessage(ReadableArray messageIds, final String sessionId, final String sessionType, final String content, final String parentId, final boolean isHaveMultiMedia, final Promise promise) {
 
         ArrayList<String> msgIds = (ArrayList<String>) (ArrayList<?>) (messageIds.toArrayList());
         getMsgService().queryMessageListByUuid(msgIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
@@ -1640,7 +1639,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                     return;
                 }
 
-                int result = sessionService.sendForwardMessage(messageList, sessionId, sessionType, content, new SessionService.OnSendMessageListener() {
+                int result = sessionService.sendForwardMessage(messageList, sessionId, sessionType, content, parentId, isHaveMultiMedia, new SessionService.OnSendMessageListener() {
                     @Override
                     public int onResult(int code, IMMessage message) {
                         return 0;

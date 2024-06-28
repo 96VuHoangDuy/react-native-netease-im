@@ -411,8 +411,9 @@ RCT_EXPORT_METHOD(queryMessageListHistory:(nonnull  NSString *)sessionId session
     }];
 }
 //转发消息
-RCT_EXPORT_METHOD(sendForwardMessage:(nonnull NSArray *)messageIds sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(nonnull NSString *)content resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ConversationViewController initWithConversationViewController]forwardMessage:messageIds sessionId:sessionId sessionType:sessionType content:content success:^(id param) {
+RCT_EXPORT_METHOD(sendForwardMessage:(nonnull NSArray *)messageIds sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(nonnull NSString *)content parentId:(nonnull NSString *)parentId
+                  isHaveMultiMedia:(nonnull BOOL *)isHaveMultiMedia resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController]forwardMessage:messageIds sessionId:sessionId sessionType:sessionType content:content parentId:parentId isHaveMultiMedia:isHaveMultiMedia success:^(id param) {
         resolve(param);
     }];
 }
@@ -506,7 +507,7 @@ RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable 
 
 //发送图片消息
 RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality) {
-    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality parentId:nil];
+    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality parentId:nil indexCount:nil];
 }
 
 RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
@@ -560,7 +561,7 @@ RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId
 
 //发送视频消息
 RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
-    [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService parentId:nil];
+    [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService parentId:nil indexCount:nil];
 }
 
 //

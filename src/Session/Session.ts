@@ -255,14 +255,10 @@ class NimSession {
 
   sendMultiMediaMessage(
     listMedia: NIMMessageMedia[],
-    parentId: string,
+    parentId: string | null,
     isCustomerService?: boolean
   ) {
-    return RNNeteaseIm.sendMultiMediaMessage(
-      listMedia,
-      parentId,
-      isCustomerService
-    );
+    return RNNeteaseIm.sendMultiMediaMessage(listMedia, parentId, isCustomerService);
   }
 
   /**
@@ -477,13 +473,17 @@ class NimSession {
     messageIds: string[],
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
-    content: string
+    content: string,
+    parentId: string,
+    isHaveMultiMedia: boolean
   ) {
     return RNNeteaseIm.sendForwardMessage(
       messageIds,
       sessionId,
       sessionType,
-      content
+      content,
+      parentId,
+      isHaveMultiMedia
     );
   }
   /**
@@ -672,7 +672,9 @@ class NimSession {
   }
 
   sendCustomNotification(
-    dataDict: ICustomNotificationDataDict,
+    dataDict: {
+      data: ICustomNotificationDataDict
+    },
     toSessionId: string,
     toSessionType: NIMSessionTypeEnum
   ) {

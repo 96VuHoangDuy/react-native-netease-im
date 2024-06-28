@@ -29,11 +29,13 @@ export interface NIMMessageMediaVideoData {
 
 interface NIMMessageMediaImage {
   type: NIMMessageMediaType.IMAGE;
+  indexCount?: number;
   data: NIMMessageMediaImageData;
 }
 
 interface NIMMessageMediaVideo {
   type: NIMMessageMediaType.VIDEO;
+  indexCount?: number;
   data: NIMMessageMediaVideoData;
 }
 
@@ -118,6 +120,9 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   // Size Android
   imageWidth?: number;
   imageHeight?: number;
+
+  parentId?: string;
+  indexCount?: number;
 }
 
 export interface NIMMessage {
