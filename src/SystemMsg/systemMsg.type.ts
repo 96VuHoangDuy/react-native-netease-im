@@ -47,6 +47,7 @@ export interface NIMSystemMsgType {
 export enum NIMCustomNotificationTypeEnum {
   OBSERVE_RECEIVE_REVOKE_MESSAGE = 1,
   OBSERVE_RECEIVE_FRIEND_REMOVED_ME = 2,
+  OBSERVE_RECEIVE_REVOKE_FRIEND_REQUEST = 3
 }
 
 export interface ICustomNotificationDataDict {
@@ -55,4 +56,5 @@ export interface ICustomNotificationDataDict {
   messageId?: string;
   isObserveReceiveRevokeMessage?: boolean;
   isObserveFriendRemovedMe?: boolean;
+  isObserveFriendRevokedFriendRequest?:boolean
 }

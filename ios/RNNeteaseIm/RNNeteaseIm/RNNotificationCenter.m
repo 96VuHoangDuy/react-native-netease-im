@@ -139,11 +139,13 @@
                 break;
             case 2:
                 break;
-            case 3://拆红包消息
-//            {
-//                [self saveTheRedPacketOpenMsg:[notiDict objectForKey:@"data"] andTime:timestamp];
-//            }
+            case 3:
                 break;
+//            case 4://拆红包消息
+////            {
+////                [self saveTheRedPacketOpenMsg:[notiDict objectForKey:@"data"] andTime:timestamp];
+////            }
+//                break;
                 
             default:
                 break;

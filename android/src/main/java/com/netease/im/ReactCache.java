@@ -850,6 +850,7 @@ public class ReactCache {
         String messageId = data.getString("messageId");
         Boolean isObserveReceiveRevokeMessage = data.getBoolean("isObserveReceiveRevokeMessage");
         Boolean isObserveFriendRemovedMe = data.getBoolean("isObserveFriendRemovedMe");
+        Boolean isObserveFriendRevokedFriendRequest = data.getBoolean("isObserveFriendRevokedFriendRequest");
 
         notification.putInt("type",type);
         notification.putString("sessionId",sessionId);
@@ -863,6 +864,10 @@ public class ReactCache {
 
         if(isObserveFriendRemovedMe != null){
             notification.putBoolean("isObserveFriendRemovedMe",isObserveFriendRemovedMe);
+        }
+
+        if(isObserveFriendRevokedFriendRequest != null){
+            notification.putBoolean("isObserveFriendRevokedFriendRequest",isObserveFriendRevokedFriendRequest);
         }
 
         return notification;

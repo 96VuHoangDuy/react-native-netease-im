@@ -1673,7 +1673,6 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
             @Override
             public int onResult(int code, IMMessage message) {
-
                 sessionService.revokeMessage(message, new SessionService.OnSendMessageListener() {
                     @Override
                     public int onResult(int code, IMMessage message) {
