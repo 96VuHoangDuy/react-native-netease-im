@@ -149,7 +149,7 @@ class NimTeam {
     fields: NIMCreateTeamOptionsType,
     type: NIMCreateTeamTypeEnum,
     accounts: string[]
-  ): Promise<NIMResponseCode> {
+  ): Promise<{teamId: string}> {
     return RNNeteaseIm.createTeam(fields, type, accounts);
   }
   /**

@@ -1207,6 +1207,13 @@
     }];
 }
 
+-(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMMessage *message = [NIMMessageMaker msgWithText:msgContent andApnsMembers:@[] andeSession:session senderName:sessionName messageSubType:messageSubType];
+    
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+}
+
 //发送文字消息
 -(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService messageSubType:(NSInteger)messageSubType {
     NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session senderName:_myUserName messageSubType:messageSubType];
@@ -1311,6 +1318,15 @@
                                                 completion:completion];
 }
 
+-(void) sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMMessage *message = [NIMMessageMaker msgWithText:@"[动图]" andApnsMembers:@[] andeSession:session senderName:sessionName messageSubType:0];
+    NSDictionary  *remoteExt = @{@"extendType": @"gif", @"path": url, @"aspectRatio": aspectRatio};
+    message.remoteExt = remoteExt;
+    
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+ }
+
 //send gif message
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isCustomerService:(BOOL *)isCustomerService{
     NIMMessage *message = [NIMMessageMaker msgWithText:@"[动图]" andApnsMembers:members andeSession:self._session senderName:_myUserName messageSubType:0];
@@ -1343,6 +1359,14 @@
     } else {
         succe(@"200");
     }
+}
+
+-(void) sendImageMessageWithSession:(NSString *)path isHighQuality:(BOOL *)isHighQuality sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
+    UIImage *image = [[UIImage alloc] initWithContentsOfFile:path];
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMMessage *message = [NIMMessageMaker msgWithImage:image andeSession:session isHighQuality:isHighQuality senderName:sessionName];
+    
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
 }
 
 //发送图片
@@ -1411,6 +1435,17 @@
     succes(@"success");
 }
 
+-(void)sendVideoMessageWithSession:(NSString *)path sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
+    if ([path hasPrefix:@"file:///private"]) {
+        path = [path stringByReplacingOccurrencesOfString:@"file:///private" withString:@""];
+    }
+    
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMMessage *message = [NIMMessageMaker msgWithVideo:path andeSession:session senderName:sessionName];
+    
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+}
+
 //发送视频
 -(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber*)indexCount {
 //    __weak typeof(self) weakSelf = self;
@@ -1450,6 +1485,20 @@
 //    [dataDict setValue:strH forKey:@"Height"];
 //    [self sendCustomMessage:CustomMessgeTypeCustom data:dataDict];
 //}
+
+-(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName success:(Success)success err:(Errors)err {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMMessage *message = [NIMMessageMaker msgWithFile:path fileName:fileName andeSession:session senderName:sessionName];
+    
+    NSError *error;
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
+    if (error != nil) {
+        NSLog(@"sendFileMessageWithSession error: %@", error);
+        err(error);
+    } else {
+        success(@"200");
+    }
+}
 
 -(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName isCustomerService:(BOOL *)isCustomerService success:(Success)succe Err:(Errors)err{
     NIMMessage *message = [NIMMessageMaker msgWithFile:filePath fileName:fileName andeSession:self._session senderName:_myUserName];

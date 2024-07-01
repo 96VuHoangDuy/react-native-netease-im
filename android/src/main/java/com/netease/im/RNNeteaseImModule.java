@@ -1323,6 +1323,22 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
+    @ReactMethod
+    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType ,final Promise promise) {
+        try {
+
+            sessionService.sendTextMessageWithSession(content, sessionId, sessionType, sessionName, messageSubType, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send text message: " + e.getMessage());
+        }
+    }
+
     /*************Session send message 聊天***********/
     /***sessionId,   聊天对象的 ID，如果是单聊，为用户帐号，如果是群聊，为群组 ID***/
     /***   sessionType,   聊天类型，单聊或群组***/
@@ -1369,6 +1385,21 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void sendGifMessageWithSession(String url,String aspectRatio, String sessionId, String typeStr, String sessionName, final Promise promise) {
+        try {
+            sessionService.sendGifMessageWithSession(url, aspectRatio, sessionId, typeStr, sessionName, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send gif message: " + e.getMessage());
+        }
+    }
+
+    @ReactMethod
     public void sendGifMessage(String url, String aspectRatio, ReadableArray atUserIds, boolean isCustomerService, final Promise promise) {
         try {
             LogUtil.w(TAG, "sendTextMessage" + url);
@@ -1382,6 +1413,21 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             promise.resolve("success");
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send gif message: " + e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, final Promise promise) {
+        try {
+            sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send image message: " + e.getMessage());
         }
     }
 
@@ -1400,6 +1446,21 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             promise.resolve("success");
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send image message: " + e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void sendFileMessageWithSession(String filePath, String fileName,String sessionId, String sessionType, String sessionName, final Promise promise) {
+        try {
+            sessionService.sendFileMessageWitSession(filePath, fileName, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("200");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send file message: " + e.getMessage());
         }
     }
 
@@ -1467,6 +1528,21 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService, final Promise promise) {
         try {
             sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, null, null, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    return 0;
+                }
+            });
+            promise.resolve("success");
+        } catch (Exception e) {
+            promise.reject("SEND_ERROR", "Failed to send video message: " + e.getMessage());
+        }
+    }
+
+    @ReactMethod
+    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, final Promise promise) {
+        try {
+            sessionService.sendVideoMessageWithSession(file, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;

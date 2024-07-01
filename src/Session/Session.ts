@@ -684,6 +684,26 @@ class NimSession {
       toSessionType
     );
   }
+
+  sendFileMessageWithSession(path: string, fileName: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
+    return RNNeteaseIm.sendFileMessageWithSession(path, fileName, sessionId, sessionType, sessionName)
+  }
+
+  sendTextMessageWithSession(msgContent: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string, messageSubType?: NIMMessageSubTypeEnum) {
+    return RNNeteaseIm.sendTextMessageWithSession(msgContent, sessionId, sessionType, sessionName, messageSubType)
+  }
+
+  sendImageMessageWithSession(path: string,isHighQuality: boolean, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
+    return RNNeteaseIm.sendImageMessageWithSession(path, isHighQuality, sessionId, sessionType, sessionName)
+  }
+
+  sendVideoMessageWithSession(path: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
+    return RNNeteaseIm.sendVideoMessageWithSession(path, sessionId, sessionType, sessionName)
+  }
+
+  sendGifMessageWithSession(url: string,aspectRatio: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
+    return RNNeteaseIm.sendGifMessageWithSession(url, aspectRatio, sessionId, sessionType, sessionName)
+  }
 }
 
 export default new NimSession();

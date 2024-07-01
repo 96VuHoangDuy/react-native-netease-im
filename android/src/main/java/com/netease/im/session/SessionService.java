@@ -1017,6 +1017,15 @@ public class SessionService {
         NIMSDK.getMsgService().insertLocalMessage(message, sessionId);
     }
 
+    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName,  Integer messageSubType, OnSendMessageListener onSendMessageListener) {
+        SessionTypeEnum sessionT = SessionUtil.getSessionType(sessionType);
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionT, content);
+        if (!messageSubType.equals(0)) {
+            message.setSubtype(messageSubType);
+        }
+        sendMessageSelf(message, onSendMessageListener, false, false);
+    }
+
     /**
      * @param content
      */
@@ -1033,6 +1042,20 @@ public class SessionService {
             message.setMemberPushOption(option);
         }
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+    }
+
+    public void sendGifMessageWithSession(String url,String aspectRatio, String sessionId, String typeStr, String sessionName, OnSendMessageListener onSendMessageListener) {
+        SessionTypeEnum sessionType = SessionUtil.getSessionType(typeStr);
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, "[动图]");
+
+        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+        remoteExt.put("extendType", "gif");
+        remoteExt.put("path", url);
+        remoteExt.put("aspectRatio", aspectRatio);
+
+        message.setRemoteExtension(remoteExt);
+
+        sendMessageSelf(message,onSendMessageListener, false, false);
     }
 
     public void sendGifMessage(String url,String aspectRatio, List<String> selectedMembers, Boolean isCustomerService,OnSendMessageListener onSendMessageListener) {
@@ -1197,6 +1220,22 @@ public class SessionService {
         promise.resolve("success");
     }
 
+    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
+        file = Uri.parse(file).getPath();
+        File f = new File(file);
+        File temp = ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()), true);
+        if (temp != null) {
+            f = temp;
+        }
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        IMMessage message = MessageBuilder.createImageMessage(sessionId, sessionTypeEnum, f, TextUtils.isEmpty(fileName) ? f.getName() : fileName);
+        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+
+        message.setRemoteExtension(remoteExt);
+
+        sendMessageSelf(message, onSendMessageListener, false,false);
+    }
+
     public void sendImageMessage(String file, String displayName, boolean isCustomerService,boolean isHighQuality, String parentId,Integer indexCount, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
@@ -1221,6 +1260,15 @@ public class SessionService {
 
 
         sendMessageSelf(message, onSendMessageListener, false,isCustomerService);
+    }
+
+    public void sendFileMessageWitSession(String filePath, String fileName,String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
+        File file = new File(filePath);
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        IMMessage message = MessageBuilder.createFileMessage(sessionId, sessionTypeEnum, file, fileName);
+        message.setContent(fileName);
+
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
     public void sendFileMessage(String filePath, String fileName, boolean isCustomerService, OnSendMessageListener onSendMessageListener) {
@@ -1255,6 +1303,7 @@ public class SessionService {
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
+
         IMMessage message = MessageBuilder.createVideoMessage(sessionId, sessionTypeEnum, f, durationL, width, height, md5);
 
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
@@ -1270,6 +1319,43 @@ public class SessionService {
         message.setRemoteExtension(remoteExt);
 
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+    }
+
+    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
+        file = Uri.parse(file).getPath();
+        String md5 = MD5.getStreamMD5(file);
+        File f = new File(file);
+        long durationL = 0;
+        int width = 0;
+        int height = 0;
+        try {
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(file);
+            durationL = Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+            width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+            height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+            String metaRotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            int rotation = metaRotation == null ? 0 : Integer.parseInt(metaRotation);
+
+            if (rotation == 90 || rotation == 270) {
+                Integer widthTemp = width;
+                width = height;
+                height = widthTemp;
+            }
+
+            retriever.release();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        IMMessage message = MessageBuilder.createVideoMessage(sessionId, sessionTypeEnum, f, durationL, width, height, md5);
+
+        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+
+
+        message.setRemoteExtension(remoteExt);
+
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
     public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, OnSendMessageListener onSendMessageListener) {

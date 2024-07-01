@@ -386,6 +386,31 @@ RCT_EXPORT_METHOD(setAllread){
 RCT_EXPORT_METHOD(clearSystemMessages){
     [[NoticeViewController initWithNoticeViewController] deleAllNotic];
 }
+
+RCT_EXPORT_METHOD(sendFileMessageWithSession:(nonnull NSString *)path fileName:(nonnull NSString *)fileName sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendFileMessageWithSession:path fileName:fileName sessionId:sessionId sessionType:sessionType sessionName:sessionName success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(sendTextMessageWithSession:(nonnull NSString *)msgContent sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName messageSubType:(NSInteger)messageSubType) {
+    [[ConversationViewController initWithConversationViewController] sendTextMessageWithSession:msgContent sessionId:sessionId sessionType:sessionType sessionName:sessionName messageSubType:messageSubType];
+}
+
+RCT_EXPORT_METHOD(sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName) {
+    [[ConversationViewController initWithConversationViewController] sendGifMessageWithSession:url aspectRatio:aspectRatio sessionId:sessionId sessionType:sessionType sessionName:sessionName];
+}
+
+RCT_EXPORT_METHOD(sendImageMessageWithSession:(nonnull NSString *)path isHighQuality:(nonnull BOOL *)isHighQuality sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName) {
+    [[ConversationViewController initWithConversationViewController] sendImageMessageWithSession:path isHighQuality:isHighQuality sessionId:sessionId sessionType:sessionType sessionName:sessionName];
+}
+
+RCT_EXPORT_METHOD(sendVideoMessageWithSession:(nonnull NSString *)path sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName) {
+    [[ConversationViewController initWithConversationViewController] sendVideoMessageWithSession:path sessionId:sessionId sessionType:sessionType sessionName:sessionName];
+}
+
 //会话开始
 RCT_EXPORT_METHOD(startSession:(nonnull  NSString *)sessionId type:(nonnull  NSString *)type myUserName:(NSString *)myUserName myUserID:(NSString *)myUserID){
     [[ConversationViewController initWithConversationViewController]startSession:sessionId withType:type myUserName:myUserName myUserID:myUserID];
