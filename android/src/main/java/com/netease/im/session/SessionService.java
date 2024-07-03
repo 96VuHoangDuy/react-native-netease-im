@@ -1478,10 +1478,11 @@ public class SessionService {
         for (IMMessage _message : selectMessages) {
             Map<String, Object> remoteExt = _message.getRemoteExtension();
 
-            if (_message.getRemoteExtension() != null && _message.getRemoteExtension().containsKey("parentId")) {
+            if ((_message.getRemoteExtension() != null && _message.getRemoteExtension().containsKey("parentId")) || _message.getMsgType() == MsgTypeEnum.image
+            || _message.getMsgType() == MsgTypeEnum.video) {
                 if (isHaveMultiMedia) {
                     remoteExt.replace("parentId", parentId);
-                } else {
+                } else if (_message.getRemoteExtension() != null) {
                     remoteExt.remove(remoteExt.get("parentId"));
                 }
             }

@@ -2421,12 +2421,12 @@
     //    NIMMessage *message = currentMessage[0];
    
     for (NIMMessage *message in currentMessages) {
-        if ([message.remoteExt objectForKey:@"parentId"] != nil) {
+        if ([message.remoteExt objectForKey:@"parentId"] != nil || message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo) {
             NSMutableDictionary *msgRemoteExt = [[NSMutableDictionary alloc] initWithDictionary:message.remoteExt];
 
             if (isHaveMultiMedia) {
                 [msgRemoteExt setObject:parentId forKey:@"parentId"];
-            } else {
+            } else if ([message.remoteExt objectForKey:@"parentId"] != nil) {
                 [msgRemoteExt removeObjectForKey:@"parentId"];
             }
             
