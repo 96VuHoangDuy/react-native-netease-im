@@ -106,6 +106,14 @@
         }
     }
 }
+
+-(void)removeSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMDeleteMessagesOption *option = [[NIMDeleteMessagesOption alloc] init];
+    option.removeSession = YES;
+    [[NIMSDK sharedSDK].conversationManager deleteAllmessagesInSession:session option:option];
+}
+
 /*
 //登录失败后重新手动登录
 - (void)backLogin{
@@ -364,7 +372,7 @@
             if (recent.localExt) {
                 isHideSession = [recent.localExt objectForKey:@"isHideSession"];
             }
-            if (user.notifyForNewMsg == YES && !isHideSession) {
+            if (user.notifyForNewMsg == YES && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"]) {
                 allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
             }
             [dic setObject:strMute forKey:@"mute"];
@@ -657,7 +665,7 @@
             if (recent.localExt) {
                 isHideSession = [recent.localExt objectForKey:@"isHideSession"];
             }
-            if (user.notifyForNewMsg == YES && !isHideSession) {
+            if (user.notifyForNewMsg == YES && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"]) {
                 allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
             }
             [dic setObject:strMute forKey:@"mute"];

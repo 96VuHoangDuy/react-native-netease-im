@@ -14,7 +14,7 @@ export enum QueryDirectionType {
 }
 
 export enum NIMMessageSubTypeEnum {
-  LINK = 1
+  LINK = 1,
 }
 
 export enum NIMSessionTypeEnum {

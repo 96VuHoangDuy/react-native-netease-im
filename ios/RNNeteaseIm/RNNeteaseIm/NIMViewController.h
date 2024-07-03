@@ -23,6 +23,7 @@ typedef void(^ERROR)(NSString *error);
 -(void)deleteCurrentSession:(NSString *)recentContactId andback:(ERROR)error;
 //获取最近聊天列表回调
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err;
+-(void)removeSession:(NSString *)sessionId sessionType:(NSString *)sessionType;
 -(void)addDelegate;
 - (void)getResouces;
 

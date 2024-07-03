@@ -21,4 +21,6 @@ public interface CustomAttachmentType {
     String AccountNotice = "account_notice";//账户变动通知
     String Card = "card";//账户变动通知
 
+    String WARNING_BLOCK = "WARNING_BLOCK";
+    String WARNING_LOGIN = "WARNING_LOGIN";
 }

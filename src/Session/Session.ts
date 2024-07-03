@@ -60,6 +60,11 @@ class NimSession {
   deleteRecentContact(recentContactId: string) {
     return RNNeteaseIm.deleteRecentContact(recentContactId);
   }
+
+  removeSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.removeSession(sessionId, sessionType);
+  }
+
   /**
    * 进入聊天会话
    * @param sessionId

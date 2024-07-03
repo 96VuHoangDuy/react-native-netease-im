@@ -33,6 +33,8 @@ import com.netease.im.session.extension.DefaultCustomAttachment;
 import com.netease.im.session.extension.LinkUrlAttachment;
 import com.netease.im.session.extension.RedPacketAttachement;
 import com.netease.im.session.extension.RedPacketOpenAttachement;
+import com.netease.im.session.extension.WarningBlockAttachment;
+import com.netease.im.session.extension.WarningLoginAttachment;
 import com.netease.im.uikit.cache.FriendDataCache;
 import com.netease.im.uikit.cache.NimUserInfoCache;
 import com.netease.im.uikit.cache.TeamDataCache;
@@ -186,7 +188,6 @@ public class ReactCache {
         WritableArray array = Arguments.createArray();
         int unreadNumTotal = 0;
         if (recents != null && recents.size() > 0) {
-
             WritableMap map;
             for (RecentContact contact : recents) {
                 Boolean isMessageAfterRevoke = contact.getContent() == "" && contact.getFromAccount() == null && contact.getRecentMessageId() == "" && contact.getMsgType() == MsgTypeEnum.text;
@@ -269,7 +270,7 @@ public class ReactCache {
                     NimUserInfoCache nimUserInfoCache = NimUserInfoCache.getInstance();
                     imagePath = nimUserInfoCache.getAvatar(contactId);
                     Boolean isNeedMessageNotify = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
-                    if (isNeedMessageNotify == true && !isHideRecent) {
+                    if (isNeedMessageNotify == true && !isHideRecent && !contact.getContactId().equals("cmd10000")) {
                           unreadNumTotal += _unreadCount;
                     }
                     map.putString("mute", boolean2String(!isNeedMessageNotify));
@@ -438,6 +439,23 @@ public class ReactCache {
                 }
 //                map.putString("msgType", getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
                 if (contact.getMsgType() == MsgTypeEnum.custom) {
+                    if (contact.getContactId().equals("cmd10000") && lastMessage != null) {
+                        CustomAttachment customAttachment  = (CustomAttachment) lastMessage.getAttachment();
+
+                        if (customAttachment != null && customAttachment instanceof WarningBlockAttachment) {
+                            WritableMap extend = ((WarningBlockAttachment) customAttachment).getWritableMap();
+
+                            map.putMap(MESSAGE_EXTEND, extend);
+                        }
+
+                        if (customAttachment != null && customAttachment instanceof WarningLoginAttachment) {
+                            WritableMap extend = ((WarningLoginAttachment) customAttachment).getWritableMap();
+
+                            map.putMap(MESSAGE_EXTEND, extend);
+                        }
+                    }
+
+
                     map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), (CustomAttachment) contact.getAttachment()));
                 } else {
                     if (lastMessage != null && lastMessage.getRemoteExtension() != null) {
@@ -481,6 +499,7 @@ public class ReactCache {
                             }
                         } else {
                             map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
+                            map.putMap(MESSAGE_EXTEND, MapUtil.mapToReadableMap(extensionMsg));
                         }
                     } else {
                         map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));

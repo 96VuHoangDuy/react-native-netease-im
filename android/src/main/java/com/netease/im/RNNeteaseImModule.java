@@ -1933,6 +1933,16 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void removeSession(String sessionId, String sessionType, final Promise promise) {
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        RecentContact recentContact = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+        Log.e(TAG, "test =>>>>> remove session " + recentContact);
+        NIMClient.getService(MsgService.class).deleteRecentContact(recentContact);
+        NIMClient.getService(MsgService.class).clearChattingHistory(sessionId, sessionTypeEnum);
+        promise.resolve("success");
+    }
+
+    @ReactMethod
     public void getRecentContactList(final Promise promise) {
         NIMClient.getService(MsgService.class).queryRecentContacts()
                 .setCallback(new RequestCallbackWrapper<List<RecentContact>>() {

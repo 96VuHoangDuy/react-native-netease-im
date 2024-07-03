@@ -5,7 +5,6 @@ package com.netease.im;
  */
 
 public class MessageConstant {
-
     public class MsgType {
         public final static String TEXT = "text";
         public final static String VOICE = "voice";
@@ -147,5 +146,18 @@ public class MessageConstant {
         public final static String STATUS = "status";
         public final static String DB = "db";
         public final static String TIME = "time";
+    }
+
+    public static class WarningLogin {
+        public final static String DEVICE_ID = "deviceId";
+        public final static String DEVICE_NAME = "deviceName";
+        public final static String TIME_LOGIN = "timeLogin";
+        public final static String WARINING_TYPE = "type";
+    }
+
+    public static class WarningBlock {
+        public final static String BLOCK_TYPE = "typeBlock";
+        public final static String DAYS_BLOCK = "dayBlocks";
+        public final static String DAY_EXPIRED_BLOCK = "dayExpiredBlock";
     }
 }

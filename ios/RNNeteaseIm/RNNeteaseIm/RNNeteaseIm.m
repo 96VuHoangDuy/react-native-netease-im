@@ -179,6 +179,10 @@ RCT_EXPORT_METHOD(deleteRecentContact:(nonnull NSString * )recentContactId resol
         }
     }];
 }
+
+RCT_EXPORT_METHOD(removeSession:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType) {
+    [[NIMViewController initWithController] removeSession:sessionId sessionType:sessionType];
+}
 //回调最近聊天列表
 RCT_EXPORT_METHOD(getRecentContactList:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
