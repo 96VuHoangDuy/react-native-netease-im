@@ -440,11 +440,16 @@ RCT_EXPORT_METHOD(queryMessageListHistory:(nonnull  NSString *)sessionId session
     }];
 }
 //转发消息
-RCT_EXPORT_METHOD(sendForwardMessage:(nonnull NSArray *)messageIds sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(nonnull NSString *)content parentId:(nonnull NSString *)parentId
-                  isHaveMultiMedia:(nonnull BOOL *)isHaveMultiMedia resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ConversationViewController initWithConversationViewController]forwardMessage:messageIds sessionId:sessionId sessionType:sessionType content:content parentId:parentId isHaveMultiMedia:isHaveMultiMedia success:^(id param) {
-        resolve(param);
-    }];
+RCT_EXPORT_METHOD(sendForwardMessage:(nonnull NSArray *)messageIds sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(nonnull NSString *)content parentId:(nonnull NSString *)parentId isHaveMultiMedia:(BOOL *)isHaveMultiMedia resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+   
+    @try {
+        [[ConversationViewController initWithConversationViewController]forwardMessage:messageIds sessionId:sessionId sessionType:sessionType content:content parentId:parentId isHaveMultiMedia:isHaveMultiMedia success:^(id param) {
+            resolve(param);
+        }];
+       // Process the arguments and send the message
+     } @catch (NSException *exception) {
+       NSLog(@"Error: %@", exception.reason);
+     }
 }
 //撤回消息
 RCT_EXPORT_METHOD(revokeMessage:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
