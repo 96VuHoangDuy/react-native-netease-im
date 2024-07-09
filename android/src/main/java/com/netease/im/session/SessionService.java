@@ -375,7 +375,7 @@ public class SessionService {
                 config.enablePush = false;
                 config.enableUnreadCount = false;
                 localMessage.setConfig(config);
-                NIMSDK.getMsgService().saveMessageToLocal(localMessage, false);
+                NIMSDK.getMsgService().saveMessageToLocal(localMessage, true);
 
 //                NIMSDK.getMsgService().updateIMMessage(localMessage);
             }
@@ -1137,7 +1137,7 @@ public class SessionService {
             localExt.put("parentMediaId", parentId);
             message.setLocalExtension(localExt);
 
-            NIMClient.getService(MsgService.class).saveMessageToLocal(message, false);
+            NIMClient.getService(MsgService.class).saveMessageToLocal(message, true);
         }
 
         List<Object> listMedia = MapUtil.readableArrayToArray(data);
@@ -1172,7 +1172,7 @@ public class SessionService {
                     isHighQuality = false;
                 }
 
-                sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId,(int) media.get("indexCount"), null);
+                sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId,(Double) media.get("indexCount"), null);
                 continue;
             }
 
@@ -1214,7 +1214,7 @@ public class SessionService {
             }
 
 
-            sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, (int) media.get("indexCount"), null);
+            sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, (Double) media.get("indexCount"), null);
         }
 
         promise.resolve("success");
@@ -1236,7 +1236,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false,false);
     }
 
-    public void sendImageMessage(String file, String displayName, boolean isCustomerService,boolean isHighQuality, String parentId,Integer indexCount, OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessage(String file, String displayName, boolean isCustomerService,boolean isHighQuality, String parentId,Double indexCount, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
@@ -1291,7 +1291,7 @@ public class SessionService {
 //        long duration = mediaPlayer == null ? 0 : mediaPlayer.getDuration();
 //        int height = mediaPlayer == null ? 0 : mediaPlayer.getVideoHeight();
 //        int width = mediaPlayer == null ? 0 : mediaPlayer.getVideoWidth();
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService,String parentId, Integer indexCount,  OnSendMessageListener onSendMessageListener) {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService,String parentId, Double indexCount,  OnSendMessageListener onSendMessageListener) {
 
 //        String filename = md5 + "." + FileUtil.getExtensionName(file);
         file = Uri.parse(file).getPath();
