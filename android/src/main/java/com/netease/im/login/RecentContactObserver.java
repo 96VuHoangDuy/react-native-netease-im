@@ -217,7 +217,7 @@ public class RecentContactObserver {
     public void refreshMessages(boolean unreadChanged) {
         sortRecentContacts(items);
         String lastMessageId = items.get(0).getRecentMessageId();
-        if (lastMessageId != null || !lastMessageId.isEmpty() ) {
+        if (lastMessageId != null) {
             List<String> messageIds = new ArrayList<String>();
             messageIds.add(lastMessageId);
             NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
