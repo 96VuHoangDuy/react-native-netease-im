@@ -76,6 +76,7 @@ import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
+import com.netease.nimlib.sdk.msg.model.NIMMessage;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.SearchOrderEnum;
@@ -2995,6 +2996,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
         recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
 
+        String latestMsgId = recent.getRecentMessageId();
+
         Map<String, Object> extension = recent.getExtension();
         if (extension == null) {
             extension = new HashMap<String, Object>();
@@ -3003,9 +3006,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         if (isHideSession) {
             extension.put("isHideSession", true);
             extension.put("isPinCode", isPinCode);
+            if (latestMsgId != null) {
+                extension.put("latestMsgIdWithHideSession", latestMsgId);
+            }
         } else {
             extension.put("isHideSession", false);
             extension.put("isPinCode", false);
+            extension.put("latestMsgIdWithHideSession", "");
         }
 
         recent.setExtension(extension);

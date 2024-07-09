@@ -107,6 +107,7 @@ export interface NimSessionType {
     name?: string;
     isHideSession?: boolean;
     isPinCode?: boolean;
+    latestMsgIdWithHideSession?: string
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;

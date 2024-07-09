@@ -76,6 +76,31 @@ export enum NIMMessageStatusEnum {
   RECEIVE_UNREAD = 'receive_unread',
 }
 
+export enum NIMMessageReactionEnum {
+  HEART = 'HEART',
+  LIKE = 'LIKE',
+  HAHA = 'HAHA',
+  SURPRISE = 'SURPRISE',
+  CRY = 'CRY',
+  ANGRY = 'ANGRY',
+}
+
+export type INimMessageReactionEnum = `${NIMMessageReactionEnum}`;
+
+export interface INimMessageReactionSymbol {
+  name: INimMessageReactionEnum;
+  symbol: string
+}
+
+
+export interface INimMessageReaction {
+  accId: string;
+  type: INimMessageReactionEnum;
+  totalReaction: number;
+  nickname: string;
+  avatar: string
+}
+
 export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   duration: number;
   isPlayed: boolean;
@@ -110,6 +135,8 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   fileMd5: string;
   fileUrl: string;
   fileType: string;
+
+  aspectRatio?: number;
 
   downloadAttStatus?: string;
 
@@ -165,6 +192,7 @@ export interface NIMMessage {
   localExt?: {
     chatBotType?: NIMMessageChatBotType;
     isCancelResend?: boolean;
+    reactions?: INimMessageReaction[]
   };
 }
 

@@ -2334,6 +2334,7 @@
     }
     
     recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    NIMMessage *lastMessage = recent.lastMessage;
     
     if (recent) {
         NSMutableDictionary *dict = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
@@ -2341,9 +2342,15 @@
         if (isHideSession) {
             [dict setObject:[NSNumber numberWithBool:YES] forKey:@"isHideSession"];
             [dict setObject:[NSNumber numberWithBool:isPinCode] forKey:@"isPinCode"];
+            if (lastMessage != nil) {
+                [dict setObject:lastMessage.messageId forKey:@"latestMsgIdWithHideSession"];
+            }
+            
         } else {
             [dict setObject:[NSNumber numberWithBool:NO] forKey:@"isHideSession"];
             [dict setObject:[NSNumber numberWithBool:NO] forKey:@"isPinCode"];
+            [dict setObject:@"" forKey:@"latestMsgIdWithHideSession"];
+            
         }
         
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];

@@ -218,6 +218,11 @@ public class ReactCache {
                     Boolean isUpdated = (Boolean) extension.get("isUpdated");
                     String nameCsr = (String) extension.get("name");
                     Boolean isHideSession = (Boolean) extension.get("isHideSession");
+                    String latestMsgIdWithHideSession = (String) extension.get("latestMsgIdWithHideSession");
+
+                    if (latestMsgIdWithHideSession != null) {
+                        localExt.putString("latestMsgIdWithHideSession", latestMsgIdWithHideSession);
+                    }
 
                     if (isCsr != null) {
                         localExt.putBoolean("isCsr", isCsr);
