@@ -93,6 +93,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -1846,7 +1847,7 @@ public class SessionService {
         try {
             SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(toSessionType);
 
-            notification.setContent(dataDict.getMap("data").toString());
+            notification.setContent(dataDict.toString());
             notification.setSessionId(toSessionId);
             notification.setSessionType(sessionTypeEnum);
 
