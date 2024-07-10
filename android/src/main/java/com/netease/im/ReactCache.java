@@ -1407,7 +1407,9 @@ public class ReactCache {
         if (attachment instanceof VideoAttachment) {
             VideoAttachment videoAttachment = (VideoAttachment) attachment;
             videoDic.putString(MessageConstant.MediaFile.URL, videoAttachment.getUrl());
-            videoDic.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            if (localExtension!= null && localExtension.containsKey("isReplacePathSuccess")) {
+                videoDic.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            }
             videoDic.putBoolean("needRefreshMessage", false);
 
             Boolean isFilePathDeleted = false;
@@ -1424,7 +1426,7 @@ public class ReactCache {
                 }
             }
 
-            if (localExtension.get("isReplacePathSuccess").equals(true) && videoAttachment.getPath() == null) {
+            if (localExtension!= null && localExtension.containsKey("isReplacePathSuccess") && localExtension.get("isReplacePathSuccess").equals(true) && videoAttachment.getPath() == null) {
                 videoDic.putBoolean("isFilePathDeleted", true);
                 isFilePathDeleted = true;
             }
@@ -1502,13 +1504,15 @@ public class ReactCache {
 
             Map<String, Object> localExtension = item.getLocalExtension();
 
-            imageObj.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            if (localExtension != null) {
+                imageObj.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
+            }
             imageObj.putBoolean("needRefreshMessage", false);
 
             Boolean isFilePathDeleted = false;
             Boolean isFileDownloading = true;
             Log.d("imageAttachment", imageAttachment.getPath() + "");
-            Log.d("localExtension.get()", localExtension.get("isReplacePathSuccess") + "");
+//            Log.d("localExtension.get()", localExtension.get("isReplacePathSuccess") + "");
 
             Map<String, Object> remoteExtension = item.getRemoteExtension();
             if (remoteExtension != null) {
@@ -1521,7 +1525,7 @@ public class ReactCache {
                 }
             }
 
-            if (localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {
+            if (localExtension != null && localExtension.containsKey("'isReplacePathSuccess'") && localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {
                     imageObj.putBoolean("isFilePathDeleted", true);
                     isFilePathDeleted = true;
             }

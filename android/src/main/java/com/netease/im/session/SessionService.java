@@ -1130,96 +1130,128 @@ public class SessionService {
         }
     }
 
-    public void sendMultiMediaMessage(ReadableArray data,Boolean isCustomerService, String parentId, final Promise promise) {
-        if (parentId != null) {
-            IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, parentId);
-            Map<String, Object> localExt = MapBuilder.newHashMap();
-            localExt.put("isLocalMsg", true);
-            localExt.put("parentMediaId", parentId);
-            message.setLocalExtension(localExt);
-
-            NIMClient.getService(MsgService.class).saveMessageToLocal(message, true);
-        }
-
+    public void sendMultiMediaMessage(ReadableArray data, Boolean isCustomerService, String parentId, final Promise promise) {
         List<Object> listMedia = MapUtil.readableArrayToArray(data);
-        for (Object dataMedia : listMedia) {
-            Map<String, Object> media = (Map<String, Object>) dataMedia;
+        final int batchSize = 3;
+        final int delay = 2000;
+        final Handler handler = new Handler();
+        final Runnable[] sendBatchRunnable = new Runnable[1];
 
-            String mediaType = (String) media.get("type");
-            if (mediaType == null || (!mediaType.equals("image") && !mediaType.equals("video"))) {
-                promise.reject("-1", "media type is invalid");
-                return;
-            }
+        sendBatchRunnable[0] = new Runnable() {
+            int startIndex = 0;
 
-            Map<String, Object> mediaData = (Map<String, Object>) media.get("data");
-            if (mediaData == null) {
-                promise.reject("-1", "media data is invalid");
-                return;
-            }
+            @Override
+            public void run() {
+                int endIndex = Math.min(startIndex + batchSize, listMedia.size());
+                List<Object> batch = listMedia.subList(startIndex, endIndex);
 
-            if (mediaType.equals("image")) {
-                String file = (String) mediaData.get("file");
-                if (file == null) {
-                    continue;
-                }
+                for (Object dataMedia : batch) {
+                    Map<String, Object> media = (Map<String, Object>) dataMedia;
 
-                String displayName = (String) mediaData.get("displayName");
-                if (displayName == null) {
-                    displayName = "";
-                }
-
-                Boolean isHighQuality = (Boolean) mediaData.get("isHighQuality");
-                if (isHighQuality == null) {
-                    isHighQuality = false;
-                }
-
-                sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId,(Double) media.get("indexCount"), null);
-                continue;
-            }
-
-            String file = (String) mediaData.get("file");
-            if (file == null) {
-                continue;
-            }
-
-            String displayName = (String) mediaData.get("displayName");
-            if (displayName == null) {
-                displayName = "";
-            }
-
-            Integer width = (Integer) mediaData.get("width");
-            Integer height = (Integer) mediaData.get("height");
-            String duration = (String) mediaData.get("duration");
-            if (width == null || height == null || duration == null) {
-                try {
-                    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                    retriever.setDataSource(file);
-                    duration = Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) + "";
-                    width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-                    height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
-                    String metaRotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-                    int rotation = metaRotation == null ? 0 : Integer.parseInt(metaRotation);
-
-                    if (rotation == 90 || rotation == 270) {
-                        Integer widthTemp = width;
-                        width = height;
-                        height = widthTemp;
+                    String mediaType = (String) media.get("type");
+                    if (mediaType == null || (!mediaType.equals("image") && !mediaType.equals("video"))) {
+                        promise.reject("-1", "media type is invalid");
+                        return;
                     }
 
-                    retriever.release();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    promise.reject("-1", e.getMessage());
-                    return;
+                    Map<String, Object> mediaData = (Map<String, Object>) media.get("data");
+                    if (mediaData == null) {
+                        promise.reject("-1", "media data is invalid");
+                        return;
+                    }
+
+                    if (mediaType.equals("image")) {
+                        String file = (String) mediaData.get("file");
+                        if (file == null) {
+                            continue;
+                        }
+
+                        String displayName = (String) mediaData.get("displayName");
+                        if (displayName == null) {
+                            displayName = "";
+                        }
+
+                        Boolean isHighQuality = (Boolean) mediaData.get("isHighQuality");
+                        if (isHighQuality == null) {
+                            isHighQuality = false;
+                        }
+
+                        sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId, (Double) media.get("indexCount"), null);
+                        continue;
+                    }
+
+                    String file = (String) mediaData.get("file");
+                    if (file == null) {
+                        continue;
+                    }
+
+                    String displayName = (String) mediaData.get("displayName");
+                    if (displayName == null) {
+                        displayName = "";
+                    }
+
+                    Integer width = (Integer) mediaData.get("width");
+                    Integer height = (Integer) mediaData.get("height");
+                    String duration = (String) mediaData.get("duration");
+                    if (width == null || height == null || duration == null) {
+                        try {
+                            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                            retriever.setDataSource(file);
+                            duration = Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) + "";
+                            width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+                            height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+                            String metaRotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+                            int rotation = metaRotation == null ? 0 : Integer.parseInt(metaRotation);
+
+                            if (rotation == 90 || rotation == 270) {
+                                Integer widthTemp = width;
+                                width = height;
+                                height = widthTemp;
+                            }
+
+                            retriever.release();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            promise.reject("-1", e.getMessage());
+                            return;
+                        }
+                    }
+
+                    sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, (Double) media.get("indexCount"), null);
+                }
+
+                if (parentId != null && startIndex == 0) {
+                    IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, parentId);
+                    Map<String, Object> localExt = MapBuilder.newHashMap();
+                    localExt.put("isLocalMsg", true);
+                    localExt.put("parentMediaId", parentId);
+                    message.setLocalExtension(localExt);
+                    message.setFromAccount(message.getFromAccount());
+                    message.setDirect(message.getDirect());
+
+                    NIMClient.getService(MsgService.class).saveMessageToLocal(message, true);
+
+                    if (isCustomerService) {
+                        List<IMMessage> list = new ArrayList<>(1);
+                        list.add(message);
+                        Object a = ReactCache.createMessageList(list);
+                        ReactCache.emit(ReactCache.observeMsgStatus, a);
+                    }
+                }
+
+                startIndex += batchSize;
+                if (startIndex < listMedia.size()) {
+                    handler.postDelayed(sendBatchRunnable[0], delay);
+                } else {
+                    promise.resolve("success");
                 }
             }
+        };
 
-
-            sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, (Double) media.get("indexCount"), null);
-        }
-
-        promise.resolve("success");
+        // Post the first batch immediately
+        handler.post(sendBatchRunnable[0]);
     }
+
 
     public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
@@ -1556,7 +1588,7 @@ public class SessionService {
 
                 deleteItem(selectMessage, false);
                 revokMessage(selectMessage);
-
+                
                 WritableMap content = Arguments.createMap();
                 content.putMap("data",contentObject);
 
@@ -1805,7 +1837,7 @@ public class SessionService {
         getService(MsgServiceObserve.class).observeAttachmentProgress(new Observer<AttachmentProgress>() {
             @Override
             public void onEvent(AttachmentProgress attachmentProgress) {
-                ReactCache.emit(ReactCache.observeAttachmentProgress, ReactCache.createAttachmentProgress(attachmentProgress));
+//                ReactCache.emit(ReactCache.observeAttachmentProgress, ReactCache.createAttachmentProgress(attachmentProgress));
             }
         }, register);
     }
