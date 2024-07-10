@@ -1556,8 +1556,11 @@ public class SessionService {
                 deleteItem(selectMessage, false);
                 revokMessage(selectMessage);
 
+                WritableMap content = Arguments.createMap();
+                content.putMap("data",contentObject);
+
                 CustomNotification notification = new CustomNotification();
-                notification.setContent(contentObject.toString());
+                notification.setContent(content.toString());
                 notification.setSessionId(selectMessage.getSessionId());
                 notification.setSessionType(selectMessage.getSessionType());
 

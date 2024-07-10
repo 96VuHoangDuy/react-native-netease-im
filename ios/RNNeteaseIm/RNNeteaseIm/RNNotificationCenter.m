@@ -105,11 +105,11 @@
 //    NSString * tip = [[ConversationViewController initWithConversationViewController] tipOnMessageRevoked:notification.message];
 //    NIMMessage *tipMessage = [[ConversationViewController initWithConversationViewController] msgWithTip:tip];
 //    tipMessage.timestamp = notification.timestamp;
-    NIMMessage *deleMess = notification.message;
-    if (deleMess) {
-        NSDictionary *deleteDict = @{@"msgId":deleMess.messageId, @"sessionId": deleMess.session.sessionId, @"isObserveReceiveRevokeMessage": @(YES)};
-        [NIMModel initShareMD].deleteMessDict = deleteDict;
-    }
+//    NIMMessage *deleMess = notification.message;
+//    if (deleMess) {
+//        NSDictionary *deleteDict = @{@"msgId":deleMess.messageId, @"sessionId": deleMess.session.sessionId, @"isObserveReceiveRevokeMessage": @(YES)};
+//        [NIMModel initShareMD].deleteMessDict = deleteDict;
+//    }
 
     // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
 //    [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage
@@ -119,21 +119,21 @@
 #pragma mark - NIMSystemNotificationManagerDelegate
 - (void)onReceiveCustomSystemNotification:(NIMCustomSystemNotification *)notification{//接收自定义通知
     NSDictionary *notiDict = [self jsonDictWithString:notification.content];
-    NSTimeInterval timestamp = notification.timestamp;
-    if (notiDict){
-        NSInteger notiType = [[notiDict objectForKey:@"type"] integerValue];
-                
+    NSDictionary *dataDict = [notiDict objectForKey:@"data"];
+    
+    if (dataDict){
+        NSInteger notiType = [[dataDict objectForKey:@"type"] integerValue];
+                        
         switch (notiType) {
+            case 0:
             case 1://revoke messages
             {
-                NSString *sessionId = [notiDict objectForKey:@"sessionId"];
-                NSString *messageId = [notiDict objectForKey:@"messageId"];
-                
+                NSString *sessionId = [dataDict objectForKey:@"sessionId"];
+                NSString *messageId = [dataDict objectForKey:@"messageId"];                
                 NIMSession *session = [NIMSession session:sessionId type:[@(notification.receiverType) integerValue]];
-                
+                                
                 NSArray *currentMessages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
-                NIMMessage *revokedMessge = currentMessages[0];
-                
+                NIMMessage *revokedMessge = currentMessages[0];                
                 [[NIMSDK sharedSDK].conversationManager deleteMessage:revokedMessge];
             }
                 break;
