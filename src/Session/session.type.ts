@@ -1,5 +1,7 @@
 import { NIMCommonBooleanType } from 'react-native-netease-im/src/utils/common.type';
 import {
+  INimMessageReaction,
+  INimMessageRemoveReaction,
   NIMMessageStatusEnum,
   NIMMessageTypeEnum,
 } from '../Message/message.type';
@@ -14,7 +16,10 @@ export enum QueryDirectionType {
 }
 
 export enum NIMMessageSubTypeEnum {
+  DEFAULT = 0,
   LINK = 1,
+  REACTION = 2,
+  REMOVE_REACTION = 3
 }
 
 export enum NIMSessionTypeEnum {
@@ -108,9 +113,12 @@ export interface NimSessionType {
     isHideSession?: boolean;
     isPinCode?: boolean;
     latestMsgIdWithHideSession?: string
+    reaction?: INimMessageReaction;
+    dataRemoveReaction?: INimMessageRemoveReaction
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;
+  messageSubType?: NIMMessageSubTypeEnum
 }
 
 export type SessionCache = {

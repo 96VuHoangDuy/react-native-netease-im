@@ -1325,6 +1325,21 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void removeReactionMessage(String sessionId, String sessionType, String messageId, String accId, Boolean isSendMessage, final Promise promise) {
+        sessionService.removeReactionMessage(sessionId, sessionType, messageId, accId, isSendMessage, promise);
+    }
+
+    @ReactMethod
+    public void updateReactionMessage(String sessionId, String sessionType, String messageId, String messageNotifyReactionId, ReadableMap reaction, final Promise promise) {
+        sessionService.updateReactionMessage(sessionId, sessionType, messageId, messageNotifyReactionId, reaction, promise);
+    }
+
+    @ReactMethod
+    public void reactionMessage(String sessionId, String sessionType, String messageId, ReadableMap reaction, final Promise promise) {
+        sessionService.reactionMessage(sessionId,sessionType,messageId,reaction, promise);
+    }
+
+    @ReactMethod
     public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType ,final Promise promise) {
         try {
 
@@ -1800,7 +1815,31 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void removeMessage(String messageId, String sessionId, String sessionType, final  Promise promise) {
-        deleteMessage(messageId, promise);
+        List<String> messageIds = new ArrayList<String>();
+        messageIds.add(messageId);
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("error: " + code, "error");
+                    return;
+                }
+
+                if (result.isEmpty()) {
+                    promise.resolve("200");
+                    return;
+                }
+
+                IMMessage message = result.get(0);
+                if (message == null) {
+                    promise.resolve("200");
+                    return;
+                }
+
+                NIMClient.getService(MsgService.class).deleteChattingHistory(message);
+                promise.resolve("200u");
+            }
+        });
     }
 
     /**

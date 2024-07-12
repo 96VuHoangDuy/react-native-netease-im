@@ -267,9 +267,20 @@
             //账号
             [dic setObject:[NSString stringWithFormat:@"%@",recent.lastMessage.session.sessionId] forKey:@"account"];
             
-            if (recent.localExt) {
-                [dic setObject:recent.localExt forKey:@"localExt"];
+            NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+            
+            if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
+                if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+                }
             }
+            
+            [dic setObject:localExt forKey:@"localExt"];
+
             
             if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                 NIMCustomObject *customObject = recent.lastMessage.messageObject;
@@ -356,6 +367,11 @@
                     [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
                 }
             }
+            
+            if (recent.lastMessage.messageSubType) {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            }
+            
             //消息状态
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
             //消息ID
@@ -392,9 +408,23 @@
             
             NSMutableDictionary *localExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
             
-            if (recent.lastMessage != nil && recent.lastMessage.localExt != nil && [recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
-                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
+            if (recent.lastMessage != nil && recent.lastMessage.localExt != nil ) {
+                if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
+                    [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
+                }
             }
+            
+            if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
+                if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+                }
+            }
+            
+            
             
             [dic setObject:localExt forKey:@"localExt"];
                 
@@ -491,6 +521,10 @@
                 }
             }
             
+            if (recent.lastMessage.messageSubType) {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            }
+            
             //消息状态
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
             //消息ID
@@ -555,9 +589,19 @@
             //账号
             [dic setObject:[NSString stringWithFormat:@"%@",recent.lastMessage.session.sessionId] forKey:@"account"];
             
-            if (recent.localExt) {
-                [dic setObject:recent.localExt forKey:@"localExt"];
+            NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+            
+            if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
+                if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+                }
             }
+            
+            [dic setObject:localExt forKey:@"localExt"];
             
             if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
                 NIMCustomObject *customObject = recent.lastMessage.messageObject;
@@ -649,6 +693,11 @@
                     [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
                 }
             }
+            
+            if (recent.lastMessage.messageSubType) {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            }
+            
             //消息状态
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
             //消息ID
@@ -688,9 +737,23 @@
             
                 NSMutableDictionary *localExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
                 
-                if (recent.lastMessage != nil && recent.lastMessage.localExt != nil && [recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
-                    [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
+                if (recent.lastMessage != nil && recent.lastMessage.localExt != nil) {
+                    if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
+                        [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
+                    }
                 }
+            
+               
+            
+            if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
+                if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+                }
+            }
                 
                 [dic setObject:localExt forKey:@"localExt"];
                 
@@ -786,6 +849,12 @@
                         [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
                     }
                 }
+            
+            
+            if (recent.lastMessage.messageSubType) {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            }
+            
                 //消息状态
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
                 //消息ID

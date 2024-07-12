@@ -1,5 +1,6 @@
 import {
   NIMMessageChatBotType,
+  NIMMessageSubTypeEnum,
   NIMSessionTypeEnum,
   NimSessionTypeExtend,
 } from '../Session/session.type';
@@ -101,6 +102,13 @@ export interface INimMessageReaction {
   avatar: string
 }
 
+export interface INimMessageRemoveReaction {
+  sessionId: string;
+  sessionType: NIMSessionTypeEnum;
+  messageId: string;
+  accId: string
+}
+
 export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   duration: number;
   isPlayed: boolean;
@@ -193,7 +201,10 @@ export interface NIMMessage {
     chatBotType?: NIMMessageChatBotType;
     isCancelResend?: boolean;
     reactions?: INimMessageReaction[]
+    reaction?: INimMessageReaction;
+    dataRemoveReaction?: INimMessageRemoveReaction
   };
+  messageSubType?: NIMMessageSubTypeEnum
 }
 
 export enum NIMFileType {

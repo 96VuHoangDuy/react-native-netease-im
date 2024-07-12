@@ -211,6 +211,10 @@ public class ReactCache {
                 IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
                 String notifyType = "";
 
+                if (lastMessage != null) {
+                    map.putInt("messageSubType", lastMessage.getSubtype());
+                }
+
                 if (extension != null) {
                     WritableMap localExt = Arguments.createMap();
                     Boolean isCsr = (Boolean) extension.get("isCsr");
@@ -245,10 +249,10 @@ public class ReactCache {
 
                     if (lastMessage != null) {
                         Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
+                        Map<String, Object> messageRemoteExt = lastMessage.getRemoteExtension();
                         if (messageLocalExt != null) {
                             String notificationType = (String) messageLocalExt.get("notificationType");
                             Map<String, Object> notificationExtend = (Map<String, Object>) messageLocalExt.get("notificationExtend");
-
                             if (notificationType != null) {
                                 localExt.putString("notificationType", notificationType);
                                 notifyType = notificationType;
@@ -262,6 +266,20 @@ public class ReactCache {
 
                             if (parentMediaId != null) {
                                 localExt.putString("parentMediaId", parentMediaId);
+                            }
+
+                        }
+
+                        if (messageRemoteExt != null) {
+                            Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
+                            Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
+
+                            if (reaction != null) {
+                                localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));
+                            }
+
+                            if (dataRemoveReaction != null) {
+                                localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
                             }
                         }
                     }
@@ -1705,6 +1723,9 @@ public class ReactCache {
         itemMap.putString(MessageConstant.Message.MSG_ID, item.getUuid());
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(item.getSessionId(), item.getSessionType());
         Map<String, Object> messageLocalExt = item.getLocalExtension();
+        Map<String, Object> messageRemoteExt = item.getRemoteExtension();
+
+        itemMap.putInt("messageSubType", item.getSubtype());
 
         WritableMap localExt = Arguments.createMap();
 
@@ -1716,6 +1737,7 @@ public class ReactCache {
             String birthdayMemberContactId = (String) messageLocalExt.get("birthdayMemberContactId");
             String birthdayMemberName = (String) messageLocalExt.get("birthdayMemberName");
             String parentMediaId = (String) messageLocalExt.get("parentMediaId");
+            List<Object> reactions = (List<Object>) messageLocalExt.get("reactions");
 
             if (parentMediaId != null) {
                 localExt.putString("parentMediaId", parentMediaId);
@@ -1743,6 +1765,23 @@ public class ReactCache {
 
             if (birthdayMemberContactId != null) {
                 localExt.putString("birthdayMemberContactId", birthdayMemberContactId);
+            }
+
+            if (reactions != null) {
+                localExt.putArray("reactions", MapUtil.arrayMaptoWritableArray(reactions));
+            }
+        }
+
+        if (messageRemoteExt != null) {
+            Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
+            Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
+
+            if (reaction != null) {
+                localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));
+            }
+
+            if (dataRemoveReaction != null) {
+                localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
             }
         }
 

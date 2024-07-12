@@ -13,6 +13,10 @@
 
 @interface NIMMessageMaker : NSObject
 
++(NIMMessage *)msgWithRemoveReaction:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId accId:(NSString *)accId;
+
++(NIMMessage *)msgWithReaction:(NSString *)messageId reaction:(NSDictionary *)reaction;
+
 + (NIMMessage *)msgWithNotificationBirthday:(NIMMessage *)lastMessage memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName;
 
 + (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName messageSubType:(NSInteger)messageSubType;

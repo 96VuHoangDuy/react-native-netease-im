@@ -93,7 +93,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -1018,6 +1017,213 @@ public class SessionService {
         NIMSDK.getMsgService().insertLocalMessage(message, sessionId);
     }
 
+    public void removeReactionMessage(String sessionId, String sessionType, String messageId, String accId, Boolean isSendMessage, final Promise promise) {
+        List<String> messageIds = new ArrayList<String>();
+        messageIds.add(messageId);
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> messages, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("code: "  + code, "error");
+                    return;
+                }
+
+                if (messages.isEmpty()) {
+                    promise.resolve("200");
+                    return;
+                }
+
+                IMMessage message = messages.get(0);
+                Map<String, Object> localExt = message.getLocalExtension();
+                Log.e(TAG, "remove reaction message =>>>>>>>>" + localExt);
+                if (localExt == null || localExt.get("reactions") == null) {
+                    promise.resolve("200");
+                    return;
+                }
+
+                List<Map<String, Object>> reactions = (List<Map<String, Object>>) localExt.get("reactions");
+                List<Map<String, Object>> updateReactions = new ArrayList<Map<String, Object>>();
+                for(Map<String, Object> reaction : reactions) {
+                    String reactionAccId = (String) reaction.get("accId");
+                    if (reactionAccId == null || !reactionAccId.equals(accId)) {
+                        updateReactions.add(reaction);
+                    }
+                }
+
+                localExt.put("reactions", updateReactions);
+
+                message.setLocalExtension(localExt);
+                NIMClient.getService(MsgService.class).updateIMMessage(message);
+
+                if (isSendMessage) {
+                    SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+                    IMMessage newMessage = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "");
+                    Map<String, Object> remoteExt = new HashMap<String, Object>();
+                    Map<String, Object> dataRemoveReaction = new HashMap<String, Object>();
+                    dataRemoveReaction.put("sessionId", sessionId);
+                    dataRemoveReaction.put("sessionType", sessionType);
+                    dataRemoveReaction.put("messageId", messageId);
+                    dataRemoveReaction.put("accId", accId);
+                    remoteExt.put("dataRemoveReaction", dataRemoveReaction);
+
+                    CustomMessageConfig config = new CustomMessageConfig();
+                    config.enablePush = false;
+                    config.enableUnreadCount  = false;
+
+                    newMessage.setSubtype(3);
+                    newMessage.setRemoteExtension(remoteExt);
+                    newMessage.setConfig(config);
+
+                    NIMClient.getService(MsgService.class).sendMessage(newMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
+                        @Override
+                        public void onResult(int code, Void result, Throwable exception) {
+                            if (code != ResponseCode.RES_SUCCESS) {
+                                promise.reject("code: " + code, "error");
+                                return;
+                            }
+
+                            promise.resolve("200");
+                        }
+                    });
+                    return;
+                }
+
+                promise.resolve("200");
+            }
+        });
+    }
+
+    public void updateReactionMessage(String sessionId, String sessionType, String messageId, String messageNotifyReactionId, ReadableMap reaction, final Promise promise) {
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        List<String> messageIds = new ArrayList<String>();
+        messageIds.add(messageId);
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> messages, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("message not found", "err");
+                    return;
+                }
+
+                if (messages.isEmpty()) {
+                    promise.resolve("NO_MESSAGE_IN_LOCAL");
+                    return;
+                }
+
+                IMMessage message = messages.get(0);
+                Map<String, Object> localExt = message.getLocalExtension();
+                if (localExt == null) {
+                    localExt = new HashMap<String, Object>();
+                }
+
+                List<Map<String, Object>> reactions = (List<Map<String, Object>>) localExt.get("reactions");
+                if (reactions == null) {
+                    reactions = new ArrayList<Map<String, Object>>();
+                }
+
+                reactions.add(MapUtil.readableMaptoMap(reaction));
+                localExt.put("reactions", reactions);
+
+                message.setLocalExtension(localExt);
+
+                NIMClient.getService(MsgService.class).updateIMMessage(message);
+
+                List<String> messageNotifyReactionIds = new ArrayList<String>();
+                messageNotifyReactionIds.add(messageNotifyReactionId);
+                NIMClient.getService(MsgService.class).queryMessageListByUuid(messageNotifyReactionIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+                    @Override
+                    public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                        if (code != ResponseCode.RES_SUCCESS || result.isEmpty()) {
+                            promise.reject("code: " + code, "error");
+                            return;
+                        }
+
+                        IMMessage messageNotifyReaction = result.get(0);
+
+                        NIMClient.getService(MsgService.class).deleteChattingHistory(messageNotifyReaction);
+
+                        promise.resolve("SUCCESS");
+                    }
+                });
+            }
+        });
+    }
+
+    public void reactionMessage(String sessionId, String sessionType, String messageId, ReadableMap reaction, final Promise promise) {
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        RecentContact recentContact = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+        if (recentContact == null) {
+            promise.resolve("200");
+            return;
+        }
+
+        List<String> messageIds = new ArrayList<String>();
+        messageIds.add(messageId);
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> messages, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("code: " + code, "error");
+                    return;
+                }
+
+                if (messages.isEmpty()) {
+                    promise.reject("message not found", "error");
+                    return;
+                }
+
+                IMMessage message = messages.get(0);
+                if (message == null) {
+                    promise.reject("message not found", "error");
+                    return;
+                }
+
+                Map<String, Object> localExt = message.getLocalExtension();
+                if (localExt == null) {
+                    localExt = new HashMap<String, Object>();
+                }
+
+                List<Map<String, Object>> reactions = (List<Map<String, Object>>) localExt.get("reactions");
+                if (reactions == null) {
+                    reactions = new ArrayList<Map<String, Object>>();
+                }
+
+                reactions.add(MapUtil.readableMaptoMap(reaction));
+                localExt.put("reactions", reactions);
+
+                message.setLocalExtension(localExt);
+
+                NIMClient.getService(MsgService.class).updateIMMessage(message);
+
+                IMMessage newMessage = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, messageId);
+                Map<String, Object> remoteExt = new HashMap<String, Object>();
+                remoteExt.put("reaction", MapUtil.readableMaptoMap(reaction));
+
+                newMessage.setRemoteExtension(remoteExt);
+                newMessage.setSubtype(2);
+
+                CustomMessageConfig config = new CustomMessageConfig();
+                config.enablePush = false;
+                config.enableUnreadCount = false;
+
+                newMessage.setConfig(config);
+
+                NIMClient.getService(MsgService.class).sendMessage(newMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
+                    @Override
+                    public void onResult(int code, Void result, Throwable exception) {
+                        if (code == ResponseCode.RES_SUCCESS) {
+                            promise.resolve("200");
+                            return;
+                        }
+
+                        promise.reject("error", "error");
+                    }
+                });
+            }
+        });
+
+    }
+
     public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName,  Integer messageSubType, OnSendMessageListener onSendMessageListener) {
         SessionTypeEnum sessionT = SessionUtil.getSessionType(sessionType);
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionT, content);
@@ -1035,6 +1241,8 @@ public class SessionService {
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
         if (!messageSubType.equals(0)) {
             message.setSubtype(messageSubType);
+        } else {
+            message.setSubtype(0);
         }
 
         if (selectedMembers != null && !selectedMembers.isEmpty()) {
@@ -1146,79 +1354,79 @@ public class SessionService {
                 List<Object> batch = listMedia.subList(startIndex, endIndex);
 
                 for (Object dataMedia : batch) {
-                    Map<String, Object> media = (Map<String, Object>) dataMedia;
+            Map<String, Object> media = (Map<String, Object>) dataMedia;
 
-                    String mediaType = (String) media.get("type");
-                    if (mediaType == null || (!mediaType.equals("image") && !mediaType.equals("video"))) {
-                        promise.reject("-1", "media type is invalid");
-                        return;
-                    }
+            String mediaType = (String) media.get("type");
+            if (mediaType == null || (!mediaType.equals("image") && !mediaType.equals("video"))) {
+                promise.reject("-1", "media type is invalid");
+                return;
+            }
 
-                    Map<String, Object> mediaData = (Map<String, Object>) media.get("data");
-                    if (mediaData == null) {
-                        promise.reject("-1", "media data is invalid");
-                        return;
-                    }
+            Map<String, Object> mediaData = (Map<String, Object>) media.get("data");
+            if (mediaData == null) {
+                promise.reject("-1", "media data is invalid");
+                return;
+            }
 
-                    if (mediaType.equals("image")) {
-                        String file = (String) mediaData.get("file");
-                        if (file == null) {
-                            continue;
-                        }
-
-                        String displayName = (String) mediaData.get("displayName");
-                        if (displayName == null) {
-                            displayName = "";
-                        }
-
-                        Boolean isHighQuality = (Boolean) mediaData.get("isHighQuality");
-                        if (isHighQuality == null) {
-                            isHighQuality = false;
-                        }
-
-                        sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId, (Double) media.get("indexCount"), null);
-                        continue;
-                    }
-
-                    String file = (String) mediaData.get("file");
-                    if (file == null) {
-                        continue;
-                    }
-
-                    String displayName = (String) mediaData.get("displayName");
-                    if (displayName == null) {
-                        displayName = "";
-                    }
-
-                    Integer width = (Integer) mediaData.get("width");
-                    Integer height = (Integer) mediaData.get("height");
-                    String duration = (String) mediaData.get("duration");
-                    if (width == null || height == null || duration == null) {
-                        try {
-                            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                            retriever.setDataSource(file);
-                            duration = Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) + "";
-                            width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-                            height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
-                            String metaRotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-                            int rotation = metaRotation == null ? 0 : Integer.parseInt(metaRotation);
-
-                            if (rotation == 90 || rotation == 270) {
-                                Integer widthTemp = width;
-                                width = height;
-                                height = widthTemp;
-                            }
-
-                            retriever.release();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            promise.reject("-1", e.getMessage());
-                            return;
-                        }
-                    }
-
-                    sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, (Double) media.get("indexCount"), null);
+            if (mediaType.equals("image")) {
+                String file = (String) mediaData.get("file");
+                if (file == null) {
+                    continue;
                 }
+
+                String displayName = (String) mediaData.get("displayName");
+                if (displayName == null) {
+                    displayName = "";
+                }
+
+                Boolean isHighQuality = (Boolean) mediaData.get("isHighQuality");
+                if (isHighQuality == null) {
+                    isHighQuality = false;
+                }
+
+                sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId, (Double) media.get("indexCount"), null);
+                continue;
+            }
+
+            String file = (String) mediaData.get("file");
+            if (file == null) {
+                continue;
+            }
+
+            String displayName = (String) mediaData.get("displayName");
+            if (displayName == null) {
+                displayName = "";
+            }
+
+            Integer width = (Integer) mediaData.get("width");
+            Integer height = (Integer) mediaData.get("height");
+            String duration = (String) mediaData.get("duration");
+            if (width == null || height == null || duration == null) {
+                try {
+                    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                    retriever.setDataSource(file);
+                    duration = Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) + "";
+                    width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+                    height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+                    String metaRotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+                    int rotation = metaRotation == null ? 0 : Integer.parseInt(metaRotation);
+
+                    if (rotation == 90 || rotation == 270) {
+                        Integer widthTemp = width;
+                        width = height;
+                        height = widthTemp;
+                    }
+
+                    retriever.release();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    promise.reject("-1", e.getMessage());
+                    return;
+                }
+            }
+
+            sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, (Double) media.get("indexCount"), null);
+        }
 
                 if (parentId != null && startIndex == 0) {
                     IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, parentId);

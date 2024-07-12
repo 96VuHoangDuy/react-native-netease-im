@@ -10,6 +10,7 @@ import {
   NIMMessageSubTypeEnum,
 } from './session.type';
 import {
+  INimMessageReaction,
   NIMMessage,
   NIMMessageMedia,
   NIMMessageTypeEnum,
@@ -708,6 +709,18 @@ class NimSession {
 
   sendGifMessageWithSession(url: string,aspectRatio: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
     return RNNeteaseIm.sendGifMessageWithSession(url, aspectRatio, sessionId, sessionType, sessionName)
+  }
+
+  reactionMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string,reaction: INimMessageReaction) {
+    return RNNeteaseIm.reactionMessage(sessionId, sessionType, messageId, reaction)
+  }
+
+  removeReactionMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string, accId: string, isSendMessage: boolean) {
+    return RNNeteaseIm.removeReactionMessage(sessionId, sessionType, messageId, accId, isSendMessage);
+  }
+
+  updateReactionMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string, messageNotifyReactionId: string, reaction: INimMessageReaction) {
+    return RNNeteaseIm.updateReactionMessage(sessionId, sessionType, messageId, messageNotifyReactionId, reaction)
   }
 }
 

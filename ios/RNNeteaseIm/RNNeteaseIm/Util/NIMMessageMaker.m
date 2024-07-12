@@ -14,6 +14,50 @@
 
 @implementation NIMMessageMaker
 
++(NIMMessage *)msgWithRemoveReaction:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId accId:(NSString *)accId {
+    NIMMessage *message = [[NIMMessage alloc] init];
+    
+    message.text = @"";
+    message.messageSubType = 3;
+    
+    NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *dataRemoveReaction = [[NSMutableDictionary alloc] init];
+    [dataRemoveReaction setObject:sessionId forKey:@"sessionId"];
+    [dataRemoveReaction setObject:sessionType forKey:@"sessionType"];
+    [dataRemoveReaction setObject:messageId forKey:@"messageId"];
+    [dataRemoveReaction setObject:accId forKey:@"accId"];
+    [remoteExt setObject:dataRemoveReaction forKey:@"dataRemoveReaction"];
+    
+    message.remoteExt = remoteExt;
+    
+    NIMMessageSetting *setting = [[NIMMessageSetting alloc] init];
+    setting.apnsEnabled = NO;
+    setting.shouldBeCounted = NO;
+    
+    message.setting = setting;
+    
+    return message;
+}
+
++(NIMMessage *)msgWithReaction:(NSString *)messageId reaction:(NSDictionary *)reaction {
+    NIMMessage *message = [[NIMMessage alloc] init];
+    message.text = messageId;
+
+    NSMutableDictionary *removeExt = [[NSMutableDictionary alloc] init];
+    [removeExt setObject:reaction forKey:@"reaction"];
+    
+    message.remoteExt = removeExt;
+    message.messageSubType = 2;
+    
+    NIMMessageSetting *setting = [[NIMMessageSetting alloc] init];
+    setting.apnsEnabled = NO;
+    setting.shouldBeCounted = NO;
+    
+    message.setting = setting;
+    
+    return message;
+}
+
 + (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName messageSubType:(NSInteger)messageSubType
 {
     NIMMessage *message = [[NIMMessage alloc] init];

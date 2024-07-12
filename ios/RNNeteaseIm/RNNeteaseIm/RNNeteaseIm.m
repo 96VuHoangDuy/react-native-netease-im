@@ -205,6 +205,26 @@ RCT_EXPORT_METHOD(getUserInfo:(nonnull NSString * )contactId  resolve:(RCTPromis
         resolve(param);
     }];
 }
+
+RCT_EXPORT_METHOD(removeReactionMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId accId:(nonnull NSString *)accId isSendMessage:(BOOL *)isSendMessage resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    NSLog(@"sessionId - %@, sessionType - %@, messageId - %@, accId - %@, isSendMessage - %@", sessionId, sessionType, messageId, accId ,[NSNumber numberWithBool:isSendMessage]);
+    [[ConversationViewController initWithConversationViewController] removeReactionMessage:sessionId sessionType:sessionType messageId:messageId accId:accId isSendMessage:isSendMessage success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(updateReactionMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId messageNotifyReactionId:(nonnull NSString *)messageNotifyReactionId reaction:(nonnull NSDictionary *)reaction resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] updateReactionMessage:sessionId sessionType:sessionType messageId:messageId messageNotifyReactionId:messageNotifyReactionId reaction:reaction success:^(id param) {
+        resolve(param);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //获取服务器用户资料
 RCT_EXPORT_METHOD(fetchUserInfo:(nonnull NSString * )contactId   resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ContactViewController initWithContactViewController]fetchUserInfos:contactId Success:^(id param) {
@@ -430,6 +450,14 @@ RCT_EXPORT_METHOD(queryMessageListEx:(nonnull  NSString *)messageId limit:(int)l
         resolve(param);
     } err:^(id erro) {
         reject(@"-1",erro, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(reactionMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId reaction:(nonnull NSDictionary *)reaction resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] reactionMessage:sessionId sessionType:sessionType messageId:messageId reaction:reaction success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
     }];
 }
 
