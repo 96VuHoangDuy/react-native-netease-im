@@ -325,11 +325,11 @@ public class ReactCache {
                 String content = contact.getContent();
                 switch (contact.getMsgType()) {
                     case text:
-                        if (contact.getContent() != null && contact.getContent().equals("[动图]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                        if (contact.getContent() != null && contact.getContent().equals("[动图]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
                             content = name + " : [动图]";
                             break;
                         }
-                        if (contact.getContent() != null && contact.getContent().equals("[个人名片]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                        if (contact.getContent() != null && contact.getContent().equals("[个人名片]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
                             content = name + " : [个人名片]";
                             break;
                         }
@@ -337,28 +337,28 @@ public class ReactCache {
                         content = contact.getContent();
                         break;
                     case image:
-                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
                             content = name + " : [图片]";
                         } else {
                             content = "[图片]";
                         }
                         break;
                     case video:
-                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
                             content = name + " : [视频]";
                         } else {
                             content = "[视频]";
                         }
                         break;
                     case audio:
-                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
                             content = name + " : [语音消息]";
                         } else {
                             content = "[语音消息]";
                         }
                         break;
                     case location:
-                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                        if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
                             content = name + " : [位置]";
                         } else {
                             content = "[位置]";

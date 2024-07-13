@@ -934,7 +934,7 @@
     if ([message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
         text = contentMessage;
     } else {
-        text = [NSString stringWithFormat:@"%@ : %@", message.senderName, contentMessage];
+        text = message.session.sessionType == NIMSessionTypeP2P ? [NSString stringWithFormat:@"%@", contentMessage] : [NSString stringWithFormat:@"%@ :%@", message.senderName, contentMessage];
     }
     
     return text;
@@ -978,7 +978,7 @@
         return text;
     }else{
         NSString *nickName = [NIMKitUtil showNick:lastMessage.from inSession:lastMessage.session];
-        return nickName.length ? [nickName stringByAppendingFormat:@" : %@",text] : @"";
+        return nickName.length ? [nickName stringByAppendingFormat:@":%@",text] : @"";
     }
 }
 //获得数据类型
