@@ -123,17 +123,19 @@
     
     if (dataDict){
         NSInteger notiType = [[dataDict objectForKey:@"type"] integerValue];
-                        
+                
         switch (notiType) {
             case 0:
             case 1://revoke messages
             {
                 NSString *sessionId = [dataDict objectForKey:@"sessionId"];
-                NSString *messageId = [dataDict objectForKey:@"messageId"];                
+                NSString *messageId = [dataDict objectForKey:@"messageId"];
+                
                 NIMSession *session = [NIMSession session:sessionId type:[@(notification.receiverType) integerValue]];
-                                
+                
                 NSArray *currentMessages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
-                NIMMessage *revokedMessge = currentMessages[0];                
+                NIMMessage *revokedMessge = currentMessages[0];
+                
                 [[NIMSDK sharedSDK].conversationManager deleteMessage:revokedMessge];
             }
                 break;
@@ -150,7 +152,7 @@
             default:
                 break;
         }
-        [NIMModel initShareMD].customNotification = notiDict;
+        [NIMModel initShareMD].customNotification = dataDict;
     }
 }
 //保存拆红包消息到本地
