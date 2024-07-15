@@ -244,8 +244,6 @@
     return result;
 };
 
-
-
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err{
     NSInteger allUnreadNum = 0;
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
@@ -276,6 +274,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
                 }
             }
             
@@ -421,6 +423,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
                 }
             }
             
@@ -599,6 +605,10 @@
                 if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
                 }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
+                }
             }
             
             [dic setObject:localExt forKey:@"localExt"];
@@ -752,6 +762,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
                 }
             }
                 

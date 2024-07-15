@@ -273,6 +273,7 @@ public class ReactCache {
                         if (messageRemoteExt != null) {
                             Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
                             Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
+                            Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
 
                             if (reaction != null) {
                                 localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));
@@ -280,6 +281,10 @@ public class ReactCache {
 
                             if (dataRemoveReaction != null) {
                                 localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
+                            }
+
+                            if(revokeMessage != null){
+                                localExt.putMap("revokeMessage", MapUtil.mapToReadableMap(revokeMessage));
                             }
                         }
                     }

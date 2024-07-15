@@ -2695,6 +2695,18 @@
         NIMCustomSystemNotification *notifi = [[NIMCustomSystemNotification alloc]initWithContent:content];
         
         [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notifi toSession:self._session completion:nil];
+        
+        //      send a message to session that has message need to revoke
+        NIMMessage *messageForUserKnowWhichMessageToRevoke = [NIMMessageMaker msgWithText:@"revoked_success" andApnsMembers:@[] andeSession:self._session senderName:@"" messageSubType:4];
+        NSDictionary *remoteExt2 = @{@"revokeMessage": @{@"sessionId": self._session.sessionId, @"messageId":messageId}};
+        messageForUserKnowWhichMessageToRevoke.remoteExt = remoteExt2;
+        
+        NIMMessageSetting *settings = [[NIMMessageSetting alloc] init];
+        settings.apnsEnabled = NO;
+        settings.shouldBeCounted = NO;
+        messageForUserKnowWhichMessageToRevoke.setting = settings;
+        [[NIMSDK sharedSDK].chatManager sendMessage:messageForUserKnowWhichMessageToRevoke toSession:self._session error:nil];
+        
 //        save tip message
         NSString *tip = [self tipOnMessageRevoked:currentmessage];
         

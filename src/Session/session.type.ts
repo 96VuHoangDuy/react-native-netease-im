@@ -19,7 +19,8 @@ export enum NIMMessageSubTypeEnum {
   DEFAULT = 0,
   LINK = 1,
   REACTION = 2,
-  REMOVE_REACTION = 3
+  REMOVE_REACTION = 3,
+  REVOKE_MESSAGE = 4
 }
 
 export enum NIMSessionTypeEnum {
@@ -114,7 +115,12 @@ export interface NimSessionType {
     isPinCode?: boolean;
     latestMsgIdWithHideSession?: string
     reaction?: INimMessageReaction;
-    dataRemoveReaction?: INimMessageRemoveReaction
+    dataRemoveReaction?: INimMessageRemoveReaction;
+    // revokeMessage
+    revokeMessage?:{
+      sessionId: string;
+      messageId: string;
+    }
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;
@@ -136,3 +142,4 @@ export type NIMBirthdayMemberType = {
   contactId: string;
   name: string;
 };
+

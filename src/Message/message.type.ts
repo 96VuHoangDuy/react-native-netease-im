@@ -202,7 +202,11 @@ export interface NIMMessage {
     isCancelResend?: boolean;
     reactions?: INimMessageReaction[]
     reaction?: INimMessageReaction;
-    dataRemoveReaction?: INimMessageRemoveReaction
+    dataRemoveReaction?: INimMessageRemoveReaction;
+    revokeMessage?:{
+      sessionId: string;
+      messageId: string
+    }
   };
   messageSubType?: NIMMessageSubTypeEnum
 }
