@@ -1796,7 +1796,23 @@ public class SessionService {
 
                 deleteItem(selectMessage, false);
                 revokMessage(selectMessage);
-                
+
+//              send a message to session that has message need to revoke
+                IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "revoked_success");
+                message.setSubtype(4);
+                Map<String, Object> remoteExtObj = new HashMap<String, Object>();
+                remoteExtObj.put("sessionId", sessionId);
+                remoteExtObj.put("messageId", selectMessage.getUuid());
+                Map<String, Object> remoteExt = new HashMap<String, Object>();
+                remoteExt.put("revokeMessage", remoteExtObj);
+                message.setRemoteExtension(remoteExt);
+
+                CustomMessageConfig customMessageConfig = new CustomMessageConfig();
+                customMessageConfig.enablePush = false;
+                customMessageConfig.enableUnreadCount = false;
+                message.setConfig(customMessageConfig);
+                sendMessageSelf(message, onSendMessageListener, false, false);
+//
                 WritableMap content = Arguments.createMap();
                 content.putMap("data",contentObject);
 
