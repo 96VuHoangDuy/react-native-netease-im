@@ -10,8 +10,8 @@ import {
 } from '../Team/team.type';
 
 export enum NIMMessageMediaType {
-  IMAGE = "image",
-  VIDEO = "video"
+  IMAGE = 'image',
+  VIDEO = 'video',
 }
 
 export interface NIMMessageMediaImageData {
@@ -40,9 +40,9 @@ interface NIMMessageMediaVideo {
   data: NIMMessageMediaVideoData;
 }
 
-export type NIMMessageMedia = NIMMessageMediaImage | NIMMessageMediaVideo
+export type NIMMessageMedia = NIMMessageMediaImage | NIMMessageMediaVideo;
 
-// interface 
+// interface
 
 export enum NIMMessageTypeEnum {
   TEXT = 'text',
@@ -65,7 +65,7 @@ export enum NIMMessageTypeEnum {
   MULTIPLE_TEXT = 'forwardMultipleText',
   GIF = 'gif',
   UNKNOWN = 'unknown',
-  EMPTY_SESSION = "EMPTY_SESSION"
+  EMPTY_SESSION = 'EMPTY_SESSION',
 }
 
 export enum NIMMessageStatusEnum {
@@ -90,23 +90,22 @@ export type INimMessageReactionEnum = `${NIMMessageReactionEnum}`;
 
 export interface INimMessageReactionSymbol {
   name: INimMessageReactionEnum;
-  symbol: string
+  symbol: string;
 }
-
 
 export interface INimMessageReaction {
   accId: string;
   type: INimMessageReactionEnum;
   totalReaction: number;
   nickname: string;
-  avatar: string
+  avatar: string;
 }
 
 export interface INimMessageRemoveReaction {
   sessionId: string;
   sessionType: NIMSessionTypeEnum;
   messageId: string;
-  accId: string
+  accId: string;
 }
 
 export interface NimMessageTypeExtend extends NimSessionTypeExtend {
@@ -119,7 +118,7 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   isFilePathDeleted: boolean;
   needRefreshMessage: boolean;
   isReplacePathSuccess: boolean;
-  isFileDownloading: boolean
+  isFileDownloading: boolean;
 
   // have when message type is "card"
   extendType?: string;
@@ -200,15 +199,15 @@ export interface NIMMessage {
   localExt?: {
     chatBotType?: NIMMessageChatBotType;
     isCancelResend?: boolean;
-    reactions?: INimMessageReaction[]
+    reactions?: INimMessageReaction[];
     reaction?: INimMessageReaction;
     dataRemoveReaction?: INimMessageRemoveReaction;
-    revokeMessage?:{
+    revokeMessage?: {
       sessionId: string;
-      messageId: string
-    }
+      messageId: string;
+    };
   };
-  messageSubType?: NIMMessageSubTypeEnum
+  messageSubType?: NIMMessageSubTypeEnum;
 }
 
 export enum NIMFileType {
