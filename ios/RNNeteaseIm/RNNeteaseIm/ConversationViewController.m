@@ -686,8 +686,8 @@
     [imgObj setObject:[NSString stringWithFormat:@"%f",[object size].height] forKey:@"imageHeight"];
     [imgObj setObject:[NSString stringWithFormat:@"%f",[object size].width] forKey:@"imageWidth"];
     
-    NSString *mediaPath = [self moveFiletoSessionDir:message isThumb:nil];
-    NSString *mediaCoverPath = [self moveFiletoSessionDir:message isThumb:@1];
+    NSString *mediaPath = [self moveFiletoSessionDir:message];
+    NSString *mediaCoverPath = [self makeThumbnail:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
     
@@ -712,7 +712,9 @@
         } else {
             [imgObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
         }
-    } else if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
+    }
+    
+    if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
         [imgObj setObject:@true forKey:@"isFileDownloading"];
     }
     
@@ -743,7 +745,7 @@
     [fileObj setObject:[NSString stringWithFormat:@"%@", object.md5 ] forKey:@"fileMd5"];
     [fileObj setObject:[NSString stringWithFormat:@"%@", object.url ] forKey:@"fileUrl"];
     
-    NSString *mediaPath = [self moveFiletoSessionDir:message isThumb:nil];
+    NSString *mediaPath = [self moveFiletoSessionDir:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
     if ([downloadAttStatus length]) {
@@ -759,7 +761,8 @@
         } else {
             [fileObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
         }
-    } else if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
+    }
+    if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
         [fileObj setObject:@true forKey:@"isFileDownloading"];
     }
     
@@ -788,8 +791,8 @@
     [videoObj setObject:[NSString stringWithFormat:@"%ld",object.duration ] forKey:@"duration"];
     [videoObj setObject:[NSString stringWithFormat:@"%lld",object.fileLength] forKey:@"fileLength"];
 
-    NSString *mediaPath = [self moveFiletoSessionDir:message isThumb:nil];
-    NSString *mediaThumbPath = [self moveFiletoSessionDir:message isThumb:@1];
+    NSString *mediaPath = [self moveFiletoSessionDir:message];
+    NSString *mediaCoverPath = [self makeThumbnail:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
     
@@ -814,12 +817,13 @@
         } else {
             [videoObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
         }
-    } else if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
+    }
+    if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
         [videoObj setObject:@true forKey:@"isFileDownloading"];
     }
     
-    if (mediaThumbPath != nil) {
-        [videoObj setObject:[NSString stringWithFormat:@"%@",mediaThumbPath] forKey:@"coverPath"];
+    if (mediaCoverPath != nil) {
+        [videoObj setObject:[NSString stringWithFormat:@"%@",mediaCoverPath] forKey:@"coverPath"];
     }
     
     if (message.deliveryState == NIMMessageDeliveryStateDeliveried && message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])) {
@@ -841,7 +845,7 @@
     [voiceObj setObject:[NSString stringWithFormat:@"%zd",(object.duration/1000)] forKey:@"duration"];
     [voiceObj setObject:[NSNumber  numberWithBool:message.isPlayed] forKey:@"isPlayed"];
     
-    NSString *mediaPath = [self moveFiletoSessionDir:message isThumb:nil];
+    NSString *mediaPath = [self moveFiletoSessionDir:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
     if ([downloadAttStatus length]) {
@@ -857,6 +861,8 @@
         } else {
             [voiceObj setObject:[NSString stringWithFormat:@"%@",mediaPath] forKey:@"path"];
         }
+    } else if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
+        [voiceObj setObject:@true forKey:@"isFileDownloading"];
     }
     
     if (message.deliveryState == NIMMessageDeliveryStateDeliveried && message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && [downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) {
@@ -871,7 +877,59 @@
     return voiceObj;
 }
 
--(nullable NSString *) moveFiletoSessionDir:(NIMMessage *)message isThumb:(nullable NSNumber *)isThumb {
+-(nullable NSString *) makeThumbnail:(NIMMessage *)message {
+    NSString *originPath;
+    NSString *urlDownload;
+    
+    if (message.messageType == NIMMessageTypeImage) {
+        NIMImageObject *object = message.messageObject;
+        originPath = object.thumbPath;
+    } else if (message.messageType == NIMMessageTypeVideo) {
+        NIMVideoObject *object = message.messageObject;
+        originPath = object.coverPath;
+    }
+    
+    NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    
+    NSString *originMediaCachePath = documentPath;
+    NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
+        for (NSString *file in files) {
+            if ([file hasSuffix:@"Global/Resources"]) {
+                originMediaCachePath = [documentPath stringByAppendingPathComponent:file];
+                break;
+            }
+        }
+    }
+    //strDocPath: NIMSDK/b62854c9e1779d34fa7d683155581c2b/Global/Resources
+    NSString *cacheMediaPath = [originMediaCachePath stringByAppendingPathComponent:message.session.sessionId];
+    
+    if (![[NSFileManager defaultManager] fileExistsAtPath:cacheMediaPath]) {
+        NSLog(@"fileExistsAtPath NO");
+        [[NSFileManager defaultManager] createDirectoryAtPath:cacheMediaPath withIntermediateDirectories:YES attributes:nil error:NULL];
+    } else {
+        NSLog(@"fileExistsAtPath YES");
+    }
+    
+    NSString *theFileName = [originPath lastPathComponent];
+    cacheMediaPath = [cacheMediaPath stringByAppendingPathComponent:theFileName];
+        
+    if ([[NSFileManager defaultManager] fileExistsAtPath:cacheMediaPath]) {
+        return cacheMediaPath;
+    }
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
+        NSError *copyError = nil;
+        if (![[NSFileManager defaultManager] copyItemAtPath:originPath toPath:cacheMediaPath error:&copyError]) {
+            NSLog(@"[copyError thumbnail description]: %@", copyError);
+            return nil;
+        }
+        return cacheMediaPath;
+    }
+    return nil;
+};
+
+-(nullable NSString *) moveFiletoSessionDir:(NIMMessage *)message {
     NSString *originPath;
     NSString *urlDownload;
     
@@ -887,16 +945,15 @@
         urlDownload = object.url;
     } else if (message.messageType == NIMMessageTypeImage) {
         NIMImageObject *object = message.messageObject;
-        originPath = [isThumb  isEqual: @1] ? object.thumbPath : object.path;
+        originPath = object.path;
         urlDownload = object.url;
     } else if (message.messageType == NIMMessageTypeVideo) {
         NIMVideoObject *object = message.messageObject;
-        originPath = [isThumb  isEqual: @1] ? object.coverPath : object.path;
+        originPath = object.path;
         urlDownload = object.url;
-    }
-    else if (message.messageType == NIMMessageTypeFile) {
+    } else if (message.messageType == NIMMessageTypeFile) {
         NIMVideoObject *object = message.messageObject;
-        originPath = [isThumb  isEqual: @1] ? object.path : object.path;
+        originPath = object.path;
         urlDownload = object.url;
     }
     NSLog(@"originPath: %@ , urlDownload: %@",originPath, urlDownload );
@@ -927,29 +984,29 @@
     
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
 
-    if (([isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && [downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"] && isThumb == nil) || [[NSFileManager defaultManager] fileExistsAtPath:cacheMediaPath]) {
+    if (([isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && [downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) || [[NSFileManager defaultManager] fileExistsAtPath:cacheMediaPath]) {
         return cacheMediaPath;
     }
     
     if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
         NSError *copyError = nil;
         if (![[NSFileManager defaultManager] copyItemAtPath:originPath toPath:cacheMediaPath error:&copyError]) {
-       NSLog(@"[copyError description]: %@", [copyError description]);
+            NSLog(@"[copyError description]: %@", [copyError description]);
             return nil;
         }
         [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
         [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
         [self refrashMessage:message From:@"receive"];
 
-        if ([isThumb isEqual:@1]) {
-            if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
-                NSError *removeItemError = nil;
-                if (![[NSFileManager defaultManager] removeItemAtPath:originPath error:&removeItemError]) {
-                    NSLog(@"[removeItemError description]: %@", [removeItemError description]);
-                }
-            }
-        }
-    }else if (isThumb == nil) {
+//        if ([isThumb isEqual:@1]) {
+//            if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
+//                NSError *removeItemError = nil;
+//                if (![[NSFileManager defaultManager] removeItemAtPath:originPath error:&removeItemError]) {
+//                    NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+//                }
+//            }
+//        }
+    } else {
 //        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloading"];
         [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloading"}];
 
@@ -964,10 +1021,34 @@
                 [self refrashMessage:message From:@"receive"];
             }
         } progress:^(float progress) {
+            if (message.messageType == NIMMessageTypeFile) {
+                NIMModel *model = [NIMModel initShareMD];
+                model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
+            }
+
             NSLog(@"视频下载进度%f",progress);
         }];
         return nil;
     }
+//    else if (isThumb == nil) {
+////        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloading"];
+//        [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloading"}];
+//
+//        [[NIMObject initNIMObject] downLoadAttachment:urlDownload filePath:cacheMediaPath Error:^(NSError *error) {
+//            NSLog(@"downLoadVideo error: %@", [error description]);
+//            if (!error) {
+//                NSLog(@"download success");
+////                [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
+////                [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
+//                [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
+//
+//                [self refrashMessage:message From:@"receive"];
+//            }
+//        } progress:^(float progress) {
+//            NSLog(@"视频下载进度%f",progress);
+//        }];
+//        return nil;
+//    }
     
     return nil;
 };
@@ -1940,16 +2021,16 @@
 //发送进度
 -(void)sendMessage:(NIMMessage *)message progress:(float)progress
 {
+    NSLog(@"sendMessage:(NIMMessage *)message progress:(float)progress");
     [self refrashMessage:message From:@"send" ];
     NIMModel *model = [NIMModel initShareMD];
-    model.endSend = @{@"progress":[NSString stringWithFormat:@"%f",progress]};
+    model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
 }
 
 
 //接收消息
 - (void)onRecvMessages:(NSArray *)messages
 {
-    
     NIMMessage *message = messages.firstObject;
     
     NSLog(@"onRecvMessages >>>>> %@", message);
@@ -1966,7 +2047,7 @@
         
         [dict setObject:message.messageId forKey:@"lastReadMessageId"];
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
-        
+
         if ([self isSeenMessage]) {
             if (message.session.sessionType == NIMSessionTypeTeam) {
                 [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
@@ -2047,7 +2128,10 @@
 
 - (void)fetchMessageAttachment:(NIMMessage *)message progress:(float)progress
 {
-    NSLog(@"下载图片");
+    NSLog(@"下载图片] %f", progress);
+    NIMModel *model = [NIMModel initShareMD];
+    model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"download", @"sessionId": message.session.sessionId};
+
     //    if ([message.session isEqual:_session]) {
     //        [self.interactor updateMessage:message];
     //    }
