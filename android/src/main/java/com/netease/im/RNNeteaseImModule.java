@@ -1856,7 +1856,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             @Override
             public int onResult(int code, IMMessage message) {
                 if (message != null) {
-                    sessionService.deleteItem(message, true);
+                    sessionService.deleteMessage(message, promise);
                 } else {
                     showTip("请选择消息");
                 }

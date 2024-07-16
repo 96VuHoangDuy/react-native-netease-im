@@ -179,7 +179,7 @@ public class SessionService {
         List<IMMessage> addedListItems = new ArrayList<>(messages.size());
         for (IMMessage message : messages) {
             if (isMyMessage(message)) {
-                handleInComeMultiMediaMessage(message, "");
+//                handleInComeMultiMediaMessage(message, "");
 
                 addedListItems.add(message);
                 needRefresh = true;
@@ -320,6 +320,69 @@ public class SessionService {
             return;
         }
         getMsgService().deleteChattingHistory(messageItem, true);
+    }
+
+    public void deleteMessage(IMMessage message, final Promise promise) {
+        if (message == null){
+            promise.resolve("SUCCESS");
+            return;
+        }
+
+        NIMClient.getService(MsgService.class).deleteChattingHistory(message);
+
+        if (!message.getMsgType().equals(MsgTypeEnum.image) && !message.getMsgType().equals(MsgTypeEnum.video)) {
+            promise.resolve("SUCCESS");
+            return;
+        }
+
+        Map<String, Object> remoteExt = message.getRemoteExtension();
+        if (remoteExt == null) {
+            promise.resolve("SUCCESS");
+            return;
+        }
+
+        String parentId = (String) remoteExt.get("parentId");
+        if (parentId == null) {
+            promise.resolve("SUCCESS");
+            return;
+        }
+
+        MsgSearchOption option = new MsgSearchOption();
+        option.setSearchContent(parentId);
+
+        List<MsgTypeEnum> messageTypes = new ArrayList<>();
+        messageTypes.add(MsgTypeEnum.text);
+        messageTypes.add(MsgTypeEnum.image);
+        messageTypes.add(MsgTypeEnum.video);
+
+        option.setMessageTypes(messageTypes);
+
+        NIMClient.getService(MsgService.class).searchAllMessage(option).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("error: " + code, "error");
+                    return;
+                }
+
+                if (result == null) {
+                    promise.resolve("SUCCESS");
+                    return;
+                }
+
+                if (result.size() == 1) {
+                    IMMessage messageParent = result.get(0);
+
+                    NIMClient.getService(MsgService.class).deleteChattingHistory(messageParent);
+
+                    promise.resolve(messageParent.getUuid());
+                    return;
+                }
+
+                promise.resolve("SUCCESS");
+                return;
+            }
+        });
     }
 
     /**
@@ -1430,21 +1493,22 @@ public class SessionService {
 
                 if (parentId != null && startIndex == 0) {
                     IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, parentId);
-                    Map<String, Object> localExt = MapBuilder.newHashMap();
-                    localExt.put("isLocalMsg", true);
-                    localExt.put("parentMediaId", parentId);
-                    message.setLocalExtension(localExt);
+                    Map<String, Object> remoteExt = new HashMap<String, Object>();
+                    remoteExt.put("parentMediaId", parentId);
+
+                    message.setRemoteExtension(remoteExt);
                     message.setFromAccount(message.getFromAccount());
                     message.setDirect(message.getDirect());
 
-                    NIMClient.getService(MsgService.class).saveMessageToLocal(message, true);
 
-                    if (isCustomerService) {
-                        List<IMMessage> list = new ArrayList<>(1);
-                        list.add(message);
-                        Object a = ReactCache.createMessageList(list);
-                        ReactCache.emit(ReactCache.observeMsgStatus, a);
-                    }
+                    NIMClient.getService(MsgService.class).sendMessage(message, false);
+
+//                    if (isCustomerService) {
+//                        List<IMMessage> list = new ArrayList<>(1);
+//                        list.add(message);
+//                        Object a = ReactCache.createMessageList(list);
+//                        ReactCache.emit(ReactCache.observeMsgStatus, a);
+//                    }
                 }
 
                 startIndex += batchSize;
@@ -1491,6 +1555,7 @@ public class SessionService {
 
         if (parentId != null) {
             remoteExt.put("parentId", parentId);
+            message.setContent(parentId);
         }
 
         if (indexCount != null) {
@@ -1551,6 +1616,7 @@ public class SessionService {
 
         if (parentId != null) {
             remoteExt.put("parentId", parentId);
+            message.setContent(parentId);
         }
 
         if (indexCount != null) {
@@ -1735,24 +1801,25 @@ public class SessionService {
                 return 1;
             }
 
+            Map<String, Object> localExt = new HashMap<String, Object>();
+            message.setLocalExtension(localExt);
+
             sendMessageSelf(message, onSendMessageListener, false, false);
         }
 
-//       if (parentId != null && isHaveMultiMedia) {
-//           IMMessage localMessage = MessageBuilder.createTextMessage(sessionId, sessionTypeE, parentId);
-//           Map<String, Object> localExt = MapBuilder.newHashMap();
-//           localExt.put("isLocalMsg", true);
-//           localExt.put("parentMediaId", parentId);
-//           localMessage.setLocalExtension(localExt);
-//
-//           CustomMessageConfig config = new CustomMessageConfig();
-//           config.enablePush = false;
-//           config.enableUnreadCount = false;
-//           localMessage.setConfig(config);
-//           NIMSDK.getMsgService().saveMessageToLocal(localMessage, false);
-//
-//           NIMSDK.getMsgService().updateIMMessage(localMessage);
-//       }
+       if (parentId != null && isHaveMultiMedia) {
+           IMMessage localMessage = MessageBuilder.createTextMessage(sessionId, sessionTypeE, parentId);
+           Map<String, Object> remoteExt = new HashMap<String, Object>();
+           remoteExt.put("parentMediaId", parentId);
+           localMessage.setRemoteExtension(remoteExt);
+
+           CustomMessageConfig config = new CustomMessageConfig();
+           config.enablePush = false;
+           config.enableUnreadCount = false;
+           localMessage.setConfig(config);
+
+           sendMessageSelf(localMessage,onSendMessageListener, false, false);
+       }
 
         if(!content.isEmpty()) {
             IMMessage messageSelf = MessageBuilder.createTextMessage(sessionId, sessionTypeE, content);

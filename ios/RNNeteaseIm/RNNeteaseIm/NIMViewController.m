@@ -170,7 +170,7 @@
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recentSession];
     }
     
-    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
+//    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
     
     [self getResouces];
 }
@@ -191,7 +191,7 @@
     
     // [self setLastMessageId:recentSession.lastMessage.messageId];
 
-    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
+//    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
 
     [self getResouces];
 }
@@ -278,6 +278,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
                 }
             }
             
@@ -427,6 +431,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
                 }
             }
             
@@ -609,6 +617,10 @@
                 if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
                 }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                }
             }
             
             [dic setObject:localExt forKey:@"localExt"];
@@ -766,6 +778,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
                 }
             }
                 

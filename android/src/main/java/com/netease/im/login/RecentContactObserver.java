@@ -134,7 +134,7 @@ public class RecentContactObserver {
         if (updatedRecent != null ) {
             IMMessage msg = NIMClient.getService(MsgService.class).queryLastMessage(updatedRecent.getContactId(), updatedRecent.getSessionType());
             if (msg != null) {
-                SessionService.getInstance().handleInComeMultiMediaMessage(msg, "NIMViewController");
+//                SessionService.getInstance().handleInComeMultiMediaMessage(msg, "NIMViewController");
             }
         }
         int index;
@@ -225,8 +225,8 @@ public class RecentContactObserver {
                 public void onResult(int c, List<IMMessage> r, Throwable exception) {
 
                     if (c == ResponseCode.RES_SUCCESS && r.size() > 0) {
-                        IMMessage msg = r.get(0);
-                       SessionService.getInstance().handleInComeMultiMediaMessage(msg, "");
+//                        IMMessage msg = r.get(0);
+//                       SessionService.getInstance().handleInComeMultiMediaMessage(msg, "");
                     }
                 }
             });

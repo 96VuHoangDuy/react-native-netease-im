@@ -3,16 +3,16 @@ import {
   NIMMessageSubTypeEnum,
   NIMSessionTypeEnum,
   NimSessionTypeExtend,
-} from "../Session/session.type";
+} from '../Session/session.type';
 import {
   NIMTeamOperationType,
   NIMTeamOperationTypeUpdateDetail,
-} from "../Team/team.type";
-import { NIMCommonBooleanType } from "../utils/common.type";
+} from '../Team/team.type';
+import { NIMCommonBooleanType } from '../utils/common.type';
 
 export enum NIMMessageMediaType {
-  IMAGE = "image",
-  VIDEO = "video",
+  IMAGE = 'image',
+  VIDEO = 'video',
 }
 
 export interface NIMMessageMediaImageData {
@@ -46,45 +46,45 @@ export type NIMMessageMedia = NIMMessageMediaImage | NIMMessageMediaVideo;
 // interface
 
 export enum NIMMessageTypeEnum {
-  TEXT = "text",
-  VOICE = "voice",
-  IMAGE = "image",
-  VIDEO = "video",
-  FILE = "file",
-  ROBOT = "robot",
-  BANK_TRANSFER = "transfer",
-  ACCOUNT_NOTICE = "account_notice",
-  EVENT = "event",
-  LOCATION = "location",
-  NOTIFICATION = "notification",
-  TIP = "tip",
-  RED_PACKET = "redpacket",
-  RED_PACKET_OPEN = "redpacketOpen",
-  LINK = "url",
-  CARD = "card",
-  CUSTOM = "custom",
-  MULTIPLE_TEXT = "forwardMultipleText",
-  GIF = "gif",
-  UNKNOWN = "unknown",
-  EMPTY_SESSION = "EMPTY_SESSION",
+  TEXT = 'text',
+  VOICE = 'voice',
+  IMAGE = 'image',
+  VIDEO = 'video',
+  FILE = 'file',
+  ROBOT = 'robot',
+  BANK_TRANSFER = 'transfer',
+  ACCOUNT_NOTICE = 'account_notice',
+  EVENT = 'event',
+  LOCATION = 'location',
+  NOTIFICATION = 'notification',
+  TIP = 'tip',
+  RED_PACKET = 'redpacket',
+  RED_PACKET_OPEN = 'redpacketOpen',
+  LINK = 'url',
+  CARD = 'card',
+  CUSTOM = 'custom',
+  MULTIPLE_TEXT = 'forwardMultipleText',
+  GIF = 'gif',
+  UNKNOWN = 'unknown',
+  EMPTY_SESSION = 'EMPTY_SESSION',
 }
 
 export enum NIMMessageStatusEnum {
-  SEND_DRAFT = "send_draft",
-  SEND_FAILED = "send_failed",
-  SEND_SENDING = "send_going",
-  SEND_SUCCESS = "send_succeed",
-  RECEIVE_READ = "receive_read",
-  RECEIVE_UNREAD = "receive_unread",
+  SEND_DRAFT = 'send_draft',
+  SEND_FAILED = 'send_failed',
+  SEND_SENDING = 'send_going',
+  SEND_SUCCESS = 'send_succeed',
+  RECEIVE_READ = 'receive_read',
+  RECEIVE_UNREAD = 'receive_unread',
 }
 
 export enum NIMMessageReactionEnum {
-  HEART = "HEART",
-  LIKE = "LIKE",
-  HAHA = "HAHA",
-  SURPRISE = "SURPRISE",
-  CRY = "CRY",
-  ANGRY = "ANGRY",
+  HEART = 'HEART',
+  LIKE = 'LIKE',
+  HAHA = 'HAHA',
+  SURPRISE = 'SURPRISE',
+  CRY = 'CRY',
+  ANGRY = 'ANGRY',
 }
 
 export type INimMessageReactionEnum = `${NIMMessageReactionEnum}`;
@@ -212,7 +212,7 @@ export interface NIMMessage {
 }
 
 export enum NIMFileType {
-  image = "image/",
-  audio = "audio/",
-  video = "video/",
+  image = 'image/',
+  audio = 'audio/',
+  video = 'video/',
 }

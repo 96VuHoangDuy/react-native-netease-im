@@ -110,7 +110,7 @@ typedef void(^Errors)(id erro);
 //清空本地聊天记录
 -(void)clearMsg:(NSString *)contactId type:(NSString *)type;
 //删除一条信息
--(void)deleteMsg:(NSString *)messageId;
+-(void)deleteMsg:(NSString *)messageId success:(Success)success err:(Errors)err;
 //麦克风权限
 - (void)onTouchVoiceSucc:(Success)succ Err:(Errors)err;
 //更新录音消息为已播放

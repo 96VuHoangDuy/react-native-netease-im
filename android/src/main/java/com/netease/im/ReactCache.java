@@ -261,19 +261,17 @@ public class ReactCache {
                             if (notificationExtend != null) {
                                 localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
                             }
-
-                            String parentMediaId = (String) messageLocalExt.get("parentMediaId");
-
-                            if (parentMediaId != null) {
-                                localExt.putString("parentMediaId", parentMediaId);
-                            }
-
                         }
 
                         if (messageRemoteExt != null) {
                             Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
                             Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
                             Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
+                            String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
+
+                            if (parentMediaId != null) {
+                                localExt.putString("parentMediaId", parentMediaId);
+                            }
 
                             if (reaction != null) {
                                 localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));
@@ -1785,6 +1783,11 @@ public class ReactCache {
         if (messageRemoteExt != null) {
             Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
             Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
+            String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
+
+            if (parentMediaId != null) {
+                localExt.putString("parentMediaId", parentMediaId);
+            }
 
             if (reaction != null) {
                 localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));

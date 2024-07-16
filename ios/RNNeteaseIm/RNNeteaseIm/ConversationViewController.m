@@ -1110,6 +1110,10 @@
         if (message.remoteExt != nil && [message.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
             [localExt setObject:[message.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
         }
+        
+        if (message.remoteExt != nil && [message.remoteExt objectForKey:@"parentMediaId"] != nil) {
+            [localExt setObject:[message.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+        }
                 
         [dic setObject:localExt forKey:@"localExt"];
         
@@ -1591,6 +1595,11 @@
         [msgRemoteExt setValue:indexCount forKey:@"indexCount"];
     }
     message.remoteExt = msgRemoteExt;
+    
+    if (parentId != nil) {
+        message.text = parentId;
+    }
+    
 //    NIMMessage *message = [NIMMessageMaker msgWithImagePath:path];
     if (isCustomerService || [self isFriendToSendMessage:message]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
@@ -1644,22 +1653,29 @@
         if (parentId != nil && startIndex == 0) {
             NIMMessage *message = [[NIMMessage alloc] init];
             message.text = parentId;
-            message.localExt = @{@"isLocalMsg": @YES, @"parentMediaId": parentId};
+            NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+            [remoteExt setObject:parentId forKey:@"parentMediaId"];
+            
+            message.remoteExt = remoteExt;
             NIMMessageSetting *setting = [[NIMMessageSetting alloc] init];
             setting.apnsEnabled = NO;
             setting.shouldBeCounted = NO;
             message.setting = setting;
             
-            [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:^(NSError * _Nullable error) {
-                if (error != nil) {
-    //                error(error.localizedDescription);
-                    return;
-                }
-            }];
+            NSLog(@"test parent id =>>>>> message id: %@", message.messageId);
             
-            if (isCustomerService) {
-                [self refrashMessage:message From:@"send"];
-            }
+            [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+            
+//            [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:^(NSError * _Nullable error) {
+//                if (error != nil) {
+//    //                error(error.localizedDescription);
+//                    return;
+//                }
+//            }];
+            
+//            if (isCustomerService) {
+//                [self refrashMessage:message From:@"send"];
+//            }
         }
 
         
@@ -1707,6 +1723,7 @@
     
     if (parentId != nil) {
         [msgRemoteExt setValue:parentId forKey:@"parentId"];
+        message.text = parentId;
     }
     if (indexCount != nil) {
         [msgRemoteExt setValue:indexCount forKey:@"indexCount"];
@@ -2035,7 +2052,7 @@
     NSLog(@"onRecvMessages >>>>> %@", message);
     
     if ([message.session.sessionId isEqualToString:_sessionID]) {
-        [self handleInComeMultiMediaMessage: message callFrom:@""];
+//        [self handleInComeMultiMediaMessage: message callFrom:@""];
 
         [self refrashMessage:message From:@"receive" ];
         NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:message];
@@ -2326,6 +2343,10 @@
     
     if (message.remoteExt != nil && [message.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
         [localExt setObject:[message.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+    }
+    
+    if (message.remoteExt != nil && [message.remoteExt objectForKey:@"parentMediaId"] != nil) {
+        [localExt setObject:[message.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
     }
     
     [dic2 setObject:localExt forKey:@"localExt"];
@@ -2670,14 +2691,19 @@
     if (parentId != nil && isHaveMultiMedia) {
         NIMMessage *message = [[NIMMessage alloc] init];
         message.text    = parentId;
-        message.localExt = @{@"isLocalMsg": @YES, @"parentMediaId": parentId };
+        
+        NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+        [remoteExt setObject:parentId forKey:@"parentMediaId"];
+        message.remoteExt = remoteExt;
         NIMMessageSetting *seting = [[NIMMessageSetting alloc]init];
         seting.apnsEnabled = NO;
         seting.shouldBeCounted = NO;
         message.setting = seting;
         
-        [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:^(NSError * _Nullable error) {
-        }];
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+        
+//        [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:^(NSError * _Nullable error) {
+//        }];
     }
     
     NSArray *currentMessages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:messageIds];
@@ -2696,6 +2722,8 @@
             message.remoteExt = msgRemoteExt;
 
         }
+        
+        message.localExt = @{};
         
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
     }
@@ -2832,10 +2860,59 @@
 }
 
 //删除一条信息
--(void)deleteMsg:(NSString *)messageId{
+-(void)deleteMsg:(NSString *)messageId success:(Success)success err:(Errors)err {
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageId]];
     NIMMessage *message = currentMessage[0];
     [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
+    
+    if (message.messageType != NIMMessageTypeImage && message.messageType != NIMMessageTypeVideo) {
+        success(@"SUCCESS");
+        return;
+    };
+    
+    NSDictionary *remoteExt = message.remoteExt;
+    if (remoteExt == nil) {
+        success(@"SUCCESS");
+        return;
+    };
+    
+    NSString *parentId = [remoteExt objectForKey:@"parentId"];
+    if (parentId == nil) {
+        success(@"SUCCESS");
+        return;
+    };
+    
+    NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
+    NSMutableArray *messageTypes = [[NSMutableArray alloc] init];
+    [messageTypes addObject:[NSNumber numberWithInt:NIMMessageTypeText]];
+    [messageTypes addObject:[NSNumber numberWithInt:NIMMessageTypeVideo]];
+    [messageTypes addObject:[NSNumber numberWithInt:NIMMessageTypeImage]];
+    
+    option.messageTypes = messageTypes;
+    option.searchContent = parentId;
+    [[NIMSDK sharedSDK].conversationManager searchMessages:message.session option:option result:^(NSError * __nullable error,NSArray<NIMMessage *> * __nullable messages) {
+        if (error != nil) {
+            err(error);
+            return;
+        }
+        
+        if (messages == nil) {
+            success(@"SUCCESS");
+            return;
+        }
+        
+        if (messages.count == 1) {
+            NIMMessage *messageParent = [messages firstObject];
+            
+            [[NIMSDK sharedSDK].conversationManager deleteMessage:messageParent];
+            
+            success(messageParent.messageId);
+            
+            return;
+        }
+        
+        success(@"SUCCESS");
+    }];
 }
 //清空聊天记录
 -(void)clearMsg:(NSString *)contactId type:(NSString *)type{

@@ -536,8 +536,12 @@ RCT_EXPORT_METHOD(resendMessage:(nonnull NSString *)messageId resolve:(RCTPromis
 }
 
 //删除会话内容
-RCT_EXPORT_METHOD(deleteMessage:(nonnull NSString *)messageId){
-    [[ConversationViewController initWithConversationViewController]deleteMsg:messageId];
+RCT_EXPORT_METHOD(deleteMessage:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] deleteMsg:messageId success:^(id param) {
+        resolve(param);
+    } err:^(id err) {
+        reject(@"-1", err, nil);
+    }];
 }
 //清空聊天记录
 RCT_EXPORT_METHOD(clearMessage:(nonnull  NSString *)sessionId sessionId:(nonnull  NSString *)type){
