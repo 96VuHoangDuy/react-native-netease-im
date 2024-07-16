@@ -125,8 +125,8 @@
         NSInteger notiType = [[dataDict objectForKey:@"type"] integerValue];
                 
         switch (notiType) {
-            case 0:
-            case 1://revoke messages
+            case 0: //OBSERVE_RECEIVE_REVOKE_MESSAGE
+            case 1: //OBSERVE_RECEIVE_REVOKE_MESSAGE
             {
                 NSString *sessionId = [dataDict objectForKey:@"sessionId"];
                 NSString *messageId = [dataDict objectForKey:@"messageId"];
@@ -139,9 +139,11 @@
                 [[NIMSDK sharedSDK].conversationManager deleteMessage:revokedMessge];
             }
                 break;
-            case 2:
+            case 2: //OBSERVE_RECEIVE_FRIEND_REMOVED_ME
                 break;
-            case 3:
+            case 3: //OBSERVE_RECEIVE_REVOKE_FRIEND_REQUEST,
+                break;
+            case 4: //OBERSVE_FRIEND_ACCEPT_MY_FRIEND_REQUEST
                 break;
 //            case 4://拆红包消息
 ////            {
