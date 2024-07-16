@@ -994,8 +994,7 @@
             NSLog(@"[copyError description]: %@", [copyError description]);
             return nil;
         }
-        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
-        [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
+        [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
         [self refrashMessage:message From:@"receive"];
 
 //        if ([isThumb isEqual:@1]) {
