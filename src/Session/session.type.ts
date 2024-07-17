@@ -10,6 +10,12 @@ import {
   NIMTeamOperationTypeUpdateDetail,
 } from '../Team/team.type';
 
+export interface ICreateRecentOnlineService {
+  sessionId: string;
+  onlineServiceType: NIMSessionOnlineServiceType;
+  nickname?: string
+}
+
 export enum QueryDirectionType {
   NEW = 1,
   OLD = 0,

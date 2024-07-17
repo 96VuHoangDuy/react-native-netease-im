@@ -311,7 +311,7 @@
     }
     
 
-    [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
+    [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:session];
     
     NIMGetMessagesDynamicallyParam *param = [[NIMGetMessagesDynamicallyParam alloc] init];
     
@@ -2682,6 +2682,49 @@
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
+}
+
+-(void)addEmptyRecentSessionCustomerService:(NSArray *)data {
+    NSLog(@"data =>>>>>> %@", data);
+    for(NSDictionary *item in data) {
+        NSString *sessionId = [item objectForKey:@"sessionId"];
+        NSString *onlineServiceType = [item objectForKey:@"onlineServiceType"];
+        NSString *nickname = [item objectForKey:@"nickname"];
+        
+        if (sessionId == nil || onlineServiceType == nil) continue;
+        
+        NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+        if (recent == nil) {
+            [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
+            
+            recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+        }
+        if (recent == nil) continue;
+        
+        NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        
+        BOOL isCsr = NO;
+        BOOL isChatBot = NO;
+        
+        if ([onlineServiceType isEqual:@"chatbot"]) {
+            isChatBot = YES;
+        }
+        
+        if ([onlineServiceType isEqual:@"csr"]) {
+            isCsr = YES;
+        }
+        
+        [localExt setObject:@(isCsr) forKey:@"isCsr"];
+        [localExt setObject:@(isChatBot) forKey:@"isChatBot"];
+        [localExt setObject:@(YES) forKey:@"isUpdate"];
+        
+        if (nickname != nil) {
+            [localExt setObject:[NSString stringWithFormat:@"%@", nickname] forKey:@"name"];
+        }
+        
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+    }
 }
 
 //转发消息

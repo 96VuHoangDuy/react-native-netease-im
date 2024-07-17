@@ -215,35 +215,37 @@ public class RecentContactObserver {
     int unreadNum = 0;
 
     public void refreshMessages(boolean unreadChanged) {
-        sortRecentContacts(items);
-        String lastMessageId = items.get(0).getRecentMessageId();
-        if (lastMessageId != null) {
-            List<String> messageIds = new ArrayList<String>();
-            messageIds.add(lastMessageId);
-            NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
-                @Override
-                public void onResult(int c, List<IMMessage> r, Throwable exception) {
+        if (items.size() > 0) {
+            sortRecentContacts(items);
+            String lastMessageId = items.get(0).getRecentMessageId();
+            if (lastMessageId != null) {
+                List<String> messageIds = new ArrayList<String>();
+                messageIds.add(lastMessageId);
+                NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+                    @Override
+                    public void onResult(int c, List<IMMessage> r, Throwable exception) {
 
-                    if (c == ResponseCode.RES_SUCCESS && r.size() > 0) {
+                        if (c == ResponseCode.RES_SUCCESS && r.size() > 0) {
 //                        IMMessage msg = r.get(0);
 //                       SessionService.getInstance().handleInComeMultiMediaMessage(msg, "");
+                        }
                     }
-                }
-            });
+                });
 
-        }
-
-        if (unreadChanged) {
-
-            for (RecentContact r : items) {
-                unreadNum += r.getUnreadCount();
             }
 
-            unreadNum = NIMClient.getService(MsgService.class).getTotalUnreadCount();
+            if (unreadChanged) {
+
+                for (RecentContact r : items) {
+                    unreadNum += r.getUnreadCount();
+                }
+
+                unreadNum = NIMClient.getService(MsgService.class).getTotalUnreadCount();
 
 //            if (callback != null) {
 //                callback.onUnreadCountChange(unreadNum);
 //            }
+            }
         }
         ReactCache.emit(ReactCache.observeRecentContact, ReactCache.createRecentList(items, unreadNum));
     }

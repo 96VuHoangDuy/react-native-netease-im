@@ -8,6 +8,7 @@ import {
   NIMSessionOnlineServiceType,
   NIMBirthdayMemberType,
   NIMMessageSubTypeEnum,
+  ICreateRecentOnlineService,
 } from './session.type';
 import {
   INimMessageReaction,
@@ -721,6 +722,10 @@ class NimSession {
 
   updateReactionMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string, messageNotifyReactionId: string, reaction: INimMessageReaction) {
     return RNNeteaseIm.updateReactionMessage(sessionId, sessionType, messageId, messageNotifyReactionId, reaction)
+  }
+
+  addEmptyRecentSessionCustomerService(data: ICreateRecentOnlineService[]) {
+    return RNNeteaseIm.addEmptyRecentSessionCustomerService(data);
   }
 }
 

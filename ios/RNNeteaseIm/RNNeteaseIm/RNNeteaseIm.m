@@ -616,6 +616,10 @@ RCT_EXPORT_METHOD(updateRecentSessionIsCsrOrChatbot:(nonnull NSString *)sessionI
     [[ConversationViewController initWithConversationViewController]updateRecentSessionIsCsrOrChatbot:sessionId type:type name:name];
 }
 
+RCT_EXPORT_METHOD(addEmptyRecentSessionCustomerService:(nonnull NSArray *)data) {
+    [[ConversationViewController initWithConversationViewController] addEmptyRecentSessionCustomerService:data];
+}
+
 RCT_EXPORT_METHOD(addEmptyRecentSession:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType) {
     [[ConversationViewController initWithConversationViewController]addEmptyRecentSession:sessionId sessionType:sessionType];
 }

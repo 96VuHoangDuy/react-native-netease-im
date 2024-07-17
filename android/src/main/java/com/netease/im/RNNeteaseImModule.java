@@ -3059,6 +3059,66 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         promise.resolve("success");
     }
 
+    private Map<String, Object> getExtensionByRecentContact(RecentContact recent) {
+        Map<String, Object> extension = recent.getExtension();
+        if (extension == null) {
+            return new HashMap<String, Object>();
+        }
+
+        return extension;
+    }
+
+    @ReactMethod
+    public void addEmptyRecentSessionCustomerService(ReadableArray data, final Promise promise) {
+        Log.e(TAG, "addEmptyRecentSessionCustomerService =>>>>>> " + data);
+        List<Object> arr = MapUtil.readableArrayToArray(data);
+
+        for(Object item : arr) {
+            Map<String, Object> map = (Map<String, Object>) item;
+            Log.e(TAG, "addEmptyRecentSessionCustomerService =>>>>>> " + map);
+            if (map == null) continue;
+
+            String sessionId = (String) map.get("sessionId");
+            String onlineServiceType = (String) map.get("onlineServiceType");
+            String nickname = (String) map.get("nickname");
+            if (sessionId == null || onlineServiceType == null) continue;;
+
+            RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
+            if (recent == null) {
+                NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, SessionTypeEnum.P2P,0, System.currentTimeMillis(), true);
+                recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
+            }
+            if (recent == null) continue;
+
+            Map<String, Object> extension = getExtensionByRecentContact(recent);
+
+            Boolean isChatBot = false;
+            Boolean isCsr = false;
+
+            if (onlineServiceType.equals("chatbot")) {
+                isChatBot = true;
+            }
+
+            if (onlineServiceType.equals("csr")) {
+                isCsr = true;
+            }
+
+            if (nickname != null && !nickname.isEmpty()) {
+                extension.put("name", nickname);
+            }
+
+            extension.put("isChatBot", isChatBot);
+            extension.put("isCsr", isCsr);
+            extension.put("isUpdated", true);
+
+            recent.setExtension(extension);
+
+            NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
+         }
+
+        promise.resolve("200");
+    }
+
     @ReactMethod
     public  void updateRecentSessionIsCsrOrChatbot(String sessionId,String type, String name ) {
         Boolean isUpdated = type.equals("chatbot") || type.equals("csr");

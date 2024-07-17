@@ -71,6 +71,8 @@ typedef void(^Errors)(id erro);
 
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType;
 
+-(void)addEmptyRecentSessionCustomerService:(NSArray *)data;
+
 -(NSDictionary *) updateMessageOfChatBot:(NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(NSString *)chatBotType;
 
 -(void) reactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId reaction:(NSDictionary *)reaction success:(Success)success err:(Errors)err;

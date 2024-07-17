@@ -215,8 +215,10 @@ public class ReactCache {
                     map.putInt("messageSubType", lastMessage.getSubtype());
                 }
 
+
+                WritableMap localExt = Arguments.createMap();
+
                 if (extension != null) {
-                    WritableMap localExt = Arguments.createMap();
                     Boolean isCsr = (Boolean) extension.get("isCsr");
                     Boolean isChatBot = (Boolean) extension.get("isChatBot");
                     Boolean isUpdated = (Boolean) extension.get("isUpdated");
@@ -246,49 +248,50 @@ public class ReactCache {
                         isHideRecent = isHideSession;
                         localExt.putBoolean("isHideSession", isHideSession);
                     }
+                 }
 
-                    if (lastMessage != null) {
-                        Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
-                        Map<String, Object> messageRemoteExt = lastMessage.getRemoteExtension();
-                        if (messageLocalExt != null) {
-                            String notificationType = (String) messageLocalExt.get("notificationType");
-                            Map<String, Object> notificationExtend = (Map<String, Object>) messageLocalExt.get("notificationExtend");
-                            if (notificationType != null) {
-                                localExt.putString("notificationType", notificationType);
-                                notifyType = notificationType;
-                            }
-
-                            if (notificationExtend != null) {
-                                localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
-                            }
+                if (lastMessage != null) {
+                    Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
+                    Map<String, Object> messageRemoteExt = lastMessage.getRemoteExtension();
+                    if (messageLocalExt != null) {
+                        String notificationType = (String) messageLocalExt.get("notificationType");
+                        Map<String, Object> notificationExtend = (Map<String, Object>) messageLocalExt.get("notificationExtend");
+                        if (notificationType != null) {
+                            localExt.putString("notificationType", notificationType);
+                            notifyType = notificationType;
                         }
 
-                        if (messageRemoteExt != null) {
-                            Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
-                            Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
-                            Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
-                            String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
-
-                            if (parentMediaId != null) {
-                                localExt.putString("parentMediaId", parentMediaId);
-                            }
-
-                            if (reaction != null) {
-                                localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));
-                            }
-
-                            if (dataRemoveReaction != null) {
-                                localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
-                            }
-
-                            if(revokeMessage != null){
-                                localExt.putMap("revokeMessage", MapUtil.mapToReadableMap(revokeMessage));
-                            }
+                        if (notificationExtend != null) {
+                            localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
                         }
                     }
 
-                    map.putMap("localExt", localExt);
-                 }
+                    if (messageRemoteExt != null) {
+                        Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
+                        Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
+                        Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
+                        String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
+
+                        if (parentMediaId != null) {
+                            localExt.putString("parentMediaId", parentMediaId);
+                        }
+
+                        if (reaction != null) {
+                            localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));
+                        }
+
+                        if (dataRemoveReaction != null) {
+                            localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
+                        }
+
+                        if(revokeMessage != null){
+                            localExt.putMap("revokeMessage", MapUtil.mapToReadableMap(revokeMessage));
+                        }
+                    }
+                }
+
+                map.putMap("localExt", localExt);
+
                 Team team = null;
 
                 if (sessionType == SessionTypeEnum.P2P) {
@@ -461,6 +464,9 @@ public class ReactCache {
                         }
                         break;
                     default:
+                        if (content == null) {
+                            content = "";
+                        }
                         break;
                 }
 //                map.putString("msgType", getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
