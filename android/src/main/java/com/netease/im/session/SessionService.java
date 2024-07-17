@@ -1835,71 +1835,92 @@ public class SessionService {
     }
 
     public int revokeMessage(final IMMessage selectMessage, final OnSendMessageListener onSendMessageListener) {
+//        if (selectMessage == null) {
+//            return 0;
+//        }
+//        if (MessageUtil.shouldIgnoreRevoke(selectMessage)) {
+//            return 1;
+//        }
+//
+//        Boolean isOutOfTime;
+//        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+//        Long periodOfTime = timestamp.getTime() - selectMessage.getTime();
+//        if(periodOfTime > 30000){
+//            isOutOfTime = true;
+//        }else {
+//            isOutOfTime = false;
+//        }
+//
+//        if(isOutOfTime){
+//            onSendMessageListener.onResult(ResponseCode.RES_OVERDUE, selectMessage);
+//        }else {
+//            try{
+//                WritableMap contentObject = Arguments.createMap();
+//                contentObject.putInt("type",1);
+//                contentObject.putString("messageId", selectMessage.getUuid());
+//                contentObject.putString("sessionId", selectMessage.getSessionId());
+//                contentObject.putBoolean("isObserveReceiveRevokeMessage", true);
+//
+//                deleteItem(selectMessage, false);
+////                revokMessage(selectMessage);
+//
+////              send a message to session that has message need to revoke
+//                IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "revoked_success");
+//                message.setSubtype(4);
+//                Map<String, Object> remoteExtObj = new HashMap<String, Object>();
+//                remoteExtObj.put("sessionId", sessionId);
+//                remoteExtObj.put("messageId", selectMessage.getUuid());
+//                Map<String, Object> remoteExt = new HashMap<String, Object>();
+//                remoteExt.put("revokeMessage", remoteExtObj);
+//                message.setRemoteExtension(remoteExt);
+//
+//                CustomMessageConfig customMessageConfig = new CustomMessageConfig();
+//                customMessageConfig.enablePush = false;
+//                customMessageConfig.enableUnreadCount = false;
+//                message.setConfig(customMessageConfig);
+//                sendMessageSelf(message, onSendMessageListener, false, false);
+////
+//                WritableMap content = Arguments.createMap();
+//                content.putMap("data",contentObject);
+//
+//                CustomNotification notification = new CustomNotification();
+//                notification.setContent(content.toString());
+//                notification.setSessionId(selectMessage.getSessionId());
+//                notification.setSessionType(selectMessage.getSessionType());
+//
+//                NIMClient.getService(MsgService.class).sendCustomNotification(notification);
+//
+//                MessageHelper.getInstance().onRevokeMessage(selectMessage);
+//
+//                if (onSendMessageListener != null) {
+//                    onSendMessageListener.onResult(ResponseCode.RES_SUCCESS, selectMessage);
+//                }
+//            }
+//            catch(Exception error){
+//            }
+//        }
+//
+//        return 2;
+
         if (selectMessage == null) {
             return 0;
         }
         if (MessageUtil.shouldIgnoreRevoke(selectMessage)) {
             return 1;
         }
-
-        Boolean isOutOfTime;
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        Long periodOfTime = timestamp.getTime() - selectMessage.getTime();
-        if(periodOfTime > 30000){
-            isOutOfTime = true;
-        }else {
-            isOutOfTime = false;
-        }
-
-        if(isOutOfTime){
-            onSendMessageListener.onResult(ResponseCode.RES_OVERDUE, selectMessage);
-        }else {
-            try{
-                WritableMap contentObject = Arguments.createMap();
-                contentObject.putInt("type",1);
-                contentObject.putString("messageId", selectMessage.getUuid());
-                contentObject.putString("sessionId", selectMessage.getSessionId());
-                contentObject.putBoolean("isObserveReceiveRevokeMessage", true);
-
-                deleteItem(selectMessage, false);
-                revokMessage(selectMessage);
-
-//              send a message to session that has message need to revoke
-                IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "revoked_success");
-                message.setSubtype(4);
-                Map<String, Object> remoteExtObj = new HashMap<String, Object>();
-                remoteExtObj.put("sessionId", sessionId);
-                remoteExtObj.put("messageId", selectMessage.getUuid());
-                Map<String, Object> remoteExt = new HashMap<String, Object>();
-                remoteExt.put("revokeMessage", remoteExtObj);
-                message.setRemoteExtension(remoteExt);
-
-                CustomMessageConfig customMessageConfig = new CustomMessageConfig();
-                customMessageConfig.enablePush = false;
-                customMessageConfig.enableUnreadCount = false;
-                message.setConfig(customMessageConfig);
-                sendMessageSelf(message, onSendMessageListener, false, false);
-//
-                WritableMap content = Arguments.createMap();
-                content.putMap("data",contentObject);
-
-                CustomNotification notification = new CustomNotification();
-                notification.setContent(content.toString());
-                notification.setSessionId(selectMessage.getSessionId());
-                notification.setSessionType(selectMessage.getSessionType());
-
-                NIMClient.getService(MsgService.class).sendCustomNotification(notification);
-
-                MessageHelper.getInstance().onRevokeMessage(selectMessage);
-
+        getMsgService().revokeMessage(selectMessage).setCallback(new RequestCallbackWrapper<Void>() {
+            @Override
+            public void onResult(int code, Void aVoid, Throwable throwable) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    deleteItem(selectMessage, false);
+                    revokMessage(selectMessage);
+                    MessageHelper.getInstance().onRevokeMessage(selectMessage);
+                }
                 if (onSendMessageListener != null) {
-                    onSendMessageListener.onResult(ResponseCode.RES_SUCCESS, selectMessage);
+                    onSendMessageListener.onResult(code, selectMessage);
                 }
             }
-            catch(Exception error){
-            }
-        }
-
+        });
         return 2;
     }
 

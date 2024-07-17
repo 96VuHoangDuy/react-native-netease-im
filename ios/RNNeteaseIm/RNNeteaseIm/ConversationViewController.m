@@ -2784,99 +2784,98 @@
 -(void)revokeMessage:(NSString *)messageId success:(Success)succe Err:(Errors)err{
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageId]];
     NIMMessage *currentmessage = currentMessage[0];
-//    __weak typeof(self) weakSelf = self;
     
-//    NIMRevokeMessageOption *option;
-//    option.apnsContent = @"";
-//    option.shouldBeCounted = NO;
-
-//    [[NIMSDK sharedSDK].chatManager revokeMessage:currentmessage completion:^(NSError * _Nullable error) {
-//        WARNIING: DOT NOT DELETE THIS COMMENT CODE
-//        if (error) {
-//            if (error.code == NIMRemoteErrorCodeDomainExpireOld) {
-//                err(@"expired");
-//            }else{
-//                err(@"fail");
-//            }
-//        }
-//        else
-//        {
-//            succe(@"success");
-//            
-//            NSString *tip = [self tipOnMessageRevoked:currentmessage];
-//            
-//            NIMMessage *tipMessage = [self msgWithTip:tip];
-//            tipMessage.timestamp = currentmessage.timestamp;
-//            
-//            NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
-//            tipMessage.remoteExt = remoteExt;
+    NIMRevokeMessageOption *option;
+    option.apnsContent = @"";
+    option.shouldBeCounted = NO;
+    
+    [[NIMSDK sharedSDK].chatManager revokeMessage:currentmessage completion:^(NSError * _Nullable error) {
+        if (error) {
+            if (error.code == NIMRemoteErrorCodeDomainExpireOld) {
+                err(@"expired");
+            }else{
+                err(@"fail");
+            }
+        }
+        else
+        {
+            succe(@"success");
+            
+            NSString *tip = [self tipOnMessageRevoked:currentmessage];
+            
+            NIMMessage *tipMessage = [self msgWithTip:tip];
+            tipMessage.timestamp = currentmessage.timestamp;
+            
+            NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
+            tipMessage.remoteExt = remoteExt;
+            
+            NSDictionary *deleteDict = @{@"msgId":messageId};
+            [NIMModel initShareMD].deleteMessDict = deleteDict;
+            
+            // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
+            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+        }
+    }];
+    
+    
+//    BOOL isOutOfTime;
+//    NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+//    NSTimeInterval timeInterval = currentTime - currentmessage.timestamp;
+//    
+//    if (timeInterval > 300) {
+//        isOutOfTime = YES;
+//    } else {
+//        isOutOfTime = NO;
+//    }
+//    
+//    if (isOutOfTime) {
+//        err(@"expired");
+//    }
+//    else
+//    {
 //        
-//            NSDictionary *deleteDict = @{@"msgId":messageId};
-//            [NIMModel initShareMD].deleteMessDict = deleteDict;
-//
-//            // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
-//            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
-//        }
-//    }];
-    
-    BOOL isOutOfTime;
-    NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
-    NSTimeInterval timeInterval = currentTime - currentmessage.timestamp;
-    
-    if (timeInterval > 300) {
-        isOutOfTime = YES;
-    } else {
-        isOutOfTime = NO;
-    }
-    
-    if (isOutOfTime) {
-        err(@"expired");
-    }
-    else
-    {
-        
-//        send custom notification
-        NSDictionary *dataDict = @{
-            @"data":@{
-            @"type":@(1),
-            @"messageId":messageId,
-            @"sessionId":self._session.sessionId,
-            @"isObserveReceiveRevokeMessage": @(YES)}
-        };
-        
-        NSString *content = [self jsonStringWithDictionary:dataDict];
-        
-        NIMCustomSystemNotification *notifi = [[NIMCustomSystemNotification alloc]initWithContent:content];
-        
-        [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notifi toSession:self._session completion:nil];
-        
-        //      send a message to session that has message need to revoke
-        NIMMessage *messageForUserKnowWhichMessageToRevoke = [NIMMessageMaker msgWithText:@"revoked_success" andApnsMembers:@[] andeSession:self._session senderName:@"" messageSubType:4];
-        NSDictionary *remoteExt2 = @{@"revokeMessage": @{@"sessionId": self._session.sessionId, @"messageId":messageId}};
-        messageForUserKnowWhichMessageToRevoke.remoteExt = remoteExt2;
-        
-        NIMMessageSetting *settings = [[NIMMessageSetting alloc] init];
-        settings.apnsEnabled = NO;
-        settings.shouldBeCounted = NO;
-        messageForUserKnowWhichMessageToRevoke.setting = settings;
-        [[NIMSDK sharedSDK].chatManager sendMessage:messageForUserKnowWhichMessageToRevoke toSession:self._session error:nil];
-        
-//        save tip message
-        NSString *tip = [self tipOnMessageRevoked:currentmessage];
-        
-        NIMMessage *tipMessage = [self msgWithTip:tip];
-        tipMessage.timestamp = currentmessage.timestamp;
-        
-        NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
-        tipMessage.remoteExt = remoteExt;
-        
-        [[NIMSDK sharedSDK].conversationManager deleteMessage:currentmessage];
-        
-        // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
-        [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
-        
-        succe(@"success");
-    }
+////        send custom notification
+//        NSDictionary *dataDict = @{
+//            @"data":@{
+//            @"type":@(1),
+//            @"messageId":messageId,
+//            @"sessionId":self._session.sessionId,
+//            @"isObserveReceiveRevokeMessage": @(YES)}
+//        };
+//        
+//        NSString *content = [self jsonStringWithDictionary:dataDict];
+//        
+//        NIMCustomSystemNotification *notifi = [[NIMCustomSystemNotification alloc]initWithContent:content];
+//        
+//        [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notifi toSession:self._session completion:nil];
+//        
+//        //      send a message to session that has message need to revoke
+//        NIMMessage *messageForUserKnowWhichMessageToRevoke = [NIMMessageMaker msgWithText:@"" andApnsMembers:@[] andeSession:self._session senderName:@"" messageSubType:4];
+//        NSDictionary *remoteExt2 = @{@"revokeMessage": @{@"sessionId": self._session.sessionId, @"messageId":messageId}};
+//        messageForUserKnowWhichMessageToRevoke.remoteExt = remoteExt2;
+//        
+//        NIMMessageSetting *settings = [[NIMMessageSetting alloc] init];
+//        settings.apnsEnabled = NO;
+//        settings.shouldBeCounted = NO;
+//        messageForUserKnowWhichMessageToRevoke.setting = settings;
+//        [[NIMSDK sharedSDK].chatManager sendMessage:messageForUserKnowWhichMessageToRevoke toSession:self._session error:nil];
+//        
+////        save tip message
+//        NSString *tip = [self tipOnMessageRevoked:currentmessage];
+//        
+//        NIMMessage *tipMessage = [self msgWithTip:tip];
+//        tipMessage.timestamp = currentmessage.timestamp;
+//        
+//        NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
+//        tipMessage.remoteExt = remoteExt;
+//        
+//        [[NIMSDK sharedSDK].conversationManager deleteMessage:currentmessage];
+//        
+//        // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
+//        [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+//        
+//        succe(@"success");
+//    }
 }
 
 -(void)sendCustomNotification:(NSDictionary *)dataDict toSessionId:(NSString*)toSessionId toSessionType:(NSString*)toSessionType success:(Success)succe Err:(Errors)err{
