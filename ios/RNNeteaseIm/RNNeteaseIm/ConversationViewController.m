@@ -159,6 +159,19 @@
     }
 }
 
+-(void)downloadAttachment:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId toSessionType:(nonnull NSString *)toSessionType {
+    NIMSession *session = [NIMSession session:sessionId type:[toSessionType integerValue]];
+
+    NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
+    if (messages.count == 0) return;
+    NIMMessage *message = messages.firstObject;
+    [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"idle", @"isReplaceSuccess": @"NO"}];
+
+//    NSError *error;
+//    [[NIMSDK sharedSDK].chatManager fetchMessageAttachment:message error:&error];
+    [self moveFiletoSessionDir:message];
+}
+
 -(void) removeReactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId accId:(NSString *)accId isSendMessage:(BOOL *)isSendMessage success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[messageId]];
@@ -1006,24 +1019,21 @@
 //            }
 //        }
     } else {
-//        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloading"];
         [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloading"}];
+        [self refrashMessage:message From:@"receive"];
 
         [[NIMObject initNIMObject] downLoadAttachment:urlDownload filePath:cacheMediaPath Error:^(NSError *error) {
             NSLog(@"downLoadVideo error: %@", [error description]);
             if (!error) {
                 NSLog(@"download success");
-//                [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
 //                [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
                 [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
 
                 [self refrashMessage:message From:@"receive"];
             }
         } progress:^(float progress) {
-            if (message.messageType == NIMMessageTypeFile) {
-                NIMModel *model = [NIMModel initShareMD];
-                model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
-            }
+            NIMModel *model = [NIMModel initShareMD];
+            model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
 
             NSLog(@"视频下载进度%f",progress);
         }];

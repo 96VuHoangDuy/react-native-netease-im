@@ -7,7 +7,7 @@
 //
 
 #import "RNNeteaseIm.h"
-#import "RCTUtils.h"
+#import <React/RCTUtils.h>
 #import "RNNotificationCenter.h"
 #import "NIMModel.h"
 #import "NIMViewController.h"
@@ -820,6 +820,10 @@ RCT_EXPORT_METHOD(setTeamMemberMute:(nonnull NSString *)teamId contactId:(nonnul
     } Err:^(id erro) {
         reject(@"-1",erro,nil);
     }];
+}
+
+RCT_EXPORT_METHOD(downloadAttachment:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId toSessionType:(nonnull NSString *)toSessionType) {
+    [[ConversationViewController initWithConversationViewController]downloadAttachment:messageId sessionId:sessionId toSessionType:toSessionType];
 }
 
 RCT_EXPORT_METHOD(readAllMessageOnlineServiceByListSession:(nonnull NSArray *)listSessionId) {

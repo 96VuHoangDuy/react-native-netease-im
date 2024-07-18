@@ -2149,7 +2149,7 @@ public class SessionService {
         getService(MsgServiceObserve.class).observeAttachmentProgress(new Observer<AttachmentProgress>() {
             @Override
             public void onEvent(AttachmentProgress attachmentProgress) {
-//                ReactCache.emit(ReactCache.observeAttachmentProgress, ReactCache.createAttachmentProgress(attachmentProgress));
+                ReactCache.emit(ReactCache.observeProgressSend, ReactCache.createAttachmentProgress(attachmentProgress));
             }
         }, register);
     }
@@ -2164,7 +2164,9 @@ public class SessionService {
         ReactCache.DownloadCallback callback = new ReactCache.DownloadCallback() {
             @Override
             public void onSuccess(Void result) {
-                setLocalExtension(message, "downloadStatus", "success");
+                Map<String, Object> newLocalExt = MapBuilder.newHashMap();
+                newLocalExt.put("downloadStatus", "success");
+                setLocalExtension(message, newLocalExt);
                 ReactCache.createMessage(message, true);
                 Log.d("onSuccess download", "onSuccess download" + "");
             }
@@ -2179,7 +2181,10 @@ public class SessionService {
                 Log.d("onException result", String.valueOf(exception));
             }
         };
-        setLocalExtension(message, "downloadStatus", "downloading");
+        Map<String, Object> newLocalExt = MapBuilder.newHashMap();
+        newLocalExt.put("downloadStatus", "downloading");
+
+        setLocalExtension(message, newLocalExt);
 
         AbortableFuture future = getService(MsgService.class).downloadAttachment(message, isThumb);
         future.setCallback(callback);

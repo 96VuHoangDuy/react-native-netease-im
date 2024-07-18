@@ -532,8 +532,8 @@ class NimSession {
    * @param messageId
    * @returns {*}
    */
-  downloadAttachment(messageId: string) {
-    return RNNeteaseIm.downloadAttachment(messageId, '0');
+  downloadAttachment(messageId: string, sessionId: string, sessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.downloadAttachment(messageId, sessionId, sessionType);
   }
 
   /**

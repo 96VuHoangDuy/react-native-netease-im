@@ -37,6 +37,9 @@ typedef void(^Errors)(id erro);
 -(void)sendAudioMessage:(  NSString *)file duration:(  NSString *)duration isCustomerService:(BOOL *)isCustomerService;
 
 -(void)updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession isPinCode:(BOOL *)isPinCode success:(Success)success error:(Errors)error;
+
+-(void)downloadAttachment:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId toSessionType:(nonnull NSString *)toSessionType;
+
 //发送视频
 -(void)sendVideoMessage:(  NSString *)path duration:(  NSString *)duration width:(  NSNumber *)width height:(  NSNumber *)height displayName:(  NSString *)displayName isCustomerService:(BOOL *)isCustomerService parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber*)indexCount;
 //发送自定义消息

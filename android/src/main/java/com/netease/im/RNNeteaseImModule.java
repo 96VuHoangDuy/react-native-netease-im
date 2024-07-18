@@ -29,6 +29,7 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.common.MapBuilder;
 import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.common.ResourceUtil;
 import com.netease.im.contact.BlackListObserver;
@@ -56,6 +57,7 @@ import com.netease.im.uikit.permission.annotation.OnMPermissionDenied;
 import com.netease.im.uikit.permission.annotation.OnMPermissionGranted;
 import com.netease.im.uikit.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.im.uikit.session.helper.MessageHelper;
+import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.NIMSDK;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -112,7 +114,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.netease.im.ReactCache.setLocalExtension;
 import static com.netease.im.ReceiverMsgParser.getIntent;
+import static com.netease.nimlib.sdk.NIMClient.getService;
 import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
 
 import androidx.annotation.RawRes;
@@ -1676,22 +1680,22 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param messageId
      * @param promise
      */
-    @ReactMethod
-    public void downloadAttachment(String messageId, final String isThumb, final Promise promise) {
-        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
-                if (message != null) {
-                    sessionService.downloadAttachment(message, string2Boolean(isThumb));
-                    promise.resolve("开始下载");
-                } else {
-                    promise.resolve("开始下载");
-                }
-                return 0;
-            }
-        });
-
-    }
+//    @ReactMethod
+//    public void downloadAttachment(String messageId, final String isThumb, final Promise promise) {
+//        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+//            @Override
+//            public int onResult(int code, IMMessage message) {
+//                if (message != null) {
+//                    sessionService.downloadAttachment(message, string2Boolean(isThumb));
+//                    promise.resolve("开始下载");
+//                } else {
+//                    promise.resolve("开始下载");
+//                }
+//                return 0;
+//            }
+//        });
+//
+//    }
 
     /**
      * 转发消息操作
@@ -1838,6 +1842,49 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
                 NIMClient.getService(MsgService.class).deleteChattingHistory(message);
                 promise.resolve("200u");
+            }
+        });
+    }
+
+    @ReactMethod
+    public void downloadAttachment(String messageId, String sessionId, String sessionType) {
+        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+                                @Override
+            public int onResult(int code, IMMessage message) {
+                if (message != null) {
+                    ReactCache.DownloadCallback callback = new ReactCache.DownloadCallback() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            Map<String, Object> map = MapBuilder.newHashMap();
+                            map.put("downloadStatus", "success");
+                            setLocalExtension(message, map);
+                            ReactCache.createMessage(message, true);
+                            Log.d("onSuccess download", "onSuccess download" + "");
+                        }
+
+                        @Override
+                        public void onFailed(int code) {
+                            Log.d("onFailed resultresult", String.valueOf(code));
+                        }
+
+                        @Override
+                        public void onException(Throwable exception) {
+                            Log.d("onException result", String.valueOf(exception));
+                        }
+                    };
+                    Map<String, Object> map = MapBuilder.newHashMap();
+                    map.put("downloadStatus", "downloading");
+                    setLocalExtension(message, map);
+
+                    AbortableFuture future = getService(MsgService.class).downloadAttachment(message, false);
+                    future.setCallback(callback);
+
+//                    sessionService.downloadAttachment(message, string2Boolean(isThumb));
+//                    promise.resolve("开始下载");
+                } else {
+//                    promise.resolve("开始下载");
+                }
+                return 0;
             }
         });
     }
@@ -2510,7 +2557,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     private WritableMap updateLocalExt(IMMessage message, String chatBotType) {
         String key = "chatBotType";
-        Map<String, Object> map = ReactCache.setLocalExtension(message, key, chatBotType);
+        Map<String, Object> newLocalExt = MapBuilder.newHashMap();
+        newLocalExt.put("key", "chatBotType");
+
+        Map<String, Object> map = ReactCache.setLocalExtension(message, newLocalExt);
         String valueChatBotType = (String) map.get(key);
 
         if (valueChatBotType == null) return null;
@@ -2527,7 +2577,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             @Override
             public int onResult(int code, IMMessage message) {
                 if (code == ResponseCode.RES_SUCCESS) {
-                    ReactCache.setLocalExtension(message, "isCancelResend", true);
+                    Map<String, Object> newLocalExt = MapBuilder.newHashMap();
+                    newLocalExt.put("isCancelResend", true);
+                    ReactCache.setLocalExtension(message, newLocalExt);
                 }
 
                 return 0;
