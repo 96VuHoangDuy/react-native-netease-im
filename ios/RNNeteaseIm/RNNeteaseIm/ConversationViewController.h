@@ -50,6 +50,8 @@ typedef void(^Errors)(id erro);
 // just forward multiple message text
 -(void)forwardMultipleTextMessage:(NSDictionary *)dataDict sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content;
 
+-(void)forwardMultiTextMessageToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err;
+
 -(void)createNotificationBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName success:(Success)success err:(Errors)err;
 
 -(void)queryTeamByName:(NSString *)search success:(Success)success err:(Errors)err;
@@ -75,6 +77,8 @@ typedef void(^Errors)(id erro);
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType;
 
 -(void)addEmptyRecentSessionCustomerService:(NSArray *)data;
+
+-(void)forwardMessagesToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err;
 
 -(NSDictionary *) updateMessageOfChatBot:(NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(NSString *)chatBotType;
 

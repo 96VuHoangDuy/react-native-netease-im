@@ -218,37 +218,11 @@ public class ReactCache {
 
                 WritableMap localExt = Arguments.createMap();
 
-                if (extension != null) {
-                    Boolean isCsr = (Boolean) extension.get("isCsr");
-                    Boolean isChatBot = (Boolean) extension.get("isChatBot");
-                    Boolean isUpdated = (Boolean) extension.get("isUpdated");
-                    String nameCsr = (String) extension.get("name");
-                    Boolean isHideSession = (Boolean) extension.get("isHideSession");
-                    String latestMsgIdWithHideSession = (String) extension.get("latestMsgIdWithHideSession");
-
-                    if (latestMsgIdWithHideSession != null) {
-                        localExt.putString("latestMsgIdWithHideSession", latestMsgIdWithHideSession);
-                    }
-
-                    if (isCsr != null) {
-                        localExt.putBoolean("isCsr", isCsr);
-                    }
-                    if (isChatBot != null) {
-                        localExt.putBoolean("isChatBot", isChatBot);
-                    }
-                    if (isUpdated != null) {
-                        localExt.putBoolean("isUpdated", isUpdated);
-                    }
-
-                    if (nameCsr != null) {
-                        localExt.putString("name", nameCsr);
-                    }
-
-                    if (isHideSession != null) {
-                        isHideRecent = isHideSession;
-                        localExt.putBoolean("isHideSession", isHideSession);
-                    }
-                 }
+                if (extension == null) {
+                    localExt = Arguments.createMap();
+                } else {
+                    localExt = MapUtil.mapToReadableMap(extension);
+                }
 
                 if (lastMessage != null) {
                     Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();

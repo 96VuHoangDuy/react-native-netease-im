@@ -97,6 +97,20 @@ export interface NimSessionTypeExtend {
   };
 }
 
+export interface NimParamsForwardMessagesToMultipleRecipients {
+  recipients: Array<{ sessionId: string, sessionType: NIMSessionTypeEnum }>;
+  messageIds: string[];
+  content?: string;
+  parentId?: string;
+  isHaveMultiMedia?: boolean;
+}
+
+export interface NimParamsForwardMultiTextMessageToMultipleRecipients {
+  recipients: Array<{ sessionId: string, sessionType: NIMSessionTypeEnum }>;
+  messageText: string;
+  content?: string;
+}
+
 export interface NimSessionType {
   account: string;
   msgStatus: NIMMessageStatusEnum;

@@ -9,6 +9,8 @@ import {
   NIMBirthdayMemberType,
   NIMMessageSubTypeEnum,
   ICreateRecentOnlineService,
+  NimParamsForwardMessagesToMultipleRecipients,
+  NimParamsForwardMultiTextMessageToMultipleRecipients,
 } from './session.type';
 import {
   INimMessageReaction,
@@ -265,7 +267,11 @@ class NimSession {
     parentId: string | null,
     isCustomerService?: boolean
   ) {
-    return RNNeteaseIm.sendMultiMediaMessage(listMedia, parentId, isCustomerService);
+    return RNNeteaseIm.sendMultiMediaMessage(
+      listMedia,
+      parentId,
+      isCustomerService
+    );
   }
 
   /**
@@ -532,7 +538,11 @@ class NimSession {
    * @param messageId
    * @returns {*}
    */
-  downloadAttachment(messageId: string, sessionId: string, sessionType: NIMSessionTypeEnum) {
+  downloadAttachment(
+    messageId: string,
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum
+  ) {
     return RNNeteaseIm.downloadAttachment(messageId, sessionId, sessionType);
   }
 
@@ -680,7 +690,7 @@ class NimSession {
 
   sendCustomNotification(
     dataDict: {
-      data: ICustomNotificationDataDict
+      data: ICustomNotificationDataDict;
     },
     toSessionId: string,
     toSessionType: NIMSessionTypeEnum
@@ -692,40 +702,144 @@ class NimSession {
     );
   }
 
-  sendFileMessageWithSession(path: string, fileName: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
-    return RNNeteaseIm.sendFileMessageWithSession(path, fileName, sessionId, sessionType, sessionName)
+  sendFileMessageWithSession(
+    path: string,
+    fileName: string,
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    sessionName: string
+  ) {
+    return RNNeteaseIm.sendFileMessageWithSession(
+      path,
+      fileName,
+      sessionId,
+      sessionType,
+      sessionName
+    );
   }
 
-  sendTextMessageWithSession(msgContent: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string, messageSubType?: NIMMessageSubTypeEnum) {
-    return RNNeteaseIm.sendTextMessageWithSession(msgContent, sessionId, sessionType, sessionName, messageSubType)
+  sendTextMessageWithSession(
+    msgContent: string,
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    sessionName: string,
+    messageSubType?: NIMMessageSubTypeEnum
+  ) {
+    return RNNeteaseIm.sendTextMessageWithSession(
+      msgContent,
+      sessionId,
+      sessionType,
+      sessionName,
+      messageSubType
+    );
   }
 
-  sendImageMessageWithSession(path: string,isHighQuality: boolean, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
-    return RNNeteaseIm.sendImageMessageWithSession(path, isHighQuality, sessionId, sessionType, sessionName)
+  sendImageMessageWithSession(
+    path: string,
+    isHighQuality: boolean,
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    sessionName: string
+  ) {
+    return RNNeteaseIm.sendImageMessageWithSession(
+      path,
+      isHighQuality,
+      sessionId,
+      sessionType,
+      sessionName
+    );
   }
 
-  sendVideoMessageWithSession(path: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
-    return RNNeteaseIm.sendVideoMessageWithSession(path, sessionId, sessionType, sessionName)
+  sendVideoMessageWithSession(
+    path: string,
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    sessionName: string
+  ) {
+    return RNNeteaseIm.sendVideoMessageWithSession(
+      path,
+      sessionId,
+      sessionType,
+      sessionName
+    );
   }
 
-  sendGifMessageWithSession(url: string,aspectRatio: string, sessionId: string, sessionType: NIMSessionTypeEnum, sessionName: string) {
-    return RNNeteaseIm.sendGifMessageWithSession(url, aspectRatio, sessionId, sessionType, sessionName)
+  sendGifMessageWithSession(
+    url: string,
+    aspectRatio: string,
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    sessionName: string
+  ) {
+    return RNNeteaseIm.sendGifMessageWithSession(
+      url,
+      aspectRatio,
+      sessionId,
+      sessionType,
+      sessionName
+    );
   }
 
-  reactionMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string,reaction: INimMessageReaction) {
-    return RNNeteaseIm.reactionMessage(sessionId, sessionType, messageId, reaction)
+  reactionMessage(
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    messageId: string,
+    reaction: INimMessageReaction
+  ) {
+    return RNNeteaseIm.reactionMessage(
+      sessionId,
+      sessionType,
+      messageId,
+      reaction
+    );
   }
 
-  removeReactionMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string, accId: string, isSendMessage: boolean) {
-    return RNNeteaseIm.removeReactionMessage(sessionId, sessionType, messageId, accId, isSendMessage);
+  removeReactionMessage(
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    messageId: string,
+    accId: string,
+    isSendMessage: boolean
+  ) {
+    return RNNeteaseIm.removeReactionMessage(
+      sessionId,
+      sessionType,
+      messageId,
+      accId,
+      isSendMessage
+    );
   }
 
-  updateReactionMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string, messageNotifyReactionId: string, reaction: INimMessageReaction) {
-    return RNNeteaseIm.updateReactionMessage(sessionId, sessionType, messageId, messageNotifyReactionId, reaction)
+  updateReactionMessage(
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum,
+    messageId: string,
+    messageNotifyReactionId: string,
+    reaction: INimMessageReaction
+  ) {
+    return RNNeteaseIm.updateReactionMessage(
+      sessionId,
+      sessionType,
+      messageId,
+      messageNotifyReactionId,
+      reaction
+    );
   }
 
   addEmptyRecentSessionCustomerService(data: ICreateRecentOnlineService[]) {
     return RNNeteaseIm.addEmptyRecentSessionCustomerService(data);
+  }
+
+  forwardMessagesToMultipleRecipients(
+    params: NimParamsForwardMessagesToMultipleRecipients
+  ) {
+    return RNNeteaseIm.forwardMessagesToMultipleRecipients(params);
+  }
+
+  forwardMultiTextMessageToMultipleRecipients(
+    params: NimParamsForwardMultiTextMessageToMultipleRecipients
+  ) {
+    return RNNeteaseIm.forwardMultiTextMessageToMultipleRecipients(params);
   }
 }
 

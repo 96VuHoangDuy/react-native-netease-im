@@ -2737,6 +2737,149 @@
     }
 }
 
+-(void)forwardMultiTextMessageToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err {
+    NSArray *recipients = [params objectForKey:@"recipients"];
+    NSString *messageText = [params objectForKey:@"messageText"];
+    NSString *content = [params objectForKey:@"content"];
+    if (recipients == nil) {
+        err(@"recipients is required!");
+        return;
+    }
+    if (messageText == nil) {
+        err(@"messageText is required!");
+        return;
+    }
+    
+    for(NSDictionary *recipient in recipients) {
+        NSString *sessionId = [recipient objectForKey:@"sessionId"];
+        NSString *sessionType = [recipient objectForKey:@"sessionType"];
+        if (sessionId == nil || sessionType == nil) continue;
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void) {
+            NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+            NIMMessage *message = [NIMMessageMaker msgWithText:messageText andApnsMembers:@[] andeSession:session senderName:_myUserName messageSubType:0];
+            
+            NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+            [remoteExt setObject:@"forwardMultipleText" forKey:@"extendType"];
+            
+            message.remoteExt = remoteExt;
+            message.apnsContent = @"[聊天记录]";
+            [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
+            
+            [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+            
+            if (content != nil && [content length] > 0) {
+                NIMMessage *messageContent = [[NIMMessage alloc] init];
+                messageContent.text = content;
+                
+                [[NIMSDK sharedSDK].chatManager sendMessage:messageContent toSession:session error:nil];
+            }
+        });
+    }
+    
+    success(@"success");
+}
+
+-(void) handleMessageFoward:(NIMMessage *)message session:(NIMSession *)session parentId:(NSString *)parentId isHaveMultiMedia:(BOOL)isHaveMultiMedia {
+    if (message.messageType == NIMMessageTypeLocation) {
+        NIMLocationObject *object = message.messageObject;
+        NSError *jsonErr;
+        NSData *titleData = [object.title dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary *titleJson = [NSJSONSerialization JSONObjectWithData:titleData options:NSJSONReadingMutableContainers error:&jsonErr];
+        if (jsonErr != nil) {
+            return;
+        }
+        
+        NSMutableDictionary *titleDic = [titleJson mutableCopy];
+        [titleDic setObject:@(YES) forKey:@"isForwardMessage"];
+        
+        NSData *titleNewData = [NSJSONSerialization dataWithJSONObject:titleDic options:NSJSONWritingPrettyPrinted error:&jsonErr];
+        if (jsonErr != nil || titleNewData == nil) {
+            return;
+        }
+        
+        NSString *title = [[NSString alloc] initWithData:titleData encoding:NSUTF8StringEncoding];
+        NIMLocationObject *locationObj = [[NIMLocationObject alloc] initWithLatitude:object.latitude longitude:object.longitude title:title];
+        NIMKitLocationPoint *locationPoint = [[NIMKitLocationPoint alloc] initWithLocationObject:locationObj];
+        NIMMessage *messageLocation = [NIMMessageMaker msgWithLocation:locationPoint andeSession:session senderName:_myUserName];
+        
+        [[NIMSDK sharedSDK].chatManager sendMessage:messageLocation toSession:session error:nil];
+        return;
+    }
+    
+    if ([message.remoteExt objectForKey:@"parentId"] != nil || message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo) {
+        NSMutableDictionary *msgRemoteExt = [[NSMutableDictionary alloc] initWithDictionary:message.remoteExt];
+
+        if (isHaveMultiMedia) {
+            [msgRemoteExt setObject:parentId forKey:@"parentId"];
+        } else if ([message.remoteExt objectForKey:@"parentId"] != nil) {
+            [msgRemoteExt removeObjectForKey:@"parentId"];
+        }
+        
+        message.remoteExt = msgRemoteExt;
+
+    }
+    
+    message.localExt = @{};
+    
+    [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
+}
+
+-(void)forwardMessagesToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err {
+    NSArray *recipients = [params objectForKey:@"recipients"];
+    NSArray *messageIds = [params objectForKey:@"messageIds"];
+    NSString *content = [params objectForKey:@"content"];
+    NSString *parentId = [params objectForKey:@"parentId"];
+    BOOL isHaveMultiMedia = [params objectForKey:@"isHaveMultiMedia"];
+    if (recipients == nil) {
+        err(@"recipients is required!");
+        return;
+    }
+    if (messageIds == nil) {
+        err(@"messageIds is required!");
+        return;
+    }
+    
+    for(NSDictionary *recipient in recipients) {
+        NSString *sessionId = [recipient objectForKey:@"sessionId"];
+        NSString *sessionType = [recipient objectForKey:@"sessionType"];
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+            NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+            if (parentId != nil && isHaveMultiMedia) {
+                NIMMessage *messageParent = [[NIMMessage alloc] init];
+                
+                NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+                [remoteExt setObject:parentId forKey:@"parentMediaId"];
+                
+                NIMMessageSetting *seting = [[NIMMessageSetting alloc]init];
+                seting.apnsEnabled = NO;
+                seting.shouldBeCounted = NO;
+                
+                messageParent.text = parentId;
+                messageParent.remoteExt = remoteExt;
+                messageParent.setting = seting;
+                
+                [[NIMSDK sharedSDK].chatManager sendMessage:messageParent toSession:session error:nil];
+            }
+            
+            NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:messageIds];
+            for(NIMMessage *message in messages) {
+                [self handleMessageFoward:message session:session parentId:parentId isHaveMultiMedia:isHaveMultiMedia];
+            }
+            
+            if (content != nil && [content length] > 0) {
+                NIMMessage *messageContent = [[NIMMessage alloc] init];
+                messageContent.text = content;
+                
+                [[NIMSDK sharedSDK].chatManager sendMessage:messageContent toSession:session error:nil];
+            }
+        });
+    }
+    
+    success(@"已发送");
+}
+
 //转发消息
 -(void)forwardMessage:(NSArray *)messageIds sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType content:(NSString *)content parentId:(NSString *)parentId isHaveMultiMedia:(BOOL *)isHaveMultiMedia success:(Success)succe{
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];

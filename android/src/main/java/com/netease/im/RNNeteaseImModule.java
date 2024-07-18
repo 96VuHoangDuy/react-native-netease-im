@@ -112,6 +112,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.netease.im.ReactCache.setLocalExtension;
@@ -1712,6 +1713,70 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         });
     }
 
+    @ReactMethod
+    public void forwardMultiTextMessageToMultipleRecipients(ReadableMap params, final Promise promise) {
+        Map<String, Object> data = MapUtil.readableMaptoMap(params);
+        List<Map<String, Object>> recipients = (List<Map<String, Object>>) data.get("recipients");
+        String messageText = (String) data.get("messageText");
+        String content = (String) data.get("content");
+        if (recipients == null || recipients.isEmpty()) {
+            promise.reject("recipients is required", "error");
+            return;
+        }
+        if (messageText == null || messageText.isEmpty()) {
+            promise.reject("messageText is required", "error");
+            return;
+        }
+
+        for(Map<String, Object> recipient : recipients) {
+            String sessionId = (String) recipient.get("sessionId");
+            String sessionType = (String) recipient.get("sessionType");
+            if (sessionId == null || sessionType == null || sessionId.isEmpty() || sessionType.isEmpty()) {
+                continue;
+            }
+
+            SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+            Log.e(TAG, "test =>>>>>>>>>>>> " + sessionId + " " + sessionType);
+
+            new Thread(() -> sessionService.handleForwardMultiTextMessageToRecipient(sessionId, sessionTypeEnum, messageText, content)).start();
+        }
+
+        promise.resolve("200");
+    }
+
+    @ReactMethod
+    public void forwardMessagesToMultipleRecipients(ReadableMap params, final Promise promise) {
+        Map<String, Object> data = MapUtil.readableMaptoMap(params);
+        List<Map<String, Object>> recipients = (List<Map<String, Object>>) data.get("recipients");
+        List<String> messageIds = (List<String>) data.get("messageIds");
+        String parentId = (String) data.get("parentId");
+        Boolean isHaveMultiMedia = (Boolean) data.get("isHaveMultiMedia");
+        String content = (String) data.get("content");
+        if (recipients == null || recipients.isEmpty()) {
+            promise.reject("recipients is required", "error");
+            return;
+        }
+        if (messageIds == null || messageIds.isEmpty()) {
+            promise.reject("messageIds is required", "error");
+            return;
+        }
+
+        for(Map<String, Object> recipient : recipients) {
+            String sessionId = (String) recipient.get("sessionId");
+            String sessionType = (String) recipient.get("sessionType");
+            if (sessionId == null || sessionType == null || sessionId.isEmpty() || sessionType.isEmpty()) {
+                continue;
+            }
+
+            SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+
+            new Thread(() -> sessionService.handleForwardMessageToRecipient(messageIds, sessionId, sessionTypeEnum, content, parentId, isHaveMultiMedia)).start();
+        }
+
+
+
+        promise.resolve("已发送");
+    }
 
     /**
      * 转发消息操作
@@ -2559,7 +2624,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         String key = "chatBotType";
         Map<String, Object> newLocalExt = MapBuilder.newHashMap();
         newLocalExt.put("key", "chatBotType");
-
+        
         Map<String, Object> map = ReactCache.setLocalExtension(message, newLocalExt);
         String valueChatBotType = (String) map.get(key);
 
@@ -3076,19 +3141,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         NIMSDK.getMsgService().createEmptyRecentContact(sessionId, type, 0, System.currentTimeMillis(), true);
     }
 
-    @ReactMethod
-    public  void  updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, Boolean isPinCode, final Promise promise) {
-        Log.e(TAG, "updateActionHideRecentSession");
-        SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
-        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
-        if (recent == null) {
-            addEmptyRecentSession(sessionId, type);
-        }
-
-        recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
-
-        String latestMsgId = recent.getRecentMessageId();
-
+    private Map<String, Object> handleRecentLocalExtWithActionHide(RecentContact recent, String latestMsgId, Boolean isHideSession, Boolean isPinCode) {
         Map<String, Object> extension = recent.getExtension();
         if (extension == null) {
             extension = new HashMap<String, Object>();
@@ -3106,7 +3159,23 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             extension.put("latestMsgIdWithHideSession", "");
         }
 
-        recent.setExtension(extension);
+        return extension;
+    }
+
+    @ReactMethod
+    public  void  updateActionHideRecentSession(String sessionId, String type, Boolean isHideSession, Boolean isPinCode, final Promise promise) {
+        Log.e(TAG, "updateActionHideRecentSession");
+        SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+        if (recent == null) {
+            addEmptyRecentSession(sessionId, type);
+        }
+
+        recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+
+        String latestMsgId = recent.getRecentMessageId();
+
+        recent.setExtension(handleRecentLocalExtWithActionHide(recent, latestMsgId, isHideSession, isPinCode));
         NIMSDK.getMsgService().updateRecent(recent);
         promise.resolve("success");
     }

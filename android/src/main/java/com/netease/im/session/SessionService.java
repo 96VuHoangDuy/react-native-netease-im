@@ -8,6 +8,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableArray;
@@ -1398,6 +1400,114 @@ public class SessionService {
             } else {
                 sendMessageSelf(message, onSendMessageListener, false, false);
             }
+        }
+    }
+
+    private void handleForwardMessage(IMMessage message, String sessionId, SessionTypeEnum sessionTypeEnum, String parentId, Boolean isHaveMultiMedia) {
+        if (message.getMsgType() == MsgTypeEnum.location) {
+            LocationAttachment locationAttachment = (LocationAttachment) message.getAttachment();
+            Log.e(TAG, "location test => " + locationAttachment);
+            if (locationAttachment == null) {
+                return;
+            }
+
+            String title;
+
+            try {
+                Map<String, Object> titleDic = (Map<String, Object>) JSONObject.parse(locationAttachment.getAddress());
+                titleDic.put("isForwardMessage", true);
+                JSONObject jsonObject = new JSONObject(titleDic);
+                title = jsonObject.toString();
+            } catch (JSONException err) {
+                Log.e(TAG, err.toString());
+                return;
+            }
+
+            Log.e(TAG, "location title =>>>>> " + title);
+            if (title == null || title.isEmpty()) {
+                return;
+            }
+
+            IMMessage messageLocation = MessageBuilder.createLocationMessage(sessionId, sessionTypeEnum, locationAttachment.getLatitude(), locationAttachment.getLongitude(), title);
+
+            sendMessageSelf(messageLocation, null, false, false);
+            return;
+        }
+
+        Map<String, Object> remoteExt = message.getRemoteExtension();
+
+        if ((message.getRemoteExtension() != null && message.getRemoteExtension().containsKey("parentId")) || message.getMsgType() == MsgTypeEnum.image
+                || message.getMsgType() == MsgTypeEnum.video) {
+
+            if (isHaveMultiMedia) {
+                remoteExt.put("parentId", parentId);
+            } else if (message.getRemoteExtension() != null) {
+                remoteExt.remove(remoteExt.get("parentId"));
+            }
+
+        }
+        message.setRemoteExtension(remoteExt);
+
+        IMMessage messageForward = MessageBuilder.createForwardMessage(message, sessionId, sessionTypeEnum);
+
+        if (messageForward == null) {
+            return;
+        }
+
+        Map<String, Object> localExt = new HashMap<String, Object>();
+        messageForward.setLocalExtension(localExt);
+
+        sendMessageSelf(messageForward, null, false, false);
+    }
+
+    public void handleForwardMessageToRecipient(List<String> messageIds, String sessionId, SessionTypeEnum sessionType, String content, String parentId, Boolean isHaveMultiMedia) {
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> messages, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS || messages == null || messages.isEmpty()) {
+                    return;
+                }
+
+                for(IMMessage message : messages) {
+                    handleForwardMessage(message, sessionId, sessionTypeEnum, parentId, isHaveMultiMedia);
+                }
+
+                if (parentId != null && !parentId.isEmpty() && isHaveMultiMedia) {
+                    IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, parentId);
+                    Map<String, Object> remoteExt = new HashMap<String, Object>();
+                    remoteExt.put("parentMediaId", parentId);
+
+                    CustomMessageConfig config = new CustomMessageConfig();
+                    config.enableUnreadCount = false;
+                    config.enablePush = false;
+
+                    message.setRemoteExtension(remoteExt);
+                    message.setConfig(config);
+
+                    sendMessageSelf(message, null, false, false);
+                }
+
+                if (content != null && !content.isEmpty()) {
+                    IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
+                    sendMessageSelf(message, null, false, false);
+                }
+            }
+        });
+    }
+
+    public void handleForwardMultiTextMessageToRecipient(String sessionId, SessionTypeEnum sessionTypeEnum, String messageText, String content) {
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, messageText);
+
+        Map<String, Object> remoteExt = MapBuilder.newHashMap();
+        remoteExt.put("extendType", "forwardMultipleText");
+        message.setRemoteExtension(remoteExt);
+
+        sendMessageSelf(message, null, false, false);
+
+        if (content != null && !content.isEmpty()) {
+            IMMessage messageContent = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
+
+            sendMessageSelf(messageContent, null, false, false);
         }
     }
 

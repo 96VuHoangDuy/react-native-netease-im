@@ -467,6 +467,15 @@ RCT_EXPORT_METHOD(queryMessageListHistory:(nonnull  NSString *)sessionId session
         resolve(param);
     }];
 }
+
+RCT_EXPORT_METHOD(forwardMessagesToMultipleRecipients:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] forwardMessagesToMultipleRecipients:params success:^(id param) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //转发消息
 RCT_EXPORT_METHOD(sendForwardMessage:(nonnull NSArray *)messageIds sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(nonnull NSString *)content parentId:(nonnull NSString *)parentId isHaveMultiMedia:(BOOL *)isHaveMultiMedia resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
    
@@ -610,6 +619,14 @@ RCT_EXPORT_METHOD(sendCustomMessage:(NSInteger)custType attachment: (nonnull  NS
 RCT_EXPORT_METHOD(forwardMultipleTextMessage: (nonnull  NSDictionary *)attachment  sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(NSString *)content){
 //forwardMessagesText:CustomMessageTypeFowardMultipleText data:attachment sessionId:sessionId sessionType:sessionType content:content data:attachment
     [[ConversationViewController initWithConversationViewController] forwardMultipleTextMessage:attachment sessionId:sessionId sessionType:sessionType content:content];
+}
+
+RCT_EXPORT_METHOD(forwardMultiTextMessageToMultipleRecipients:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] forwardMultiTextMessageToMultipleRecipients:params success:^(id param) {
+        resolve(param);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
 }
 
 RCT_EXPORT_METHOD(updateRecentSessionIsCsrOrChatbot:(nonnull NSString *)sessionId type:(nonnull NSString *)type name:(NSString *)name) {
