@@ -123,6 +123,11 @@
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageID] ];
     NIMMessage *currentM = currentMessage[0];
 //    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
+    if (currentM.messageType == (NIMMessageTypeImage || NIMMessageTypeVideo)) {
+        NSMutableDictionary *newRemoteExt = currentM.remoteExt ? [currentM.remoteExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        [newRemoteExt removeObjectForKey:@"parentId"];
+        currentM.remoteExt = newRemoteExt;
+    }
     
     if (self._session.sessionType == NIMSessionTypeP2P && ![self isFriendToSendMessage:currentM]) {
         return;
