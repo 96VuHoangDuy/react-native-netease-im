@@ -909,7 +909,7 @@
                     isHideSession = YES;
                 }
             
-                if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && isHideSession) {
+                if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
                     allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
                 }
 
