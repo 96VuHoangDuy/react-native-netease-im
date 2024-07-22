@@ -1037,10 +1037,13 @@
                 [self refrashMessage:message From:@"receive"];
             }
         } progress:^(float progress) {
-            NIMModel *model = [NIMModel initShareMD];
-            model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
+            NSLog(@"sessionId %@ %@", self._session.sessionId, message.session.sessionId);
+            if ([message.session.sessionId isEqual:self._session.sessionId]) {
+                NIMModel *model = [NIMModel initShareMD];
+                model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
 
-            NSLog(@"视频下载进度%f",progress);
+                NSLog(@"视频下载进度%f",progress);
+            }
         }];
         return nil;
     }
@@ -2053,9 +2056,11 @@
 -(void)sendMessage:(NIMMessage *)message progress:(float)progress
 {
     NSLog(@"sendMessage:(NIMMessage *)message progress:(float)progress");
-    [self refrashMessage:message From:@"send" ];
-    NIMModel *model = [NIMModel initShareMD];
-    model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
+//    [self refrashMessage:message From:@"send" ];
+    if ([message.session.sessionId isEqual:self._session.sessionId]) {
+        NIMModel *model = [NIMModel initShareMD];
+        model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
+    }
 }
 
 
@@ -2159,10 +2164,12 @@
 
 - (void)fetchMessageAttachment:(NIMMessage *)message progress:(float)progress
 {
-    NSLog(@"下载图片] %f", progress);
-    NIMModel *model = [NIMModel initShareMD];
-    model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"download", @"sessionId": message.session.sessionId};
-
+    if ([message.session.sessionId isEqual:self._session.sessionId]) {
+        NSLog(@"下载图片] %f", progress);
+        NIMModel *model = [NIMModel initShareMD];
+        model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"download", @"sessionId": message.session.sessionId};
+    }
+   
     //    if ([message.session isEqual:_session]) {
     //        [self.interactor updateMessage:message];
     //    }
