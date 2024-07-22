@@ -236,6 +236,15 @@
     NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
     NSMutableArray *reactions = [localExt objectForKey:@"reactions"] ? [[localExt objectForKey:@"reactions"] mutableCopy] : [[NSMutableArray alloc] init];
     
+    NSString *reactionId = [reaction objectForKey:@"id"];
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"id == %@", reactionId];
+    NSArray *filterReactions = [reactions filteredArrayUsingPredicate:predicate];
+    BOOL *isReaction = filterReactions.count > 0 ? YES : NO;
+    if (isReaction) {
+        success(@"REACTION_READY!");
+        return;
+    }
+    
     [reactions addObject:reaction];
     [localExt setObject:reactions forKey:@"reactions"];
     
@@ -261,6 +270,10 @@
     }
     
     NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[messageId]];
+    if (messages == nil || messages.count != 1) {
+        success(@"200");
+        return;
+    }
     NIMMessage *message = [messages firstObject];
     NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
     NSMutableArray *reactions;

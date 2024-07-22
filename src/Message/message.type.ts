@@ -100,6 +100,7 @@ export interface INimMessageReaction {
   totalReaction: number;
   nickname: string;
   avatar: string;
+  id: string;
 }
 
 export interface INimMessageRemoveReaction {

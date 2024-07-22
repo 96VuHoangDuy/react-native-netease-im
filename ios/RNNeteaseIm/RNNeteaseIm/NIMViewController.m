@@ -283,6 +283,11 @@
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
                 }
+                
+                NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
+                if (extendType != nil && [extendType isEqual:@"gif"]) {
+                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
+                }
             }
             
             [dic setObject:localExt forKey:@"localExt"];
@@ -435,6 +440,11 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                }
+                
+                NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
+                if (extendType != nil && [extendType isEqual:@"gif"]) {
+                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
                 }
             }
             
@@ -621,6 +631,11 @@
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
                 }
+                
+                NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
+                if (extendType != nil && [extendType isEqual:@"gif"]) {
+                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
+                }
             }
             
             [dic setObject:localExt forKey:@"localExt"];
@@ -782,6 +797,11 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                }
+                
+                NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
+                if (extendType != nil && [extendType isEqual:@"gif"]) {
+                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
                 }
             }
                 

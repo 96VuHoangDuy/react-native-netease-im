@@ -99,6 +99,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import androidx.annotation.NonNull;
 
@@ -1181,9 +1182,26 @@ public class SessionService {
                     localExt = new HashMap<String, Object>();
                 }
 
+                String reactionId = reaction.getString("id");
+
                 List<Map<String, Object>> reactions = (List<Map<String, Object>>) localExt.get("reactions");
                 if (reactions == null) {
                     reactions = new ArrayList<Map<String, Object>>();
+                }
+
+                Boolean isReaction = false;
+                for(Map<String, Object> r : reactions) {
+                    String rId = (String) r.get("id");
+
+                    if (rId != null && rId.equals(reactionId)) {
+                        isReaction = true;
+                        break;
+                    }
+                }
+
+                if (isReaction) {
+                    promise.resolve("REACTION_READY");
+                    return;
                 }
 
                 reactions.add(MapUtil.readableMaptoMap(reaction));

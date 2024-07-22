@@ -95,6 +95,7 @@ export interface NimSessionTypeExtend {
     type: NIMTeamOperationTypeUpdateDetail;
     value: any;
   };
+  extendType?: string
 }
 
 export interface NimParamsForwardMessagesToMultipleRecipients {
