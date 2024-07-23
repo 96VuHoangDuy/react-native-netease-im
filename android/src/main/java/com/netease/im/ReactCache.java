@@ -245,7 +245,7 @@ public class ReactCache {
                         Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
                         Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
                         String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
-                        String extendType = (String) messageLocalExt.get("extendType");
+                        String extendType = (String) messageRemoteExt.get("extendType");
 
                         if (extendType != null && extendType.equals("gif")) {
                             map.putMap("extend", MapUtil.mapToReadableMap(messageRemoteExt));
