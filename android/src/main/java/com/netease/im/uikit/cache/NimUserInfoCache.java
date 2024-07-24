@@ -114,7 +114,7 @@ public class NimUserInfoCache {
                 }
 
                 NimUserInfo user = null;
-                boolean hasCallback = requestUserInfoMap.get(account).size() > 0;
+                boolean hasCallback = requestUserInfoMap.get(account) != null && requestUserInfoMap.get(account).size() > 0;
                 if (code == ResponseCode.RES_SUCCESS && users != null && !users.isEmpty()) {
                     user = users.get(0);
                     // 这里不需要更新缓存，由监听用户资料变更（添加）来更新缓存

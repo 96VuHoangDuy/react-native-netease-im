@@ -236,7 +236,7 @@
     NIMMessage *message = messages.firstObject;
     NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
     NSMutableArray *reactions = [localExt objectForKey:@"reactions"] ? [[localExt objectForKey:@"reactions"] mutableCopy] : [[NSMutableArray alloc] init];
-        
+    
     NSString *reactionId = [reaction objectForKey:@"id"];
     NSPredicate *predicate = [NSPredicate predicateWithFormat:@"id == %@", reactionId];
     NSArray *filterReactions = [reactions filteredArrayUsingPredicate:predicate];
@@ -1116,7 +1116,7 @@
     }
     
 //    NSDictionary *dict = [self setLocalExtMessage:message key:@"chatBotType" value:chatBotType];
-    NSDictionary *dict = [self setLocalExtMessage:message newDict:@{@"chatBotType": @"chatBotType"}];    
+    NSDictionary *dict = [self setLocalExtMessage:message newDict:@{@"chatBotType": chatBotType}];
     return dict;
 }
 
@@ -1640,6 +1640,11 @@
 
 - (void)sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isCustomerService:(BOOL)isCustomerService success:(Success)success error:(Errors)error {
 
+    NSString *parentMediaId;
+    if ([listMedia count] > 1) {
+        parentMediaId = parentId;
+    }
+    
     NSUInteger batchSize = 3;
     NSUInteger delay = 2.0; // Delay in seconds
     __block NSUInteger startIndex = 0;
@@ -1648,6 +1653,7 @@
         NSUInteger endIndex = MIN(startIndex + batchSize, listMedia.count);
         NSArray *batch = [listMedia subarrayWithRange:NSMakeRange(startIndex, endIndex - startIndex)];
         
+        NSString *multiMediaType;
         for (NSDictionary *media in batch) {
             NSString *mediaType = media[@"type"];
             if (mediaType == nil || (![mediaType isEqualToString:@"image"] && ![mediaType isEqualToString:@"video"])) {
@@ -1662,14 +1668,22 @@
             }
             
             if ([mediaType isEqualToString:@"image"]) {
+                if (multiMediaType == nil) {
+                    multiMediaType = @"image";
+                }
+                
                 BOOL isHighQuality = [mediaData[@"isHighQuality"] boolValue];
                 [self sendImageMessages:mediaData[@"file"]
                           displayName:mediaData[@"displayName"]
                    isCustomerService:isCustomerService
                       isHighQuality:isHighQuality
-                           parentId:parentId
+                           parentId:parentMediaId
                          indexCount:media[@"indexCount"]];
                 continue;
+            }
+            
+            if (multiMediaType == nil) {
+                multiMediaType = @"video";
             }
             
             [self sendVideoMessage:mediaData[@"file"]
@@ -1678,36 +1692,29 @@
                             height:mediaData[@"height"]
                        displayName:mediaData[@"displayName"]
                   isCustomerService:isCustomerService
-                          parentId:parentId
+                          parentId:parentMediaId
                         indexCount:media[@"indexCount"]];
         }
         
-        if (parentId != nil && startIndex == 0) {
+        if (parentId != nil && [listMedia count] > 1 && startIndex == 0) {
             NIMMessage *message = [[NIMMessage alloc] init];
             message.text = parentId;
             NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
             [remoteExt setObject:parentId forKey:@"parentMediaId"];
             
-            message.remoteExt = remoteExt;
             NIMMessageSetting *setting = [[NIMMessageSetting alloc] init];
             setting.apnsEnabled = NO;
             setting.shouldBeCounted = NO;
             message.setting = setting;
-            
-            NSLog(@"test parent id =>>>>> message id: %@", message.messageId);
+            NSInteger messageSubType = 6;
+            if (isImage) {
+                messageSubType = 5;
+            }
+            [remoteExt setObject:multiMediaType forKey:@"multiMediaType"];
+            message.messageSubType = messageSubType;
+            message.remoteExt = remoteExt;
             
             [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
-            
-//            [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:^(NSError * _Nullable error) {
-//                if (error != nil) {
-//    //                error(error.localizedDescription);
-//                    return;
-//                }
-//            }];
-            
-//            if (isCustomerService) {
-//                [self refrashMessage:message From:@"send"];
-//            }
         }
 
         
@@ -2877,11 +2884,27 @@
         
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+            
+            NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:messageIds];
+            NSString *multiMediaType;
+            for(NIMMessage *message in messages) {
+                if (multiMediaType == nil && (message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo)) {
+                    if (message.messageType == NIMMessageTypeImage) {
+                        multiMediaType = @"image";
+                    } else {
+                        multiMediaType = @"video";
+                    }
+                }
+                
+                [self handleMessageFoward:message session:session parentId:parentId isHaveMultiMedia:isHaveMultiMedia];
+            }
+            
             if (parentId != nil && isHaveMultiMedia) {
                 NIMMessage *messageParent = [[NIMMessage alloc] init];
                 
                 NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
                 [remoteExt setObject:parentId forKey:@"parentMediaId"];
+                [remoteExt setObject:multiMediaType forKey:@"multiMediaType"];
                 
                 NIMMessageSetting *seting = [[NIMMessageSetting alloc]init];
                 seting.apnsEnabled = NO;
@@ -2892,11 +2915,6 @@
                 messageParent.setting = seting;
                 
                 [[NIMSDK sharedSDK].chatManager sendMessage:messageParent toSession:session error:nil];
-            }
-            
-            NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:messageIds];
-            for(NIMMessage *message in messages) {
-                [self handleMessageFoward:message session:session parentId:parentId isHaveMultiMedia:isHaveMultiMedia];
             }
             
             if (content != nil && [content length] > 0) {

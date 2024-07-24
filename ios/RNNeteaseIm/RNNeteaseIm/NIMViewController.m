@@ -264,6 +264,7 @@
             [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
             //账号
             [dic setObject:[NSString stringWithFormat:@"%@",recent.lastMessage.session.sessionId] forKey:@"account"];
+    
             
             NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
             
@@ -282,6 +283,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
                 }
                 
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
@@ -379,9 +384,7 @@
                 }
             }
             
-            if (recent.lastMessage.messageSubType) {
-                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-            }
+            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
             
             //消息状态
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
@@ -440,6 +443,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
                 }
                 
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
@@ -545,9 +552,7 @@
                 }
             }
             
-            if (recent.lastMessage.messageSubType) {
-                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-            }
+            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
             
             //消息状态
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
@@ -603,7 +608,8 @@
             [dic setObject: [NSNumber numberWithBool: isMyFriend] forKey:@"isMyFriend"];
             BOOL isReplyRecent = [recent.localExt[@"isReplyStranger"] isEqual:@(YES)];
             [dic setObject: [NSNumber numberWithBool: isReplyRecent] forKey:@"isReplyStranger"];
-
+            
+            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
 
             //未读
             NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
@@ -630,6 +636,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
                 }
                 
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
@@ -730,10 +740,7 @@
                     [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
                 }
             }
-            
-            if (recent.lastMessage.messageSubType) {
-                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-            }
+ 
             
             //消息状态
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
@@ -797,6 +804,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                }
+                
+                if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
                 }
                 
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
@@ -901,9 +912,7 @@
                 }
             
             
-            if (recent.lastMessage.messageSubType) {
-                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-            }
+            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
             
                 //消息状态
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
@@ -982,7 +991,6 @@
 - (NSString *)convertMessageMedia:(NIMMessage *)message contentMessage:(NSString *)contentMessage{
     NSString *text = @"";
     
-    
     if ([message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
         text = contentMessage;
     } else {
@@ -999,7 +1007,6 @@
             if ([lastMessage.text isEqual:@"[动图]"] || [lastMessage.text isEqual:@"[个人名片]"]) {
                 return [self convertMessageMedia:lastMessage contentMessage:lastMessage.text];
             }
-            
             
             text = lastMessage.text;
             break;

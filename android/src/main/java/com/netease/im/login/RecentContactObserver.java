@@ -130,6 +130,7 @@ public class RecentContactObserver {
 
     private void onRecentContactChanged(List<RecentContact> recentContacts) {
          Log.d("onRecentContactChanged", recentContacts.get(0).getContent() + "...." +  NIMClient.getService(MsgService.class).queryLastMessage(recentContacts.get(0).getContactId(), recentContacts.get(0).getSessionType()));
+         if (recentContacts == null || recentContacts.isEmpty()) return;
         RecentContact updatedRecent = recentContacts.get(0);
         if (updatedRecent != null ) {
             IMMessage msg = NIMClient.getService(MsgService.class).queryLastMessage(updatedRecent.getContactId(), updatedRecent.getSessionType());

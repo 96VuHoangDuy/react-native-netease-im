@@ -27,6 +27,8 @@ export enum NIMMessageSubTypeEnum {
   REACTION = 2,
   REMOVE_REACTION = 3,
   REVOKE_MESSAGE = 4,
+  MESSAGE_MULTI_MEDIA_IMAGE = 5,
+  MESSAGE_MULTI_MEDIA_VIDEO = 6
 }
 
 export enum NIMSessionTypeEnum {

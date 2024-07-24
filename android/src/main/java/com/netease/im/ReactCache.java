@@ -246,6 +246,11 @@ public class ReactCache {
                         Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
                         String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
                         String extendType = (String) messageRemoteExt.get("extendType");
+                        String multiMediaType = (String) messageRemoteExt.get("multiMediaType");
+
+                        if (multiMediaType != null) {
+                            localExt.putString("multiMediaType", multiMediaType);
+                        }
 
                         if (extendType != null && extendType.equals("gif")) {
                             map.putMap("extend", MapUtil.mapToReadableMap(messageRemoteExt));
