@@ -41,6 +41,12 @@ interface NIMMessageMediaVideo {
   data: NIMMessageMediaVideoData;
 }
 
+export enum NIMMessageDeliveryState {
+  NIMMessageDeliveryStateFailed = 0,
+  NIMMessageDeliveryStateDelivering = 1,
+  NIMMessageDeliveryStateDeliveried = 2,
+}
+
 export type NIMMessageMedia = NIMMessageMediaImage | NIMMessageMediaVideo;
 
 // interface
