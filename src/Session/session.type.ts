@@ -13,7 +13,7 @@ import {
 export interface ICreateRecentOnlineService {
   sessionId: string;
   onlineServiceType: NIMSessionOnlineServiceType;
-  nickname?: string
+  nickname?: string;
 }
 
 export enum QueryDirectionType {
@@ -28,7 +28,7 @@ export enum NIMMessageSubTypeEnum {
   REMOVE_REACTION = 3,
   REVOKE_MESSAGE = 4,
   MESSAGE_MULTI_MEDIA_IMAGE = 5,
-  MESSAGE_MULTI_MEDIA_VIDEO = 6
+  MESSAGE_MULTI_MEDIA_VIDEO = 6,
 }
 
 export enum NIMSessionTypeEnum {
@@ -97,11 +97,11 @@ export interface NimSessionTypeExtend {
     type: NIMTeamOperationTypeUpdateDetail;
     value: any;
   };
-  extendType?: string
+  extendType?: string;
 }
 
 export interface NimParamsForwardMessagesToMultipleRecipients {
-  recipients: Array<{ sessionId: string, sessionType: NIMSessionTypeEnum }>;
+  recipients: Array<{ sessionId: string; sessionType: NIMSessionTypeEnum }>;
   messageIds: string[];
   content?: string;
   parentId?: string;
@@ -109,7 +109,7 @@ export interface NimParamsForwardMessagesToMultipleRecipients {
 }
 
 export interface NimParamsForwardMultiTextMessageToMultipleRecipients {
-  recipients: Array<{ sessionId: string, sessionType: NIMSessionTypeEnum }>;
+  recipients: Array<{ sessionId: string; sessionType: NIMSessionTypeEnum }>;
   messageText: string;
   content?: string;
 }
@@ -144,6 +144,7 @@ export interface NimSessionType {
       sessionId: string;
       messageId: string;
     };
+    multiMediaType?: 'video' | 'image';
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;
