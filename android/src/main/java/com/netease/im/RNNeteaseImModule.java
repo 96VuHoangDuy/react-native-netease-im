@@ -59,10 +59,12 @@ import com.netease.im.uikit.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.im.uikit.session.helper.MessageHelper;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.NIMPushSDK;
 import com.netease.nimlib.sdk.NIMSDK;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.ResponseCode;
+import com.netease.nimlib.sdk.SDKOptions;
 import com.netease.nimlib.sdk.auth.AuthService;
 import com.netease.nimlib.sdk.auth.LoginInfo;
 import com.netease.nimlib.sdk.friend.FriendService;
@@ -98,6 +100,7 @@ import com.netease.nimlib.sdk.team.model.TeamMember;
 import com.netease.nimlib.sdk.uinfo.constant.UserInfoFieldEnum;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.nimlib.sdk.uinfo.model.UserInfo;
+import com.netease.nimlib.sdk.util.NIMUtil;
 
 import java.io.File;
 import java.io.Serializable;
@@ -209,14 +212,14 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void login(String contactId, String token, final Promise promise) {
+    public void login(String contactId, String token, String appKey, final Promise promise) {
         LogUtil.w(TAG, "_id:" + contactId);
         LogUtil.w(TAG, "t:" + token);
 //        LogUtil.w(TAG, "md5:" + MD5.getStringMD5(token));
 
         NIMClient.getService(AuthService.class).openLocalCache(contactId);
         LogUtil.w(TAG, "s:" + NIMClient.getStatus().name());
-        LoginService.getInstance().login(new LoginInfo.LoginInfoBuilder(contactId, token, 1, "").build(), new RequestCallback<LoginInfo>() {
+        LoginService.getInstance().login(new LoginInfo.LoginInfoBuilder(contactId, token, 1, "").withAppKey(appKey).build(), new RequestCallback<LoginInfo>() {
             @Override
             public void onSuccess(LoginInfo loginInfo) {
 
@@ -243,14 +246,15 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void autoLogin(String contactId, String token, final Promise promise) {
+    public void autoLogin(String contactId, String token, String appKey, final Promise promise) {
         LogUtil.w(TAG, "_id:" + contactId);
         LogUtil.w(TAG, "t:" + token);
 //        LogUtil.w(TAG, "md5:" + MD5.getStringMD5(token));
 
+
         NIMClient.getService(AuthService.class).openLocalCache(contactId);
         LogUtil.w(TAG, "s:" + NIMClient.getStatus().name());
-        LoginService.getInstance().login(new LoginInfo.LoginInfoBuilder(contactId, token, 1, "").build(), new RequestCallback<LoginInfo>() {
+        LoginService.getInstance().login(new LoginInfo.LoginInfoBuilder(contactId, token, 1, "").withAppKey(appKey).build(), new RequestCallback<LoginInfo>() {
             @Override
             public void onSuccess(LoginInfo loginInfo) {
 
@@ -2657,6 +2661,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
             @Override
             public int onResult(int code, IMMessage message) {
+                if (message == null) return 0;
+
                 Map<String, Object> localExtension = message.getLocalExtension();
                 if (localExtension != null) {
                     String chatBotTypeByLocalExtension = (String) localExtension.get("chatBotType");

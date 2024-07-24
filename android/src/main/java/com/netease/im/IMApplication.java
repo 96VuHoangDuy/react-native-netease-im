@@ -76,7 +76,7 @@ public class IMApplication {
     private static StatusBarNotificationConfig statusBarNotificationConfig;
     private static boolean DEBUG = false;
 
-    public static void init(Context context, Class mainActivityClass, @DrawableRes int notify_msg_drawable_id, ImPushConfig miPushConfig) {
+    public static void init(Context context, Class mainActivityClass, @DrawableRes int notify_msg_drawable_id) {
         IMApplication.context = context.getApplicationContext();
         IMApplication.mainActivityClass = mainActivityClass;
         IMApplication.notify_msg_drawable_id = notify_msg_drawable_id;
@@ -89,7 +89,7 @@ public class IMApplication {
 //            mixPushConfig.xmAppKey = miPushConfig.appKey;
 //            NIMPushClient.initPush(new MixPushConfig());
 //        }
-        NIMClient.init(context, getLoginInfo(), getOptions(context, miPushConfig));
+        NIMClient.init(context, getLoginInfo(), getOptions(context));
         // crash handler
 //        AppCrashHandler.getInstance(context);
         if (NIMUtil.isMainProcess(IMApplication.context)) {
@@ -99,9 +99,7 @@ public class IMApplication {
             PinYin.init(context);
             PinYin.validate();
 
-            if (miPushConfig != null) {
-                NIMClient.getService(MixPushService.class).enable(true);
-            }
+            NIMClient.getService(MixPushService.class).enable(true);
             // 初始化Kit模块
             initKit();
 
@@ -149,7 +147,7 @@ public class IMApplication {
         return Environment.getExternalStorageDirectory() + "/" + context.getPackageName() + "/nim";
     }
 
-    private static SDKOptions getOptions(Context context, ImPushConfig miPushConfig) {
+    private static SDKOptions getOptions(Context context) {
         SDKOptions options = new SDKOptions();
 
         // 如果将新消息通知提醒托管给SDK完成，需要添加以下配置。
@@ -184,17 +182,27 @@ public class IMApplication {
         //sdkStorageRootPath 配置的外置存储缓存根目录
 
 
-        // 推送配置
-        if(miPushConfig!=null) {
-            MixPushConfig pushConfig = new MixPushConfig();
-            pushConfig.xmAppId = miPushConfig.xmAppId;
-            pushConfig.xmAppKey = miPushConfig.xmAppKey;
-            pushConfig.xmCertificateName = miPushConfig.xmCertificateName;
-            pushConfig.hwCertificateName = miPushConfig.hwCertificateName;
-            pushConfig.fcmCertificateName= miPushConfig.fcmCertificateName;
+        ImPushConfig config = new ImPushConfig();
+        // 小米证书配置，没有可不填
+        config.xmAppId = "2882303106219";
+        config.xmAppKey = "59717219";
+        config.xmCertificateName = "";
+        config.hwCertificateName = "";
+        config.mzAppId = "11398";
+        config.fcmCertificateName= "ZYZJIM_ANDROID_FCM";
+        config.mzAppKey = "b74148973e60a2af4c2f6779";
 
-            options.mixPushConfig = pushConfig;
-        }
+
+        // 推送配置
+        MixPushConfig pushConfig = new MixPushConfig();
+
+        pushConfig.xmAppId = config.xmAppId;
+        pushConfig.xmAppKey = config.xmAppKey;
+        pushConfig.xmCertificateName = config.xmCertificateName;
+        pushConfig.hwCertificateName = config.hwCertificateName;
+        pushConfig.fcmCertificateName= config.fcmCertificateName;
+
+        options.mixPushConfig = pushConfig;
 
         return options;
     }

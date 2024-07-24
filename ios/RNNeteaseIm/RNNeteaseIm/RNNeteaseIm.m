@@ -98,10 +98,12 @@ RCT_EXPORT_MODULE()
 
 
 //手动登录
-RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)token
+RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)token appKey:(NSString *)appKey
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject){
     //请将 NIMMyAccount 以及 NIMMyToken 替换成您自己提交到此App下的账号和密码
+    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:@"ZYZJIM_IOS"];
+
     [[[NIMSDK sharedSDK] loginManager] login:account token:token authType:NIMSDKAuthTypeDynamicToken loginExt:@"" completion:^(NSError *error)
         {
          if (!error) {
@@ -118,9 +120,12 @@ RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)to
 }
 
 //手动登录
-RCT_EXPORT_METHOD(autoLogin:(nonnull NSString *)account token:(nonnull NSString *)token
+RCT_EXPORT_METHOD(autoLogin:(nonnull NSString *)account token:(nonnull NSString *)token appKey:(nonnull NSString *)appKey
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject){
+    
+    
+    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:@"ZYZJIM_IOS"];
     
     NIMAutoLoginData *loginData = [[NIMAutoLoginData alloc] init];
     loginData.account = account;

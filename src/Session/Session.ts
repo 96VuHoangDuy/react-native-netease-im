@@ -29,8 +29,8 @@ class NimSession {
    * @param token
    * @returns {*} @see observeRecentContact observeOnlineStatus
    */
-  login(contactId: string, token: string) {
-    return RNNeteaseIm.login(contactId, token);
+  login(contactId: string, token: string, appKey: string) {
+    return RNNeteaseIm.login(contactId, token, appKey);
   }
 
   /**
@@ -39,8 +39,8 @@ class NimSession {
    * @param token
    * @returns {*} @see observeRecentContact
    */
-  autoLogin(contactId: string, token: string) {
-    return RNNeteaseIm.autoLogin(contactId, token);
+  autoLogin(contactId: string, token: string, appKey: string) {
+    return RNNeteaseIm.autoLogin(contactId, token, appKey);
   }
   /**
    * 退出
