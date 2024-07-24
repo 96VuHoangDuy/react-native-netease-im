@@ -1707,7 +1707,7 @@
             setting.shouldBeCounted = NO;
             message.setting = setting;
             NSInteger messageSubType = 6;
-            if (isImage) {
+            if ([multiMediaType isEqual:@"image"]) {
                 messageSubType = 5;
             }
             [remoteExt setObject:multiMediaType forKey:@"multiMediaType"];
