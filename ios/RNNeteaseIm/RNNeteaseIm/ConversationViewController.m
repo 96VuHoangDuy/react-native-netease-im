@@ -10,6 +10,7 @@
 #import <Photos/PhotosTypes.h>
 #import "NIMMessageMaker.h"
 #import "ContactViewController.h"
+#import "NIMViewController.h"
 #import "NIMKitLocationPoint.h"
 #import <AVFoundation/AVFoundation.h>
 //#import "NIMKitMediaFetcher.h"
@@ -235,7 +236,7 @@
     NIMMessage *message = messages.firstObject;
     NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
     NSMutableArray *reactions = [localExt objectForKey:@"reactions"] ? [[localExt objectForKey:@"reactions"] mutableCopy] : [[NSMutableArray alloc] init];
-    
+        
     NSString *reactionId = [reaction objectForKey:@"id"];
     NSPredicate *predicate = [NSPredicate predicateWithFormat:@"id == %@", reactionId];
     NSArray *filterReactions = [reactions filteredArrayUsingPredicate:predicate];
@@ -2041,6 +2042,11 @@
     NSLog(@"sendMessage didCompleteWithError %@", error);
     if (!error) {
         [self refrashMessage:message From:@"send"];
+        
+        if (self._session.sessionId == nil || self._session == nil) {
+            [[NIMViewController initWithController]getResouces];
+        }
+        
         [[NSUserDefaults standardUserDefaults]setObject: [NSString stringWithFormat:@"%f", message.timestamp] forKey:@"timestamp"];
     }else{
         NSDictionary *userInfo = error.userInfo;
