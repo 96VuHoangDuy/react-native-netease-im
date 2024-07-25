@@ -2887,8 +2887,10 @@
             
             NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:messageIds];
             NSString *multiMediaType;
+            NSInteger countMedia = 0;
             for(NIMMessage *message in messages) {
                 if (multiMediaType == nil && (message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo)) {
+                    countMedia += 1;
                     if (message.messageType == NIMMessageTypeImage) {
                         multiMediaType = @"image";
                     } else {
@@ -2899,7 +2901,7 @@
                 [self handleMessageFoward:message session:session parentId:parentId isHaveMultiMedia:isHaveMultiMedia];
             }
             
-            if (parentId != nil && isHaveMultiMedia) {
+            if (parentId != nil && isHaveMultiMedia && countMedia > 1) {
                 NIMMessage *messageParent = [[NIMMessage alloc] init];
                 
                 NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
