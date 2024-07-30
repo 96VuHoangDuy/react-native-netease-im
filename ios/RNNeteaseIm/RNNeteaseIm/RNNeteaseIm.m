@@ -416,8 +416,8 @@ RCT_EXPORT_METHOD(clearSystemMessages){
     [[NoticeViewController initWithNoticeViewController] deleAllNotic];
 }
 
-RCT_EXPORT_METHOD(sendFileMessageWithSession:(nonnull NSString *)path fileName:(nonnull NSString *)fileName sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] sendFileMessageWithSession:path fileName:fileName sessionId:sessionId sessionType:sessionType sessionName:sessionName success:^(id params) {
+RCT_EXPORT_METHOD(sendFileMessageWithSession:(nonnull NSString *)path fileName:(nonnull NSString *)fileName fileType:(NSString*)fileType sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendFileMessageWithSession:path fileName:fileName fileType:fileType sessionId:sessionId sessionType:sessionType sessionName:sessionName success:^(id params) {
         resolve(params);
     } err:^(id error) {
         reject(@"-1", error, nil);
@@ -590,8 +590,8 @@ RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonn
     [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality parentId:nil indexCount:nil];
 }
 
-RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController]sendFileMessage:filePath fileName:fileName isCustomerService:isCustomerService success:^(id param) {
+RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName fileType:(NSString *)fileType isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController]sendFileMessage:filePath fileName:fileName fileType:fileType isCustomerService:isCustomerService success:^(id param) {
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);

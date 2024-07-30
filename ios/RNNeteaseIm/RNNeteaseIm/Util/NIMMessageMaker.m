@@ -186,7 +186,7 @@
     return message;
 }
 
-+ (NIMMessage*)msgWithFile:(NSString*)filePath fileName:(NSString *)fileName andeSession:(NIMSession *)session senderName:(NSString *)senderName
++ (NIMMessage*)msgWithFile:(NSString*)filePath fileName:(NSString *)fileName fileType:(NSString *)fileType andeSession:(NIMSession *)session senderName:(NSString *)senderName
 {
     
     NIMFileObject *fileObject = [[NIMFileObject alloc] initWithSourcePath:filePath];
@@ -195,6 +195,9 @@
     NSString *content = @"文件";
     message.text = fileName;
     message.apnsContent = content;
+    
+    NSDictionary *remoteExt= @{@"fileType": fileType};
+    message.remoteExt = remoteExt;
     [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:senderName];
     return message;
 }

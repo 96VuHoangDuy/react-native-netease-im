@@ -654,9 +654,10 @@ class NimSession {
   sendFileMessage(
     filePath: string,
     fileName: string,
-    isCustomerService?: boolean
+    fileType:string,
+    isCustomerService?: boolean,
   ) {
-    return RNNeteaseIm.sendFileMessage(filePath, fileName, isCustomerService);
+    return RNNeteaseIm.sendFileMessage(filePath, fileName, fileType, isCustomerService);
   }
 
   createNotificationBirthday(

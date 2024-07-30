@@ -1602,6 +1602,7 @@ public class ReactCache {
         if (attachment instanceof FileAttachment) {
             FileAttachment fileAttachment = (FileAttachment) attachment;
 
+            Map<String, Object> remoteExtension = item.getRemoteExtension();
             Map<String, Object> localExtension = item.getLocalExtension();
             fileObj.putBoolean("isReplacePathSuccess", (Boolean) localExtension.get("isReplacePathSuccess"));
             fileObj.putBoolean("needRefreshMessage", false);
@@ -1620,6 +1621,7 @@ public class ReactCache {
                 if (fileAttachment.getPath() != null
                         && !fileAttachment.getPath().contains(item.getSessionId())
                         && item.getStatus() == MsgStatusEnum.success) {
+                    String fileType = (String) remoteExtension.get("fileType");
                     File newFile = replaceVideoPath(fileAttachment.getPath(), item.getSessionId(), "file", "." + fileAttachment.getExtension());
                     if (newFile != null) {
                         fileAttachment.setPath(newFile.getPath());
@@ -1630,7 +1632,7 @@ public class ReactCache {
                         fileObj.putString("fileName", item.getContent());
                         fileObj.putString("fileMd5", fileAttachment.getMd5());
                         fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
-                        fileObj.putString("fileType", fileAttachment.getExtension());
+                        fileObj.putString("fileType", fileType);
 
                         Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                         newLocalExt.put("isReplacePathSuccess", true);
@@ -1650,7 +1652,11 @@ public class ReactCache {
                     fileObj.putString("fileName", item.getContent());
                     fileObj.putString("fileMd5", fileAttachment.getMd5());
                     fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
-                    fileObj.putString("fileType", fileAttachment.getExtension());
+
+                    if(remoteExtension != null && remoteExtension.get("fileType") != null){
+                        String fileType = (String) remoteExtension.get("fileType");
+                        fileObj.putString("fileType", fileType);
+                    }
                 }
 
                 SessionService.getInstance().downloadAttachment(item, fileAttachment.getThumbPath() == null);
