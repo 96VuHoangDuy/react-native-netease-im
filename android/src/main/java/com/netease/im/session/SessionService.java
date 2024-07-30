@@ -1718,19 +1718,26 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
     }
 
-    public void sendFileMessageWitSession(String filePath, String fileName, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
+    public void sendFileMessageWitSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
         File file = new File(filePath);
         SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
         IMMessage message = MessageBuilder.createFileMessage(sessionId, sessionTypeEnum, file, fileName);
         message.setContent(fileName);
 
+        Map<String, Object> remoteExt = new HashMap<String, Object>();
+        remoteExt.put("fileType", fileType);
+        message.setRemoteExtension(remoteExt);
         sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
-    public void sendFileMessage(String filePath, String fileName, boolean isCustomerService, OnSendMessageListener onSendMessageListener) {
+    public void sendFileMessage(String filePath, String fileName, String fileType, boolean isCustomerService, OnSendMessageListener onSendMessageListener) {
         File file = new File(filePath);
         IMMessage message = MessageBuilder.createFileMessage(sessionId, sessionTypeEnum, file, fileName);
         message.setContent(fileName);
+
+        Map<String, Object> remoteExt = new HashMap<String, Object>();
+        remoteExt.put("fileType", fileType);
+        message.setRemoteExtension(remoteExt);
         sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
     }
 

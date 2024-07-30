@@ -776,6 +776,7 @@
     [fileObj setObject:[NSString stringWithFormat:@"%@", displayFileSize ] forKey:@"fileSize"];
     [fileObj setObject:[NSString stringWithFormat:@"%@", object.md5 ] forKey:@"fileMd5"];
     [fileObj setObject:[NSString stringWithFormat:@"%@", object.url ] forKey:@"fileUrl"];
+    [fileObj setObject:[NSString stringWithFormat:@"%@", [message.remoteExt objectForKey:@"fileType"]] forKey:@"fileType"];
     
     NSString *mediaPath = [self moveFiletoSessionDir:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
@@ -1784,9 +1785,9 @@
 //    [self sendCustomMessage:CustomMessgeTypeCustom data:dataDict];
 //}
 
--(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName success:(Success)success err:(Errors)err {
+-(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName fileType:(NSString *)fileType success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
-    NIMMessage *message = [NIMMessageMaker msgWithFile:path fileName:fileName andeSession:session senderName:sessionName];
+    NIMMessage *message = [NIMMessageMaker msgWithFile:path fileName:fileName fileType:(NSString *)fileType andeSession:session senderName:sessionName];
     
     NSError *error;
     [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
@@ -1798,8 +1799,8 @@
     }
 }
 
--(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName isCustomerService:(BOOL *)isCustomerService success:(Success)succe Err:(Errors)err{
-    NIMMessage *message = [NIMMessageMaker msgWithFile:filePath fileName:fileName andeSession:self._session senderName:_myUserName];
+-(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName fileType:(NSString *)fileType isCustomerService:(BOOL *)isCustomerService success:(Success)succe Err:(Errors)err{
+    NIMMessage *message = [NIMMessageMaker msgWithFile:filePath fileName:fileName fileType:fileType andeSession:self._session senderName:_myUserName];
                            
     if (isCustomerService || [self isFriendToSendMessage:message]) {
         NSError *error;

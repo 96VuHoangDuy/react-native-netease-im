@@ -1475,9 +1475,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendFileMessageWithSession(String filePath, String fileName,String sessionId, String sessionType, String sessionName, final Promise promise) {
+    public void sendFileMessageWithSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, final Promise promise) {
         try {
-            sessionService.sendFileMessageWitSession(filePath, fileName, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendFileMessageWitSession(filePath, fileName, fileType, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1490,9 +1490,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendFileMessage(String filePath, String fileName, boolean isCustomerService, final Promise promise) {
+    public void sendFileMessage(String filePath, String fileName, String fileType, boolean isCustomerService, final Promise promise) {
         try {
-            sessionService.sendFileMessage(filePath, fileName, isCustomerService, new SessionService.OnSendMessageListener() {
+            sessionService.sendFileMessage(filePath, fileName, fileType, isCustomerService, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;

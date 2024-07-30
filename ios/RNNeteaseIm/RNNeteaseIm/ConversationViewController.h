@@ -155,9 +155,9 @@ typedef void(^Errors)(id erro);
 
 - (BOOL) isPlayingRecord;
 
--(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName isCustomerService:(BOOL *)isCustomerService success:(Success)succe Err:(Errors)err;
+-(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName fileType:(NSString *)fileType isCustomerService:(BOOL *)isCustomerService  success:(Success)succe Err:(Errors)err;
 
--(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName success:(Success)success err:(Errors)err;
+-(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName  success:(Success)success err:(Errors)err;
 
 -(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType;
 
