@@ -3147,6 +3147,30 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         NIMSDK.getMsgService().createEmptyRecentContact(sessionId, type, 0, System.currentTimeMillis(), true);
     }
 
+    @ReactMethod
+    public void addEmptyPinRecentSession(String sessionId, String sessionType) {
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+        if (recent != null) return;
+
+        recent = NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, sessionTypeEnum, 0, System.currentTimeMillis(), true, false);
+
+        if (recent == null) return;
+
+        Map<String, Object> localExt = recent.getExtension();
+        if (localExt == null) {
+            localExt = new HashMap<String, Object>();
+        }
+
+        Boolean isPinSessionWithEmpty = true;
+
+        localExt.put("isPinSessionWithEmpty", isPinSessionWithEmpty);
+
+        recent.setExtension(localExt);
+
+        NIMClient.getService(MsgService.class).updateRecent(recent);
+    }
+
     private Map<String, Object> handleRecentLocalExtWithActionHide(RecentContact recent, String latestMsgId, Boolean isHideSession, Boolean isPinCode) {
         Map<String, Object> extension = recent.getExtension();
         if (extension == null) {

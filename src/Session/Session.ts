@@ -842,6 +842,10 @@ class NimSession {
   ) {
     return RNNeteaseIm.forwardMultiTextMessageToMultipleRecipients(params);
   }
+
+  addEmptyPinRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.addEmptyPinRecentSession(sessionId, sessionType)
+  }
 }
 
 export default new NimSession();

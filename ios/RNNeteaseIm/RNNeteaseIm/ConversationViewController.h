@@ -76,6 +76,8 @@ typedef void(^Errors)(id erro);
 
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType;
 
+-(void)addEmptyPinRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType;
+
 -(void)addEmptyRecentSessionCustomerService:(NSArray *)data;
 
 -(void)forwardMessagesToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err;

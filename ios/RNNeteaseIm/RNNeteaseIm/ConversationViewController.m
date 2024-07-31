@@ -2733,6 +2733,28 @@
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
 }
 
+-(void)addEmptyPinRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent != nil) return;
+    
+    NIMAddEmptyRecentSessionBySessionOption *option = [[NIMAddEmptyRecentSessionBySessionOption alloc] init];
+    option.addEmptyMsgIfNoLastMsgExist = YES;
+    
+    [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session option:option];
+    
+    recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent == nil) return;
+    
+    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    
+    BOOL isPinSessionWithEmpty = YES;
+    
+    [localExt setObject:@(isPinSessionWithEmpty) forKey:@"isPinSessionWithEmpty"];
+    
+    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+}
+
 -(void)addEmptyRecentSessionCustomerService:(NSArray *)data {
     NSLog(@"data =>>>>>> %@", data);
     for(NSDictionary *item in data) {

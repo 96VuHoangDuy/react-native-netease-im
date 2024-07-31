@@ -207,6 +207,10 @@ public class ReactCache {
                 SessionTypeEnum sessionType = contact.getSessionType();
                 String imagePath = "";
                 Map<String, Object> extension = contact.getExtension();
+                Boolean isPinSessionWithEmpty = false;
+                if (extension != null && extension.containsKey("isPinSessionWithEmpty") && extension.get("isPinSessionWithEmpty") != null) {
+                    isPinSessionWithEmpty = (Boolean) extension.get("isPinSessionWithEmpty");
+                }
                 Boolean isHideRecent = false;
                 IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
                 String notifyType = "";
@@ -535,7 +539,11 @@ public class ReactCache {
                 map.putString("messageId", contact.getRecentMessageId());
 
                 map.putString("fromAccount", fromAccount);
-                map.putString("time", TimeUtil.getTimeShowString(contact.getTime(), true));
+                if (lastMessage == null) {
+                    map.putString("time", "0");
+                } else {
+                    map.putString("time", TimeUtil.getTimeShowString(contact.getTime(), true));
+                }
 
 
                 String fromNick = "";
@@ -633,8 +641,28 @@ public class ReactCache {
                     content = teamNick + content;
                 }
 
+                if (contact.getContent() == null) {
+                    content = "";
+                }
+
+                if (lastMessage != null && (lastMessage.getSubtype() == 2 || lastMessage.getSubtype() == 3) && contact.getContent() != null) {
+                    content = contact.getContent();
+                }
+
                 map.putString("content", content);
                 array.pushMap(map);
+
+                if (lastMessage != null && isPinSessionWithEmpty != null && isPinSessionWithEmpty) {
+                    Map<String, Object> recentLocalExt = contact.getExtension();
+                    if (recentLocalExt == null) {
+                        recentLocalExt = new HashMap<String, Object>();
+                    }
+
+                    recentLocalExt.put("isPinSessionWithEmpty", false);
+                    contact.setExtension(recentLocalExt);
+
+                    NIMClient.getService(MsgService.class).updateRecentAndNotify(contact);
+                }
             }
 //            LogUtil.w(TAG, array + "");
         }

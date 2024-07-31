@@ -473,6 +473,10 @@ RCT_EXPORT_METHOD(queryMessageListHistory:(nonnull  NSString *)sessionId session
     }];
 }
 
+RCT_EXPORT_METHOD(addEmptyPinRecentSession:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType) {
+    [[ConversationViewController initWithConversationViewController] addEmptyPinRecentSession:sessionId sessionType:sessionType];
+}
+
 RCT_EXPORT_METHOD(forwardMessagesToMultipleRecipients:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
     [[ConversationViewController initWithConversationViewController] forwardMessagesToMultipleRecipients:params success:^(id param) {
         resolve(params);

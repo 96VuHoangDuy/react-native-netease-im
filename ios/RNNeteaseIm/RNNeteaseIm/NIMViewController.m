@@ -384,16 +384,19 @@
                 }
             }
             
-            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            if (recent.lastMessage == nil) {
+                [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+                [dic setObject:@"" forKey:@"messageId"];
+                [dic setObject:@"0" forKey:@"time"];
+                [dic setObject:@"" forKey:@"content"];
+            } else {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+                [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+                [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
+                [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
+                [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000] forKey:@"time"];
+            }
             
-            //消息状态
-            [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
-            //消息ID
-            [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
-            //消息内容
-            [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
-            //发送时间
-            [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000] forKey:@"time"];
 
             [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
@@ -552,21 +555,26 @@
                 }
             }
             
-            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            if (recent.lastMessage == nil) {
+                [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+                [dic setObject:@"" forKey:@"messageId"];
+                [dic setObject:@"0" forKey:@"time"];
+                [dic setObject:@"" forKey:@"content"];
+            } else {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+                [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+                [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
+                [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
+                [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
+            }
             
-            //消息状态
-            [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
-            //消息ID
-            [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
-            //消息内容
-            [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
 
             if (recent.lastMessage.messageType == NIMMessageTypeNotification) {
             // if message type is NIMNotificationTypeTeam/NIMNotificationTypeChatroom/NIMNotificationTypeNetCall
                 [dic setObject:[[ConversationViewController initWithConversationViewController]setNotiTeamObj:recent.lastMessage] forKey:@"extend"];
             }
             //发送时间
-            [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
+           
 
             [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
             NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
@@ -582,6 +590,22 @@
             }
             [dic setObject:strMute forKey:@"mute"];
             [sessionList addObject:dic];
+        }
+        
+        
+        if (recent != nil && recent.localExt != nil) {
+            NSMutableDictionary *localExt = [recent.localExt mutableCopy];
+            NSNumber *pinSessionWithEmpty = [localExt objectForKey:@"isPinSessionWithEmpty"];
+            
+            if (pinSessionWithEmpty != nil) {
+                BOOL isPinSessionWithEmpty = [pinSessionWithEmpty boolValue];
+                
+                if (isPinSessionWithEmpty && recent.lastMessage != nil) {
+                    [localExt setObject:@(NO) forKey:@"isPinSessionWithEmpty"];
+                    
+                    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt  recentSession:recent];
+                }
+            }
         }
     }
     
@@ -741,15 +765,18 @@
                 }
             }
  
-            
-            //消息状态
-            [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
-            //消息ID
-            [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
-            //消息内容
-            [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
-            //发送时间
-            [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000] forKey:@"time"];
+            if (recent.lastMessage == nil) {
+                [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+                [dic setObject:@"" forKey:@"messageId"];
+                [dic setObject:@"0" forKey:@"time"];
+                [dic setObject:@"" forKey:@"content"];
+            } else {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+                [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+                [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
+                [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
+                [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
+            }
 
             [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
@@ -912,21 +939,24 @@
                 }
             
             
-            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
             
-                //消息状态
+            if (recent.lastMessage == nil) {
+                [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+                [dic setObject:@"" forKey:@"messageId"];
+                [dic setObject:@"0" forKey:@"time"];
+                [dic setObject:@"" forKey:@"content"];
+            } else {
+                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
-                //消息ID
                 [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
-                //消息内容
                 [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
+                [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
+            }
 
                 if (recent.lastMessage.messageType == NIMMessageTypeNotification) {           
                 // if message type is NIMNotificationTypeTeam/NIMNotificationTypeChatroom/NIMNotificationTypeNetCall
                     [dic setObject:[[ConversationViewController initWithConversationViewController]setNotiTeamObj:recent.lastMessage] forKey:@"extend"];        
                 }
-                //发送时间
-                [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
 
                 [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
                 NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
@@ -947,6 +977,23 @@
                 [sessionList addObject:dic];
                 
             // }
+        }
+        
+        if (recent != nil && recent.localExt != nil) {
+            NSMutableDictionary *localExt = [recent.localExt mutableCopy];
+            NSNumber *pinSessionWithEmpty = [localExt objectForKey:@"isPinSessionWithEmpty"];
+            
+            NSLog(@"pinSessionWithEmpty >> %@", pinSessionWithEmpty);
+            
+            if (pinSessionWithEmpty != nil) {
+                BOOL isPinSessionWithEmpty = [pinSessionWithEmpty boolValue];
+                
+                if (isPinSessionWithEmpty && recent.lastMessage != nil) {
+                    [localExt setObject:@(NO) forKey:@"isPinSessionWithEmpty"];
+                    
+                    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+                }
+            }
         }
     }
     
@@ -1001,6 +1048,10 @@
 }
 
 - (NSString *)messageContent:(NIMMessage*)lastMessage{
+    if (lastMessage.messageSubType == 2 || lastMessage.messageSubType == 3) {
+        return lastMessage.text;
+    }
+    
     NSString *text = @"";
     switch (lastMessage.messageType) {
         case NIMMessageTypeText:
