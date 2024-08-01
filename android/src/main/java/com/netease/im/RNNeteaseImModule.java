@@ -2506,7 +2506,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
         Integer unreadCount = recent.getUnreadCount();
         String lastMessageId = "";
+        String latestMessageTime = "";
         String recentLastMessageId = recent.getRecentMessageId();
+        String recentLatestMessageTime = Long.toString(recent.getTime());
+
         Map<String, Object> extension = recent.getExtension();
 
         if (extension == null) {
@@ -2517,7 +2520,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             lastMessageId = (String) extension.get("lastReadMessageId");
         }
 
+        if (extension.get("latestMessageTime") != null) {
+            latestMessageTime = (String) extension.get("latestMessageTime");
+        }
+
         extension.put("lastReadMessageId", recentLastMessageId);
+        extension.put("latestMessageTime", recentLatestMessageTime);
 
         recent.setExtension(extension);
 
@@ -2527,6 +2535,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
         if (!lastMessageId.equals("")) {
             result.putString("lastMessageId", lastMessageId);
+        }
+
+        if (!latestMessageTime.equals("")) {
+            result.putString("latestMessageTime", latestMessageTime);
         }
 
         return result;

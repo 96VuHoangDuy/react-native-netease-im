@@ -502,6 +502,7 @@ public class SessionService {
                     }
 
                     extension.put("lastReadMessageId", message.getUuid());
+                    extension.put("latestMessageTime", Long.toString(message.getTime()));
 
                     recent.setExtension(extension);
 

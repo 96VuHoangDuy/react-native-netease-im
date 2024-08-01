@@ -326,6 +326,7 @@
         NSMutableDictionary *dict = [localExt mutableCopy];
         
         [dict setObject:lastMessage.messageId forKey:@"lastReadMessageId"];
+        [dict setObject:[NSString stringWithFormat:@"%f", lastMessage.timestamp * 1000] forKey:@"latestMessageTime"];
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
         
         return result;
@@ -2109,6 +2110,7 @@
         NSMutableDictionary *dict = [localExt mutableCopy];
         
         [dict setObject:message.messageId forKey:@"lastReadMessageId"];
+        [dict setObject:[NSString stringWithFormat:@"%f", message.timestamp * 1000] forKey:@"latestMessageTime"];
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
 
         if ([self isSeenMessage]) {
