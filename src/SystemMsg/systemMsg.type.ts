@@ -49,6 +49,7 @@ export enum NIMCustomNotificationTypeEnum {
   OBSERVE_RECEIVE_FRIEND_REMOVED_ME = 2,
   OBSERVE_RECEIVE_REVOKE_FRIEND_REQUEST = 3,
   OBSERVE_FRIEND_ACCEPT_MY_FRIEND_REQUEST = 4,
+  IS_TYPING = 5
 }
 
 export interface ICustomNotificationDataDict {
@@ -59,4 +60,6 @@ export interface ICustomNotificationDataDict {
   isObserveFriendRemovedMe?: boolean;
   isObserveFriendRevokedFriendRequest?:boolean;
   isObserveFriendAcceptMyFriendRequest?: boolean;
+  isTyping?: boolean;
+  time?: number
 }
