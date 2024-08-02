@@ -80,6 +80,8 @@ typedef void(^Errors)(id erro);
 
 -(void)addEmptyRecentSessionCustomerService:(NSArray *)data;
 
+-(void)addEmptyTemporarySession:(NSString *)sessionId bySessionId:(NSString *)bySessionId bySessionName:(NSString *)bySessionName bySessionType:(NSString *)bySessionType;
+
 -(void)forwardMessagesToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err;
 
 -(NSDictionary *) updateMessageOfChatBot:(NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(NSString *)chatBotType;

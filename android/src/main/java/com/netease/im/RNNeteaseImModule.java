@@ -3154,6 +3154,47 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void addEmptyTemporarySession(String sessionId, String bySessionId, String bySessionName, String bySessionType) {
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
+        if (recent != null) {
+            Map<String, Object> localExt = recent.getExtension();
+            if (localExt == null) {
+                localExt = new HashMap<String, Object>();
+            }
+
+            Map<String, Object> bySession = (Map<String, Object>) localExt.get("bySession");
+            if (bySession != null && bySession.containsKey("sessionId") && bySession.get("sessionId") != null && bySession.get("sessionId").equals(bySessionId)) {
+                return;
+            }
+
+            Map<String, Object> updateBySession = new HashMap<String, Object>();
+            updateBySession.put("sessionId", bySessionId);
+            updateBySession.put("sessionType", bySessionType);
+            updateBySession.put("sessionName", bySessionName);
+            localExt.put("bySession", updateBySession);
+
+            recent.setExtension(localExt);
+
+            NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
+
+            return;
+        }
+
+        recent = NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, SessionTypeEnum.P2P, 0, 0 ,true);
+
+        Map<String, Object> localExt = new HashMap<String, Object>();
+        Map<String, Object> bySession = new HashMap<String, Object>();
+        bySession.put("sessionId", sessionId);
+        bySession.put("sessionType", bySessionType);
+        bySession.put("sessionName", bySessionName);
+        localExt.put("bySession", bySession);
+
+        recent.setExtension(localExt);
+
+        NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
+    }
+
+    @ReactMethod
     public void addEmptyRecentSession(String sessionId, String sessionType) {
         SessionTypeEnum type = SessionUtil.getSessionType(sessionType);
         NIMSDK.getMsgService().createEmptyRecentContact(sessionId, type, 0, System.currentTimeMillis(), true);

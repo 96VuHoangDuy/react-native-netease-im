@@ -846,6 +846,10 @@ class NimSession {
   addEmptyPinRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
     return RNNeteaseIm.addEmptyPinRecentSession(sessionId, sessionType)
   }
+
+  addEmptyTemporarySession(sessionId: string, bySessionId: string, bySessionName: string, bySessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.addEmptyTemporarySession(sessionId, bySessionId, bySessionName, bySessionType)
+  }
 }
 
 export default new NimSession();

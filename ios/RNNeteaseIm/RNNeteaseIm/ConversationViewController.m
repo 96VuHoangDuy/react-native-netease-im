@@ -2730,6 +2730,41 @@
     }
 }
 
+-(void)addEmptyTemporarySession:(NSString *)sessionId bySessionId:(NSString *)bySessionId bySessionName:(NSString *)bySessionName bySessionType:(NSString *)bySessionType {
+    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent != nil)  {
+        NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        NSDictionary *bySession = [localExt objectForKey:@"bySession"];
+        
+        if (bySession == nil || ([bySession objectForKey:@"sessionId"] != nil && [[bySession objectForKey:@"sessionId"] isEqual:sessionId])) return;
+        
+        NSMutableDictionary *updateBySession = [[NSMutableDictionary alloc] init];
+        [updateBySession setObject:bySessionId forKey:@"sessionId"];
+        [updateBySession setObject:bySessionType forKey:@"sessionType"];
+        [updateBySession setObject:bySessionName forKey:@"sessionName"];
+        [localExt setObject:updateBySession forKey:@"bySession"];
+        
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+        return;
+    };
+    
+    [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
+    
+    recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent == nil) return;
+    
+    NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *bySession = [[NSMutableDictionary alloc] init];
+    
+    [bySession setObject:bySessionId forKey:@"sessionId"];
+    [bySession setObject:bySessionName forKey:@"sessionName"];
+    [bySession setObject:bySessionType forKey:@"sessionType"];
+    [localExt setObject:bySession forKey:@"bySession"];
+    
+    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+}
+
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
