@@ -11,6 +11,7 @@ import {
   ICreateRecentOnlineService,
   NimParamsForwardMessagesToMultipleRecipients,
   NimParamsForwardMultiTextMessageToMultipleRecipients,
+  ITemporarySessionRef,
 } from './session.type';
 import {
   INimMessageReaction,
@@ -191,14 +192,14 @@ class NimSession {
   sendTextMessage(
     content: string,
     atUserIds?: string[],
-    isCustomerService?: boolean,
-    messageSubType?: number
+    messageSubType?: number,
+    isSkipFriendCheck?: boolean
   ) {
     return RNNeteaseIm.sendTextMessage(
       content,
-      atUserIds,
-      isCustomerService ?? false,
-      messageSubType ?? 0
+      atUserIds ?? [],
+      messageSubType ?? NIMMessageSubTypeEnum.DEFAULT,
+      isSkipFriendCheck ?? false
     );
   }
 
@@ -206,13 +207,13 @@ class NimSession {
     url: string,
     aspectRatio: string,
     atUserIds?: string[],
-    isCustomerService?: boolean
+    isSkipFriendCheck?: boolean
   ) {
     return RNNeteaseIm.sendGifMessage(
       url,
       aspectRatio,
-      atUserIds,
-      isCustomerService ?? false
+      atUserIds ?? [],
+      isSkipFriendCheck ?? false
     );
   }
 
@@ -226,24 +227,26 @@ class NimSession {
   sendImageMessages(
     file: string,
     displayName?: string,
-    isCustomerService?: boolean,
-    isHighQuality?: boolean
+    isHighQuality?: boolean,
+    isSkipFriendCheck?: boolean
   ) {
     if (Platform.OS === 'ios') {
       return RNNeteaseIm.sendImageMessages(
         file,
-        displayName,
-        isCustomerService ?? false,
-        isHighQuality
+        displayName ?? '',
+        isHighQuality ?? false,
+        isSkipFriendCheck ?? false
       );
     }
+
     return RNNeteaseIm.sendImageMessage(
       file.replace('file://', ''),
-      displayName,
-      isCustomerService ?? false,
-      isHighQuality
+      displayName ?? '',
+      isHighQuality ?? false,
+      isSkipFriendCheck ?? false
     );
   }
+
   /**
    * 发送音频消息
    * @param file 音频文件
@@ -253,24 +256,24 @@ class NimSession {
   sendAudioMessage(
     file: string,
     duration: string,
-    isCustomerService?: boolean
+    isSkipFriendCheck?: boolean
   ) {
     return RNNeteaseIm.sendAudioMessage(
       file,
       duration,
-      isCustomerService ?? false
+      isSkipFriendCheck ?? false
     );
   }
 
   sendMultiMediaMessage(
     listMedia: NIMMessageMedia[],
     parentId: string | null,
-    isCustomerService?: boolean
+    isSkipFriendCheck?: boolean
   ) {
     return RNNeteaseIm.sendMultiMediaMessage(
       listMedia,
       parentId,
-      isCustomerService
+      isSkipFriendCheck ?? false
     );
   }
 
@@ -289,7 +292,7 @@ class NimSession {
     width: number,
     height: number,
     displayName?: string,
-    isCustomerService?: boolean
+    isSkipFriendCheck?: boolean
   ) {
     return RNNeteaseIm.sendVideoMessage(
       file,
@@ -297,7 +300,7 @@ class NimSession {
       width,
       height,
       displayName,
-      isCustomerService ?? false
+      isSkipFriendCheck ?? false
     );
   }
   /**
@@ -651,13 +654,8 @@ class NimSession {
     );
   }
 
-  sendFileMessage(
-    filePath: string,
-    fileName: string,
-    fileType:string,
-    isCustomerService?: boolean,
-  ) {
-    return RNNeteaseIm.sendFileMessage(filePath, fileName, fileType, isCustomerService);
+  sendFileMessage(filePath: string, fileName: string, fileType: string) {
+    return RNNeteaseIm.sendFileMessage(filePath, fileName, fileType);
   }
 
   createNotificationBirthday(
@@ -844,11 +842,26 @@ class NimSession {
   }
 
   addEmptyPinRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
-    return RNNeteaseIm.addEmptyPinRecentSession(sessionId, sessionType)
+    return RNNeteaseIm.addEmptyPinRecentSession(sessionId, sessionType);
   }
 
-  addEmptyTemporarySession(sessionId: string, bySessionId: string, bySessionName: string, bySessionType: NIMSessionTypeEnum) {
-    return RNNeteaseIm.addEmptyTemporarySession(sessionId, bySessionId, bySessionName, bySessionType)
+  addEmptyTemporarySession(
+    sessionId: string,
+    temporarySessionRef: ITemporarySessionRef
+  ) {
+    return RNNeteaseIm.addEmptyTemporarySession(sessionId, temporarySessionRef);
+  }
+
+  updateRecentToTemporarySession(
+    sessionId: string,
+    messageId: string,
+    temporarySessionRef: ITemporarySessionRef
+  ) {
+    return RNNeteaseIm.updateRecentToTemporarySession(
+      sessionId,
+      messageId,
+      temporarySessionRef
+    );
   }
 }
 

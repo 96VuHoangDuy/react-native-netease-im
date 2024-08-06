@@ -1375,12 +1375,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void sendTextMessage(String content, ReadableArray atUserIds, boolean isCustomerService, Integer messageSubType,  final Promise promise) {
+    public void sendTextMessage(String content, ReadableArray atUserIds, Integer messageSubType,boolean isSkipFriendCheck, final Promise promise) {
        try {
            LogUtil.w(TAG, "sendTextMessage" + content);
 
            List<String> atUserIdList = array2ListString(atUserIds);
-           sessionService.sendTextMessage(content, atUserIdList, isCustomerService,messageSubType, new SessionService.OnSendMessageListener() {
+           sessionService.sendTextMessage(content, atUserIdList, messageSubType, isSkipFriendCheck, new SessionService.OnSendMessageListener() {
                @Override
                public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1393,10 +1393,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
        }
     }
 
-    public void sendTextMessage(String content, boolean isCustomerService,Integer messageSubType,final Promise promise) {
+    public void sendTextMessage(String content,Integer messageSubType, boolean isSkipFriendCheck,final Promise promise) {
        try {
            LogUtil.w(TAG, "sendTextMessage" + content);
-           sessionService.sendTextMessage(content, null, isCustomerService, messageSubType,new SessionService.OnSendMessageListener() {
+           sessionService.sendTextMessage(content, null, messageSubType, isSkipFriendCheck,new SessionService.OnSendMessageListener() {
                @Override
                public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1425,10 +1425,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendGifMessage(String url, String aspectRatio, ReadableArray atUserIds, boolean isCustomerService, final Promise promise) {
+    public void sendGifMessage(String url, String aspectRatio, ReadableArray atUserIds, boolean isSkipFriendCheck, final Promise promise) {
         try {
-            LogUtil.w(TAG, "sendTextMessage" + url);
-            sessionService.sendGifMessage(url, aspectRatio, null, isCustomerService, new SessionService.OnSendMessageListener() {
+            sessionService.sendGifMessage(url, aspectRatio, null, isSkipFriendCheck, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1460,9 +1459,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    file, // 图片文件对象
 //    displayName // 文件显示名字，如果第三方 APP 不关注，可以为 null
     @ReactMethod
-    public void sendImageMessage(String file, String displayName, boolean isCustomerService, boolean isHighQuality, final Promise promise) {
+    public void sendImageMessage(String file, String displayName, boolean isHighQuality,boolean isSkipFriendCheck, final Promise promise) {
         try {
-            sessionService.sendImageMessage(file, displayName, isCustomerService, isHighQuality, null, null, new SessionService.OnSendMessageListener() {
+            sessionService.sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, null, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1490,9 +1489,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendFileMessage(String filePath, String fileName, String fileType, boolean isCustomerService, final Promise promise) {
+    public void sendFileMessage(String filePath, String fileName, String fileType, final Promise promise) {
         try {
-            sessionService.sendFileMessage(filePath, fileName, fileType, isCustomerService, new SessionService.OnSendMessageListener() {
+            sessionService.sendFileMessage(filePath, fileName, fileType, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1523,7 +1522,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    file, // 音频文件
 //    duration // 音频持续时间，单位是ms
     @ReactMethod
-    public void sendAudioMessage(String file, String duration, boolean isCustomerService, final Promise promise) {
+    public void sendAudioMessage(String file, String duration, boolean isSkipFriendCheck, final Promise promise) {
         long durationL = 0;
         try {
             durationL = Long.parseLong(duration);
@@ -1531,7 +1530,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             e.printStackTrace();
         }
         try {
-            sessionService.sendAudioMessage(file, durationL, isCustomerService, new SessionService.OnSendMessageListener() {
+            sessionService.sendAudioMessage(file, durationL, isSkipFriendCheck, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1550,9 +1549,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    height, // 视频高度
 //    displayName // 视频显示名，可为空
     @ReactMethod
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService, final Promise promise) {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isSkipFriendCheck, final Promise promise) {
         try {
-            sessionService.sendVideoMessage(file, duration, width, height, displayName, isCustomerService, null, null, new SessionService.OnSendMessageListener() {
+            sessionService.sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck, null, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1735,6 +1734,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         for(Map<String, Object> recipient : recipients) {
             String sessionId = (String) recipient.get("sessionId");
             String sessionType = (String) recipient.get("sessionType");
+            Boolean isSkipFriendCheck = (Boolean) recipient.get("isSkipFriendCheck");
             if (sessionId == null || sessionType == null || sessionId.isEmpty() || sessionType.isEmpty()) {
                 continue;
             }
@@ -1742,7 +1742,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
             Log.e(TAG, "test =>>>>>>>>>>>> " + sessionId + " " + sessionType);
 
-            new Thread(() -> sessionService.handleForwardMultiTextMessageToRecipient(sessionId, sessionTypeEnum, messageText, content)).start();
+            new Thread(() -> sessionService.handleForwardMultiTextMessageToRecipient(sessionId, sessionTypeEnum, messageText, content,isSkipFriendCheck)).start();
         }
 
         promise.resolve("200");
@@ -1768,13 +1768,14 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         for(Map<String, Object> recipient : recipients) {
             String sessionId = (String) recipient.get("sessionId");
             String sessionType = (String) recipient.get("sessionType");
+            Boolean isSkipFriendCheck = (Boolean) recipient.get("isSkipFriendCheck");
             if (sessionId == null || sessionType == null || sessionId.isEmpty() || sessionType.isEmpty()) {
                 continue;
             }
 
             SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
 
-            new Thread(() -> sessionService.handleForwardMessageToRecipient(messageIds, sessionId, sessionTypeEnum, content, parentId, isHaveMultiMedia)).start();
+            new Thread(() -> sessionService.handleForwardMessageToRecipient(messageIds, sessionId, sessionTypeEnum, content, parentId, isHaveMultiMedia, isSkipFriendCheck)).start();
         }
 
 
@@ -1822,8 +1823,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendMultiMediaMessage(ReadableArray listMedia, String parentId, Boolean isCustomerService, final Promise promise) {
-        sessionService.sendMultiMediaMessage(listMedia, isCustomerService, parentId, promise);
+    public void sendMultiMediaMessage(ReadableArray listMedia, String parentId, Boolean isSkipFriendCheck, final Promise promise) {
+        sessionService.sendMultiMediaMessage(listMedia, parentId, isSkipFriendCheck, promise);
     }
 
     /**
@@ -3154,7 +3155,45 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void addEmptyTemporarySession(String sessionId, String bySessionId, String bySessionName, String bySessionType) {
+    public void updateRecentToTemporarySession(String sessionId, String messageId, ReadableMap data) {
+        Map<String, Object> temporarySessionRef = MapUtil.readableMaptoMap(data);
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
+        if (recent == null) return;
+
+        Map<String, Object> localExt = recent.getExtension();
+        if (localExt == null) {
+            localExt = new HashMap<String, Object>();
+        }
+
+        localExt.put("temporarySessionRef", temporarySessionRef);
+
+        recent.setExtension(localExt);
+
+        NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
+
+        List<String> messageIds = new ArrayList<String>();
+        messageIds.add(messageId);
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS || result == null || result.isEmpty()) return;
+
+                IMMessage message = result.get(0);
+
+                NIMClient.getService(MsgService.class).deleteChattingHistory(message);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void addEmptyTemporarySession(String sessionId, ReadableMap data, final Promise promise) {
+        Map<String, Object> temporarySessionRef = MapUtil.readableMaptoMap(data);
+        String temporarySessionId = (String) temporarySessionRef.get("sessionId");
+        if (temporarySessionId == null) {
+            promise.resolve("success");
+            return;
+        };
+
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
         if (recent != null) {
             Map<String, Object> localExt = recent.getExtension();
@@ -3162,36 +3201,56 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 localExt = new HashMap<String, Object>();
             }
 
-            Map<String, Object> bySession = (Map<String, Object>) localExt.get("bySession");
-            if (bySession != null && bySession.containsKey("sessionId") && bySession.get("sessionId") != null && bySession.get("sessionId").equals(bySessionId)) {
-                return;
-            }
+            Map<String, Object> tempSessionRef = (Map<String, Object>) localExt.get("temporarySessionRef");
+            if (tempSessionRef != null && tempSessionRef.get("sessionId") != null && tempSessionRef.get("sessionId").equals(temporarySessionId)) return;
 
-            Map<String, Object> updateBySession = new HashMap<String, Object>();
-            updateBySession.put("sessionId", bySessionId);
-            updateBySession.put("sessionType", bySessionType);
-            updateBySession.put("sessionName", bySessionName);
-            localExt.put("bySession", updateBySession);
+            localExt.put("temporarySessionRef", temporarySessionRef);
 
             recent.setExtension(localExt);
 
             NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
 
+            sessionService.sendMessageUpdateTemporarySession(sessionId, temporarySessionRef, new SessionService.OnSendMessageListener() {
+                @Override
+                public int onResult(int code, IMMessage message) {
+                    if (code == ResponseCode.RES_SUCCESS) {
+                        promise.resolve("success");
+                    } else {
+                        promise.reject("-1", "error: " + code);
+                    }
+
+                    return 0;
+                }
+            });
+
             return;
         }
 
         recent = NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, SessionTypeEnum.P2P, 0, 0 ,true);
+        if (recent == null) {
+            promise.resolve("success");
+            return;
+        }
 
         Map<String, Object> localExt = new HashMap<String, Object>();
-        Map<String, Object> bySession = new HashMap<String, Object>();
-        bySession.put("sessionId", sessionId);
-        bySession.put("sessionType", bySessionType);
-        bySession.put("sessionName", bySessionName);
-        localExt.put("bySession", bySession);
+        localExt.put("temporarySessionRef", temporarySessionRef);
 
         recent.setExtension(localExt);
 
         NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
+
+        sessionService.sendMessageUpdateTemporarySession(sessionId, temporarySessionRef, new SessionService.OnSendMessageListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+                if (code == ResponseCode.RES_SUCCESS) {
+                    promise.resolve("success");
+                } else {
+                    promise.reject("-1", "error: " + code);
+                }
+
+                return 0;
+            }
+        });
     }
 
     @ReactMethod

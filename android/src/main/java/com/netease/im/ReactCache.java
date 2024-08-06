@@ -187,9 +187,10 @@ public class ReactCache {
         WritableMap writableMap = Arguments.createMap();
         WritableArray array = Arguments.createArray();
         int unreadNumTotal = 0;
-        if (recents != null && recents.size() > 0) {
+        if (recents != null && !recents.isEmpty()) {
             WritableMap map;
-            for (RecentContact contact : recents) {
+            for (int i = 0; i < recents.size(); i++) {
+                RecentContact contact = recents.get(i);
                 Boolean isMessageAfterRevoke = contact.getContent() == "" && contact.getFromAccount() == null && contact.getRecentMessageId() == "" && contact.getMsgType() == MsgTypeEnum.text;
 
                 int recentUnreadCount = contact.getUnreadCount();
@@ -248,6 +249,7 @@ public class ReactCache {
                         Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
                         Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
                         Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
+                        Map<String, Object> temporarySessionRef = (Map<String, Object>) messageRemoteExt.get("temporarySessionRef");
                         String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
                         String extendType = (String) messageRemoteExt.get("extendType");
                         String multiMediaType = (String) messageRemoteExt.get("multiMediaType");
@@ -274,6 +276,10 @@ public class ReactCache {
 
                         if(revokeMessage != null){
                             localExt.putMap("revokeMessage", MapUtil.mapToReadableMap(revokeMessage));
+                        }
+
+                        if (temporarySessionRef != null) {
+                            localExt.putMap("temporarySessionRef", MapUtil.mapToReadableMap(temporarySessionRef));
                         }
                     }
                 }
@@ -1304,8 +1310,6 @@ public class ReactCache {
 
     static String getMessageStatus(MsgStatusEnum statusEnum) {
         switch (statusEnum) {
-            case draft:
-                return MessageConstant.MsgStatus.SEND_DRAFT;
             case sending:
                 return MessageConstant.MsgStatus.SEND_SENDING;
             case success:
@@ -1834,6 +1838,7 @@ public class ReactCache {
             Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
             Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
             String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
+            Map<String, Object> temporarySessionRef = (Map<String, Object>) messageRemoteExt.get("temporarySessionRef");
 
             if (parentMediaId != null) {
                 localExt.putString("parentMediaId", parentMediaId);
@@ -1845,6 +1850,10 @@ public class ReactCache {
 
             if (dataRemoveReaction != null) {
                 localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
+            }
+
+            if (temporarySessionRef != null) {
+                localExt.putMap("temporarySessionRef", MapUtil.mapToReadableMap(temporarySessionRef));
             }
         }
 

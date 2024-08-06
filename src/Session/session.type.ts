@@ -29,6 +29,7 @@ export enum NIMMessageSubTypeEnum {
   REVOKE_MESSAGE = 4,
   MESSAGE_MULTI_MEDIA_IMAGE = 5,
   MESSAGE_MULTI_MEDIA_VIDEO = 6,
+  TEMPORARY_SESSION = 7
 }
 
 export enum NIMSessionTypeEnum {
@@ -109,7 +110,7 @@ export interface NimParamsForwardMessagesToMultipleRecipients {
 }
 
 export interface NimParamsForwardMultiTextMessageToMultipleRecipients {
-  recipients: Array<{ sessionId: string; sessionType: NIMSessionTypeEnum }>;
+  recipients: Array<{ sessionId: string; sessionType: NIMSessionTypeEnum, isSkipFriendCheck: boolean }>;
   messageText: string;
   content?: string;
 }
@@ -145,6 +146,7 @@ export interface NimSessionType {
       messageId: string;
     };
     multiMediaType?: 'video' | 'image';
+    temporarySessionRef?: ITemporarySessionRef
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;
@@ -165,4 +167,10 @@ export type ListSessionCacheType = {
 export type NIMBirthdayMemberType = {
   contactId: string;
   name: string;
+};
+
+export type ITemporarySessionRef = {
+  sessionId: string;
+  sessionName: string;
+  sessionType: NIMSessionTypeEnum;
 };

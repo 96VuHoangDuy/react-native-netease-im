@@ -534,6 +534,22 @@ public class SessionService {
         });
     }
 
+    public void sendMessageUpdateTemporarySession(String sessionId, Map<String, Object> temporarySessionRef, final OnSendMessageListener onSendMessageListener) {
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, SessionTypeEnum.P2P, "");
+        CustomMessageConfig config = new CustomMessageConfig();
+        config.enablePush = false;
+        config.enableUnreadCount = false;
+
+        Map<String, Object> remoteExt = new HashMap<String, Object>();
+        remoteExt.put("temporarySessionRef", temporarySessionRef);
+
+        message.setSubtype(7);
+        message.setRemoteExtension(remoteExt);
+        message.setConfig(config);
+
+        sendMessageSelf(message, onSendMessageListener, false, true);
+    }
+
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
         Map<String, Object> localExtension = message.getLocalExtension();
         if (message.getStatus() == MsgStatusEnum.success && message.getDirect() == MsgDirectionEnum.Out) {
@@ -1323,7 +1339,7 @@ public class SessionService {
     /**
      * @param content
      */
-    public void sendTextMessage(String content, List<String> selectedMembers, Boolean isCustomerService, Integer messageSubType, OnSendMessageListener onSendMessageListener) {
+    public void sendTextMessage(String content, List<String> selectedMembers, Integer messageSubType, Boolean isSkipFriendCheck, OnSendMessageListener onSendMessageListener) {
 
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
         if (!messageSubType.equals(0)) {
@@ -1337,7 +1353,7 @@ public class SessionService {
 //            message.setPushContent("有人@了你");
             message.setMemberPushOption(option);
         }
-        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
     }
 
     public void sendGifMessageWithSession(String url, String aspectRatio, String sessionId, String typeStr, String sessionName, OnSendMessageListener onSendMessageListener) {
@@ -1354,7 +1370,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
-    public void sendGifMessage(String url, String aspectRatio, List<String> selectedMembers, Boolean isCustomerService, OnSendMessageListener onSendMessageListener) {
+    public void sendGifMessage(String url, String aspectRatio, List<String> selectedMembers, Boolean isSkipFriendCheck, OnSendMessageListener onSendMessageListener) {
 
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "[动图]");
 
@@ -1370,7 +1386,7 @@ public class SessionService {
 //            message.setPushContent("有人@了你");
             message.setMemberPushOption(option);
         }
-        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
     }
 
 
@@ -1482,7 +1498,7 @@ public class SessionService {
         sendMessageSelf(messageForward, null, false, false);
     }
 
-    public void handleForwardMessageToRecipient(List<String> messageIds, String sessionId, SessionTypeEnum sessionType, String content, String parentId, Boolean isHaveMultiMedia) {
+    public void handleForwardMessageToRecipient(List<String> messageIds, String sessionId, SessionTypeEnum sessionType, String content, String parentId, Boolean isHaveMultiMedia, Boolean isSkipFriendCheck) {
         NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> messages, Throwable exception) {
@@ -1515,34 +1531,34 @@ public class SessionService {
                     message.setRemoteExtension(remoteExt);
                     message.setConfig(config);
 
-                    sendMessageSelf(message, null, false, false);
+                    sendMessageSelf(message, null, false, isSkipFriendCheck);
                 }
 
                 if (content != null && !content.isEmpty()) {
                     IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
-                    sendMessageSelf(message, null, false, false);
+                    sendMessageSelf(message, null, false, isSkipFriendCheck);
                 }
             }
         });
     }
 
-    public void handleForwardMultiTextMessageToRecipient(String sessionId, SessionTypeEnum sessionTypeEnum, String messageText, String content) {
+    public void handleForwardMultiTextMessageToRecipient(String sessionId, SessionTypeEnum sessionTypeEnum, String messageText, String content, Boolean isSkipFriendCheck) {
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, messageText);
 
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
         remoteExt.put("extendType", "forwardMultipleText");
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, null, false, false);
+        sendMessageSelf(message, null, false, isSkipFriendCheck);
 
         if (content != null && !content.isEmpty()) {
             IMMessage messageContent = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
 
-            sendMessageSelf(messageContent, null, false, false);
+            sendMessageSelf(messageContent, null, false, isSkipFriendCheck);
         }
     }
 
-    public void sendMultiMediaMessage(ReadableArray data, Boolean isCustomerService, String parentId, final Promise promise) {
+    public void sendMultiMediaMessage(ReadableArray data, String parentId, Boolean isSkipFriendCheck, final Promise promise) {
         List<Object> listMedia = MapUtil.readableArrayToArray(data);
         final int batchSize = 3;
         final int delay = 2000;
@@ -1593,7 +1609,7 @@ public class SessionService {
                             isHighQuality = false;
                         }
 
-                        sendImageMessage(file, displayName, isCustomerService, isHighQuality, parentId, (Double) media.get("indexCount"), null);
+                        sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, parentId, (Double) media.get("indexCount"), null);
                         continue;
                     }
 
@@ -1638,7 +1654,7 @@ public class SessionService {
                         }
                     }
 
-                    sendVideoMessage(file, duration, width, height, displayName, isCustomerService, parentId, (Double) media.get("indexCount"), null);
+                    sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck, parentId, (Double) media.get("indexCount"), null);
                 }
 
                 if (parentId != null && startIndex == 0) {
@@ -1651,9 +1667,13 @@ public class SessionService {
                     message.setFromAccount(message.getFromAccount());
                     message.setDirect(message.getDirect());
 
+                    CustomMessageConfig config = new CustomMessageConfig();
+                    config.enableUnreadCount = false;
+                    config.enablePush = false;
 
-                    NIMClient.getService(MsgService.class).sendMessage(message, false);
+                    message.setConfig(config);
 
+                    sendMessageSelf(message, null, false, isSkipFriendCheck);
 //                    if (isCustomerService) {
 //                        List<IMMessage> list = new ArrayList<>(1);
 //                        list.add(message);
@@ -1692,7 +1712,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
-    public void sendImageMessage(String file, String displayName, boolean isCustomerService, boolean isHighQuality, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessage(String file, String displayName, boolean isHighQuality, boolean isSkipFriendCheck, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
@@ -1716,7 +1736,7 @@ public class SessionService {
         message.setRemoteExtension(remoteExt);
 
 
-        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
     }
 
     public void sendFileMessageWitSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
@@ -1731,7 +1751,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
-    public void sendFileMessage(String filePath, String fileName, String fileType, boolean isCustomerService, OnSendMessageListener onSendMessageListener) {
+    public void sendFileMessage(String filePath, String fileName, String fileType, OnSendMessageListener onSendMessageListener) {
         File file = new File(filePath);
         IMMessage message = MessageBuilder.createFileMessage(sessionId, sessionTypeEnum, file, fileName);
         message.setContent(fileName);
@@ -1739,15 +1759,15 @@ public class SessionService {
         Map<String, Object> remoteExt = new HashMap<String, Object>();
         remoteExt.put("fileType", fileType);
         message.setRemoteExtension(remoteExt);
-        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+        sendMessageSelf(message, onSendMessageListener, false, false);
     }
 
-    public void sendAudioMessage(String file, long duration, boolean isCustomerService, OnSendMessageListener onSendMessageListener) {
+    public void sendAudioMessage(String file, long duration, boolean isSkipFriendCheck, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
 
         IMMessage message = MessageBuilder.createAudioMessage(sessionId, sessionTypeEnum, f, duration);
-        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
     }
 
     //        String md5Path = StorageUtil.getWritePath(filename, StorageType.TYPE_VIDEO);
@@ -1755,7 +1775,7 @@ public class SessionService {
 //        long duration = mediaPlayer == null ? 0 : mediaPlayer.getDuration();
 //        int height = mediaPlayer == null ? 0 : mediaPlayer.getVideoHeight();
 //        int width = mediaPlayer == null ? 0 : mediaPlayer.getVideoWidth();
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isCustomerService, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isSkipFriendCheck, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
 
 //        String filename = md5 + "." + FileUtil.getExtensionName(file);
         file = Uri.parse(file).getPath();
@@ -1783,7 +1803,7 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, isCustomerService);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
     }
 
     public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
@@ -2134,7 +2154,7 @@ public class SessionService {
         getMsgService().updateIMMessageStatus(message);
     }
 
-    public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isCustomerService) {
+    public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isSkipFriendCheck) {
         appendPushConfig(message);
         if (sessionTypeEnum == SessionTypeEnum.P2P) {
             sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
@@ -2142,7 +2162,7 @@ public class SessionService {
 
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
             LogUtil.w(TAG, "isFriend:" + isFriend);
-            if (!isFriend && !isCustomerService) {
+            if (!isFriend && !isSkipFriendCheck) {
                 Map<String, Object> localExt = new HashMap<String, Object>();
 
                 if (!isFriend) {

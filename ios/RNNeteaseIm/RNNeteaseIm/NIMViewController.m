@@ -289,6 +289,10 @@
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
                 }
                 
+                if (recent.lastMessage.messageSubType == 7 && [recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
+                }
+                
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
                 if (extendType != nil && [extendType isEqual:@"gif"]) {
                     [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
@@ -384,11 +388,14 @@
                 }
             }
             
-            if (recent.lastMessage == nil) {
+            if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
                 [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
                 [dic setObject:@"" forKey:@"messageId"];
                 [dic setObject:@"0" forKey:@"time"];
                 [dic setObject:@"" forKey:@"content"];
+                if (recent.lastMessage.messageSubType == 7) {
+                    [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+                }
             } else {
                 [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
@@ -450,6 +457,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
+                }
+                
+                if (recent.lastMessage.messageSubType == 7 && [recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
                 }
                 
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
@@ -555,11 +566,14 @@
                 }
             }
             
-            if (recent.lastMessage == nil) {
+            if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
                 [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
                 [dic setObject:@"" forKey:@"messageId"];
                 [dic setObject:@"0" forKey:@"time"];
                 [dic setObject:@"" forKey:@"content"];
+                if (recent.lastMessage.messageSubType == 7) {
+                    [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+                }
             } else {
                 [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
@@ -666,6 +680,10 @@
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
                 }
                 
+                if (recent.lastMessage.messageSubType == 7 && [recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
+                }
+                
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
                 if (extendType != nil && [extendType isEqual:@"gif"]) {
                     [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
@@ -765,11 +783,14 @@
                 }
             }
  
-            if (recent.lastMessage == nil) {
+            if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
                 [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
                 [dic setObject:@"" forKey:@"messageId"];
                 [dic setObject:@"0" forKey:@"time"];
                 [dic setObject:@"" forKey:@"content"];
+                if (recent.lastMessage.messageSubType == 7) {
+                    [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+                }
             } else {
                 [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
@@ -835,6 +856,10 @@
                 
                 if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
                     [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
+                }
+                
+                if (recent.lastMessage.messageSubType == 7 && [recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
+                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
                 }
                 
                 NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
@@ -940,11 +965,14 @@
             
             
             
-            if (recent.lastMessage == nil) {
+            if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
                 [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
                 [dic setObject:@"" forKey:@"messageId"];
                 [dic setObject:@"0" forKey:@"time"];
                 [dic setObject:@"" forKey:@"content"];
+                if (recent.lastMessage.messageSubType == 7) {
+                    [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+                }
             } else {
                 [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
                 [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];

@@ -449,8 +449,12 @@ RCT_EXPORT_METHOD(stopSession){
     [[ConversationViewController initWithConversationViewController]stopSession];
 }
 
-RCT_EXPORT_METHOD(addEmptyTemporarySession:(nonnull NSString *)sessionId bySessionId:(nonnull NSString *)bySessionId bySessionName:(nonnull NSString *)bySessionName bySessionType:(nonnull NSString *)bySessionType) {
-    [[ConversationViewController initWithConversationViewController] addEmptyTemporarySession:sessionId bySessionId:bySessionId bySessionName:bySessionName bySessionType:bySessionType];
+RCT_EXPORT_METHOD(addEmptyTemporarySession:(NSString *)sessionId temporarySessionRef:(NSDictionary *)temporarySessionRef resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] addEmptyTemporarySession:sessionId temporarySessionRef:temporarySessionRef success:^(id params) {
+        resolve(params);
+    } error:^(id err) {
+        reject(@"-1", err, nil);
+    }];
 }
 
 //聊天界面历史记录
@@ -570,8 +574,8 @@ RCT_EXPORT_METHOD(clearMessage:(nonnull  NSString *)sessionId sessionId:(nonnull
     [[ConversationViewController initWithConversationViewController] clearMsg:sessionId type:type];
 }
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
-RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds isCustomerService:(BOOL *)isCustomerService messageSubType:(NSInteger )messageSubType) {
-    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds isCustomerService:isCustomerService messageSubType:messageSubType];
+RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds messageSubType:(NSInteger )messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck) {
+    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds messageSubType:messageSubType isSkipFriendCheck:isSkipFriendCheck];
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", content);
 }
 
@@ -580,13 +584,12 @@ RCT_EXPORT_METHOD(setCancelResendMessage:(nonnull NSString *)messageId sessionId
 }
 
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
-RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString *)aspectRatio atUserIds:(NSArray *)atUserIds isCustomerService:(BOOL *)isCustomerService) {
-    [[ConversationViewController initWithConversationViewController]sendGifMessage:url aspectRatio:aspectRatio andApnsMembers:atUserIds isCustomerService:isCustomerService];
-    RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", url);
+RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString *)aspectRatio atUserIds:(NSArray *)atUserIds isSkipFriendCheck:(BOOL *)isSkipFriendCheck) {
+    [[ConversationViewController initWithConversationViewController] sendGifMessage:url aspectRatio:aspectRatio andApnsMembers:atUserIds isSkipFriendCheck:isSkipFriendCheck];
 }
 
-RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia parentId:parentId isCustomerService:isCustomerService success:^(id params) {
+RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isSkipFriendCheck:(BOOL *)isSkipFriendCheck resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia parentId:parentId isSkipFriendCheck:isSkipFriendCheck success:^(id params) {
         resolve(params);
     } error:^(id err) {
         reject(@"-1", err, nil);
@@ -594,12 +597,12 @@ RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable 
 }
 
 //发送图片消息
-RCT_EXPORT_METHOD(sendImageMessages:(nonnull  NSString *)file  displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService isHighQuality:(BOOL *)isHighQuality) {
-    [[ConversationViewController initWithConversationViewController]sendImageMessages:file  displayName:displayName isCustomerService:isCustomerService isHighQuality:isHighQuality parentId:nil indexCount:nil];
+RCT_EXPORT_METHOD(sendImageMessages:(nonnull NSString *)path displayName:(nonnull NSString *)displayName isHighQuality:(nonnull BOOL *)isHighQuality isSkipCheckFriend:(nonnull BOOL *)isSkipCheckFriend) {
+    [[ConversationViewController initWithConversationViewController] sendImageMessages:path displayName:displayName isHighQuality:isHighQuality isSkipCheckFriend:isSkipCheckFriend parentId:nil indexCount:nil];
 }
 
-RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName fileType:(NSString *)fileType isCustomerService:(BOOL *)isCustomerService resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController]sendFileMessage:filePath fileName:fileName fileType:fileType isCustomerService:isCustomerService success:^(id param) {
+RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName fileType:(NSString *)fileType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController]sendFileMessage:filePath fileName:fileName fileType:fileType success:^(id param) {
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);
@@ -620,12 +623,17 @@ RCT_EXPORT_METHOD(sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary 
 //}
 
 //发送音频消息
-RCT_EXPORT_METHOD(sendAudioMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration isCustomerService:(BOOL *)isCustomerService){
-    [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isCustomerService:isCustomerService];
+RCT_EXPORT_METHOD(sendAudioMessage:(nonnull NSString *)file duration:(nonnull NSString *)duration isSkipFriendCheck:(nonnull BOOL *)isSkipFriendCheck){
+    [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isSkipFriendCheck:isSkipFriendCheck];
 }
+
 //发送自定义消息
 RCT_EXPORT_METHOD(sendCustomMessage:(NSInteger)custType attachment: (nonnull  NSDictionary *)attachment){
 //    [[ConversationViewController initWithConversationViewController]sendCustomMessage:custType data:attachment];
+}
+
+RCT_EXPORT_METHOD(updateRecentToTemporarySession:(nonnull NSString *)sessionId temporarySessionRef:(nonnull NSDictionary *)temporarySessionRef) {
+    [[ConversationViewController initWithConversationViewController] updateRecentToTemporarySession:sessionId temporarySessionRef:temporarySessionRef];
 }
 
 //发送自定义消息
@@ -660,8 +668,8 @@ RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId
 }
 
 //发送视频消息
-RCT_EXPORT_METHOD(sendVideoMessage:(nonnull  NSString *)file duration:(nonnull  NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isCustomerService:(BOOL *)isCustomerService){
-    [[ConversationViewController initWithConversationViewController]sendVideoMessage:file duration:duration width:width height:height displayName:displayName isCustomerService:isCustomerService parentId:nil indexCount:nil];
+RCT_EXPORT_METHOD(sendVideoMessage:(nonnull NSString *)file duration:(nonnull NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isSkipFriendCheck:(BOOL *)isSkipFriendCheck){
+    [[ConversationViewController initWithConversationViewController] sendVideoMessage:file duration:duration width:width height:height displayName:displayName isSkipFriendCheck:isSkipFriendCheck parentId:nil indexCount:nil];
 }
 
 //
