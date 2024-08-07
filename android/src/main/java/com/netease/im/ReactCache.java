@@ -187,7 +187,7 @@ public class ReactCache {
         WritableMap writableMap = Arguments.createMap();
         WritableArray array = Arguments.createArray();
         int unreadNumTotal = 0;
-        if (recents != null && !recents.isEmpty()) {
+         if (recents != null && !recents.isEmpty()) {
             WritableMap map;
             for (int i = 0; i < recents.size(); i++) {
                 RecentContact contact = recents.get(i);
@@ -1838,7 +1838,7 @@ public class ReactCache {
             Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
             Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
             String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
-            Map<String, Object> temporarySessionRef = (Map<String, Object>) messageRemoteExt.get("temporarySessionRef");
+            String repliedId = (String) messageRemoteExt.get("repliedId");
 
             if (parentMediaId != null) {
                 localExt.putString("parentMediaId", parentMediaId);
@@ -1852,8 +1852,13 @@ public class ReactCache {
                 localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
             }
 
-            if (temporarySessionRef != null) {
-                localExt.putMap("temporarySessionRef", MapUtil.mapToReadableMap(temporarySessionRef));
+            if (repliedId != null) {
+                List<String> uuids = new ArrayList<>();
+                uuids.add(repliedId);
+                List<IMMessage> replymessage = NIMClient.getService(MsgService.class).queryMessageListByUuidBlock(uuids);
+                if (replymessage != null && !replymessage.isEmpty()) {
+                    localExt.putMap("replyedMessage", createMessage(replymessage.get(0), false));
+                }
             }
         }
 

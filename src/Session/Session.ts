@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules, Platform } from "react-native";
 import {
   CustomMessageType,
   NIMSessionTypeEnum,
@@ -12,15 +12,15 @@ import {
   NimParamsForwardMessagesToMultipleRecipients,
   NimParamsForwardMultiTextMessageToMultipleRecipients,
   ITemporarySessionRef,
-} from './session.type';
+} from "./session.type";
 import {
   INimMessageReaction,
   NIMMessage,
   NIMMessageMedia,
   NIMMessageTypeEnum,
   NimMessageTypeExtend,
-} from '../Message/message.type';
-import { ICustomNotificationDataDict } from '../SystemMsg/systemMsg.type';
+} from "../Message/message.type";
+import { ICustomNotificationDataDict } from "../SystemMsg/systemMsg.type";
 const { RNNeteaseIm } = NativeModules;
 
 class NimSession {
@@ -79,10 +79,10 @@ class NimSession {
   startSession(
     sessionId: string,
     type: NIMSessionTypeEnum,
-    myUserName: string = '',
-    myUserID: string = ''
+    myUserName: string = "",
+    myUserID: string = ""
   ) {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       return RNNeteaseIm.startSession(sessionId, type, myUserName, myUserID);
     }
     return RNNeteaseIm.startSession(sessionId, type);
@@ -189,6 +189,15 @@ class NimSession {
    * @param content 文本内容
    * @param atUserIds @的群成员ID ["abc","abc12"]
    */
+  replyMessage(params: { content: string; messageId: string }) {
+    return RNNeteaseIm.replyMessage(params);
+  }
+
+  /**
+   *1.发送文本消息
+   * @param content 文本内容
+   * @param atUserIds @的群成员ID ["abc","abc12"]
+   */
   sendTextMessage(
     content: string,
     atUserIds?: string[],
@@ -230,18 +239,18 @@ class NimSession {
     isHighQuality?: boolean,
     isSkipFriendCheck?: boolean
   ) {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       return RNNeteaseIm.sendImageMessages(
         file,
-        displayName ?? '',
+        displayName ?? "",
         isHighQuality ?? false,
         isSkipFriendCheck ?? false
       );
     }
 
     return RNNeteaseIm.sendImageMessage(
-      file.replace('file://', ''),
-      displayName ?? '',
+      file.replace("file://", ""),
+      displayName ?? "",
       isHighQuality ?? false,
       isSkipFriendCheck ?? false
     );
@@ -354,7 +363,7 @@ class NimSession {
     return RNNeteaseIm.sendRedPacketMessage(type, comments, serialNo);
   }
 
-  setMessageNotify(contactId: string, needNotify: '0' | '1') {
+  setMessageNotify(contactId: string, needNotify: "0" | "1") {
     return RNNeteaseIm.setMessageNotify(contactId, needNotify);
   }
 
@@ -559,7 +568,7 @@ class NimSession {
   }
 
   getLaunch() {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       return RNNeteaseIm.getLaunch();
     }
   }

@@ -18,6 +18,7 @@
 #import "BankListViewController.h"
 #import "ImConfig.h"
 #import <React/RCTLog.h>
+#import "NIMMessageMaker.h"
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
@@ -144,6 +145,16 @@ RCT_EXPORT_METHOD(autoLogin:(nonnull NSString *)account token:(nonnull NSString 
         reject(@"-1",strEorr, nil);
         NSLog(@"%@:%@",strEorr,@"''");
     }
+}
+
+RCT_EXPORT_METHOD(replyMessage:(nonnull NSDictionary *)params
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject){
+        [[ConversationViewController initWithConversationViewController] replyMessage:params success:^(id params) {
+            resolve(params);
+        } err:^(id error) {
+            reject(@"-1", error, nil);
+        }];
 }
 
 // //手动登录

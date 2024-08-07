@@ -183,6 +183,46 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void replyMessage(ReadableMap params, final  Promise promise) {
+        Map<String, Object> data = MapUtil.readableMaptoMap(params);
+
+        List<String> uuids = new ArrayList<>();
+        String messageId = (String) data.get("messageId");
+        uuids.add(messageId);
+        List<IMMessage> replymessage = NIMClient.getService(MsgService.class).queryMessageListByUuidBlock(uuids);
+        if (replymessage == null && replymessage.isEmpty()) {
+            promise.reject("error");
+        }
+
+        IMMessage message = MessageBuilder.createTextMessage((String) data.get("sessionId"), SessionUtil.getSessionType((String) data.get("sessionType")), (String) data.get("content"));
+        Map<String, Object> localExt = message.getLocalExtension();
+        if (localExt == null) {
+            localExt = new HashMap<String, Object>();
+        }
+        localExt.put("repliedId", messageId);
+        message.setRemoteExtension(localExt);
+
+        NIMClient.getService(MsgService.class).replyMessage(message, replymessage.get(0), false).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void param) {
+                //回复消息成功
+                promise.resolve("200");
+            }
+
+            @Override
+            public void onFailed(int code) {
+                promise.reject("" + code, "");
+                //回复消息失败，code为错误码
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                //回复消息产生异常
+            }
+        });
+    }
+
+    @ReactMethod
     public void updateMessageSentStickerBirthday(String sessionId, String sessionType, String messageId,  Promise promise) {
         sessionService.updateMessageSentStickerBirthday(sessionId, sessionType, messageId, new SessionService.OnMessageQueryListener() {
             @Override

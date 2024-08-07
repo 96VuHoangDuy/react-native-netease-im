@@ -75,6 +75,8 @@ typedef void(^Errors)(id erro);
 
 - (NSString *)getUserName:(NSString *)userID;
 
+-(void) replyMessage:(nonnull NSDictionary *)params success:(Success)success err:(Errors)err;
+
 -(void)updateIsSeenMessage:(BOOL *)isSeenMessage;
 
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType;

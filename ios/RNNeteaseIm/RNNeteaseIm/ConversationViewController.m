@@ -123,7 +123,7 @@
 - (void)resendMessage:(NSString *)messageID success:(Success)succe err:(Errors)err{
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageID] ];
     NIMMessage *currentM = currentMessage[0];
-    //    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
+//    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
     if (currentM.messageType == (NIMMessageTypeImage || NIMMessageTypeVideo)) {
         NSMutableDictionary *newRemoteExt = currentM.remoteExt ? [currentM.remoteExt mutableCopy] : [[NSMutableDictionary alloc] init];
         [newRemoteExt removeObjectForKey:@"parentId"];
@@ -167,14 +167,14 @@
 
 -(void)downloadAttachment:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId toSessionType:(nonnull NSString *)toSessionType {
     NIMSession *session = [NIMSession session:sessionId type:[toSessionType integerValue]];
-    
+
     NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[messageId]];
     if (messages.count == 0) return;
     NIMMessage *message = messages.firstObject;
     [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"idle", @"isReplaceSuccess": @"NO"}];
-    
-    //    NSError *error;
-    //    [[NIMSDK sharedSDK].chatManager fetchMessageAttachment:message error:&error];
+
+//    NSError *error;
+//    [[NIMSDK sharedSDK].chatManager fetchMessageAttachment:message error:&error];
     [self moveFiletoSessionDir:message];
 }
 
@@ -223,7 +223,7 @@
     
     success(@"200");
 }
-
+ 
 -(void) updateReactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId messageNotifyReactionId:(NSString *)messageNotifyReactionId reaction:(NSDictionary *)reaction success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[messageId]];
@@ -309,7 +309,7 @@
     
     if (recent != nil) {
         NIMMessage *lastMessage = recent.lastMessage;
-        if (lastMessage == nil) return nil;
+                if (lastMessage == nil) return nil;
         NSDictionary *localExt = recent.localExt?:@{};
         NSString *messageId = [localExt objectForKey:@"lastReadMessageId"];
         NSInteger unreadCount = recent.unreadCount;
@@ -336,6 +336,27 @@
     return nil;
 }
 
+-(void)replyMessage:(nonnull NSDictionary *)params success:(Success)success err:(Errors)err {
+//    NIMSession *session = [NIMSession session:[params objectForKey:@"sessionId"] type:[[params objectForKey:@"sessionType"] intValue]];
+
+    NIMMessage *newWessage = [NIMMessageMaker msgWithText:[params objectForKey:@"content"] andApnsMembers:@[] andeSession:self._session senderName:_myUserName messageSubType:@0];
+    newWessage.remoteExt = @{@"repliedId": [params objectForKey:@"messageId"]};
+    NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:@[[params objectForKey:@"messageId"]]];
+
+    NIMMessage *repliedMessage = messages.firstObject;
+    NSError *copyError = nil;
+    [[[NIMSDK sharedSDK] chatExtendManager] reply:newWessage
+                                                to:repliedMessage
+                                             error:&copyError];
+    
+    if (copyError == nil) {
+        success(@"200");
+    }else{
+        err(copyError);
+        NSLog(@"%@:%@",[copyError description],@"''");
+    }
+}
+
 //聊天界面历史记录
 - (void)localSession:(NSInteger)limit currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err{
     NIMSession *session = [sessionId length] && [sessionType length] ? [NIMSession session:sessionId type:[sessionType integerValue]] : self._session;
@@ -344,64 +365,64 @@
         data = [self updateLastReadMessageId:session];
     }
     
-    
+
     [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:session];
     
     NIMGetMessagesDynamicallyParam *param = [[NIMGetMessagesDynamicallyParam alloc] init];
     
     param.session = session;
     param.limit = limit;
-    
+  
     if (currentMessageID.length != 0) {
         NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[currentMessageID] ];
         NIMMessage *currentM = currentMessage[0];
-        
+
         param.anchorClientId = currentMessageID;
         
         param.startTime = direction == 1 ? currentM.timestamp : 0;
         param.endTime = direction == 0 ? currentM.timestamp : 0;
     }
     param.order = direction == 1 ? NIMMessageSearchOrderAsc : NIMMessageSearchOrderDesc;
-    
-    [[[NIMSDK sharedSDK] conversationManager]getMessagesDynamically:param completion:^(NSError * _Nullable error, BOOL isReliable, NSArray<NIMMessage *> * _Nullable messageArr) {
-        if (error) {
-            err(@"暂无更多");
-        } else {
-            NIMMessage *lastMessage = direction == 0 ? [messageArr firstObject] : [messageArr lastObject];
-            NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:lastMessage];
-            
-            if ([self isSeenMessage]) {
-                if (lastMessage.session.sessionType == NIMSessionTypeTeam) {
-                    [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
-                } else {
-                    [[[NIMSDK sharedSDK] chatManager] sendMessageReceipt:receipt completion:nil];
-                }
-            }
-            
-            NSArray *messages = [self setTimeArr:messageArr];
-            
-            
-            if (currentMessageID.length == 0 && messages.count != 0) {
-                NSMutableDictionary *dic = [messages objectAtIndex:[self setTimeArr:messageArr].count - 1];
-                [[NSUserDefaults standardUserDefaults]setObject:[dic objectForKey:@"time"] forKey:@"timestamp"];
-            }
-            
-            
-            if (currentMessageID.length > 0) {
-                succe(messages);
+
+        [[[NIMSDK sharedSDK] conversationManager]getMessagesDynamically:param completion:^(NSError * _Nullable error, BOOL isReliable, NSArray<NIMMessage *> * _Nullable messageArr) {
+            if (error) {
+                err(@"暂无更多");
             } else {
-                NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
-                if (data != nil) {
-                    [result setObject:data forKey:@"data"];
+                NIMMessage *lastMessage = direction == 0 ? [messageArr firstObject] : [messageArr lastObject];
+                NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:lastMessage];
+
+                if ([self isSeenMessage]) {
+                    if (lastMessage.session.sessionType == NIMSessionTypeTeam) {
+                       [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
+                    } else {
+                       [[[NIMSDK sharedSDK] chatManager] sendMessageReceipt:receipt completion:nil];
+                    }
                 }
                 
-                [result setObject:messages forKey:@"messages"];
+                NSArray *messages = [self setTimeArr:messageArr];
+
+            
+                if (currentMessageID.length == 0 && messages.count != 0) {
+                    NSMutableDictionary *dic = [messages objectAtIndex:[self setTimeArr:messageArr].count - 1];
+                    [[NSUserDefaults standardUserDefaults]setObject:[dic objectForKey:@"time"] forKey:@"timestamp"];
+                }
+
                 
-                succe(result);
+                if (currentMessageID.length > 0) {
+                    succe(messages);
+                } else {
+                    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+                    if (data != nil) {
+                        [result setObject:data forKey:@"data"];
+                    }
+                    
+                    [result setObject:messages forKey:@"messages"];
+                    
+                    succe(result);
+                }
             }
-        }
-    }];
-    //    }
+        }];
+//    }
 }
 //更新录音消息为已播放
 - (void)updateAudioMessagePlayStatus:(NSString *)messageID{
@@ -434,9 +455,9 @@
     
     [[NIMSDK sharedSDK].conversationManager searchAllMessages:option result:^(NSError * _Nullable error, NSDictionary<NIMSession *,NSArray<NIMMessage *> *> * _Nullable messages) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-        
+
         if (!error) {
-            for (NIMSession* key in messages) {
+           for (NIMSession* key in messages) {
                 id value = [messages objectForKey:key];
                 
                 [dict setValue:[self setTimeArr:value] forKey:key.sessionId];
@@ -456,9 +477,9 @@
     
     [[NIMSDK sharedSDK].conversationManager searchAllMessages:option result:^(NSError * _Nullable error, NSDictionary<NIMSession *,NSArray<NIMMessage *> *> * _Nullable messages) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-        
+
         if (!error) {
-            for (NIMSession* key in messages) {
+           for (NIMSession* key in messages) {
                 id value = [messages objectForKey:key];
                 
                 [dict setValue:[self setTimeArr:value] forKey:key.sessionId];
@@ -476,12 +497,12 @@
     option.limit = 100;
     option.searchContent = keyWords;
     option.allMessageTypes = YES;
-    
+
     [[NIMSDK sharedSDK].conversationManager searchAllMessages:option result:^(NSError * _Nullable error, NSDictionary<NIMSession *,NSArray<NIMMessage *> *> * _Nullable messages) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-        
+
         if (!error) {
-            for (NIMSession* key in messages) {
+           for (NIMSession* key in messages) {
                 id value = [messages objectForKey:key];
                 
                 [dict setValue:[self setTimeArr:value] forKey:key.sessionId];
@@ -510,11 +531,11 @@
     
     if (messageType.count != 0) {
         const NSDictionary* keysMessageType = @{
-            @"text": @(NIMMessageTypeText),
-            @"voice": @(NIMMessageTypeAudio),
-            @"image": @(NIMMessageTypeImage),
-            @"video": @(NIMMessageTypeVideo),
-            @"file": @(NIMMessageTypeFile),
+          @"text": @(NIMMessageTypeText),
+          @"voice": @(NIMMessageTypeAudio),
+          @"image": @(NIMMessageTypeImage),
+          @"video": @(NIMMessageTypeVideo),
+          @"file": @(NIMMessageTypeFile),
         };
         
         NSMutableArray * messageTypeOptions = [[NSMutableArray alloc] init];
@@ -525,7 +546,7 @@
         
         option.messageTypes = messageTypeOptions;
     }
-    
+
     
     
     if (anchorId.length != 0) {
@@ -536,15 +557,15 @@
         option.endTime = direction == 0 ? currentM.timestamp : 0;
     }
     
-    
+
     NSLog(@"searchAllMessages option: %@]", option);
-    
+
     [[NIMSDK sharedSDK].conversationManager searchMessages:self._session option:option result:^(NSError * _Nullable error, NSArray<NIMMessage *> * __nullable messages) {
         NSLog(@"searchAllMessages messages: %@]", messages);
-        
+
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         [dict setValue:[self setTimeArr:messages] forKey:self._session.sessionId];
-        
+
         if (!error) {
             succe(dict);
         } else {
@@ -555,7 +576,7 @@
 
 - (NSNumber *) getTypeOpretationType:(NIMTeamOperationType) operationType {
     NSNumber *result = @-1;
-    
+
     switch(operationType) {
         case NIMTeamOperationTypeInvite:
             result = @0;
@@ -599,12 +620,12 @@
 - (NSDictionary *)teamNotificationSourceName:(NIMMessage *)message{
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    //    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
-    //    if ([content.sourceID isEqualToString:currentAccount]) {
-    //        source = @"你";
-    //    }else{
+//    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+//    if ([content.sourceID isEqualToString:currentAccount]) {
+//        source = @"你";
+//    }else{
     const NSString *sourceName = [NIMKitUtil showNick:content.sourceID inSession:message.session];
-    //    }
+//    }
     const NSDictionary *source = @{@"sourceName": sourceName, @"sourceId":content.sourceID};
     
     return source;
@@ -614,15 +635,15 @@
     NSMutableArray *targets = [[NSMutableArray alloc] init];
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    //    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+//    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
     for (NSString *item in content.targetIDs) {
-        //        if ([item isEqualToString:currentAccount]) {
-        //            [targets addObject:@"你"];
-        //        }else{
+//        if ([item isEqualToString:currentAccount]) {
+//            [targets addObject:@"你"];
+//        }else{
         NSString *targetShowName = [NIMKitUtil showNick:item inSession:message.session];
         const NSDictionary *target = @{@"targetName":targetShowName, @"targetId":item};
         [targets addObject:target];
-        //        }
+//        }
     }
     return targets;
 }
@@ -645,7 +666,7 @@
             NSNumber *operationtype = [self getTypeOpretationType:content.operationType];
             [notiObj setObject:[self teamNotificationSourceName:message] forKey:@"sourceId"];
             [notiObj setObject:[self teamNotificationTargetNames:message] forKey:@"targets"];
-            
+
             if ([operationtype isEqualToNumber:@10]) {
                 id attachment = [content attachment];
                 if ([attachment isKindOfClass:[NIMMuteTeamMemberAttachment class]]) {
@@ -671,34 +692,34 @@
                     
                     if ([teamAttachment.values count] == 1) {
                         const NSDictionary* keys = @{
-                            @(NIMTeamUpdateTagName): @"NIMTeamUpdateTagName",
-                            @(NIMTeamUpdateTagIntro): @"NIMTeamUpdateTagIntro",
-                            @(NIMTeamUpdateTagAnouncement): @"NIMTeamUpdateTagAnouncement",
-                            @(NIMTeamUpdateTagJoinMode): @"NIMTeamUpdateTagJoinMode",
-                            @(NIMTeamUpdateTagAvatar): @"NIMTeamUpdateTagAvatar",
-                            @(NIMTeamUpdateTagInviteMode): @"NIMTeamUpdateTagInviteMode",
-                            @(NIMTeamUpdateTagBeInviteMode): @"NIMTeamUpdateTagBeInviteMode",
-                            @(NIMTeamUpdateTagUpdateInfoMode): @"NIMTeamUpdateTagUpdateInfoMode",
-                            @(NIMTeamUpdateTagMuteMode): @"NIMTeamUpdateTagMuteMode",
+                          @(NIMTeamUpdateTagName): @"NIMTeamUpdateTagName",
+                          @(NIMTeamUpdateTagIntro): @"NIMTeamUpdateTagIntro",
+                          @(NIMTeamUpdateTagAnouncement): @"NIMTeamUpdateTagAnouncement",
+                          @(NIMTeamUpdateTagJoinMode): @"NIMTeamUpdateTagJoinMode",
+                          @(NIMTeamUpdateTagAvatar): @"NIMTeamUpdateTagAvatar",
+                          @(NIMTeamUpdateTagInviteMode): @"NIMTeamUpdateTagInviteMode",
+                          @(NIMTeamUpdateTagBeInviteMode): @"NIMTeamUpdateTagBeInviteMode",
+                          @(NIMTeamUpdateTagUpdateInfoMode): @"NIMTeamUpdateTagUpdateInfoMode",
+                          @(NIMTeamUpdateTagMuteMode): @"NIMTeamUpdateTagMuteMode",
                         };
                         
                         NSDictionary *mapDict = [[NSMutableDictionary alloc] init];
-                        
+
                         for (id key in teamAttachment.values) {
                             NSLog(@"keyzzz: %@, value: %@ \n", key, [teamAttachment.values objectForKey:key]);
-                            
+
                             NSNumber *keyId = [keys objectForKey: key];
                             NSString *value = [teamAttachment.values objectForKey:key];
                             mapDict = @{@"type": keyId, @"value": value};
                         }
                         
                         NSLog(@"Testtt %@", mapDict);
-                        
+
                         [notiObj setObject:mapDict  forKey:@"updateDetail"];
                     }
                 }
             }
-            
+           
             break;
         }
         case NIMNotificationTypeNetCall:{
@@ -732,7 +753,7 @@
     if ([message.remoteExt objectForKey:@"indexCount"] != nil) {
         [imgObj setObject:[message.remoteExt objectForKey:@"indexCount"] forKey:@"indexCount"];
     }
-    
+
     if ([downloadAttStatus length]) {
         [imgObj setObject:downloadAttStatus forKey:@"downloadAttStatus"];
     }
@@ -825,7 +846,7 @@
     [videoObj setObject:[NSString stringWithFormat:@"%f", object.coverSize.width ] forKey:@"coverSizeWidth"];
     [videoObj setObject:[NSString stringWithFormat:@"%ld",object.duration ] forKey:@"duration"];
     [videoObj setObject:[NSString stringWithFormat:@"%lld",object.fileLength] forKey:@"fileLength"];
-    
+
     NSString *mediaPath = [self moveFiletoSessionDir:message];
     NSString *mediaCoverPath = [self makeThumbnail:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
@@ -889,7 +910,7 @@
     if ([isReplaceSuccess length]) {
         [voiceObj setObject:isReplaceSuccess forKey:@"isReplaceSuccess"];
     }
-    
+
     if (mediaPath != nil) {
         if (message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ![[NSFileManager defaultManager] fileExistsAtPath:mediaPath] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])){
             [voiceObj setObject:[NSNumber numberWithBool: true] forKey:@"isFilePathDeleted"];
@@ -948,7 +969,7 @@
     
     NSString *theFileName = [originPath lastPathComponent];
     cacheMediaPath = [cacheMediaPath stringByAppendingPathComponent:theFileName];
-    
+        
     if ([[NSFileManager defaultManager] fileExistsAtPath:cacheMediaPath]) {
         return cacheMediaPath;
     }
@@ -969,7 +990,7 @@
     NSString *urlDownload;
     
     NSString *downloadAttStatus = [message.localExt objectForKey:@"downloadAttStatus"];
-    
+
     if ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloading"]) {
         return nil;
     }
@@ -1018,7 +1039,7 @@
     cacheMediaPath = [cacheMediaPath stringByAppendingPathComponent:theFileName];
     
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
-    
+
     if (([isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && [downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) || [[NSFileManager defaultManager] fileExistsAtPath:cacheMediaPath]) {
         return cacheMediaPath;
     }
@@ -1031,26 +1052,26 @@
         }
         [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
         [self refrashMessage:message From:@"receive"];
-        
-        //        if ([isThumb isEqual:@1]) {
-        //            if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
-        //                NSError *removeItemError = nil;
-        //                if (![[NSFileManager defaultManager] removeItemAtPath:originPath error:&removeItemError]) {
-        //                    NSLog(@"[removeItemError description]: %@", [removeItemError description]);
-        //                }
-        //            }
-        //        }
+
+//        if ([isThumb isEqual:@1]) {
+//            if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
+//                NSError *removeItemError = nil;
+//                if (![[NSFileManager defaultManager] removeItemAtPath:originPath error:&removeItemError]) {
+//                    NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+//                }
+//            }
+//        }
     } else {
         [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloading"}];
         [self refrashMessage:message From:@"receive"];
-        
+
         [[NIMObject initNIMObject] downLoadAttachment:urlDownload filePath:cacheMediaPath Error:^(NSError *error) {
             NSLog(@"downLoadVideo error: %@", [error description]);
             if (!error) {
                 NSLog(@"download success");
-                //                [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
+//                [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
                 [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
-                
+
                 [self refrashMessage:message From:@"receive"];
             }
         } progress:^(float progress) {
@@ -1058,31 +1079,31 @@
             if ([message.session.sessionId isEqual:self._session.sessionId]) {
                 NIMModel *model = [NIMModel initShareMD];
                 model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
-                
+
                 NSLog(@"视频下载进度%f",progress);
             }
         }];
         return nil;
     }
-    //    else if (isThumb == nil) {
-    ////        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloading"];
-    //        [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloading"}];
-    //
-    //        [[NIMObject initNIMObject] downLoadAttachment:urlDownload filePath:cacheMediaPath Error:^(NSError *error) {
-    //            NSLog(@"downLoadVideo error: %@", [error description]);
-    //            if (!error) {
-    //                NSLog(@"download success");
-    ////                [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
-    ////                [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
-    //                [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
-    //
-    //                [self refrashMessage:message From:@"receive"];
-    //            }
-    //        } progress:^(float progress) {
-    //            NSLog(@"视频下载进度%f",progress);
-    //        }];
-    //        return nil;
-    //    }
+//    else if (isThumb == nil) {
+////        [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloading"];
+//        [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloading"}];
+//
+//        [[NIMObject initNIMObject] downLoadAttachment:urlDownload filePath:cacheMediaPath Error:^(NSError *error) {
+//            NSLog(@"downLoadVideo error: %@", [error description]);
+//            if (!error) {
+//                NSLog(@"download success");
+////                [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
+////                [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
+//                [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
+//
+//                [self refrashMessage:message From:@"receive"];
+//            }
+//        } progress:^(float progress) {
+//            NSLog(@"视频下载进度%f",progress);
+//        }];
+//        return nil;
+//    }
     
     return nil;
 };
@@ -1118,7 +1139,7 @@
         return nil;
     }
     
-    //    NSDictionary *dict = [self setLocalExtMessage:message key:@"chatBotType" value:chatBotType];
+//    NSDictionary *dict = [self setLocalExtMessage:message key:@"chatBotType" value:chatBotType];
     NSDictionary *dict = [self setLocalExtMessage:message newDict:@{@"chatBotType": chatBotType}];
     return dict;
 }
@@ -1130,7 +1151,7 @@
         NSMutableDictionary *fromUser = [NSMutableDictionary dictionary];
         NIMUser   *messageUser = [[NIMSDK sharedSDK].userManager userInfo:message.from];
         NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:message.session];
-        
+            
         NSNumber *isCsrNumber = [recent.localExt objectForKey:@"isCsr"];
         NSNumber *isChatBotNumber = [recent.localExt objectForKey:@"isChatBot"];
         BOOL isCsr = [isCsrNumber boolValue];
@@ -1150,10 +1171,14 @@
             [localExt setObject:[message.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
         }
         
-        if (message.remoteExt != nil && [message.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
-            [localExt setObject:[message.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
+        if (message.remoteExt != nil && [message.remoteExt objectForKey:@"repliedId"] != nil) {
+            NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:message.session messageIds:@[[message.remoteExt objectForKey:@"repliedId"]]];
+            if ([messages count]) {
+            NIMMessage *message = messages[0];
+                [localExt setObject:[self refrashMessage:message From:@"reply"] forKey:@"replyedMessage"];
+            }
         }
-        
+
         [dic setObject:localExt forKey:@"localExt"];
         
         if (recent.localExt != nil && [messageUser.userId isEqual:message.session.sessionId]) {
@@ -1161,13 +1186,13 @@
             
             [fromUser setObject:[NSString stringWithFormat:@"%@", @(isCsr)] forKey:@"isCsr"];
         }
-        
+    
         [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userInfo.avatarUrl] forKey:@"avatar"];
         NSString *strAlias = messageUser.alias;
         if (strAlias.length) {
             [fromUser setObject:strAlias forKey:@"name"];
         }else if(messageUser.userInfo.nickName.length){
-            [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userInfo.nickName] forKey:@"name"];
+             [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userInfo.nickName] forKey:@"name"];
         }else{
             if (recent.localExt != nil && isCsr) {
                 NSString *nickname = [recent.localExt objectForKey:@"name"];
@@ -1196,7 +1221,7 @@
         }
         
         [dic setObject:[NSString stringWithFormat:@"%d",message.isRemoteRead] forKey:@"isRemoteRead"];
-        
+
         switch (message.deliveryState) {
             case NIMMessageDeliveryStateFailed:
                 [dic setObject:@"send_failed" forKey:@"status"];
@@ -1251,17 +1276,17 @@
         }else if (message.messageType  == NIMMessageTypeImage) {
             // image coming is not have object.path, just have thumb_path.
             [dic setObject:@"image" forKey:@"msgType"];
-            
+
             [dic setObject:[self makeExtendImage:message] forKey:@"extend"];
         }
         else if (message.messageType  == NIMMessageTypeFile) {
             [dic setObject:@"file" forKey:@"msgType"];
-            
+
             [dic setObject:[self makeExtendFile:message] forKey:@"extend"];
         }
         else if(message.messageType == NIMMessageTypeAudio){
             [dic setObject:@"voice" forKey:@"msgType"];
-            
+
             [dic setObject:[self makeExtendRecord:message] forKey:@"extend"];
         }else if(message.messageType == NIMMessageTypeVideo){
             [dic setObject:@"video" forKey:@"msgType"];
@@ -1283,7 +1308,7 @@
             [dic setObject:notiObj forKey:@"extend"];
         }else if (message.messageType == NIMMessageTypeNotification) {
             [dic setObject:@"notification" forKey:@"msgType"];
-            
+           
             [dic setObject:[self setNotiTeamObj:message] forKey:@"extend"];
         }else if (message.messageType == NIMMessageTypeCustom) {
             NIMCustomObject *customObject = message.messageObject;
@@ -1291,23 +1316,23 @@
             NSLog(@"DWCustomAttachment *obj %ld %@", (long)obj.custType, obj.dataDict);
             if (obj) {
                 switch (obj.custType) {
-                        //                    case CustomMessageTypeFowardMultipleText: //红包
-                        //                    {
-                        //                        [dic setObject:obj.dataDict forKey:@"extend"];
-                        //                        [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
-                        //                    }
-                        //                        break;
+//                    case CustomMessageTypeFowardMultipleText: //红包
+//                    {
+//                        [dic setObject:obj.dataDict forKey:@"extend"];
+//                        [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
+//                    }
+//                        break;
                     case CustomMessgeTypeRedpacket: //红包
                     {
                         [dic setObject:obj.dataDict forKey:@"extend"];
-                        //                        [dic setObject:@"redpacket" forKey:@"custType"];
+//                        [dic setObject:@"redpacket" forKey:@"custType"];
                         [dic setObject:@"redpacket" forKey:@"msgType"];
                     }
                         break;
                     case CustomMessgeTypeBankTransfer: //转账
                     {
                         [dic setObject:obj.dataDict  forKey:@"extend"];
-                        //                        [dic setObject:@"transfer" forKey:@"custType"];
+//                        [dic setObject:@"transfer" forKey:@"custType"];
                         [dic setObject:@"transfer" forKey:@"msgType"];
                     }
                         break;
@@ -1316,10 +1341,10 @@
                         NSDictionary *dataDict = [self dealWithData:obj.dataDict];
                         if (dataDict) {
                             [dic setObject:dataDict  forKey:@"extend"];
-                            //                            [dic setObject:@"redpacketOpen" forKey:@"custType"];
+//                            [dic setObject:@"redpacketOpen" forKey:@"custType"];
                             [dic setObject:@"redpacketOpen" forKey:@"msgType"];
                         }else{
-                            
+
                             continue;//终止本次循环
                         }
                     }
@@ -1328,7 +1353,7 @@
                     case CustomMessgeTypeAccountNotice: //账户通知，与账户金额相关变动
                     {
                         [dic setObject:[NSString stringWithFormat:@"%d",message.isRemoteRead] forKey:@"isRemoteRead"];
-                        //                        [dic setObject:[NSString stringWithFormat:@"%ld", message.messageType] forKey:@"msgType"];
+//                        [dic setObject:[NSString stringWithFormat:@"%ld", message.messageType] forKey:@"msgType"];
                         if (obj.custType == CustomMessgeTypeAccountNotice) {
                             [dic setObject:obj.dataDict  forKey:@"extend"];
                             [dic setObject:@"account_notice" forKey:@"msgType"];
@@ -1338,12 +1363,12 @@
                         }
                     }
                         break;
-                        //                    case CustomMessgeTypeBusinessCard://名片
-                        //                    {
-                        //                        [dic setObject:obj.dataDict  forKey:@"extend"];
-                        //                        [dic setObject:@"card" forKey:@"msgType"];
-                        //                    }
-                        //                        break;
+//                    case CustomMessgeTypeBusinessCard://名片
+//                    {
+//                        [dic setObject:obj.dataDict  forKey:@"extend"];
+//                        [dic setObject:@"card" forKey:@"msgType"];
+//                    }
+//                        break;
                     case CustomMessgeTypeCustom://自定义
                     {
                         [dic setObject:obj.dataDict  forKey:@"extend"];
@@ -1577,7 +1602,7 @@
     message.remoteExt = remoteExt;
     
     [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
-}
+ }
 
 //send gif message
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isSkipFriendCheck:(BOOL *)isSkipFriendCheck{
@@ -1956,7 +1981,7 @@
 }
 
 -(void)handleInComeMultiMediaMessage:(NIMMessage *)message callFrom:(NSString *)callFrom
-{
+{    
     if ([message.session.sessionId isEqual:self._session.sessionId] && [callFrom isEqual:@"NIMViewController"]) return;
     
     if ([message.remoteExt objectForKey:@"parentId"] == nil) return;
@@ -1965,7 +1990,7 @@
     NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
     option.searchContent = parentMediaId;
     
-    [[NIMSDK sharedSDK].conversationManager searchMessages:message.session option:option result:^(NSError * _Nullable error, NSArray<NIMMessage *> * __nullable messages) {
+    [[NIMSDK sharedSDK].conversationManager searchMessages:message.session option:option result:^(NSError * _Nullable error, NSArray<NIMMessage *> * __nullable messages) {        
         BOOL isParentMessageExits = NO;
         
         for (NIMMessage *messageResult in messages) {
@@ -2005,8 +2030,8 @@
 
 - (void)willSendMessage:(NIMMessage *)message
 {
-    //    [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"NO"];
-    //    [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"unDownload"];
+//    [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"NO"];
+//    [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"unDownload"];
     [self setLocalExtMessage:message newDict:@{@"isReplaceSuccess": @"NO",@"downloadAttStatus": @"unDownload" }];
     
     [self refrashMessage:message From:@"send"];
@@ -2052,7 +2077,7 @@
 -(void)sendMessage:(NIMMessage *)message progress:(float)progress
 {
     NSLog(@"sendMessage:(NIMMessage *)message progress:(float)progress");
-    //    [self refrashMessage:message From:@"send" ];
+//    [self refrashMessage:message From:@"send" ];
     if ([message.session.sessionId isEqual:self._session.sessionId]) {
         NIMModel *model = [NIMModel initShareMD];
         model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
@@ -2068,8 +2093,8 @@
     NSLog(@"onRecvMessages >>>>> %@", message);
     
     if ([message.session.sessionId isEqualToString:_sessionID]) {
-        //        [self handleInComeMultiMediaMessage: message callFrom:@""];
-        
+//        [self handleInComeMultiMediaMessage: message callFrom:@""];
+
         [self refrashMessage:message From:@"receive" ];
         NIMMessageReceipt *receipt = [[NIMMessageReceipt alloc] initWithMessage:message];
         NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:receipt.session];
@@ -2080,7 +2105,7 @@
         [dict setObject:message.messageId forKey:@"lastReadMessageId"];
         [dict setObject:[NSString stringWithFormat:@"%f", message.timestamp * 1000] forKey:@"latestMessageTime"];
         [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
-        
+
         if ([self isSeenMessage]) {
             if (message.session.sessionType == NIMSessionTypeTeam) {
                 [[[NIMSDK sharedSDK] chatManager] sendTeamMessageReceipts:@[receipt] completion:nil];
@@ -2105,25 +2130,25 @@
         NSArray *messageArr =  [[[NIMSDK sharedSDK] conversationManager]messagesInSession:receipt.session message:nil limit: 1];
         
         NIMModel *model = [NIMModel initShareMD];
-        
+                
         model.ResorcesArr = [self setTimeArr:messageArr]; // onObserveReceiveMessage
-        
-        //        NSLog(@"onRecv MessageReceipts session %@", receipt.session);
-        //        NSLog(@"onRecv MessageReceipts messageId %@", receipt.messageId);
-        //        NSLog(@"onRecv MessageReceipts teamReceiptInfo %@", receipt.teamReceiptInfo);
-        
-        //        [messageIds addObject: receipt.messageId];
-        //
-        //        if (receipt.teamReceiptInfo != nil) {
-        //            NSLog(@"receipt teamInfo %@", receipt.teamReceiptInfo);
-        //        }
+
+//        NSLog(@"onRecv MessageReceipts session %@", receipt.session);
+//        NSLog(@"onRecv MessageReceipts messageId %@", receipt.messageId);
+//        NSLog(@"onRecv MessageReceipts teamReceiptInfo %@", receipt.teamReceiptInfo);
+
+//        [messageIds addObject: receipt.messageId];
+//
+//        if (receipt.teamReceiptInfo != nil) {
+//            NSLog(@"receipt teamInfo %@", receipt.teamReceiptInfo);
+//        }
     }
     
-    //    NSArray<NIMMessage *> *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:messageIds];
-    //
-    //    NSMutableArray *messages = [self setTimeArr:currentMessage];
-    //
-    //
+//    NSArray<NIMMessage *> *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:messageIds];
+//
+//    NSMutableArray *messages = [self setTimeArr:currentMessage];
+//
+//
 }
 
 - (void)playTipsMusicWithMessage:(NIMMessage *)message{
@@ -2166,7 +2191,7 @@
         NIMModel *model = [NIMModel initShareMD];
         model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"download", @"sessionId": message.session.sessionId};
     }
-    
+   
     //    if ([message.session isEqual:_session]) {
     //        [self.interactor updateMessage:message];
     //    }
@@ -2174,10 +2199,10 @@
 
 - (void)fetchMessageAttachment:(NIMMessage *)message didCompleteWithError:(NSError *)error
 {
-    //    NIMVideoObject *object = message.messageObject;
-    //    [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
+//    NIMVideoObject *object = message.messageObject;
+//    [self setLocalExtMessage:message key:@"downloadAttStatus" value:@"downloadSuccess"];
     [self refrashMessage:message From:@"receive"];
-    //    [[NSNotificationCenter defaultCenter]postNotificationName:@"RNNeteaseimDidCompletePic" object:nil];
+//    [[NSNotificationCenter defaultCenter]postNotificationName:@"RNNeteaseimDidCompletePic" object:nil];
     //    if ([message.session isEqual:_session]) {
     //        NIMMessageModel *model = [self.interactor findMessageModel:message];
     //        //下完缩略图之后，因为比例有变化，重新刷下宽高。
@@ -2237,7 +2262,7 @@
 //播放结束回调
 - (void)playAudio:(NSString *)filePath didCompletedWithError:(nullable NSError *)error{
     NSLog(@"didCompletedWithError");
-    
+
     if(!error) {
         NIMModel *model = [NIMModel initShareMD];
         NSDictionary *Audic = @{@"status":@"completed"};
@@ -2249,7 +2274,7 @@
 
 - (void)playAudio:(NSString *)filePath progress:(float)value {
     NSLog(@"progress");
-    
+
     NIMModel *model = [NIMModel initShareMD];
     NSDictionary *Audic = @{@"status":@"progress", @"current": @(value)};
     model.audioDic = Audic;
@@ -2338,7 +2363,7 @@
 }
 
 
--(void)refrashMessage:(NIMMessage *)message From:(NSString *)from {
+-(NSDictionary *)refrashMessage:(NIMMessage *)message From:(NSString *)from {
     NSMutableArray *messageArr = [NSMutableArray array];
     NSMutableDictionary *dic2 = [NSMutableDictionary dictionary];
     NIMUser   *user = [[NIMSDK sharedSDK].userManager userInfo:message.from];
@@ -2367,10 +2392,20 @@
     if (message.remoteExt != nil && [message.remoteExt objectForKey:@"parentMediaId"] != nil) {
         [localExt setObject:[message.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
     }
-    
-    if (message.remoteExt != nil && [message.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
+
+      if (message.remoteExt != nil && [message.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
         [localExt setObject:[message.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
     }
+    
+    if (message.remoteExt != nil && [message.remoteExt objectForKey:@"repliedId"] != nil) {
+        NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:message.session messageIds:@[[message.remoteExt objectForKey:@"repliedId"]]];
+        if ([messages count]) {
+        NIMMessage *message = messages[0];
+            [localExt setObject:[self refrashMessage:message From:@"reply"] forKey:@"replyedMessage"];
+        }
+    }
+
+//    repliedId
     
     [dic2 setObject:localExt forKey:@"localExt"];
     
@@ -2395,7 +2430,7 @@
     [dic2 setObject:[NSString stringWithFormat:@"%ld", message.session.sessionType] forKey:@"sessionType"];
     
     [dic2 setObject:[NSString stringWithFormat:@"%d", message.isRemoteRead] forKey:@"isRemoteRead"];
-    
+
     switch (message.deliveryState) {
         case NIMMessageDeliveryStateFailed:
             [dic2 setObject:@"send_failed" forKey:@"status"];
@@ -2458,12 +2493,12 @@
     }
     else if (message.messageType  == NIMMessageTypeFile) {
         [dic2 setObject:@"file" forKey:@"msgType"];
-        
+
         [dic2 setObject:[self makeExtendFile:message] forKey:@"extend"];
     }
     else if(message.messageType == NIMMessageTypeAudio){
         [dic2 setObject:@"voice" forKey:@"msgType"];
-        
+       
         [dic2 setObject:[self makeExtendRecord:message] forKey:@"extend"];
     }else  if(message.messageType == NIMMessageTypeVideo ){
         [dic2 setObject:@"video" forKey:@"msgType"];
@@ -2491,12 +2526,12 @@
         DWCustomAttachment *obj = customObject.attachment;
         if (obj) {
             switch (obj.custType) {
-                    //                case CustomMessageTypeFowardMultipleText: //红包
-                    //                {
-                    //                    [dic2 setObject:obj.dataDict forKey:@"extend"];
-                    //                    [dic2 setObject:@"forwardMultipleText" forKey:@"msgType"];
-                    //                }
-                    //                    break;
+//                case CustomMessageTypeFowardMultipleText: //红包
+//                {
+//                    [dic2 setObject:obj.dataDict forKey:@"extend"];
+//                    [dic2 setObject:@"forwardMultipleText" forKey:@"msgType"];
+//                }
+//                    break;
                 case CustomMessgeTypeRedpacket: //红包
                 {
                     [dic2 setObject:obj.dataDict forKey:@"extend"];
@@ -2515,8 +2550,6 @@
                     if (dataDict) {
                         [dic2 setObject:dataDict  forKey:@"extend"];
                         [dic2 setObject:@"redpacketOpen" forKey:@"msgType"];
-                    }else{
-                        return;
                     }
                 }
                     break;
@@ -2525,7 +2558,7 @@
                 case CustomMessgeTypeUrl: //链接
                 {
                     [dic2 setObject:[NSString stringWithFormat:@"%d",message.isRemoteRead] forKey:@"isRemoteRead"];
-                    //                    [dic2 setObject:[NSString stringWithFormat:@"%ld", message.messageType] forKey:@"msgType"];
+//                    [dic2 setObject:[NSString stringWithFormat:@"%ld", message.messageType] forKey:@"msgType"];
                     if (obj.custType == CustomMessgeTypeAccountNotice) {
                         [dic2 setObject:obj.dataDict  forKey:@"extend"];
                         [dic2 setObject:@"account_notice" forKey:@"msgType"];
@@ -2567,10 +2600,11 @@
     NIMModel *model = [NIMModel initShareMD];
     if ([from isEqualToString:@"receive"]) {
         model.ResorcesArr = messageArr;
-    }else if ([from isEqualToString:@"send"]){
+    } else if ([from isEqualToString:@"send"]){
         //发送消息
         model.sendState = messageArr;
     }
+    return dic2;
 }
 //处理拆红包消息
 - (NSDictionary *)dealWithData:(NSDictionary *)dict{
@@ -2604,13 +2638,13 @@
     NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:userID];
     strTmpName = user.alias;
     if (![strTmpName length]) {
-        strTmpName = user.userInfo.nickName;
+            strTmpName = user.userInfo.nickName;
     }
     if (![strTmpName length]) {//从服务器获取
         [[ContactViewController initWithContactViewController]fetchUserInfos:userID Success:^(id param) {
-            
+
         } error:^(NSString *error) {
-            
+
         }];
         strTmpName = userID;
     }
