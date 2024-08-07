@@ -1839,6 +1839,11 @@ public class ReactCache {
             Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
             String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
             String repliedId = (String) messageRemoteExt.get("repliedId");
+            Map<String, Object> temporarySessionRef = (Map<String, Object>) messageRemoteExt.get("temporarySessionRef");
+
+            if (temporarySessionRef != null) {
+                localExt.putMap("temporarySessionRef", MapUtil.mapToReadableMap(temporarySessionRef));
+            }
 
             if (parentMediaId != null) {
                 localExt.putString("parentMediaId", parentMediaId);

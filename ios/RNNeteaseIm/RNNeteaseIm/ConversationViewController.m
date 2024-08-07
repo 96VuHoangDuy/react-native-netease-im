@@ -1171,6 +1171,10 @@
             [localExt setObject:[message.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
         }
         
+        if (message.remoteExt != nil && [message.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
+            [localExt setObject:[message.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
+        }
+        
         if (message.remoteExt != nil && [message.remoteExt objectForKey:@"repliedId"] != nil) {
             NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:message.session messageIds:@[[message.remoteExt objectForKey:@"repliedId"]]];
             if ([messages count]) {
@@ -3020,10 +3024,8 @@
             
             NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:messageIds];
             NSString *multiMediaType;
-            NSInteger countMedia = 0;
             for(NIMMessage *message in messages) {
                 if (multiMediaType == nil && (message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo)) {
-                    countMedia += 1;
                     if (message.messageType == NIMMessageTypeImage) {
                         multiMediaType = @"image";
                     } else {
@@ -3034,7 +3036,7 @@
                 [self handleMessageFoward:message session:session parentId:parentId isHaveMultiMedia:isHaveMultiMedia sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck];
             }
             
-            if (parentId != nil && isHaveMultiMedia && countMedia > 1) {
+            if (parentId != nil && isHaveMultiMedia) {
                 NIMMessage *messageParent = [[NIMMessage alloc] init];
                 
                 NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];

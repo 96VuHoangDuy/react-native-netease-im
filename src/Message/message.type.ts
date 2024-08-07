@@ -1,4 +1,5 @@
 import {
+  ITemporarySessionRef,
   NIMMessageChatBotType,
   NIMMessageSubTypeEnum,
   NIMSessionTypeEnum,
@@ -214,6 +215,7 @@ export interface NIMMessage {
       sessionId: string;
       messageId: string;
     };
+    temporarySessionRef?: ITemporarySessionRef
   };
   messageSubType?: NIMMessageSubTypeEnum;
 }
