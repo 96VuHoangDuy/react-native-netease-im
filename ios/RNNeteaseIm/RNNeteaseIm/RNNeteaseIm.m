@@ -643,8 +643,8 @@ RCT_EXPORT_METHOD(sendCustomMessage:(NSInteger)custType attachment: (nonnull  NS
 //    [[ConversationViewController initWithConversationViewController]sendCustomMessage:custType data:attachment];
 }
 
-RCT_EXPORT_METHOD(updateRecentToTemporarySession:(nonnull NSString *)sessionId temporarySessionRef:(nonnull NSDictionary *)temporarySessionRef) {
-    [[ConversationViewController initWithConversationViewController] updateRecentToTemporarySession:sessionId temporarySessionRef:temporarySessionRef];
+RCT_EXPORT_METHOD(updateRecentToTemporarySession:(nonnull NSString *)sessionId messageId:(nonnull NSString *)messageId temporarySessionRef:(nonnull NSDictionary *)temporarySessionRef) {
+    [[ConversationViewController initWithConversationViewController] updateRecentToTemporarySession:sessionId messageId:messageId temporarySessionRef:temporarySessionRef];
 }
 
 //发送自定义消息

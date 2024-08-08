@@ -168,7 +168,7 @@ typedef void(^Errors)(id erro);
 
 -(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName  success:(Success)success err:(Errors)err;
 
--(void)updateRecentToTemporarySession:(NSString *)sessionId temporarySessionRef:(NSDictionary *)temporarySessionRef;
+-(void)updateRecentToTemporarySession:(NSString *)sessionId messageId:(NSString *)messageId temporarySessionRef:(NSDictionary *)temporarySessionRef;
 
 -(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType;
 

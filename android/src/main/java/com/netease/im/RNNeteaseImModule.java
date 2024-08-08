@@ -3195,10 +3195,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void updateRecentToTemporarySession(String sessionId, String messageId, ReadableMap data) {
+    public void updateRecentToTemporarySession(String sessionId, String messageId, ReadableMap data, final Promise promise) {
         Map<String, Object> temporarySessionRef = MapUtil.readableMaptoMap(data);
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
-        if (recent == null) return;
+        if (recent == null) {
+            promise.resolve("success");
+            return;
+        };
 
         Map<String, Object> localExt = recent.getExtension();
         if (localExt == null) {
@@ -3216,11 +3219,16 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> result, Throwable exception) {
-                if (code != ResponseCode.RES_SUCCESS || result == null || result.isEmpty()) return;
+                if (code != ResponseCode.RES_SUCCESS || result == null || result.isEmpty())  {
+                    promise.resolve("success");
+                    return;
+                };;
 
                 IMMessage message = result.get(0);
 
                 NIMClient.getService(MsgService.class).deleteChattingHistory(message);
+
+                promise.resolve("success");
             }
         });
     }
