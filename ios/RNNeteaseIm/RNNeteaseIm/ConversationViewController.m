@@ -2976,9 +2976,9 @@
         return;
     }
     
+    NSMutableDictionary *msgRemoteExt = [[NSMutableDictionary alloc] initWithDictionary:message.remoteExt ? message.remoteExt : @{}];
+
     if ([message.remoteExt objectForKey:@"parentId"] != nil || message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo) {
-        NSMutableDictionary *msgRemoteExt = [[NSMutableDictionary alloc] initWithDictionary:message.remoteExt];
-        
         if (isHaveMultiMedia) {
             [msgRemoteExt setObject:parentId forKey:@"parentId"];
         } else if ([message.remoteExt objectForKey:@"parentId"] != nil) {
@@ -2986,7 +2986,11 @@
         }
         
         message.remoteExt = msgRemoteExt;
-        
+    }
+    
+    if (message.remoteExt != nil && [message.remoteExt objectForKey:@"repliedId"] != nil) {
+        [msgRemoteExt removeObjectForKey:@"repliedId"];
+        message.remoteExt = msgRemoteExt;
     }
     
     message.localExt = @{};
