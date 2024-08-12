@@ -690,10 +690,9 @@ RCT_EXPORT_METHOD(setStrangerRecentReplyed:(nonnull  NSString *)sessionId) {
     
     if (!session) return;
     
-    NSDictionary *localExt = recent.localExt?:@{};
-    NSMutableDictionary *dict = [localExt mutableCopy];
-    [dict setObject:@(YES) forKey:@"isReplyStranger"];
-    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recent];
+    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    [localExt setObject:@(YES) forKey:@"isReplyStranger"];
+    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
 }
 
 //发送地理位置消息

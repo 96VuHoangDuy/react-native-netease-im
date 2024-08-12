@@ -160,15 +160,15 @@
 #pragma mark - NIMConversationManagerDelegate
 - (void)didAddRecentSession:(NIMRecentSession *)recentSession
            totalUnreadCount:(NSInteger)totalUnreadCount{
-    BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recentSession.session.sessionId];
-    BOOL isSessionP2P = recentSession.session.sessionType == NIMSessionTypeP2P;
-    
-    if (!isMyFriend && isSessionP2P) {
-        NSDictionary *localExt = recentSession.localExt?:@{};
-        NSMutableDictionary *dict = [localExt mutableCopy];
-        [dict setObject:@(NO) forKey:@"isReplyStranger"];
-        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recentSession];
-    }
+//    BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recentSession.session.sessionId];
+//    BOOL isSessionP2P = recentSession.session.sessionType == NIMSessionTypeP2P;
+//    
+//    if (!isMyFriend && isSessionP2P) {
+//        NSDictionary *localExt = recentSession.localExt?:@{};
+//        NSMutableDictionary *dict = [localExt mutableCopy];
+//        [dict setObject:@(NO) forKey:@"isReplyStranger"];
+//        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:dict recentSession:recentSession];
+//    }
     
 //    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
     
@@ -244,6 +244,27 @@
     return result;
 };
 
+-(BOOL) hanldeReplyStrangerByRecentContact:(NIMRecentSession *)recent {
+    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    if ([localExt objectForKey:@"isReplyStranger"] != nil) {
+        NSNumber *replyStranger = [localExt objectForKey:@"isReplyStranger"];
+        
+        return [replyStranger boolValue];
+    }
+    
+    BOOL isReplyStranger = NO;
+    NIMMessage *lastMessage = recent.lastMessage;
+    if (lastMessage != nil && lastMessage.isOutgoingMsg) {
+        isReplyStranger = YES;
+    }
+    
+    [localExt setObject:@(isReplyStranger) forKey:@"isReplyStranger"];
+    
+    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+    
+    return isReplyStranger;
+}
+
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err{
     NSInteger allUnreadNum = 0;
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
@@ -255,8 +276,8 @@
             [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
             BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recent.session.sessionId];
             [dic setObject: [NSNumber numberWithBool: isMyFriend] forKey:@"isMyFriend"];
-            BOOL isReplyRecent = [recent.localExt[@"isReplyStranger"] isEqual:@(YES)];
-            [dic setObject: [NSNumber numberWithBool: isReplyRecent] forKey:@"isReplyStranger"];
+//            BOOL isReplyRecent = [recent.localExt[@"isReplyStranger"] isEqual:@(YES)];
+//            [dic setObject: [NSNumber numberWithBool: isReplyRecent] forKey:@"isReplyStranger"];
             //未读
             NSString *strUnreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
             [dic setObject:strUnreadCount forKey:@"unreadCount"];
@@ -267,6 +288,10 @@
     
             
             NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+            
+            BOOL isReplyStranger = [self hanldeReplyStrangerByRecentContact:recent];
+            
+            [localExt setObject:@(isReplyStranger) forKey:@"isReplyStranger"];
             
             if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
                 if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
@@ -409,8 +434,9 @@
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
             NSString *strMute = user.notifyForNewMsg?@"0":@"1";
             BOOL isHideSession = NO;
-            if (recent.localExt != nil && [recent.localExt objectForKey:@"isHideSession"]) {
-                isHideSession = YES;
+            if (recent.localExt != nil && [recent.localExt objectForKey:@"isHideSession"] != nil) {
+                NSNumber *hideSession = [recent.localExt objectForKey:@"isHideSession"];
+                isHideSession = [hideSession boolValue];
             }
             if (user.notifyForNewMsg == YES && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"]) {
                 allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
@@ -631,6 +657,7 @@
     }
     
 }
+
 -(void)getResouces {
     NSInteger allUnreadNum = 0;
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
@@ -644,8 +671,8 @@
             [dic setObject: [NSNumber numberWithBool: recent.lastMessage.isOutgoingMsg] forKey:@"isOutgoing"];
             BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:recent.session.sessionId];
             [dic setObject: [NSNumber numberWithBool: isMyFriend] forKey:@"isMyFriend"];
-            BOOL isReplyRecent = [recent.localExt[@"isReplyStranger"] isEqual:@(YES)];
-            [dic setObject: [NSNumber numberWithBool: isReplyRecent] forKey:@"isReplyStranger"];
+//            BOOL isReplyRecent = [recent.localExt[@"isReplyStranger"] isEqual:@(YES)];
+//            [dic setObject: [NSNumber numberWithBool: isReplyRecent] forKey:@"isReplyStranger"];
             
             [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
 
@@ -658,6 +685,10 @@
             [dic setObject:[NSString stringWithFormat:@"%@",recent.lastMessage.session.sessionId] forKey:@"account"];
             
             NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+            
+            BOOL isReplyStranger = [self hanldeReplyStrangerByRecentContact:recent];
+            
+            [localExt setObject:@(isReplyStranger) forKey:@"isReplyStranger"];
             
             if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
                 if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
@@ -803,9 +834,11 @@
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
             NSString *strMute = user.notifyForNewMsg?@"0":@"1";
             BOOL isHideSession = NO;
-            if (recent.localExt != nil && [recent.localExt objectForKey:@"isHideSession"]) {
-                isHideSession = YES;
+            if (recent.localExt != nil && [recent.localExt objectForKey:@"isHideSession"] != nil) {
+                NSNumber *hideSession = [recent.localExt objectForKey:@"isHideSession"];
+                isHideSession = [hideSession boolValue];
             }
+
             if (user.notifyForNewMsg == YES && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"]) {
                 allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
             }

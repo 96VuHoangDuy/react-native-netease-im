@@ -181,6 +181,32 @@ public class ReactCache {
 //        }
 //    }
 
+    private static Boolean hanldeReplyStrangerByRecentContact(RecentContact recent) {
+        Map<String, Object> localExt = recent.getExtension();
+        if (localExt == null) {
+            localExt = new HashMap<String, Object>();
+        }
+
+        if (localExt.get("isReplyStranger") != null) {
+            Boolean isReplyStranger = (Boolean) localExt.get("isReplyStranger");
+
+            return isReplyStranger;
+        }
+
+        Boolean isReplyStranger = false;
+        IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(recent.getContactId(), recent.getSessionType());
+        if (lastMessage != null && lastMessage.getDirect().getValue() == 0) {
+            isReplyStranger = true;
+        }
+
+        localExt.put("isReplyStranger", isReplyStranger);
+        recent.setExtension(localExt);
+
+        NIMClient.getService(MsgService.class).updateRecent(recent);
+
+        return isReplyStranger;
+    }
+
     public static Object createRecentList(List<RecentContact> recents, int unreadNum) {
         LogUtil.w(TAG, "size:" + (recents == null ? 0 : recents.size()));
         // recents参数即为最近联系人列表（最近会话列表）
@@ -227,6 +253,11 @@ public class ReactCache {
                     localExt = Arguments.createMap();
                 } else {
                     localExt = MapUtil.mapToReadableMap(extension);
+                }
+
+                if (contact.getSessionType() == SessionTypeEnum.P2P) {
+                    Boolean isReplyStranger = hanldeReplyStrangerByRecentContact(contact);
+                    localExt.putBoolean("isReplyStranger", isReplyStranger);
                 }
 
                 if (lastMessage != null) {
@@ -298,9 +329,6 @@ public class ReactCache {
                     }
                     map.putString("mute", boolean2String(!isNeedMessageNotify));
                     map.putBoolean("isMyFriend", NIMClient.getService(FriendService.class).isMyFriend(contactId));
-
-                    Boolean isReplyStranger = extension != null && extension.containsKey("isReplyStranger") ? (Boolean) extension.get("isReplyStranger") : false;
-                    map.putBoolean("isReplyStranger", isReplyStranger != null ? isReplyStranger : false);
 
                     name = nimUserInfoCache.getUserDisplayName(contactId);
                 } else if (sessionType == SessionTypeEnum.Team) {
