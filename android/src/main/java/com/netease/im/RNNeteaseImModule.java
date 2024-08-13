@@ -194,7 +194,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             promise.reject("error");
         }
 
-        IMMessage message = MessageBuilder.createTextMessage((String) data.get("sessionId"), SessionUtil.getSessionType((String) data.get("sessionType")), (String) data.get("content"));
+        IMMessage message = MessageBuilder.createTextMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), (String) data.get("content"));
         Map<String, Object> localExt = message.getLocalExtension();
         if (localExt == null) {
             localExt = new HashMap<String, Object>();

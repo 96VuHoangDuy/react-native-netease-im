@@ -1474,16 +1474,20 @@ public class SessionService {
 
         Map<String, Object> remoteExt = message.getRemoteExtension();
 
-        if ((message.getRemoteExtension() != null && message.getRemoteExtension().containsKey("parentId")) || message.getMsgType() == MsgTypeEnum.image
+        if ((remoteExt != null && remoteExt.containsKey("parentId")) || message.getMsgType() == MsgTypeEnum.image
                 || message.getMsgType() == MsgTypeEnum.video) {
 
             if (isHaveMultiMedia) {
                 remoteExt.put("parentId", parentId);
             } else if (message.getRemoteExtension() != null) {
-                remoteExt.remove(remoteExt.get("parentId"));
+                remoteExt.remove("parentId");
             }
-
         }
+
+        if (remoteExt != null && remoteExt.containsKey("repliedId")) {
+            remoteExt.remove("repliedId");
+        }
+
         message.setRemoteExtension(remoteExt);
 
         IMMessage messageForward = MessageBuilder.createForwardMessage(message, sessionId, sessionTypeEnum);
