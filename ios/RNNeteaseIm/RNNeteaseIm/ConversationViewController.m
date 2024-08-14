@@ -2977,6 +2977,10 @@
     }
     
     NSMutableDictionary *msgRemoteExt = [[NSMutableDictionary alloc] initWithDictionary:message.remoteExt ? message.remoteExt : @{}];
+    
+    if ([msgRemoteExt objectForKey:@"repliedId"] != nil) {
+        [msgRemoteExt removeObjectForKey:@"repliedId"];
+    }
 
     if ([message.remoteExt objectForKey:@"parentId"] != nil || message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo) {
         if (isHaveMultiMedia) {

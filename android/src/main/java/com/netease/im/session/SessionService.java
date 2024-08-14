@@ -1473,6 +1473,13 @@ public class SessionService {
         }
 
         Map<String, Object> remoteExt = message.getRemoteExtension();
+        if (remoteExt == null) {
+            remoteExt = new HashMap<String, Object>();
+        }
+
+        if (remoteExt.containsKey("repliedId")) {
+            remoteExt.remove("repliedId");
+        }
 
         if ((remoteExt != null && remoteExt.containsKey("parentId")) || message.getMsgType() == MsgTypeEnum.image
                 || message.getMsgType() == MsgTypeEnum.video) {
