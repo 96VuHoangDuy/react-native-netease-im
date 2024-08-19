@@ -2874,6 +2874,11 @@
         if (recent == nil) continue;
         
         NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        if ([localExt objectForKey:@"isUpdate"] != nil) {
+            NSNumber *update = [localExt objectForKey:@"isUpdate"];
+            BOOL isUpdate = [update boolValue];
+            if (isUpdate) return;
+        }
         
         BOOL isCsr = NO;
         BOOL isChatBot = NO;
