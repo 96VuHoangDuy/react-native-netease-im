@@ -280,15 +280,18 @@
 + (NIMMessage*)msgWithImage:(UIImage*)image andeSession:(NIMSession *)session isHighQuality:(BOOL *)isHighQuality senderName:(NSString *)senderName
 {
     // to keep image not rotating
-    UIGraphicsBeginImageContext(image.size);
-    [image drawAtPoint:CGPointZero];
+    float newHeight = image.size.height;
+    float newWidth = image.size.width;
+
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(newWidth, newHeight), NO, isHighQuality ? 1: 0.4);
+    [image drawInRect:CGRectMake(0, 0, newWidth, newHeight)];
     UIImage *formattedImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     
     NIMImageObject *imageObject = [[NIMImageObject alloc] initWithImage:formattedImage];
     NIMImageOption *option  = [[NIMImageOption alloc] init];
-    option.compressQuality  = isHighQuality ? 1: 0.7;
-    option.format           = isHighQuality ? NIMImageFormatPNG : NIMImageFormatJPEG;
+    option.compressQuality  = isHighQuality ? 1: 0.4;
+    option.format           = NIMImageFormatJPEG;
     imageObject.option      = option;
     return [NIMMessageMaker generateImageMessage:imageObject andeSession:session senderName:senderName];
 }
