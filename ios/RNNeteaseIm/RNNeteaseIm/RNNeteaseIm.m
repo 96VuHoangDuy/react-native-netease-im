@@ -96,7 +96,13 @@
 
 RCT_EXPORT_MODULE()
 
-
+RCT_EXPORT_METHOD(loginChatroom:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] loginChatroom:params success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
 
 //手动登录
 RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)token appKey:(NSString *)appKey

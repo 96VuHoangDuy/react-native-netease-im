@@ -21,7 +21,7 @@
 #define NTESCommandTyping  (1)
 #define NTESCustom         (2)
 #import "NSDictionary+NTESJson.h"
-@interface ConversationViewController ()<NIMMediaManagerDelegate,NIMMediaManagerDelegate,NIMSystemNotificationManagerDelegate>{
+@interface ConversationViewController ()<NIMMediaManagerDelegate,NIMMediaManagerDelegate,NIMSystemNotificationManagerDelegate, NIMChatroomManagerDelegate>{
     NSString *_sessionID;
     NSString *_myUserName;
     NSString *_myUserID;
@@ -3004,6 +3004,44 @@
     }
 }
 
+-(void)loginChatroom:(NSDictionary *)params success:(Success)success err:(Errors)err {
+    NSString *roomId = [params objectForKey:@"roomId"];
+    NSString *nickname = [params objectForKey:@"nickname"];
+    NSString *avatar = [params objectForKey:@"avatar"];
+    if (roomId == nil || nickname == nil || avatar == nil) {
+        err(@"missing params");
+        return;
+    }
+    
+    NIMChatroomEnterRequest *request = [[NIMChatroomEnterRequest alloc] init];
+    request.roomAvatar = avatar;
+    request.roomNickname = nickname;
+    request.roomId = roomId;
+    request.loginAuthType = NIMChatroomLoginAuthTypeDynamicToken;
+    request.retryCount = 3;
+    request.roomExt = @"";
+    
+    [[NIMSDK sharedSDK].chatroomManager enterChatroom:request completion:^(NSError *error, NIMChatroom *chatroom, NIMChatroomMember *member) {
+        NSLog(@"enterChatroom: %@ %@ %@", error,chatroom,member);
+
+        if (error != nil) {
+            NSLog(@"login chat room error: %@", error);
+            err(error);
+            return;
+        }
+        
+        NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+        NSMutableDictionary *resultChatroom = [[NSMutableDictionary alloc] init];
+        [resultChatroom setObject:chatroom.roomId forKey:@"roomId"];
+        [resultChatroom setObject:chatroom.name forKey:@"name"];
+        [resultChatroom setObject:[NSNumber numberWithInt:chatroom.onlineUserCount] forKey:@"onlineUserCount"];
+        [result setObject:resultChatroom forKey:@"chatroom"];
+        [result setObject:member forKey:@"member"];
+        
+        success(result);
+    }];
+}
+
 -(void)forwardMessagesToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err {
     NSArray *recipients = [params objectForKey:@"recipients"];
     NSArray *messageIds = [params objectForKey:@"messageIds"];
@@ -3395,19 +3433,19 @@
     
     message.localExt = @{@"isFriend":@"NO", @"isCancelResend":[NSNumber numberWithBool:YES]};
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
-    NSString *sessionName = @"";
-    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
-    if ([user.alias length]) {
-        sessionName = user.alias;
-    }else{
-        NIMUserInfo *userInfo = user.userInfo;
-        sessionName = userInfo.nickName;
-    }
-    
-    NSString *tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
-    NIMMessage *tipMessage = [self msgWithTip:tip];
-    tipMessage.timestamp = message.timestamp+1;
-    [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:session completion:nil];
+//    NSString *sessionName = @"";
+//    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
+//    if ([user.alias length]) {
+//        sessionName = user.alias;
+//    }else{
+//        NIMUserInfo *userInfo = user.userInfo;
+//        sessionName = userInfo.nickName;
+//    }
+//    
+//    NSString *tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
+//    NIMMessage *tipMessage = [self msgWithTip:tip];
+//    tipMessage.timestamp = message.timestamp+1;
+//    [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:session completion:nil];
     
     return NO;
 }
@@ -3425,17 +3463,17 @@
             [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
             NSString *strSessionName = @"";
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:strSessionId];
-            if ([user.alias length]) {
-                strSessionName = user.alias;
-            }else{
-                NIMUserInfo *userInfo = user.userInfo;
-                strSessionName = userInfo.nickName;
-            }
-            
-            NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
-            NIMMessage *tipMessage = [self msgWithTip:tip];
-            tipMessage.timestamp = message.timestamp+1;
-            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+//            if ([user.alias length]) {
+//                strSessionName = user.alias;
+//            }else{
+//                NIMUserInfo *userInfo = user.userInfo;
+//                strSessionName = userInfo.nickName;
+//            }
+//            
+//            NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
+//            NIMMessage *tipMessage = [self msgWithTip:tip];
+//            tipMessage.timestamp = message.timestamp+1;
+//            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
             return NO;
         }
     }else{
