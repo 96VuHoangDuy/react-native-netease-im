@@ -189,7 +189,7 @@
 
 }
 //修改个人资料
--(void)updateMyUserInfo:(NSDictionary<NSNumber *,id> *)newUserInfo Success:(Success )success error:(Error )err{
+-(void)updateMyUserInfo:(NSDictionary *)newUserInfo Success:(Success )success error:(Error )err{
     const NSDictionary* keys = @{
         @"NIMUserInfoUpdateTagNick": @(NIMUserInfoUpdateTagNick),
         @"NIMUserInfoUpdateTagAvatar": @(NIMUserInfoUpdateTagAvatar),
@@ -204,7 +204,7 @@
     NSMutableDictionary<NSNumber *,id> *mapDict = [[NSMutableDictionary alloc] init];
     
     for (id key in newUserInfo) {
-        NSNumber *keyId = [keys objectForKey: key];
+        NSString *keyId = [keys objectForKey: key];
         [mapDict setObject:[newUserInfo objectForKey:key] forKey:keyId];
     }
     
