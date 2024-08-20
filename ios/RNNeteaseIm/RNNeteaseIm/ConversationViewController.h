@@ -143,6 +143,8 @@ typedef void(^Errors)(id erro);
 
 -(void)getMessageById:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success;
 
+-(void)loginChatroom:(NSDictionary *)params success:(Success)success err:(Errors)err;
+
 -(void) searchTextMessages:(NSString *)searchContent success:(Success)success err:(Errors)err;
 
 // search local Messages

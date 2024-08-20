@@ -29,4 +29,9 @@
     }
     return ignore;
 }
+
+- (nullable NSString *)dynamicChatRoomTokenForAccount:(NSString *)account room:(NSString *)roomId appKey:(NSString *)appKey
+{
+    return nil;
+}
 @end
