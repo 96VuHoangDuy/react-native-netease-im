@@ -239,6 +239,10 @@ public class ReactCache {
                     isPinSessionWithEmpty = (Boolean) extension.get("isPinSessionWithEmpty");
                 }
                 Boolean isHideRecent = false;
+
+                if( extension != null && extension.containsKey("isHideSession")) {
+                    isHideRecent = (Boolean) extension.get("isHideSession");
+                }
                 IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
                 String notifyType = "";
 
