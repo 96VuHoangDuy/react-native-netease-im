@@ -2170,7 +2170,6 @@ public class SessionService {
         if (sessionTypeEnum == SessionTypeEnum.P2P) {
             sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
 
-
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
             LogUtil.w(TAG, "isFriend:" + isFriend);
             if (!isFriend && !isSkipFriendCheck) {
@@ -2182,12 +2181,12 @@ public class SessionService {
 
                 message.setStatus(MsgStatusEnum.fail);
                 message.setLocalExtension(localExt);
-                CustomMessageConfig config = new CustomMessageConfig();
-                config.enablePush = false;
-                config.enableUnreadCount = false;
-                message.setConfig(config);
-                getMsgService().saveMessageToLocal(message, true);
-                sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
+//                CustomMessageConfig config = new CustomMessageConfig();
+//                config.enablePush = false;
+//                config.enableUnreadCount = false;
+//                message.setConfig(config);
+//                getMsgService().saveMessageToLocal(message, true);
+//                sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
                 return;
             }
         }

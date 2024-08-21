@@ -13,6 +13,8 @@ typedef void(^Errors)(id erro);
 @interface TeamViewController : UIViewController
 +(instancetype)initWithTeamViewController;
 -(void)initWithDelegate;
+
+-(NSString *)getTeamNameDefault:(NSString *)teamId;
 //获取群组列表
 -(void)getTeamList:(Success)succ Err:(Errors)err;
 //创建群组

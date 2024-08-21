@@ -11,6 +11,7 @@
 #import "NIMKitLocationPoint.h"
 #import "ConversationViewController.h"
 #import "NIMViewController.h"
+#import "TeamViewController.h"
 
 @implementation NIMMessageMaker
 
@@ -365,7 +366,18 @@
         } else {
             NIMTeam *team = [[NIMSDK sharedSDK].teamManager teamById:session.sessionId];
             
-            [payload setObject:@{@"alert": @{@"title": team.teamName, @"body": [NSString stringWithFormat:@"%@: %@", senderName, body]}} forKey:@"apsField"];
+            NSString *teamName = team.teamName;
+            if ([teamName isEqual:@"TEAM_NAME_DEFAULT"]) {
+                NSString *teamNameDefault = [[TeamViewController initWithTeamViewController] getTeamNameDefault:team.teamId];
+                if (teamNameDefault != nil) {
+                    teamName = teamNameDefault;
+                } else {
+                    teamName = @"群聊";
+                }
+                
+            }
+            
+            [payload setObject:@{@"alert": @{@"title": teamName, @"body": [NSString stringWithFormat:@"%@: %@", senderName, body]}} forKey:@"apsField"];
         }
     }
     

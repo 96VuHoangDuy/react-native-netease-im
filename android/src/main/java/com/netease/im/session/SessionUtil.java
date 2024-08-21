@@ -3,6 +3,7 @@ package com.netease.im.session;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.nfc.Tag;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -18,6 +19,8 @@ import com.netease.im.uikit.cache.NimUserInfoCache;
 import com.netease.im.uikit.cache.TeamDataCache;
 import com.netease.im.uikit.common.util.log.LogUtil;
 import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.RequestCallbackWrapper;
+import com.netease.nimlib.sdk.ResponseCode;
 import com.netease.nimlib.sdk.msg.MessageBuilder;
 import com.netease.nimlib.sdk.msg.MsgService;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
@@ -26,10 +29,16 @@ import com.netease.nimlib.sdk.msg.model.CustomMessageConfig;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.CustomNotificationConfig;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
+import com.netease.nimlib.sdk.team.TeamService;
+import com.netease.nimlib.sdk.team.model.TeamMember;
 import com.nostra13.universalimageloader.utils.L;
 
+import java.lang.reflect.Member;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import androidx.core.app.NotificationCompat;
 
@@ -52,6 +61,38 @@ public class SessionUtil {
         return sessionTypeE;
     }
 
+    private static String getTeamNameDefault(String sessionId)  {
+        List<TeamMember> members = TeamDataCache.getInstance().getTeamMemberList(sessionId);
+        if (members == null || members.isEmpty()) return null;
+        Boolean isFirstMember = true;
+        StringBuilder result = null;
+
+        for(TeamMember member: members) {
+            String name = NimUserInfoCache.getInstance().getUserDisplayName(member.getAccount());
+
+            if (member.getTeamNick() == null || name == null) {
+                continue;
+            }
+
+            String memberName = member.getTeamNick();
+            if (memberName.isEmpty()) {
+                memberName = name;
+            }
+
+            if (isFirstMember) {
+                result = new StringBuilder(memberName);
+                isFirstMember = false;
+                continue;
+            }
+
+            result.append(", ").append(memberName);
+        }
+
+        if (result == null) return null;
+
+        return result.toString();
+    }
+
     public static String getSessionName(String sessionId, SessionTypeEnum sessionTypeEnum, boolean selfName) {
         String name = sessionId;
         if (sessionTypeEnum == SessionTypeEnum.P2P) {
@@ -60,6 +101,14 @@ public class SessionUtil {
             name = nimUserInfoCache.getUserName(pId);
         } else if (sessionTypeEnum == SessionTypeEnum.Team) {
             name = TeamDataCache.getInstance().getTeamName(sessionId);
+            if (name.equals("TEAM_NAME_DEFAULT")) {
+                String teamName = getTeamNameDefault(sessionId);
+                if (teamName == null) {
+                    return "群聊";
+                }
+
+                return teamName;
+            }
         }
         return name;
     }

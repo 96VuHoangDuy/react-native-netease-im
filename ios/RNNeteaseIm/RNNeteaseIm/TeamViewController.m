@@ -307,6 +307,54 @@ NSMutableArray *_myTeams;
         }
     }];
 }
+
+-(NSString *)getTeamNameDefault:(NSString *)teamId {
+    NSMutableString *result = nil;
+    
+    __block NSArray<NIMTeamMember *> *members = nil;
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    [[NIMSDK sharedSDK].teamManager fetchTeamMembers:teamId completion:^(NSError *error, NSArray<NIMTeamMember *> *m) {
+        if (error != nil) {
+            NSLog(@"getTeamNameDefault error: %@", error);
+            dispatch_semaphore_signal(semaphore);
+            return;
+        }
+        
+        if (m == nil) {
+            dispatch_semaphore_signal(semaphore);
+            return;
+        };
+        
+        members = m;
+        dispatch_semaphore_signal(semaphore);
+    }];
+    
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+
+    
+    if (members != nil) {
+        BOOL isFirstMember = YES;
+        for(NIMTeamMember *member in members) {
+            if (member != nil) {
+                NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:member.userId];
+                if (member.nickname == nil && (user == nil || user.userInfo.nickName == nil)) continue;
+                NSString *memberName = member.nickname != nil ? member.nickname : user.userInfo.nickName;
+                if (isFirstMember) {
+                    result = [NSMutableString stringWithString:[NSString stringWithFormat:@"%@", memberName]];
+                    isFirstMember = NO;
+                    continue;
+                }
+                
+                [result appendString:[NSString stringWithFormat:@", %@", memberName]];
+            }
+        }
+    }
+    
+    return result;
+}
+
 //获取群成员
 -(void)getTeamMemberList:(NSString *)teamId Succ:(Success)succ Err:(Errors)err{
 
