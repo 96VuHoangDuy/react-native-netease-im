@@ -214,6 +214,43 @@
     [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:senderName];
     return message;
 }
+
++ (NIMMessage *)msgWithGif:(NSString *)url aspectRatio:(NSString *)aspectRatio andSession:(NIMSession *)session senderName:(NSString *)senderName {
+    NIMMessage *message = [[NIMMessage alloc] init];
+    message.text = @"[动图]";
+    
+    NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+    [remoteExt setObject:@"gif" forKey:@"extendType"];
+    [remoteExt setObject:url forKey:@"path"];
+    [remoteExt setObject:aspectRatio forKey:@"aspectRatio"];
+    
+    message.remoteExt = remoteExt;
+    message.apnsContent = @"[动图]";
+    
+    [self setupMessagePushBody:message andSession:session senderName:senderName];
+    
+    return message;
+}
+
++ (NIMMessage *)msgWithCard:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType cardSessionName:(NSString *)cardSessionName avatar:(NSString *)avatar andSession:(NIMSession *)session senderName:(NSString *)senderName {
+    NIMMessage *message = [[NIMMessage alloc] init];
+    message.text = @"[个人名片]";
+    message.apnsContent = @"[个人名片]";
+    
+    NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+    [remoteExt setObject:@"card" forKey:@"extendType"];
+    [remoteExt setObject:cardSessionType forKey:@"type"];
+    [remoteExt setObject:cardSessionName forKey:@"name"];
+    [remoteExt setObject:avatar forKey:@"imgPath"];
+    [remoteExt setObject:cardSessionId forKey:@"sessionId"];
+    
+    message.remoteExt = remoteExt;
+    
+    [self setupMessagePushBody:message andSession:session senderName:senderName];
+    
+    return message;
+}
+
 + (NIMMessage*)msgWithCustomAttachment:(DWCustomAttachment *)attachment andeSession:(NIMSession *)session senderName:(NSString *)senderName
 {
     
@@ -337,16 +374,77 @@
     return message;
 }
 
++ (NSDictionary *)getMetadata:(NIMMessage *)message session:(NIMSession *)session senderName:(NSString *)senderName {
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+    
+    if (session.sessionType != NIMSessionTypeP2P) {
+        [result setObject:senderName forKey:@"senderName"];
+    }
+    
+    if (message.remoteExt != nil && [message.remoteExt objectForKey:@"extendType"] != nil) {
+        NSString *extendType = [message.remoteExt objectForKey:@"extendType"];
+        NSLog(@"remoteExt test => %@", extendType);
+        
+        if ([extendType isEqual:@"forwardMultipleText"]) {
+            [result setObject:@"forward" forKey:@"messageType"];
+        }
+        
+        if ([extendType isEqual:@"card"]) {
+            [result setObject:@"card" forKey:@"messageType"];
+        }
+        
+        if ([extendType isEqual:@"gif"]) {
+            [result setObject:@"gif" forKey:@"messageType"];
+        }
+    }
+    
+    if (message.remoteExt == nil || (message.remoteExt != nil && [message.remoteExt objectForKey:@"extendType"] == nil)) {
+        switch (message.messageType) {
+            case NIMMessageTypeImage:
+                [result setObject:@"image" forKey:@"messageType"];
+                break;
+            
+            case NIMMessageTypeVideo:
+                [result setObject:@"video" forKey:@"messageType"];
+                break;
+                
+            case NIMMessageTypeFile:
+                [result setObject:@"file" forKey:@"messageType"];
+                break;
+                
+            case NIMMessageTypeAudio:
+                [result setObject:@"audio" forKey:@"messageType"];
+                break;
+                
+            case NIMMessageTypeLocation:
+                [result setObject:@"location" forKey:@"messageType"];
+                break;
+                
+            default:
+                return nil;
+        }
+    }
+    
+    return result;
+}
+
 + (void)setupMessagePushBody:(NIMMessage *)message andSession:(NIMSession *)session senderName:(NSString *)senderName{
-    NSLog(@"messagemessage => %@", message);
+    NSString *body = [[NSString alloc] initWithString:message.apnsContent];
+    NSMutableDictionary *apsField = [[NSMutableDictionary alloc] init];
+    [apsField setObject:[NSNumber numberWithBool:YES] forKey:@"mutable-content"];
+    
     NSString *pattern = @"@\\[(.+?)\\]\\((.+?)\\)";
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:NSRegularExpressionCaseInsensitive error:nil];
-    NSString *body = [[NSString alloc] initWithString:message.apnsContent];
     
     if (regex != nil) {
         NSRange range = NSMakeRange(0, body.length);
         NSString *modifiedString = [regex stringByReplacingMatchesInString:body options:NSMatchingReportProgress range:range withTemplate:@"@$1"];
         body = modifiedString;
+    }
+    
+    NSDictionary *metadata = [self getMetadata:message session:session senderName:senderName];
+    if (metadata != nil) {
+        [apsField setObject:metadata forKey:@"metadata"];
     }
     
     NSMutableDictionary *payload = [NSMutableDictionary dictionary];
@@ -362,7 +460,12 @@
     
    if ([senderName length]) {
         if (session.sessionType == NIMSessionTypeP2P) {
-            [payload setObject:@{@"alert": @{@"title": senderName, @"body": body}} forKey:@"apsField"];
+            NSMutableDictionary *alert = [[NSMutableDictionary alloc] init];
+            [alert setObject:senderName forKey:@"title"];
+            [alert setObject:body forKey:@"body"];
+            [apsField setObject:alert forKey:@"alert"];
+            
+            [payload setObject:apsField forKey:@"apsField"];
         } else {
             NIMTeam *team = [[NIMSDK sharedSDK].teamManager teamById:session.sessionId];
             
@@ -374,14 +477,16 @@
                 } else {
                     teamName = @"群聊";
                 }
-                
             }
             
-            [payload setObject:@{@"alert": @{@"title": teamName, @"body": [NSString stringWithFormat:@"%@: %@", senderName, body]}} forKey:@"apsField"];
+            NSMutableDictionary *alert = [[NSMutableDictionary alloc] init];
+            [alert setObject:teamName forKey:@"title"];
+            [alert setObject:[NSString stringWithFormat:@"%@: %@", senderName, body] forKey:@"body"];
+            [apsField setObject:alert forKey:@"alert"];
+            
+            [payload setObject:apsField forKey:@"apsField"];
         }
     }
-    
-    
     
     message.apnsPayload = payload;
 }

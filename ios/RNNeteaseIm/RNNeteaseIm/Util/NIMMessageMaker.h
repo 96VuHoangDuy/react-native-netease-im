@@ -13,6 +13,8 @@
 
 @interface NIMMessageMaker : NSObject
 
++ (NIMMessage *)msgWithCard:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType cardSessionName:(NSString *)cardSessionName avatar:(NSString *)avatar andSession:(NIMSession *)session senderName:(NSString *)senderName;
+
 +(NIMMessage *)msgWithRemoveReaction:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId accId:(NSString *)accId;
 
 +(NIMMessage *)msgWithReaction:(NSString *)messageId reaction:(NSDictionary *)reaction;
@@ -22,6 +24,8 @@
 + (NIMMessage*)msgWithText:(NSString*)text andApnsMembers:(NSArray *)members andeSession:(NIMSession *)session senderName:(NSString *)senderName messageSubType:(NSInteger)messageSubType;
 
 + (NIMMessage *)msgWithAudio:(NSString *)filePath andeSession:(NIMSession *)session senderName:(NSString *)senderName;
+
++ (NIMMessage *)msgWithGif:(NSString *)url aspectRatio:(NSString *)aspectRatio andSession:(NIMSession *)session senderName:(NSString *)senderName;
 
 + (NIMMessage *)msgWithImage:(UIImage *)image andeSession:(NIMSession *)session isHighQuality:(BOOL *)isHighQuality senderName:(NSString *)senderName;
 

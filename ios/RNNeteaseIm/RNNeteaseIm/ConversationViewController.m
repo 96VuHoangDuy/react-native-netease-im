@@ -1601,19 +1601,14 @@
 
 -(void) sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
-    NIMMessage *message = [NIMMessageMaker msgWithText:@"[动图]" andApnsMembers:@[] andeSession:session senderName:sessionName messageSubType:0];
-    NSDictionary  *remoteExt = @{@"extendType": @"gif", @"path": url, @"aspectRatio": aspectRatio};
-    message.remoteExt = remoteExt;
+    NIMMessage *message = [NIMMessageMaker msgWithGif:url aspectRatio:aspectRatio andSession:session senderName:sessionName];
     
     [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
  }
 
 //send gif message
 -(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isSkipFriendCheck:(BOOL *)isSkipFriendCheck{
-    NIMMessage *message = [NIMMessageMaker msgWithText:@"[动图]" andApnsMembers:members andeSession:self._session senderName:_myUserName messageSubType:0];
-    
-    NSDictionary  *remoteExt = @{@"extendType": @"gif", @"path": url, @"aspectRatio": aspectRatio};
-    message.remoteExt = remoteExt;
+    NIMMessage *message = [NIMMessageMaker msgWithGif:url aspectRatio:aspectRatio andSession:self._session senderName:_myUserName];
     
     if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
@@ -1940,11 +1935,8 @@
 //发送名片
 - (void)sendCardMessage:(NSString *)toSessionType sessionId:(NSString *)toSessionId name:(NSString *)name imgPath:(NSString *)strImgPath cardSessionId:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType {
     NIMSession *session = [NIMSession session:toSessionId type:[toSessionType integerValue]];
-    
-    NIMMessage *message = [NIMMessageMaker msgWithText:@"[个人名片]" andApnsMembers:@[] andeSession:session senderName:_myUserName messageSubType:0];
-    
-    NSDictionary  *remoteExt = @{@"extendType": @"card", @"type":cardSessionType, @"name":name, @"imgPath":strImgPath, @"sessionId":cardSessionId};
-    message.remoteExt = remoteExt;
+
+    NIMMessage *message = [NIMMessageMaker msgWithCard:cardSessionId cardSessionType:cardSessionType cardSessionName:name avatar:strImgPath andSession:session senderName:_myUserName];
     
     if ([self isFriendToSendMessage:message isSkipFriendCheck:NO]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
