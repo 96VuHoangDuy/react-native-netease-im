@@ -89,7 +89,11 @@ typedef void(^Errors)(id erro);
 
 -(void)forwardMessagesToMultipleRecipients:(NSDictionary *)params success:(Success)success err:(Errors)err;
 
--(NSDictionary *) updateMessageOfChatBot:(NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(NSString *)chatBotType;
+-(void) updateMessageOfChatBot:(NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(NSString *)chatBotType chatBotInfo:(NSDictionary *)chatBotInfo success:(Success)success error:(Errors)error;
+
+-(void) updateMessageOfCsr:(NSString *)messageId sessionId:(NSString *)sessionId success:(Success)success error:(Errors)error;
+
+-(NSMutableArray *)setTimeArr:(NSArray *)messageArr;
 
 -(void) reactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId reaction:(NSDictionary *)reaction success:(Success)success err:(Errors)err;
 

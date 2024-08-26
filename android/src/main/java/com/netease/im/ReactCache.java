@@ -259,12 +259,25 @@ public class ReactCache {
                     localExt = MapUtil.mapToReadableMap(extension);
                 }
 
+                Boolean isChatBot = false;
+                Boolean isCsr = false;
+                if (localExt.hasKey("isChatBot")) {
+                    isChatBot = localExt.getBoolean("isChatBot");
+                }
+                if (localExt.hasKey("isCsr")) {
+                    isCsr = localExt.getBoolean("isCsr");
+                }
+
                 if (contact.getSessionType() == SessionTypeEnum.P2P) {
                     Boolean isReplyStranger = hanldeReplyStrangerByRecentContact(contact);
                     localExt.putBoolean("isReplyStranger", isReplyStranger);
                 }
 
                 if (lastMessage != null) {
+                    Boolean isOutgoing = LoginService.getInstance().getAccount().equals(lastMessage.getFromAccount());
+
+                    map.putBoolean("isOutgoing",isOutgoing);
+
                     Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
                     Map<String, Object> messageRemoteExt = lastMessage.getRemoteExtension();
                     if (messageLocalExt != null) {
@@ -316,6 +329,21 @@ public class ReactCache {
                         if (temporarySessionRef != null) {
                             localExt.putMap("temporarySessionRef", MapUtil.mapToReadableMap(temporarySessionRef));
                         }
+                    }
+
+                    if (isChatBot) {
+                        Boolean isMessageChatBotUpdated = false;
+                        if (messageLocalExt != null && messageLocalExt.containsKey("isMessageChatBotUpdated")) {
+                            isMessageChatBotUpdated = (Boolean) messageLocalExt.get("isMessageChatBotUpdated");
+
+                            localExt.putBoolean("isMessageChatBotUpdated", isMessageChatBotUpdated);
+                        }
+                    }
+
+                    if (isCsr && !isOutgoing) {
+                        WritableMap messageOfCsr = createMessage(lastMessage, false);
+
+                        localExt.putMap("messageOfCsr", messageOfCsr);
                     }
                 }
 

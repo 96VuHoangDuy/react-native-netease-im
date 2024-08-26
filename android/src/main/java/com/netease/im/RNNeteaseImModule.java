@@ -2710,25 +2710,69 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void updateMessageOfChatBot(String messageId, String sessionId, String chatBotType, final Promise promise) {
+    public void updateMessageOfCsr(String messageId, String sessionId, final Promise promise) {
         sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
             @Override
             public int onResult(int code, IMMessage message) {
-                if (message == null) return 0;
+                if (message == null || code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("error", "message not found");
+                    return 0;
+                };
 
-                Map<String, Object> localExtension = message.getLocalExtension();
-                if (localExtension != null) {
-                    String chatBotTypeByLocalExtension = (String) localExtension.get("chatBotType");
-
-                    if (!chatBotTypeByLocalExtension.equals("")) {
-                        promise.resolve(null);
-                        return 0;
-                    }
+                Map<String, Object> localExt = message.getLocalExtension();
+                if (localExt == null) {
+                    localExt = new HashMap<String, Object>();
                 }
 
-                WritableMap result = updateLocalExt(message, chatBotType);
+                Boolean isMessageCsrUpdated = (Boolean) localExt.get("isMessageCsrUpdated");
+                if (isMessageCsrUpdated != null) {
+                    promise.resolve("success");
+                    return 0;
+                }
 
-                promise.resolve(result);
+                localExt.put("isMessageCsrUpdated", true);
+
+                message.setLocalExtension(localExt);
+
+                NIMClient.getService(MsgService.class).updateRecentByMessage(message, false);
+
+                return 0;
+            }
+        });
+    }
+
+    @ReactMethod
+    public void updateMessageOfChatBot(String messageId, String sessionId, String chatBotType, ReadableMap chatBotInfo,final Promise promise) {
+        sessionService.queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+            @Override
+            public int onResult(int code, IMMessage message) {
+                if (message == null || code != ResponseCode.RES_SUCCESS) {
+                   promise.reject("error", "message not found");
+                    return 0;
+                };
+
+                Map<String, Object> localExtension = message.getLocalExtension();
+                if (localExtension == null) {
+                    localExtension = new HashMap<String, Object>();
+                }
+
+                String chatBotTypeLocalExt = (String) localExtension.get("chatBotType");
+
+                if (chatBotTypeLocalExt != null && !chatBotTypeLocalExt.isEmpty()) {
+                    promise.resolve("success");
+                    return 0;
+                }
+
+                localExtension.put("chatBotType", chatBotType);
+                if (chatBotInfo != null) {
+                    localExtension.put("chatBotInfo", MapUtil.readableMaptoMap(chatBotInfo));
+                }
+
+                message.setLocalExtension(localExtension);
+
+                NIMClient.getService(MsgService.class).updateRecentByMessage(message, false);
+
+                promise.resolve("success");
                 return 0;
             }
         });

@@ -76,7 +76,7 @@
             [_bridge.eventDispatcher sendDeviceEventWithName:@"observeBackgroundPushEvent" body:param];
         }
     }
-
+    
 }
 
 - (NSDictionary *)dictChangeFromJson:(NSString *)strJson{
@@ -110,17 +110,17 @@ RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)to
                   reject:(RCTPromiseRejectBlock)reject){
     //请将 NIMMyAccount 以及 NIMMyToken 替换成您自己提交到此App下的账号和密码
     [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:@"ZYZJIM_IOS"];
-
+    
     [[[NIMSDK sharedSDK] loginManager] login:account token:token authType:NIMSDKAuthTypeDynamicToken loginExt:@"" completion:^(NSError *error)
-        {
-         if (!error) {
-             resolve(account);
-         }else{
-             NSString *strEorr = @"登录失败";
-             reject(@"-1",strEorr, nil);
-             NSLog(@"%@:%@",strEorr,error);
-         }
-        }];
+     {
+        if (!error) {
+            resolve(account);
+        }else{
+            NSString *strEorr = @"登录失败";
+            reject(@"-1",strEorr, nil);
+            NSLog(@"%@:%@",strEorr,error);
+        }
+    }];
     
     [NIMViewController initWithController].strToken = token;
     [NIMViewController initWithController].strAccount = account;
@@ -156,11 +156,11 @@ RCT_EXPORT_METHOD(autoLogin:(nonnull NSString *)account token:(nonnull NSString 
 RCT_EXPORT_METHOD(replyMessage:(nonnull NSDictionary *)params
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject){
-        [[ConversationViewController initWithConversationViewController] replyMessage:params success:^(id params) {
-            resolve(params);
-        } err:^(id error) {
-            reject(@"-1", error, nil);
-        }];
+    [[ConversationViewController initWithConversationViewController] replyMessage:params success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
 }
 
 // //手动登录
@@ -290,20 +290,20 @@ RCT_EXPORT_METHOD(addFriendWithType:(nonnull  NSString *)contactId verifyType:(n
 }
 //通过/拒绝对方好友请求
 RCT_EXPORT_METHOD(ackAddFriendRequest:(nonnull NSString*)targetId isAccept:(nonnull NSString *)isAccept timestamp:(nonnull  NSString * )timestamp resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-//    if ([msg isEqualToString:@"1"]) {
-        NSLog(@"ackAddFriendRequest");
+    //    if ([msg isEqualToString:@"1"]) {
+    NSLog(@"ackAddFriendRequest");
     [[NoticeViewController initWithNoticeViewController]ackAddFriendRequest:targetId isAccept:isAccept timestamp:timestamp sucess:^(id param) {
-            resolve(param);
-        } error:^(id erro) {
-            reject(@"-1",erro, nil);
-        }];
-//    }else{
-//        [[NoticeViewController initWithNoticeViewController]onRefuse:targetId timestamp:timestamp sucess:^(id param) {
-//            resolve(param);
-//        } error:^(id erro) {
-//            reject(@"-1",erro, nil);
-//        }];
-//    }
+        resolve(param);
+    } error:^(id erro) {
+        reject(@"-1",erro, nil);
+    }];
+    //    }else{
+    //        [[NoticeViewController initWithNoticeViewController]onRefuse:targetId timestamp:timestamp sucess:^(id param) {
+    //            resolve(param);
+    //        } error:^(id erro) {
+    //            reject(@"-1",erro, nil);
+    //        }];
+    //    }
 }
 //获取通讯录好友
 RCT_EXPORT_METHOD(startFriendList){
@@ -512,15 +512,15 @@ RCT_EXPORT_METHOD(forwardMessagesToMultipleRecipients:(nonnull NSDictionary *)pa
 
 //转发消息
 RCT_EXPORT_METHOD(sendForwardMessage:(nonnull NSArray *)messageIds sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(nonnull NSString *)content parentId:(nonnull NSString *)parentId isHaveMultiMedia:(BOOL *)isHaveMultiMedia resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-   
+    
     @try {
         [[ConversationViewController initWithConversationViewController]forwardMessage:messageIds sessionId:sessionId sessionType:sessionType content:content parentId:parentId isHaveMultiMedia:isHaveMultiMedia success:^(id param) {
             resolve(param);
         }];
-       // Process the arguments and send the message
-     } @catch (NSException *exception) {
-       NSLog(@"Error: %@", exception.reason);
-     }
+        // Process the arguments and send the message
+    } @catch (NSException *exception) {
+        NSLog(@"Error: %@", exception.reason);
+    }
 }
 //撤回消息
 RCT_EXPORT_METHOD(revokeMessage:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
@@ -646,7 +646,7 @@ RCT_EXPORT_METHOD(sendAudioMessage:(nonnull NSString *)file duration:(nonnull NS
 
 //发送自定义消息
 RCT_EXPORT_METHOD(sendCustomMessage:(NSInteger)custType attachment: (nonnull  NSDictionary *)attachment){
-//    [[ConversationViewController initWithConversationViewController]sendCustomMessage:custType data:attachment];
+    //    [[ConversationViewController initWithConversationViewController]sendCustomMessage:custType data:attachment];
 }
 
 RCT_EXPORT_METHOD(updateRecentToTemporarySession:(nonnull NSString *)sessionId messageId:(nonnull NSString *)messageId temporarySessionRef:(nonnull NSDictionary *)temporarySessionRef) {
@@ -655,7 +655,7 @@ RCT_EXPORT_METHOD(updateRecentToTemporarySession:(nonnull NSString *)sessionId m
 
 //发送自定义消息
 RCT_EXPORT_METHOD(forwardMultipleTextMessage: (nonnull  NSDictionary *)attachment  sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType content:(NSString *)content){
-//forwardMessagesText:CustomMessageTypeFowardMultipleText data:attachment sessionId:sessionId sessionType:sessionType content:content data:attachment
+    //forwardMessagesText:CustomMessageTypeFowardMultipleText data:attachment sessionId:sessionId sessionType:sessionType content:content data:attachment
     [[ConversationViewController initWithConversationViewController] forwardMultipleTextMessage:attachment sessionId:sessionId sessionType:sessionType content:content];
 }
 
@@ -679,9 +679,20 @@ RCT_EXPORT_METHOD(addEmptyRecentSession:(nonnull NSString *)sessionId sessionTyp
     [[ConversationViewController initWithConversationViewController]addEmptyRecentSession:sessionId sessionType:sessionType];
 }
 
-RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId:(NSString *)sessionId chatBotType:(nonnull NSString *)chatBotType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    NSDictionary *dict =  [[ConversationViewController initWithConversationViewController]updateMessageOfChatBot:messageId sessionId:sessionId chatBotType:chatBotType];
-    resolve(dict);
+RCT_EXPORT_METHOD(updateMessageOfCsr:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] updateMessageOfCsr:messageId sessionId:sessionId success:^(id param) {
+        resolve(param);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId chatBotType:(nonnull NSString *)chatBotType chatBotInfo:(NSDictionary *)chatBotInfo resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] updateMessageOfChatBot:messageId sessionId:sessionId chatBotType:chatBotType chatBotInfo:chatBotInfo success:^(id params) {
+        resolve(params);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
 }
 
 //发送视频消息
@@ -763,7 +774,7 @@ RCT_EXPORT_METHOD(playLocal:(nonnull NSString *)name type:(nonnull NSString *)ty
 }
 
 RCT_EXPORT_METHOD(getIsPlayingRecord: (RCTResponseSenderBlock)callback){
-   BOOL isPlayingRecord = [[ConversationViewController initWithConversationViewController] isPlayingRecord];
+    BOOL isPlayingRecord = [[ConversationViewController initWithConversationViewController] isPlayingRecord];
     
     callback(@[@(isPlayingRecord)]);
 }
@@ -1004,40 +1015,40 @@ RCT_EXPORT_METHOD(transferTeam:(nonnull NSString *)teamId account:(nonnull NSStr
 
 // Add user to manager in team
 RCT_EXPORT_METHOD(addManagersToTeam:(nonnull NSString *)teamId userIds:(nonnull NSArray<NSString *>*)userIds resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-
+    
     NIMTeamHandler completion = ^(NSError * __nullable error)
-        {
-            if (error == nil) {
-                NSLog(@"[Add manager in team %@ succeed.]", teamId);
-                resolve(teamId);
-                /// your code ...
-            } else {
-                NSLog(@"[NSError message: %@]", error);
-                reject(@"-1",error,nil);
-            }
-        };
-        [[[NIMSDK sharedSDK] teamManager] addManagersToTeam:teamId
-                                                      users:userIds
-                                                 completion:completion];
+    {
+        if (error == nil) {
+            NSLog(@"[Add manager in team %@ succeed.]", teamId);
+            resolve(teamId);
+            /// your code ...
+        } else {
+            NSLog(@"[NSError message: %@]", error);
+            reject(@"-1",error,nil);
+        }
+    };
+    [[[NIMSDK sharedSDK] teamManager] addManagersToTeam:teamId
+                                                  users:userIds
+                                             completion:completion];
 }
 
 // Remove manager in team
 RCT_EXPORT_METHOD(removeManagersFromTeam:(nonnull NSString *)teamId userIds:(nonnull NSArray<NSString *>*)userIds resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-
+    
     NIMTeamHandler completion = ^(NSError * __nullable error)
-        {
-            if (error == nil) {
-                NSLog(@"[Remove manager in team %@ succeed.]", teamId);
-                resolve(teamId);
-                /// your code ...
-            } else {
-                NSLog(@"[NSError message: %@]", error);
-                reject(@"-1",error,nil);
-            }
-        };
-        [[[NIMSDK sharedSDK] teamManager] removeManagersFromTeam:teamId
-                                                      users:userIds
-                                                 completion:completion];
+    {
+        if (error == nil) {
+            NSLog(@"[Remove manager in team %@ succeed.]", teamId);
+            resolve(teamId);
+            /// your code ...
+        } else {
+            NSLog(@"[NSError message: %@]", error);
+            reject(@"-1",error,nil);
+        }
+    };
+    [[[NIMSDK sharedSDK] teamManager] removeManagersFromTeam:teamId
+                                                       users:userIds
+                                                  completion:completion];
 }
 
 //修改群昵称
@@ -1065,7 +1076,7 @@ RCT_EXPORT_METHOD(getSessionCacheSize:(NSString *)sessionId resolve:(RCTPromiseR
         }
     }
     NSString *cacheMediaPath = [strDocPath stringByAppendingPathComponent:sessionId];
-
+    
     CGFloat cacheSize = [self folderSizeAtPath:cacheMediaPath];
     
     NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:cacheSize
@@ -1101,10 +1112,10 @@ RCT_EXPORT_METHOD(cleanSessionCache:(NSString *)sessionId resolve:(RCTPromiseRes
     }
     
     NSString *cacheMediaPath = [strDocPath stringByAppendingPathComponent:sessionId];
-
+    
     NSArray *cacheMediaFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:cacheMediaPath error:nil];
     [self deleteFilesWithPath:cacheMediaPath andFiles:cacheMediaFiles];
-
+    
     resolve(@"deleteSuccess");
 }
 
@@ -1129,12 +1140,12 @@ RCT_EXPORT_METHOD(getListSessionsCacheSize:(NSArray *)sessionIds resolve:(RCTPro
         float cacheSize = [self folderSizeAtPath:cacheMediaPath];
         allSize += cacheSize;
         NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:cacheSize
-                                                                     countStyle:NSByteCountFormatterCountStyleFile];
+                                                                   countStyle:NSByteCountFormatterCountStyleFile];
         [arraySize addObject:@{@"sessionId": sessionId, @"size": displayFileSize}];
     }
     
     resolve(@{@"data": arraySize, @"totalSize": [NSByteCountFormatter stringFromByteCount:allSize
-                                                                         countStyle:NSByteCountFormatterCountStyleFile]});
+                                                                               countStyle:NSByteCountFormatterCountStyleFile]});
 }
 
 //清除数据缓存
@@ -1167,7 +1178,7 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
     
     for (NSString *sessionId in sessionIds) {
         NSString *cacheMediaPath = [strDocPath stringByAppendingPathComponent:sessionId];
-
+        
         NSArray *cacheMediaFiles = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:cacheMediaPath error:nil];
         [self deleteFilesWithPath:cacheMediaPath andFiles:cacheMediaFiles];
     }
@@ -1200,9 +1211,9 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
 - (float )folderSizeAtPath:(NSString*) folderPath{
     NSFileManager* manager = [NSFileManager defaultManager];
     if (![manager fileExistsAtPath:folderPath]) return 0;
-//    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:folderPath] objectEnumerator];
+    //    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:folderPath] objectEnumerator];
     NSArray* childFilesEnumerator = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:folderPath
-                                                                        error:NULL];
+                                                                                        error:NULL];
     NSLog(@"childFilesEnumerator =>> folderPath:%@, %@",folderPath, childFilesEnumerator);
     
     long long folderSize = 0;
@@ -1211,11 +1222,11 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
         folderSize += [self fileSizeAtPath:[folderPath stringByAppendingPathComponent:filename]];
     }
     
-//    NSString* fileName;
-//    while ((fileName = [childFilesEnumerator nextObject]) != nil){
-//        NSString* fileAbsolutePath = [folderPath stringByAppendingPathComponent:fileName];
-//    }
-
+    //    NSString* fileName;
+    //    while ((fileName = [childFilesEnumerator nextObject]) != nil){
+    //        NSString* fileAbsolutePath = [folderPath stringByAppendingPathComponent:fileName];
+    //    }
+    
     return folderSize;
 }
 

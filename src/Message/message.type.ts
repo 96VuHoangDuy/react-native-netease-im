@@ -50,6 +50,11 @@ export enum NIMMessageDeliveryState {
 
 export type NIMMessageMedia = NIMMessageMediaImage | NIMMessageMediaVideo;
 
+export interface NIMMessageChatBotInfo {
+  oldCsrName: string;
+  newCsrName: string
+}
+
 // interface
 
 export enum NIMMessageTypeEnum {
@@ -217,6 +222,7 @@ export interface NIMMessage {
     };
     temporarySessionRef?: ITemporarySessionRef;
     parentMediaId?: string;
+    chatBotInfo?: NIMMessageChatBotInfo
   };
   messageSubType?: NIMMessageSubTypeEnum;
 }

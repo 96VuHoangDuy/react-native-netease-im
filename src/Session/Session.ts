@@ -16,6 +16,7 @@ import {
 import {
   INimMessageReaction,
   NIMMessage,
+  NIMMessageChatBotInfo,
   NIMMessageMedia,
   NIMMessageTypeEnum,
   NimMessageTypeExtend,
@@ -608,12 +609,14 @@ class NimSession {
   updateMessageOfChatBot(
     messageId: string,
     sessionId: string,
-    chatBotType: string
+    chatBotType: string,
+    chatBotInfo?: NIMMessageChatBotInfo
   ) {
     return RNNeteaseIm.updateMessageOfChatBot(
       messageId,
       sessionId,
-      chatBotType
+      chatBotType,
+      chatBotInfo
     );
   }
 
@@ -871,6 +874,10 @@ class NimSession {
       messageId,
       temporarySessionRef
     );
+  }
+
+  updateMessageOfCsr(messageId: string, sessionId: string) {
+    return RNNeteaseIm.updateMessageOfCsr(messageId, sessionId)
   }
 }
 

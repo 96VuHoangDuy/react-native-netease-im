@@ -2,6 +2,7 @@ import { NIMCommonBooleanType } from 'react-native-netease-im/src/utils/common.t
 import {
   INimMessageReaction,
   INimMessageRemoveReaction,
+  NIMMessage,
   NIMMessageStatusEnum,
   NIMMessageTypeEnum,
 } from '../Message/message.type';
@@ -71,8 +72,9 @@ export enum NIMCustomAttachmentEnum {
 
 export enum NIMMessageChatBotType {
   OFFLINE = 'offline',
-  FIND_CSR = 'find_csr',
   OUT_SESSION = 'out_session',
+  CONNECTED_CSR = "connected_csr",
+  RECONNECT_CSR = 'reconnect_csr'
 }
 
 export enum NIMSendAttachmentEnum {
@@ -146,7 +148,10 @@ export interface NimSessionType {
       messageId: string;
     };
     multiMediaType?: 'video' | 'image';
-    temporarySessionRef?: ITemporarySessionRef
+    temporarySessionRef?: ITemporarySessionRef;
+    isMessageChatBotUpdated?: boolean;
+    isChatBotNotifyOutSessionOfCurrentCsr?: boolean;
+    messageOfCsr?: NIMMessage
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;
