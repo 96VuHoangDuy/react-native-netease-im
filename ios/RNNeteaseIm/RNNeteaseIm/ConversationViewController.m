@@ -1050,17 +1050,13 @@
             NSLog(@"[copyError description]: %@", [copyError description]);
             return nil;
         }
-        [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
-        [self refrashMessage:message From:@"receive"];
-        
-        //        if ([isThumb isEqual:@1]) {
-        //            if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
-        //                NSError *removeItemError = nil;
-        //                if (![[NSFileManager defaultManager] removeItemAtPath:originPath error:&removeItemError]) {
-        //                    NSLog(@"[removeItemError description]: %@", [removeItemError description]);
-        //                }
-        //            }
-        //        }
+        // because sometime reponse setTimeArr run after this function so this trick is make this function run after setTimeArr
+        dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 2);
+        dispatch_after(delay, dispatch_get_main_queue(), ^(void){
+            // do work in the UI thread here
+            [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
+            [self refrashMessage:message From:@"receive"];
+        });
     } else {
         [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloading"}];
         [self refrashMessage:message From:@"receive"];
@@ -1069,10 +1065,14 @@
             NSLog(@"downLoadVideo error: %@", [error description]);
             if (!error) {
                 NSLog(@"download success");
-                //                [self setLocalExtMessage:message key:@"isReplaceSuccess" value:@"YES"];
-                [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
-                
-                [self refrashMessage:message From:@"receive"];
+                 // because sometime reponse setTimeArr run after this function so this trick is make this function run after setTimeArr
+                dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 2);
+                dispatch_after(delay, dispatch_get_main_queue(), ^(void){
+                    // do work in the UI thread here
+                    [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
+
+                    [self refrashMessage:message From:@"receive"];
+                });
             }
         } progress:^(float progress) {
             NSLog(@"sessionId %@ %@", self._session.sessionId, message.session.sessionId);
