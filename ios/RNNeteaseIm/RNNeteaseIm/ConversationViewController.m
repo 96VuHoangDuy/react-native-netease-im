@@ -1215,6 +1215,12 @@
         
         NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
         
+        if (isChatBot && [localExt objectForKey:@"chatBotType"] == nil) {
+            [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
+            
+            continue;
+        }
+        
         if (message.remoteExt != nil && [message.remoteExt objectForKey:@"reaction"] != nil) {
             [localExt setObject:[message.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
         }
