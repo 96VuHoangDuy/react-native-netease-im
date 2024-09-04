@@ -310,6 +310,7 @@ NSMutableArray *_myTeams;
 
 -(NSString *)getTeamNameDefault:(NSString *)teamId {
     NSMutableString *result = nil;
+    NSString *nameCreator = @"";
     
     __block NSArray<NIMTeamMember *> *members = nil;
     
@@ -341,6 +342,11 @@ NSMutableArray *_myTeams;
                 NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:member.userId];
                 if (member.nickname == nil && (user == nil || user.userInfo.nickName == nil)) continue;
                 NSString *memberName = member.nickname != nil ? member.nickname : user.userInfo.nickName;
+                if (member.type == NIMTeamMemberTypeOwner) {
+                    nameCreator = memberName;
+                    continue;
+                }
+                
                 if (isFirstMember) {
                     result = [NSMutableString stringWithString:[NSString stringWithFormat:@"%@", memberName]];
                     isFirstMember = NO;
@@ -352,7 +358,7 @@ NSMutableArray *_myTeams;
         }
     }
     
-    return result;
+    return [NSString stringWithFormat:@"%@, %@", nameCreator, result];
 }
 
 //获取群成员

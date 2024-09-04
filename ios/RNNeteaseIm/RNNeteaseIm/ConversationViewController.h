@@ -41,6 +41,10 @@ typedef void(^Errors)(id erro);
 
 -(void)updateActionHideRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType isHideSession:(BOOL *)isHideSession isPinCode:(BOOL *)isPinCode success:(Success)success error:(Errors)error;
 
+-(void) sendCustomMessageOfChatbot:(NSString *)sessionId customerServiceType:(NSString *)customerServiceType success:(Success)success err:(Errors)err;
+
+-(void)addEmptyRecentSessionWithoutMessage:(NSString *)sessionId sessionType:(NSString *)sessionType;
+
 -(void)downloadAttachment:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId toSessionType:(nonnull NSString *)toSessionType;
 
 //发送视频

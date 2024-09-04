@@ -23,4 +23,6 @@ public interface CustomAttachmentType {
 
     String WARNING_BLOCK = "WARNING_BLOCK";
     String WARNING_LOGIN = "WARNING_LOGIN";
+
+    String CHAT_BOT = "CHAT_BOT";
 }

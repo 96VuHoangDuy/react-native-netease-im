@@ -415,6 +415,22 @@
                         
                 }
             }
+        } else {
+            if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
+                recent.lastMessage.text = @"[聊天记录]";
+                NSMutableDictionary *extend = [NSMutableDictionary dictionary];
+                [extend setObject:recent.lastMessage.text forKey:@"messages"];
+                [dic setObject:extend forKey:@"extend"];
+                [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
+            } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"card"]) {
+                [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
+                [dic setObject:@"card" forKey:@"msgType"];
+            } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
+                [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
+                [dic setObject:@"notification" forKey:@"msgType"];
+            } else {
+                [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
+            }
         }
         
         if (recent.lastMessage.remoteExt != nil) {

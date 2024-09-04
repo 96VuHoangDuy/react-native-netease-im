@@ -1706,6 +1706,60 @@
     [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
 }
 
+
+-(void) sendCustomMessageOfChatbot:(NSString *)sessionId customerServiceType:(NSString *)customerServiceType success:(Success)success err:(Errors)err {
+    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+        
+    NIMMessage *message = [[NIMMessage alloc] init];
+    message.text = @"";
+    message.apnsContent = @"";
+    
+    NSLog(@"test =>>> send custom message: %@, %@", [NSNumber numberWithInt:18939912], [NSNumber numberWithInt:[customerServiceType intValue]]);
+    
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    [dict setObject:[NSNumber numberWithInt:18939912] forKey:@"code"]; // 0x01210008
+    [dict setObject:[NSNumber numberWithInt:[customerServiceType intValue]] forKey:@"data"];
+    
+//    NSError *jsonError;
+//    NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&jsonError];
+//    if (jsonError != nil) {
+//        err(jsonError);
+//        return;
+//    }
+//    
+//    NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    
+    NIMCustomObject *customObject = [[NIMCustomObject alloc] init];
+    DWCustomAttachment *attachment = [[DWCustomAttachment alloc] init];
+    
+    attachment.custType = CustomMessageChatbotTypeCustomerService;
+    attachment.dataDict = dict;
+    customObject.attachment = attachment;
+    
+    message.messageObject = customObject;
+
+    
+    NIMMessageSetting *setting = [[NIMMessageSetting alloc] init];
+    setting.shouldBeCounted = NO;
+    setting.apnsEnabled = NO;
+    
+    message.setting = setting;
+    
+    NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
+    [localExt setObject:@(YES) forKey:@"isHideMessage"];
+    
+    message.localExt = localExt;
+    
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session completion:^(NSError *error) {
+        if (error != nil) {
+            NSLog(@"sendCustomMessageOfChatbot error: %@", error);
+            err(error);
+        } else {
+            success(@"success");
+        }
+    }];
+}
+
 //发送图片
 -(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isHighQuality:(BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber *)indexCount {
     UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
@@ -2884,7 +2938,22 @@
 
 -(void)addEmptyRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent != nil) return;
+    
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
+}
+
+-(void)addEmptyRecentSessionWithoutMessage:(NSString *)sessionId sessionType:(NSString *)sessionType {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
+    NSLog(@"session => %@, %@",session.sessionId, session.sessionType);
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent != nil) return;
+    
+    NIMAddEmptyRecentSessionBySessionOption *option = [[NIMAddEmptyRecentSessionBySessionOption alloc] init];
+    option.addEmptyMsgIfNoLastMsgExist = NO;
+    
+    [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session option:option];
 }
 
 -(void)addEmptyPinRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
@@ -2921,7 +2990,9 @@
         NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
         NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
         if (recent == nil) {
-            [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
+            NIMAddEmptyRecentSessionBySessionOption *option = [[NIMAddEmptyRecentSessionBySessionOption alloc] init];
+            option.addEmptyMsgIfNoLastMsgExist = NO;
+            [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session option:option];
             
             recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
         }
@@ -3492,19 +3563,19 @@
     
     message.localExt = @{@"isFriend":@"NO", @"isCancelResend":[NSNumber numberWithBool:YES]};
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
-    //    NSString *sessionName = @"";
-    //    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
-    //    if ([user.alias length]) {
-    //        sessionName = user.alias;
-    //    }else{
-    //        NIMUserInfo *userInfo = user.userInfo;
-    //        sessionName = userInfo.nickName;
-    //    }
-    //
-    //    NSString *tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
-    //    NIMMessage *tipMessage = [self msgWithTip:tip];
-    //    tipMessage.timestamp = message.timestamp+1;
-    //    [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:session completion:nil];
+    NSString *sessionName = @"";
+    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
+    if ([user.alias length]) {
+        sessionName = user.alias;
+    }else{
+        NIMUserInfo *userInfo = user.userInfo;
+        sessionName = userInfo.nickName;
+    }
+    
+    NSString *tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
+    NIMMessage *tipMessage = [self msgWithTip:tip];
+    tipMessage.timestamp = message.timestamp+1;
+    [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:session completion:nil];
     
     return NO;
 }
@@ -3522,17 +3593,17 @@
             [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
             NSString *strSessionName = @"";
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:strSessionId];
-            //            if ([user.alias length]) {
-            //                strSessionName = user.alias;
-            //            }else{
-            //                NIMUserInfo *userInfo = user.userInfo;
-            //                strSessionName = userInfo.nickName;
-            //            }
-            //
-            //            NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
-            //            NIMMessage *tipMessage = [self msgWithTip:tip];
-            //            tipMessage.timestamp = message.timestamp+1;
-            //            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+            if ([user.alias length]) {
+                strSessionName = user.alias;
+            }else{
+                NIMUserInfo *userInfo = user.userInfo;
+                strSessionName = userInfo.nickName;
+            }
+            
+            NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
+            NIMMessage *tipMessage = [self msgWithTip:tip];
+            tipMessage.timestamp = message.timestamp+1;
+            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
             return NO;
         }
     }else{

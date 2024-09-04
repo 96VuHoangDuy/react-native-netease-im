@@ -483,6 +483,20 @@ RCT_EXPORT_METHOD(queryMessageListEx:(nonnull  NSString *)messageId limit:(int)l
     }];
 }
 
+
+RCT_EXPORT_METHOD(addEmptyRecentSessionWithoutMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] addEmptyRecentSessionWithoutMessage:sessionId sessionType:sessionType];
+    resolve(@"200");
+}
+
+RCT_EXPORT_METHOD(sendCustomMessageOfChatbot:(nonnull NSString *)sessionId customerServiceType:(nonnull NSString *)customerServiceType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendCustomMessageOfChatbot:sessionId customerServiceType:customerServiceType success:^(id param) {
+        resolve(param);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 RCT_EXPORT_METHOD(reactionMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId reaction:(nonnull NSDictionary *)reaction resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
     [[ConversationViewController initWithConversationViewController] reactionMessage:sessionId sessionType:sessionType messageId:messageId reaction:reaction success:^(id params) {
         resolve(params);

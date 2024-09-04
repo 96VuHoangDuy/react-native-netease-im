@@ -84,6 +84,11 @@ public class CustomAttachParser implements MsgAttachmentParser {
     }
 
     public static String packData(String type, JSONObject data) {
+        Integer code = (Integer) data.get("code");
+        if (code != null && code == 18939912) {
+            return data.toJSONString();
+        }
+
         JSONObject object = new JSONObject();
         object.put(KEY_TYPE, type);
         if (data != null) {

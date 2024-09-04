@@ -213,6 +213,10 @@ class NimSession {
     );
   }
 
+  sendCustomMessageOfChatbot(sessionId: string, customerServiceType: string) {
+    return RNNeteaseIm.sendCustomMessageOfChatbot(sessionId, customerServiceType)
+  }
+
   sendGifMessage(
     url: string,
     aspectRatio: string,
@@ -562,7 +566,7 @@ class NimSession {
   /**
    * 更新录音消息是否播放过的状态
    * @param messageId
-   * @returns {*}
+  * @returns {*}
    */
   updateAudioMessagePlayStatus(messageId: string) {
     return RNNeteaseIm.updateAudioMessagePlayStatus(messageId);
@@ -576,6 +580,10 @@ class NimSession {
 
   addEmptyRecentSession(sessionId: string, sessionType: NIMSessionTypeEnum) {
     return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType);
+  }
+
+  addEmptyRecentSessionWithoutMessage(sessionId: string, sessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.addEmptyRecentSessionWithoutMessage(sessionId, sessionType)
   }
 
   cancelSendingMessage(

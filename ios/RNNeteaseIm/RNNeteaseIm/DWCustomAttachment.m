@@ -11,6 +11,18 @@
 @implementation DWCustomAttachment
 
 - (NSString *)encodeAttachment{
+    if (self.custType == CustomMessageChatbotTypeCustomerService) {
+        NSData *data = [NSJSONSerialization dataWithJSONObject:self.dataDict options:0 error:nil];
+        NSString *content = nil;
+        if (data) {
+            content = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        }
+        
+        NSLog(@"content => %@", content);
+        
+        return content;
+    }
+    
     NSString *strType = @"";
     switch (self.custType) {
         case CustomMessgeTypeRedpacket:

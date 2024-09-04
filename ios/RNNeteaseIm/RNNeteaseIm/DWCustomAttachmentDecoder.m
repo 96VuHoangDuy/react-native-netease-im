@@ -19,6 +19,8 @@
         NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data
                                                              options:0
                                                                error:nil];
+        
+        NSLog(@"data decodeAttachment => %@", dict);
         if ([dict isKindOfClass:[NSDictionary class]])
         {
             NSString *strType     = [self jsonString:@"msgtype" andDict:dict];
@@ -52,7 +54,6 @@
     }
     return attachment;
 }
-
 
 - (NSString *)jsonString: (NSString *)key andDict:(NSDictionary *)dict
 {

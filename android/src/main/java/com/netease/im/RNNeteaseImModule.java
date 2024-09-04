@@ -42,6 +42,7 @@ import com.netease.im.session.AudioMessageService;
 import com.netease.im.session.AudioPlayService;
 import com.netease.im.session.SessionService;
 import com.netease.im.session.SessionUtil;
+import com.netease.im.session.extension.CustomMessageChatBot;
 import com.netease.im.team.TeamListService;
 import com.netease.im.team.TeamObserver;
 import com.netease.im.uikit.cache.NimUserInfoCache;
@@ -77,6 +78,7 @@ import com.netease.nimlib.sdk.msg.SystemMessageService;
 import com.netease.nimlib.sdk.msg.constant.MsgStatusEnum;
 import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
+import com.netease.nimlib.sdk.msg.model.CustomMessageConfig;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
@@ -2048,7 +2050,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void updateMyUserInfo(ReadableMap newUserInfo, final Promise promise) {
         String contactId = LoginService.getInstance().getAccount();
-        NimUserInfoCache.getInstance().updateMyUserInfo(newUserInfo.toHashMap(), new RequestCallbackWrapper() {
+        NimUserInfoCache.getInstance().updateMyUserInfo(MapUtil.readableMaptoMap(newUserInfo), new RequestCallbackWrapper() {
             @Override
             public void onResult(int code, Object result, Throwable exception) {
                 promise.resolve("200");
@@ -3424,6 +3426,48 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void addEmptyRecentSessionWithoutMessage(String sessionId, String sessionType, final Promise promise) {
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        RecentContact recent =  NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+        if (recent != null) {
+            promise.resolve("success");
+            return;
+        }
+
+        NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, sessionTypeEnum, 0, System.currentTimeMillis(), true, false);
+
+        promise.resolve("success");
+    }
+
+    @ReactMethod
+    public void sendCustomMessageOfChatbot(String sessionId, String customerServiceType, final Promise promise) {
+        CustomMessageChatBot attachment = new CustomMessageChatBot();
+        attachment.setCustomerServiceType(customerServiceType);
+
+        CustomMessageConfig config = new CustomMessageConfig();
+        config.enablePush = false;
+        config.enableUnreadCount = false;
+
+        IMMessage message = MessageBuilder.createCustomMessage(sessionId, SessionTypeEnum.P2P,"", attachment, config);
+
+        Map<String, Object> localExt = new HashMap<>();
+        localExt.put("isHideMessage", true);
+
+        message.setLocalExtension(localExt);
+
+        NIMClient.getService(MsgService.class).sendMessage(message, false).setCallback(new RequestCallbackWrapper<Void>() {
+            @Override
+            public void onResult(int code, Void result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS) {
+                    promise.reject("error", "send message failed");
+                } else {
+                    promise.resolve("success");
+                }
+            }
+        });
+    }
+
+    @ReactMethod
     public void addEmptyRecentSessionCustomerService(ReadableArray data, final Promise promise) {
         Log.e(TAG, "addEmptyRecentSessionCustomerService =>>>>>> " + data);
         List<Object> arr = MapUtil.readableArrayToArray(data);
@@ -3440,7 +3484,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
             RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
             if (recent == null) {
-                NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, SessionTypeEnum.P2P,0, System.currentTimeMillis(), true);
+                NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, SessionTypeEnum.P2P,0, System.currentTimeMillis(), true, false);
                 recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
             }
             if (recent == null) continue;

@@ -30,6 +30,7 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.CustomNotificationConfig;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.team.TeamService;
+import com.netease.nimlib.sdk.team.constant.TeamMemberType;
 import com.netease.nimlib.sdk.team.model.TeamMember;
 import com.nostra13.universalimageloader.utils.L;
 
@@ -66,6 +67,7 @@ public class SessionUtil {
         if (members == null || members.isEmpty()) return null;
         Boolean isFirstMember = true;
         StringBuilder result = null;
+        String nameCreator = "";
 
         for(TeamMember member: members) {
             String name = NimUserInfoCache.getInstance().getUserDisplayName(member.getAccount());
@@ -79,6 +81,11 @@ public class SessionUtil {
                 memberName = name;
             }
 
+            if (member.getType() == TeamMemberType.Owner) {
+                nameCreator = memberName;
+                continue;
+            }
+
             if (isFirstMember) {
                 result = new StringBuilder(memberName);
                 isFirstMember = false;
@@ -90,7 +97,7 @@ public class SessionUtil {
 
         if (result == null) return null;
 
-        return result.toString();
+        return nameCreator + ", " + result.toString();
     }
 
     public static String getSessionName(String sessionId, SessionTypeEnum sessionTypeEnum, boolean selfName) {
