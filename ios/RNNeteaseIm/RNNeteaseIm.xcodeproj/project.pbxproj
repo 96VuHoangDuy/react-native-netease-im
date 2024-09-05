@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F5197192C899008000D3C46 /* ChatroomViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F5197182C899008000D3C46 /* ChatroomViewController.m */; };
+		1F51971B2C89904B000D3C46 /* ChatroomViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F51971A2C89904B000D3C46 /* ChatroomViewController.h */; };
 		839EB44A23B4F4A700B7F069 /* NIMObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 839EB40423B4F4A500B7F069 /* NIMObject.h */; };
 		839EB44B23B4F4A700B7F069 /* DWCustomAttachment.m in Sources */ = {isa = PBXBuildFile; fileRef = 839EB40523B4F4A500B7F069 /* DWCustomAttachment.m */; };
 		839EB44C23B4F4A700B7F069 /* NIMViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 839EB40623B4F4A500B7F069 /* NIMViewController.h */; };
@@ -77,6 +79,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1F5197182C899008000D3C46 /* ChatroomViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ChatroomViewController.m; sourceTree = "<group>"; };
+		1F51971A2C89904B000D3C46 /* ChatroomViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChatroomViewController.h; sourceTree = "<group>"; };
 		839EB3F923B4F44200B7F069 /* RNNeteaseIm.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = RNNeteaseIm.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		839EB3FD23B4F44200B7F069 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		839EB40423B4F4A500B7F069 /* NIMObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NIMObject.h; sourceTree = "<group>"; };
@@ -206,6 +210,8 @@
 				839EB40723B4F4A500B7F069 /* RNNotificationCenter.m */,
 				839EB44823B4F4A700B7F069 /* TeamViewController.h */,
 				839EB40B23B4F4A500B7F069 /* TeamViewController.m */,
+				1F5197182C899008000D3C46 /* ChatroomViewController.m */,
+				1F51971A2C89904B000D3C46 /* ChatroomViewController.h */,
 				839EB41123B4F4A600B7F069 /* Util */,
 				839EB3FD23B4F44200B7F069 /* Info.plist */,
 			);
@@ -291,6 +297,7 @@
 				839EB45023B4F4A700B7F069 /* DWCustomAttachment.h in Headers */,
 				839EB45C23B4F4A700B7F069 /* NIMKitInfo.h in Headers */,
 				839EB46823B4F4A700B7F069 /* NTESContactDataMember.h in Headers */,
+				1F51971B2C89904B000D3C46 /* ChatroomViewController.h in Headers */,
 				839EB48C23B4F4A800B7F069 /* ContactViewController.h in Headers */,
 				839EB45523B4F4A700B7F069 /* ConversationViewController.h in Headers */,
 				839EB46923B4F4A700B7F069 /* NSDictionary+NTESJson.h in Headers */,
@@ -402,6 +409,7 @@
 				839EB46D23B4F4A700B7F069 /* NSDictionary+NTESJson.m in Sources */,
 				839EB46E23B4F4A700B7F069 /* NTESGroupedContacts.m in Sources */,
 				839EB45723B4F4A700B7F069 /* NIMKitDataProviderImpl.m in Sources */,
+				1F5197192C899008000D3C46 /* ChatroomViewController.m in Sources */,
 				839EB46B23B4F4A700B7F069 /* NTESContactDataMember.m in Sources */,
 				839EB46023B4F4A700B7F069 /* NIMKitTimerHolder.m in Sources */,
 				839EB45123B4F4A700B7F069 /* TeamViewController.m in Sources */,
