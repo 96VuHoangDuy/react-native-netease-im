@@ -19,7 +19,6 @@
 #import "ImConfig.h"
 #import <React/RCTLog.h>
 #import "NIMMessageMaker.h"
-#import "ChatroomViewController.h"
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
@@ -94,40 +93,11 @@
     return dispatch_get_main_queue();
 }
 
+
+RCT_EXPORT_MODULE()
+
 RCT_EXPORT_METHOD(loginChatroom:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ChatroomViewController initWithChatroomViewController] loginChatroom:params success:^(id param) {
-        resolve(param);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(logoutChatroom:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] logoutChatroom:roomId success:^(id params) {
-        resolve(params);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(fetchChatroomInfo:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomInfo:roomId success:^(id params) {
-        resolve(params);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(fetchChatroomMember:(nonnull NSString *)roomId userId:(nonnull NSString *)userId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMember:roomId userId:userId success:^(id params) {
-        resolve(params);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(fetchChatroomMembers:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMembers:roomId success:^(id params) {
+    [[ConversationViewController initWithConversationViewController] loginChatroom:params success:^(id params) {
         resolve(params);
     } err:^(id error) {
         reject(@"-1", error, nil);
