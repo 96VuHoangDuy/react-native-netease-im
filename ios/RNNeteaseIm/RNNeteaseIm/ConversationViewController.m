@@ -2979,7 +2979,6 @@
 }
 
 -(void)addEmptyRecentSessionCustomerService:(NSArray *)data {
-    NSLog(@"data =>>>>>> %@", data);
     for(NSDictionary *item in data) {
         NSString *sessionId = [item objectForKey:@"sessionId"];
         NSString *onlineServiceType = [item objectForKey:@"onlineServiceType"];
@@ -3002,7 +3001,7 @@
         if ([localExt objectForKey:@"isUpdate"] != nil) {
             NSNumber *update = [localExt objectForKey:@"isUpdate"];
             BOOL isUpdate = [update boolValue];
-            if (isUpdate) return;
+            if (isUpdate) continue;
         }
         
         BOOL isCsr = NO;

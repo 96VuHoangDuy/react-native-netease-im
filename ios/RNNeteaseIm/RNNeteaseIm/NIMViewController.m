@@ -9,6 +9,7 @@
 #import "NIMViewController.h"
 #import "ContactViewController.h"
 #import "ConversationViewController.h"
+#import "ChatroomViewController.h"
 
 @interface NIMViewController ()<NIMLoginManagerDelegate,NIMConversationManagerDelegate>{
     //    BOOL isLoginFailed;
@@ -315,6 +316,7 @@
             [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
             [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
             [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
+            [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType] forKey:@"messageSubType"];
         }
         
         if (isChatBot) {
@@ -482,207 +484,251 @@
     return dic;
 }
 
+-(NSDictionary *)handleSessionTeam:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *) totalUnreadCount {
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+    
+    NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
+    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy]: [[NSMutableDictionary alloc] init];
+    BOOL isHideSession = NO;
+    NSString *unreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
+    if ([localExt objectForKey:@"isHideSession"] != nil) {
+        NSNumber *hideSession = [localExt objectForKey:@"isHideSession"];
+        isHideSession = [hideSession boolValue];
+    }
+    
+    if (recent.lastMessage == nil) {
+        [result setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+        [result setObject:@"" forKey:@"messageId"];
+        [result setObject:@"0" forKey:@"time"];
+        [result setObject:@"" forKey:@"content"];
+    }
+    
+    if (recent.lastMessage != nil) {
+        [result setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
+        
+        if (recent.lastMessage.messageType == NIMMessageTypeNotification) {
+            [result setObject:[[ConversationViewController initWithConversationViewController]setNotiTeamObj:recent.lastMessage] forKey:@"extend"];
+        }
+        
+        if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
+            [result setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+            [result setObject:@"" forKey:@"messageId"];
+            [result setObject:@"0" forKey:@"time"];
+            [result setObject:@"" forKey:@"content"];
+            if (recent.lastMessage.messageSubType == 7) {
+                [result setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            }
+        } else {
+            [result setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            [result setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+            [result setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
+            [result setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
+            [result setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
+            [result setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType] forKey:@"messageSubType"];
+        }
+        
+        if (recent.lastMessage.localExt != nil) {
+            if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
+                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
+            }
+        }
+        
+        if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
+            if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
+                [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
+            }
+            
+            if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
+                [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
+            }
+            
+            if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
+                [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
+            }
+            
+            if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
+                [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+            }
+            
+            if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
+                [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
+            }
+            
+            if (recent.lastMessage.messageSubType == 7 && [recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
+                [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
+            }
+            
+            NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
+            if (extendType != nil && [extendType isEqual:@"gif"]) {
+                [result setObject:recent.lastMessage.remoteExt forKey:@"extend"];
+            }
+        }
+        
+        if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
+            NIMCustomObject *messageObject = recent.lastMessage.messageObject;
+            DWCustomAttachment *attachment = messageObject.attachment;
+            
+            if (attachment) {
+                switch (attachment.custType) {
+                    case CustomMessgeTypeRedpacket: {
+                        [result setObject:attachment.dataDict forKey:@"extend"];
+                        [result setObject:@"redpacket" forKey:@"msgType"];
+                        break;
+                    }
+                        
+                    case CustomMessgeTypeBankTransfer: {
+                        [result setObject:attachment.dataDict  forKey:@"extend"];
+                        [result setObject:@"transfer" forKey:@"msgType"];
+                        break;
+                    }
+                        
+                    case CustomMessgeTypeRedPacketOpenMessage:{
+                        NSDictionary *dataDict = [self dealWithData:attachment.dataDict];
+                        if (dataDict != nil) {
+                            [result setObject:dataDict  forKey:@"extend"];
+                            [result setObject:@"redpacketOpen" forKey:@"msgType"];
+                        }
+                        
+                        break;
+                    }
+                        
+                    case CustomMessgeTypeUrl: {
+                        [result setObject:attachment.dataDict  forKey:@"extend"];
+                        [result setObject:@"account_notice" forKey:@"msgType"];
+                        break;
+                    }
+                        
+                    case CustomMessgeTypeAccountNotice:{
+                        [result setObject:attachment.dataDict  forKey:@"extend"];
+                        [result setObject:@"url" forKey:@"msgType"];
+                        break;
+                    }
+                        
+                    case CustomMessgeTypeBusinessCard:{
+                        [result setObject:attachment.dataDict  forKey:@"extend"];
+                        [result setObject:@"card" forKey:@"msgType"];
+                        break;
+                    }
+                    case CustomMessgeTypeCustom:{
+                        [result setObject:attachment.dataDict  forKey:@"extend"];
+                        [result setObject:@"custom" forKey:@"msgType"];
+                        break;
+                    }
+                    default:{
+                        if (attachment.dataDict != nil) {
+                            [result setObject:attachment.dataDict  forKey:@"extend"];
+                        }
+                        
+                        [result setObject:@"unknown" forKey:@"msgType"];
+                        break;
+                    }
+                        
+                }
+            }
+        } else {
+            if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
+                recent.lastMessage.text = @"[聊天记录]";
+                NSMutableDictionary *extend = [NSMutableDictionary dictionary];
+                [extend setObject:recent.lastMessage.text forKey:@"messages"];
+                [result setObject:extend forKey:@"extend"];
+                [result setObject:@"forwardMultipleText" forKey:@"msgType"];
+            } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"card"]) {
+                [result setObject:recent.lastMessage.remoteExt forKey:@"extend"];
+                [result setObject:@"card" forKey:@"msgType"];
+            } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
+                [result setObject:recent.lastMessage.remoteExt forKey:@"extend"];
+                [result setObject:@"notification" forKey:@"msgType"];
+            } else {
+                [result setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
+            }
+        }
+    }
+    
+    [result setObject:[NSString stringWithFormat:@"%@", recent.session.sessionId] forKey:@"contactId"];
+    [result setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
+    [result setObject:unreadCount forKey:@"unreadCount"];
+    [result setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent]] forKey:@"name"];
+    [result setObject:@"" forKey:@"imagePath"];
+    [result setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
+    
+    if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
+        *totalUnreadCount = *totalUnreadCount + [unreadCount integerValue];
+    }
+    
+    return result;
+}
+
+-(NSDictionary *)handleSessionChatroom:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *)totalUnreadCount {
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+    
+    NIMChatroom *chatroomInfo = [[ChatroomViewController initWithChatroomViewController] getChatroomInfo:recent.session.sessionId];
+    NSString *unreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];
+    
+    if (recent.lastMessage == nil) {
+        [result setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+        [result setObject:@"" forKey:@"messageId"];
+        [result setObject:@"0" forKey:@"time"];
+        [result setObject:@"" forKey:@"content"];
+    }
+    
+    if (recent.lastMessage != nil) {
+        [result setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
+        
+        if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
+            [result setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
+            [result setObject:@"" forKey:@"messageId"];
+            [result setObject:@"0" forKey:@"time"];
+            [result setObject:@"" forKey:@"content"];
+            if (recent.lastMessage.messageSubType == 7) {
+                [result setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            }
+        } else {
+            [result setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
+            [result setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
+            [result setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
+            [result setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
+            [result setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
+            [result setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType] forKey:@"messageSubType"];
+        }
+    }
+    
+    [result setObject:unreadCount forKey:@"unreadCount"];
+    [result setObject:@"" forKey:@"imagePath"];
+    [result setObject:[NSString stringWithFormat:@"%@", chatroomInfo.roomId] forKey:@"contactId"];
+    [result setObject:chatroomInfo.name forKey:@"name"];
+    [result setObject:[NSNumber numberWithLong:chatroomInfo.onlineUserCount] forKey:@"onlineUserCount"];
+    [result setObject:[NSNumber numberWithBool:[[ChatroomViewController initWithChatroomViewController] checkChatroomLoginStatus:recent.session.sessionId]] forKey:@"isLoginChatroom"];
+    
+    return result;
+}
+
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err{
     NSInteger allUnreadNum = 0;
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
     NSMutableArray *sessionList = [NSMutableArray array];
     for (NIMRecentSession *recent in NIMlistArr) {
-        if (recent.session.sessionType == NIMSessionTypeP2P) {
-            NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum];
-            [sessionList addObject:dic];
-        } else {
-            // if ( [[NIMSDK sharedSDK].teamManager isMyTeam:recent.lastMessage.session.sessionId]) {
-            NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-            [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
-            [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
-            //未读
-            NSString *strUnreadCount = [NSString stringWithFormat:@"%zd", recent.unreadCount];
-            [dic setObject:strUnreadCount forKey:@"unreadCount"];
-            //群组名称或者聊天对象名称
-            [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
-            //账号
-            [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
-            
-            NSMutableDictionary *localExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-            
-            if (recent.lastMessage != nil && recent.lastMessage.localExt != nil ) {
-                if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
-                    [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
-                }
+        switch (recent.session.sessionType) {
+            case NIMSessionTypeP2P: {
+                NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum];
+                [sessionList addObject:dic];
+                break;
             }
-            
-            if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
-                if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
-                }
                 
-                if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
-                }
+            case NIMSessionTypeTeam: {
+                NSDictionary *dic = [self handleSessionTeam:recent totalUnreadCount:&allUnreadNum];
+                [sessionList addObject:dic];
+                break;
+            }
                 
-                if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
-                }
+            case NIMSessionTypeChatroom: {
+                NSDictionary *dic = [self handleSessionChatroom:recent totalUnreadCount:&allUnreadNum];
+                [sessionList addObject:dic];
+                break;
+            }
                 
-                if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
-                }
-                
-                if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
-                }
-                
-                if (recent.lastMessage.messageSubType == 7 && [recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
-                }
-                
-                NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
-                if (extendType != nil && [extendType isEqual:@"gif"]) {
-                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
-                }
-            }
-            
-            
-            
-            [dic setObject:localExt forKey:@"localExt"];
-            
-            if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
-                NIMCustomObject *customObject = recent.lastMessage.messageObject;
-                DWCustomAttachment *obj = customObject.attachment;
-                if (obj) {
-                    switch (obj.custType) {
-                            //                            case CustomMessageTypeFowardMultipleText: //红包
-                            //                            {
-                            //        //                        [dic setObject:obj.dataDict forKey:@"extend"];
-                            //                                [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
-                            //                            }
-                            //                                break;
-                        case CustomMessgeTypeRedpacket: //红包
-                        {
-                            [dic setObject:obj.dataDict forKey:@"extend"];
-                            //                        [dic setObject:@"redpacket" forKey:@"custType"];
-                            [dic setObject:@"redpacket" forKey:@"msgType"];
-                        }
-                            break;
-                        case CustomMessgeTypeBankTransfer: //转账
-                        {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
-                            //                        [dic setObject:@"transfer" forKey:@"custType"];
-                            [dic setObject:@"transfer" forKey:@"msgType"];
-                        }
-                            break;
-                        case CustomMessgeTypeRedPacketOpenMessage: //拆红包消息
-                        {
-                            NSDictionary *dataDict = [self dealWithData:obj.dataDict];
-                            if (dataDict) {
-                                [dic setObject:dataDict  forKey:@"extend"];
-                                //                            [dic setObject:@"redpacketOpen" forKey:@"custType"];
-                                [dic setObject:@"redpacketOpen" forKey:@"msgType"];
-                            }else{
-                                
-                                continue;//终止本次循环
-                            }
-                        }
-                            break;
-                        case CustomMessgeTypeUrl: //链接
-                        case CustomMessgeTypeAccountNotice: //账户通知，与账户金额相关变动
-                        {
-                            [dic setObject:[NSString stringWithFormat:@"%d",recent.lastMessage.isRemoteRead] forKey:@"isRemoteRead"];
-                            //                        [dic setObject:[NSString stringWithFormat:@"%ld", message.messageType] forKey:@"msgType"];
-                            if (obj.custType == CustomMessgeTypeAccountNotice) {
-                                [dic setObject:obj.dataDict  forKey:@"extend"];
-                                [dic setObject:@"account_notice" forKey:@"msgType"];
-                            }else{
-                                [dic setObject:obj.dataDict  forKey:@"extend"];
-                                [dic setObject:@"url" forKey:@"msgType"];
-                            }
-                        }
-                            break;
-                        case CustomMessgeTypeBusinessCard://名片
-                        {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
-                            [dic setObject:@"card" forKey:@"msgType"];
-                        }
-                            break;
-                        case CustomMessgeTypeCustom://自定义
-                        {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
-                            [dic setObject:@"custom" forKey:@"msgType"];
-                        }
-                            break;
-                        default:
-                        {
-                            if (obj.dataDict != nil) {
-                                [dic setObject:obj.dataDict  forKey:@"extend"];
-                            }
-                            [dic setObject:@"unknown" forKey:@"msgType"];
-                        }
-                            break;
-                            
-                    }
-                }
-            } else {
-                if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
-                    recent.lastMessage.text = @"[聊天记录]";
-                    NSMutableDictionary *extend = [NSMutableDictionary dictionary];
-                    [extend setObject:recent.lastMessage.text forKey:@"messages"];
-                    [dic setObject:extend forKey:@"extend"];
-                    [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
-                } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"card"]) {
-                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
-                    [dic setObject:@"card" forKey:@"msgType"];
-                } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
-                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
-                    [dic setObject:@"notification" forKey:@"msgType"];
-                } else {
-                    [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
-                }
-            }
-            
-            if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
-                [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
-                [dic setObject:@"" forKey:@"messageId"];
-                [dic setObject:@"0" forKey:@"time"];
-                [dic setObject:@"" forKey:@"content"];
-                if (recent.lastMessage.messageSubType == 7) {
-                    [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-                }
-            } else {
-                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-                [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
-                [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
-                [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
-                [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
-            }
-            
-            
-            if (recent.lastMessage.messageType == NIMMessageTypeNotification) {
-                // if message type is NIMNotificationTypeTeam/NIMNotificationTypeChatroom/NIMNotificationTypeNetCall
-                [dic setObject:[[ConversationViewController initWithConversationViewController]setNotiTeamObj:recent.lastMessage] forKey:@"extend"];
-            }
-            //发送时间
-            
-            
-            if (recent.session.sessionType != NIMSessionTypeChatroom) {
-                [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
-            } else {
-                [dic setObject:@"" forKey:@"imagePath"];
-            }
-            NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
-            [dic setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
-            NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
-            BOOL isHideSession = NO;
-            if (recent.localExt != nil && [recent.localExt objectForKey:@"isHideSession"]) {
-                isHideSession = YES;
-            }
-            
-            if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
-                allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
-            }
-            [dic setObject:strMute forKey:@"mute"];
-            [sessionList addObject:dic];
+            default:
+                break;
         }
-        
         
         if (recent != nil && recent.localExt != nil) {
             NSMutableDictionary *localExt = [recent.localExt mutableCopy];
@@ -715,207 +761,27 @@
     
     NSMutableArray *sessionList = [NSMutableArray array];
     for (NIMRecentSession *recent in NIMlistArr) {
-        if (recent.session.sessionType == NIMSessionTypeP2P) {
-            NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum];
-            [sessionList addObject:dic];
-        }
-        else{
-            // if ( [[NIMSDK sharedSDK].teamManager isMyTeam:recent.lastMessage.session.sessionId]) {
-            NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-            [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
-            [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
-            //未读
-            NSString *strUnreadCount = [NSString stringWithFormat:@"%zd", recent.unreadCount];
-            [dic setObject: [NSNumber numberWithBool: recent.lastMessage.isOutgoingMsg] forKey:@"isOutgoing"];
-            [dic setObject:strUnreadCount forKey:@"unreadCount"];
-            //群组名称或者聊天对象名称
-            [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
-            //账号
-            [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
-            
-            
-            NSMutableDictionary *localExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-            
-            if (recent.lastMessage != nil && recent.lastMessage.localExt != nil) {
-                if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
-                    [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
-                }
+        switch (recent.session.sessionType) {
+            case NIMSessionTypeP2P: {
+                NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum];
+                [sessionList addObject:dic];
+                break;
             }
-            
-            
-            
-            if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
-                if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
-                }
                 
-                if ([recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"dataRemoveReaction"] forKey:@"dataRemoveReaction"];
-                }
+            case NIMSessionTypeTeam: {
+                NSDictionary *dic = [self handleSessionTeam:recent totalUnreadCount:&allUnreadNum];
+                [sessionList addObject:dic];
+                break;
+            }
                 
-                if ([recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"revokeMessage"] forKey:@"revokeMessage"];
-                }
+            case NIMSessionTypeChatroom: {
+                NSDictionary *dic = [self handleSessionChatroom:recent totalUnreadCount:&allUnreadNum];
+                [sessionList addObject:dic];
+                break;
+            }
                 
-                if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
-                }
-                
-                if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] forKey:@"multiMediaType"];
-                }
-                
-                if (recent.lastMessage.messageSubType == 7 && [recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] != nil) {
-                    [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"temporarySessionRef"] forKey:@"temporarySessionRef"];
-                }
-                
-                NSString *extendType = [recent.lastMessage.remoteExt objectForKey:@"extendType"];
-                if (extendType != nil && [extendType isEqual:@"gif"]) {
-                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
-                }
-            }
-            
-            [dic setObject:localExt forKey:@"localExt"];
-            
-            if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
-                NIMCustomObject *customObject = recent.lastMessage.messageObject;
-                DWCustomAttachment *obj = customObject.attachment;
-                if (obj) {
-                    switch (obj.custType) {
-                            //                            case CustomMessageTypeFowardMultipleText: //红包
-                            //                            {
-                            //        //                        [dic setObject:obj.dataDict forKey:@"extend"];
-                            //                                [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
-                            //                            }
-                            //                                break;
-                        case CustomMessgeTypeRedpacket: //红包
-                        {
-                            [dic setObject:obj.dataDict forKey:@"extend"];
-                            //                        [dic setObject:@"redpacket" forKey:@"custType"];
-                            [dic setObject:@"redpacket" forKey:@"msgType"];
-                        }
-                            break;
-                        case CustomMessgeTypeBankTransfer: //转账
-                        {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
-                            //                        [dic setObject:@"transfer" forKey:@"custType"];
-                            [dic setObject:@"transfer" forKey:@"msgType"];
-                        }
-                            break;
-                        case CustomMessgeTypeRedPacketOpenMessage: //拆红包消息
-                        {
-                            NSDictionary *dataDict = [self dealWithData:obj.dataDict];
-                            if (dataDict) {
-                                [dic setObject:dataDict  forKey:@"extend"];
-                                //                            [dic setObject:@"redpacketOpen" forKey:@"custType"];
-                                [dic setObject:@"redpacketOpen" forKey:@"msgType"];
-                            }else{
-                                
-                                continue;//终止本次循环
-                            }
-                        }
-                            break;
-                        case CustomMessgeTypeUrl: //链接
-                        case CustomMessgeTypeAccountNotice: //账户通知，与账户金额相关变动
-                        {
-                            [dic setObject:[NSString stringWithFormat:@"%d",recent.lastMessage.isRemoteRead] forKey:@"isRemoteRead"];
-                            //                        [dic setObject:[NSString stringWithFormat:@"%ld", message.messageType] forKey:@"msgType"];
-                            if (obj.custType == CustomMessgeTypeAccountNotice) {
-                                [dic setObject:obj.dataDict  forKey:@"extend"];
-                                [dic setObject:@"account_notice" forKey:@"msgType"];
-                            }else{
-                                [dic setObject:obj.dataDict  forKey:@"extend"];
-                                [dic setObject:@"url" forKey:@"msgType"];
-                            }
-                        }
-                            break;
-                        case CustomMessgeTypeBusinessCard://名片
-                        {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
-                            [dic setObject:@"card" forKey:@"msgType"];
-                        }
-                            break;
-                        case CustomMessgeTypeCustom://自定义
-                        {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
-                            [dic setObject:@"custom" forKey:@"msgType"];
-                        }
-                            break;
-                        default:
-                        {
-                            if (obj.dataDict != nil) {
-                                [dic setObject:obj.dataDict  forKey:@"extend"];
-                            }
-                            [dic setObject:@"unknown" forKey:@"msgType"];
-                        }
-                            break;
-                            
-                    }
-                }
-            } else {
-                if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
-                    NSMutableDictionary *extend = [NSMutableDictionary dictionary];
-                    [extend setObject:recent.lastMessage.text forKey:@"messages"];
-                    
-                    [dic setObject:extend forKey:@"extend"];
-                    [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
-                } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"card"]) {
-                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
-                    [dic setObject:@"card" forKey:@"msgType"];
-                } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
-                    [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
-                    [dic setObject:@"notification" forKey:@"msgType"];
-                }  else {
-                    [dic setObject:[NSString stringWithFormat:@"%@", [self getMessageType: recent.lastMessage.messageType]] forKey:@"msgType"];
-                }
-            }
-            
-            
-            
-            if (recent.lastMessage == nil || recent.lastMessage.messageSubType == 7) {
-                [dic setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
-                [dic setObject:@"" forKey:@"messageId"];
-                [dic setObject:@"0" forKey:@"time"];
-                [dic setObject:@"" forKey:@"content"];
-                if (recent.lastMessage.messageSubType == 7) {
-                    [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-                }
-            } else {
-                [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType]  forKey:@"messageSubType"];
-                [dic setObject:[NSString stringWithFormat:@"%zd", recent.lastMessage.deliveryState] forKey:@"msgStatus"];
-                [dic setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.messageId] forKey:@"messageId"];
-                [dic setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
-                [dic setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
-            }
-            
-            if (recent.lastMessage.messageType == NIMMessageTypeNotification) {
-                // if message type is NIMNotificationTypeTeam/NIMNotificationTypeChatroom/NIMNotificationTypeNetCall
-                [dic setObject:[[ConversationViewController initWithConversationViewController]setNotiTeamObj:recent.lastMessage] forKey:@"extend"];
-            }
-            
-            if (recent.session.sessionType != NIMSessionTypeChatroom) {
-                [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
-            } else {
-                [dic setObject:@"" forKey:@"imagePath"];
-            }
-            NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
-            [dic setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
-            NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
-            
-            BOOL isHideSession = NO;
-            if (recent.localExt != nil && [recent.localExt objectForKey:@"isHideSession"]) {
-                isHideSession = YES;
-            }
-            
-            if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
-                allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
-            }
-            
-            //                allUnreadNum = allUnreadNum + [strUnreadCount integerValue];
-            [dic setObject:strMute forKey:@"mute"];
-            [sessionList addObject:dic];
-            
-            // }
+            default:
+                break;
         }
         
         if (recent != nil && recent.localExt != nil) {
