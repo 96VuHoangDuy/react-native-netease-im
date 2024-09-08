@@ -94,45 +94,7 @@
     return dispatch_get_main_queue();
 }
 
-RCT_EXPORT_METHOD(loginChatroom:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ChatroomViewController initWithChatroomViewController] loginChatroom:params success:^(id param) {
-        resolve(param);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(logoutChatroom:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] logoutChatroom:roomId success:^(id params) {
-        resolve(params);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(fetchChatroomInfo:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomInfo:roomId success:^(id params) {
-        resolve(params);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(fetchChatroomMember:(nonnull NSString *)roomId userId:(nonnull NSString *)userId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMember:roomId userId:userId success:^(id params) {
-        resolve(params);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
-
-RCT_EXPORT_METHOD(fetchChatroomMembers:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMembers:roomId success:^(id params) {
-        resolve(params);
-    } err:^(id error) {
-        reject(@"-1", error, nil);
-    }];
-}
+RCT_EXPORT_MODULE()
 
 //手动登录
 RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)token appKey:(NSString *)appKey
@@ -1228,6 +1190,46 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
     }
     
     resolve(@"deleteSuccess");
+}
+
+RCT_EXPORT_METHOD(loginChatroom:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ChatroomViewController initWithChatroomViewController] loginChatroom:params success:^(id param) {
+        resolve(param);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(logoutChatroom:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ChatroomViewController initWithChatroomViewController] logoutChatroom:roomId success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(fetchChatroomInfo:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ChatroomViewController initWithChatroomViewController] fetchChatroomInfo:roomId success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(fetchChatroomMember:(nonnull NSString *)roomId userId:(nonnull NSString *)userId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMember:roomId userId:userId success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(fetchChatroomMembers:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMembers:roomId success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
 }
 
 //删除文件夹下所有文件
