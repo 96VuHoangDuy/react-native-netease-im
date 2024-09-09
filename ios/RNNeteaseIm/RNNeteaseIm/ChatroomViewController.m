@@ -9,14 +9,11 @@
 #import "ChatroomViewController.h"
 #import "ImConfig.h"
 
-@interface ChatroomViewController () {
+@interface ChatroomViewController ()<NIMChatroomManagerDelegate> {
     NSDictionary *chatroomLoginStatus;
-    NIMChatroomMember *myMember;
 }
 
 @property (nonatomic, strong) NSDictionary *charoomLoginStatus;
-
-@property (nonatomic, strong) NIMChatroomMember *member;
 
 @end
 
@@ -41,7 +38,6 @@
     self = [super init];
     if (self) {
         _charoomLoginStatus = [[NSMutableDictionary alloc] init];
-        _member = nil;
     }
     
     return self;
@@ -87,25 +83,15 @@
         NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
         [result setObject:chatroom.roomId forKey:@"roomId"];
         [result setObject:chatroom.name forKey:@"name"];
-        [result setObject:chatroom.announcement forKey:@"announcement"];
         [result setObject:[NSNumber numberWithLong:chatroom.onlineUserCount] forKey:@"onlineUserCount"];
-        [result setObject:chatroom.broadcastUrl forKey:@"broadcastUrl"];
-        
-        NSDictionary *creator = [self fetchUserInfo:chatroom.creator];
-        if (creator != nil) {
-            [result setObject:creator forKey:@"creator"];
+        if (chatroom.announcement != nil) {
+            [result setObject:chatroom.announcement forKey:@"announcement"];
         }
-        
-        NIMSession *session = [NIMSession session:roomId type:NIMSessionTypeChatroom];
-        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
-        if (recent == nil) {
-            NIMAddEmptyRecentSessionBySessionOption *option = [[NIMAddEmptyRecentSessionBySessionOption alloc] init];
-            option.addEmptyMsgIfNoLastMsgExist = NO;
-            [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session option:option];
+        if (chatroom.broadcastUrl) {
+            [result setObject:chatroom.broadcastUrl forKey:@"broadcastUrl"];
         }
-        
+
         [self updateChatroomLoginStatus:roomId isLogin:YES];
-        self->_member = member;
         
         success(result);
     }];
@@ -118,7 +104,6 @@
             err(error);
         } else {
             [self updateChatroomLoginStatus:roomId isLogin:NO];
-            self->_member = nil;
             
             success(@"success");
         }
@@ -207,9 +192,13 @@
             NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
             [result setObject:chatroom.roomId forKey:@"roomId"];
             [result setObject:chatroom.name forKey:@"name"];
-            [result setObject:chatroom.announcement forKey:@"announcement"];
             [result setObject:[NSNumber numberWithLong:chatroom.onlineUserCount] forKey:@"onlineUserCount"];
-            [result setObject:chatroom.broadcastUrl forKey:@"broadcastUrl"];
+            if (chatroom.announcement != nil) {
+                [result setObject:chatroom.announcement forKey:@"announcement"];
+            }
+            if (chatroom.broadcastUrl) {
+                [result setObject:chatroom.broadcastUrl forKey:@"broadcastUrl"];
+            }
             
             NSDictionary *creator = [self fetchUserInfo:chatroom.creator];
             if (creator != nil) {
@@ -259,11 +248,11 @@
     NIMChatroomMemberRequest *request = [[NIMChatroomMemberRequest alloc] init];
     request.roomId = roomId;
     request.type = NIMChatroomFetchMemberTypeRegularOnline;
-    request.lastMember = _member;
     request.limit = 100;
     
     [[NIMSDK sharedSDK].chatroomManager fetchChatroomMembers:request completion:^(NSError *error, NSArray<NIMChatroomMember *> *members) {
         if (error != nil) {
+            NSLog(@"fetchChatroomMembers error: %@", error);
             err(error);
             return;
         }

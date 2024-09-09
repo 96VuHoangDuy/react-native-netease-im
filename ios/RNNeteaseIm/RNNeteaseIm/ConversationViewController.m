@@ -1445,6 +1445,11 @@
                     {
                         if (obj.dataDict != nil) {
                             [dic setObject:obj.dataDict  forKey:@"extend"];
+                            
+                            if(isCsr && [obj.dataDict objectForKey:@"account"]  != nil && [obj.dataDict objectForKey:@"accid"] != nil) {
+                                [dic setObject:@"notification" forKey:@"msgType"];
+                                break;
+                            }
                         }
                         [dic setObject:@"unknown" forKey:@"msgType"];
                     }

@@ -30,8 +30,7 @@ export type NIMChatroomMember = {
 export interface NIMChatroomInfo {
   roomId: string;
   name: string;
-  announcement: string;
+  announcement?: string;
   onlineUserCount: number;
-  broadcastUrl: string;
-  creator: NIMUserInfo;
+  broadcastUrl?: string;
 }

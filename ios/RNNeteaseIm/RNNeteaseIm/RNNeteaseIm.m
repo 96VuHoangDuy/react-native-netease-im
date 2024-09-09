@@ -1192,6 +1192,8 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
     resolve(@"deleteSuccess");
 }
 
+#pragma mark -- chatroom -----------------------------------------------
+
 RCT_EXPORT_METHOD(loginChatroom:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ChatroomViewController initWithChatroomViewController] loginChatroom:params success:^(id param) {
         resolve(param);

@@ -171,6 +171,10 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
 
   parentId?: string;
   indexCount?: number;
+
+  // Notification Customer Service
+  account: string;
+  accid: string;
 }
 
 export interface NIMMessage {
