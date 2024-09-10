@@ -12,6 +12,7 @@
 
 - (id<NIMCustomAttachment>)decodeAttachment:(NSString *)content
 {
+    NSLog(@"decodeAttachment content: %@", content);
     id<NIMCustomAttachment> attachment = nil;
     
     NSData *data = [content dataUsingEncoding:NSUTF8StringEncoding];

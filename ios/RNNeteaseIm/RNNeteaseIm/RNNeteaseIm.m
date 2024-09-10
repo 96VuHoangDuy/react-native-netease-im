@@ -1234,6 +1234,14 @@ RCT_EXPORT_METHOD(fetchChatroomMembers:(nonnull NSString *)roomId resolve:(RCTPr
     }];
 }
 
+RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSInteger)limit currentMessageId:(NSString *)currentMessageId orderBy:(NSString *)orderBy resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ChatroomViewController initWithChatroomViewController] fetchMessageHistory:roomId limit:limit currentMessageId:currentMessageId orderBy:orderBy success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //删除文件夹下所有文件
 - (void)deleteFilesWithPath:(NSString *)path andFiles:(NSArray *)files{
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {

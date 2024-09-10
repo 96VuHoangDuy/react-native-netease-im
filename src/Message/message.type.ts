@@ -179,20 +179,6 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
 
 export interface NIMMessage {
   extend?: NimMessageTypeExtend;
-  //  {
-  //   tipMsg?: string;
-  //   sourceId?: string;
-  //   targets?: string[];
-  //   operationType?: NIMTeamOperationType;
-  //   updateDetail?: {
-  //     type: NIMTeamOperationTypeUpdateDetail;
-  //     value: any;
-  //   };
-  //   // audio message
-  //   duration: number;
-  //   isPlayed: boolean;
-  //   url: string;
-  // };
   isRemoteRead: number;
 
   fromUser: {

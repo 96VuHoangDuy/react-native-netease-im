@@ -53,6 +53,8 @@
 #pragma mark - NIMChatManagerDelegate
 - (void)onRecvMessages:(NSArray *)messages//接收到新消息
 {
+    
+    NSLog(@"onRecvMessages messages: %@", messages);
     static BOOL isPlaying = NO;
     if (isPlaying) {
         return;
@@ -63,6 +65,8 @@
         isPlaying = NO;
     });
     [self checkTranferMessage:messages];
+    
+    
 }
 
 - (void)playMessageAudioTip

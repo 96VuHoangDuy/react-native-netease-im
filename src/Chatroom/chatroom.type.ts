@@ -1,11 +1,5 @@
 import { NIMUserInfo } from 'react-native-netease-im/src/User/user.type';
 
-export type IParamsLoginChatroom = {
-  roomId: string;
-  nickname: string;
-  avatar: string;
-};
-
 export enum ChatroomMemberType {
   GUEST = 'GUEST',
   LIMIT = 'LIMIT',
@@ -14,6 +8,17 @@ export enum ChatroomMemberType {
   MANAGER = 'MANAGER',
   ANONYMOUS_GUEST = 'ANONYMOUS_GUEST',
 }
+
+export enum ChatroomMessageOrderBy {
+  ASC = "ASC",
+  DESC = "DESC"
+}
+
+export type IParamsLoginChatroom = {
+  roomId: string;
+  nickname: string;
+  avatar: string;
+};
 
 export type NIMChatroomMember = {
   userId: string;

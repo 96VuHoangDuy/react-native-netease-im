@@ -1,5 +1,6 @@
 import { NativeModules } from 'react-native';
 import {
+  ChatroomMessageOrderBy,
   IParamsLoginChatroom,
   NIMChatroomInfo,
   NIMChatroomMember,
@@ -28,6 +29,10 @@ class NimChatroom {
 
   fetchChatroomMembers(roomId: string): Promise<NIMChatroomMember[]> {
     return RNNeteaseIm.fetchChatroomMembers(roomId);
+  }
+
+  fetchMessageHistory(roomId: string, limit: number , currentMessageId?: string, orderBy?: ChatroomMessageOrderBy) {
+    return RNNeteaseIm.fetchMessageHistory(roomId, limit, currentMessageId, orderBy)
   }
 }
 

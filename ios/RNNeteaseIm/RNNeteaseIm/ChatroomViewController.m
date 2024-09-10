@@ -301,6 +301,47 @@
     }];
 }
 
+-(void)fetchMessageHistory:(NSString *)roomId limit:(NSInteger)limit currentMessageId:(NSString *)currentMessageId orderBy:(NSString *)orderBy success:(Success)success err:(Errors)err {
+    NIMHistoryMessageSearchOption *option = [[NIMHistoryMessageSearchOption alloc] init];
+    NIMMessageSearchOrder order = [self getOrder:orderBy];
+    
+    option.order = order;
+    option.limit = limit;
+    
+    if (currentMessageId != nil) {
+        NIMSession *session = [NIMSession session:roomId type:NIMSessionTypeSuperTeam];
+        NSArray<NIMMessage *> *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[currentMessageId]];
+        
+        if (messages != nil && messages.count > 0) {
+            NIMMessage *currentMessage = messages.firstObject;
+            
+            option.currentMessage = currentMessage;
+            option.startTime = order == NIMMessageSearchOrderAsc ? currentMessage.timestamp : 0;
+            option.endTime = order == NIMMessageSearchOrderDesc ? currentMessage.timestamp : 0;
+        }
+    }
+    
+    [[NIMSDK sharedSDK].chatroomManager fetchMessageHistory:roomId option:option result:^(NSError *error, NSArray<NIMMessage *> *messages) {
+        if (error != nil) {
+            NSLog(@"fetchMessageHistory error: %@",error);
+            err(error);
+            return;
+        }
+        
+        // TODO: handle messages
+        
+        success(@[]);
+    }];
+}
+
+-(NIMMessageSearchOrder)getOrder:(NSString *)order {
+    if ([order isEqual:@"ASC"]) {
+        return NIMMessageSearchOrderAsc;
+    }
+    
+    return NIMMessageSearchOrderDesc;
+}
+
 -(NSString *)getMemberType:(NIMChatroomMemberType)memberType {
     switch (memberType) {
         case NIMChatroomMemberTypeGuest:

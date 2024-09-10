@@ -40,7 +40,7 @@ export enum NIMSessionTypeEnum {
   SUPER_TEAM = 'SUPER_TEAM',
   System = 'System',
   Ysf = 'Ysf',
-  ChatRoom = 'ChatRoom',
+  ChatRoom = '2',
   QChat = 'QChat',
   onlineService = 'online_service',
   systemMessage = 'system_message',

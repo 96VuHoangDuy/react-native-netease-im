@@ -31,4 +31,6 @@ typedef void(^Errors)(id _Nullable error);
 
 -(void)fetchChatroomMembers:(NSString *_Nonnull)roomId success:(Success _Nonnull )success err:(Errors _Nonnull )err;
 
+-(void)fetchMessageHistory:(NSString *_Nonnull)roomId limit:(NSInteger)limit currentMessageId:(NSString *_Nullable)currentMessageId orderBy:(NSString *_Nullable)orderBy success:(Success _Nonnull)success err:(Errors _Nonnull)err;
+
 @end
