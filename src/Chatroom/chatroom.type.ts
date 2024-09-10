@@ -33,4 +33,5 @@ export interface NIMChatroomInfo {
   announcement?: string;
   onlineUserCount: number;
   broadcastUrl?: string;
+  isLoginSuccess: boolean
 }

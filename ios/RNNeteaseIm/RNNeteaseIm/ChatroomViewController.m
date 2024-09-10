@@ -8,6 +8,7 @@
 
 #import "ChatroomViewController.h"
 #import "ImConfig.h"
+#import "NIMViewController.h"
 
 @interface ChatroomViewController ()<NIMChatroomManagerDelegate> {
     NSDictionary *chatroomLoginStatus;
@@ -84,12 +85,25 @@
         [result setObject:chatroom.roomId forKey:@"roomId"];
         [result setObject:chatroom.name forKey:@"name"];
         [result setObject:[NSNumber numberWithLong:chatroom.onlineUserCount] forKey:@"onlineUserCount"];
+        [result setObject:[NSNumber numberWithBool:YES] forKey:@"isLoginSuccess"];
         if (chatroom.announcement != nil) {
             [result setObject:chatroom.announcement forKey:@"announcement"];
         }
         if (chatroom.broadcastUrl) {
             [result setObject:chatroom.broadcastUrl forKey:@"broadcastUrl"];
         }
+        
+//        NIMSession *session = [NIMSession session:roomId type:NIMSessionTypeChatroom];
+//        NSLog(@"loginChatroom session: %@",session);
+//        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+//        NSLog(@"loginChatroom recent: %@", recent);
+//        if (recent == nil) {
+//            NIMAddEmptyRecentSessionBySessionOption *option = [[NIMAddEmptyRecentSessionBySessionOption alloc] init];
+//            option.addEmptyMsgIfNoLastMsgExist = NO;
+//            [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session option:option];
+//        }
+        
+        NSLog(@"loginChatroom result: %@", result);
 
         [self updateChatroomLoginStatus:roomId isLogin:YES];
         
@@ -247,7 +261,7 @@
 -(void)fetchChatroomMembers:(NSString *)roomId success:(Success)success err:(Errors)err {
     NIMChatroomMemberRequest *request = [[NIMChatroomMemberRequest alloc] init];
     request.roomId = roomId;
-    request.type = NIMChatroomFetchMemberTypeRegularOnline;
+    request.type = NIMChatroomFetchMemberTypeTemp;
     request.limit = 100;
     
     [[NIMSDK sharedSDK].chatroomManager fetchChatroomMembers:request completion:^(NSError *error, NSArray<NIMChatroomMember *> *members) {
@@ -257,13 +271,17 @@
             return;
         }
         
+        NSLog(@"member =>>>>> %@", members);
+        
         if (members == nil || members.count == 0) {
             success(@[]);
             return;
         }
-        
+
         NSMutableArray *result = [[NSMutableArray alloc] init];
         for(NIMChatroomMember *member in members) {
+            if ([member.userId isEqual:[[NIMViewController initWithController] strAccount]]) continue;
+            
             NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
             
             [dic setObject:member.userId forKey:@"userId"];

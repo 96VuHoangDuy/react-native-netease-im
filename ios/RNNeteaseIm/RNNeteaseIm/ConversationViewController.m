@@ -2205,6 +2205,12 @@
 //接收消息
 - (void)onRecvMessages:(NSArray *)messages
 {
+    for(NIMMessage *message in messages) {
+        if (message.messageType == NIMMessageTypeNotification) {
+            NSLog(@"message notification: %@", message);
+        }
+    }
+    
     NIMMessage *message = messages.firstObject;
     
     NSLog(@"onRecvMessages >>>>> %@", message);
