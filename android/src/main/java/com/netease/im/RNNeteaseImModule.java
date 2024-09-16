@@ -3079,7 +3079,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         if (toPass) {
                             try {
                                 IMMessage message = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "AGREE_FRIEND_REQUEST");
-                                TimeUnit.SECONDS.sleep(1);
+                                TimeUnit.MILLISECONDS.sleep(1500);
                                 NIMClient.getService(MsgService.class).sendMessage(message, false);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);

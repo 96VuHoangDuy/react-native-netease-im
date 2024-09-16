@@ -277,7 +277,10 @@
         if (!error) {
             if ([isAccept isEqualToString:@"1"]) {
                 success(@"success");
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                
+                double delayInSeconds = 1.5;
+                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+                dispatch_after(popTime, dispatch_get_main_queue(), ^{
                     [self sendMakeFriendSucessMessgae:request.userId];
                     [self refrash];
                 });
