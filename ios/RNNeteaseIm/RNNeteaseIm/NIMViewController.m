@@ -276,7 +276,6 @@
     BOOL isChatBot = NO;
     BOOL isCsr = NO;
     BOOL isHideSession = NO;
-    BOOL isCountUnread = user.notifyForNewMsg && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"];
     if ([localExt objectForKey:@"isChatBot"] != nil) {
         NSNumber *chatBot = [localExt objectForKey:@"isChatBot"];
         isChatBot = [chatBot boolValue];
@@ -477,7 +476,7 @@
     [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
     [dic setObject:localExt forKey:@"localExt"];
     
-    if (isCountUnread) {
+    if (user.notifyForNewMsg && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"]) {
         *totalUnreadCount = *totalUnreadCount + [unreadCount integerValue];
     }
     
