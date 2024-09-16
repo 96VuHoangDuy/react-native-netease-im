@@ -1182,6 +1182,8 @@ public class ReactCache {
     public static Object createTeamInfo(Team team) {
         WritableMap writableMap = Arguments.createMap();
         if (team != null) {
+            NimUserInfo creatorInfo = NimUserInfoCache.getInstance().getUserInfo(team.getCreator());
+
             writableMap.putString("teamId", team.getId());
             writableMap.putString("name", team.getName());
             writableMap.putString("avatar", team.getIcon());
@@ -1192,6 +1194,8 @@ public class ReactCache {
             writableMap.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
             writableMap.putString("memberCount", Integer.toString(team.getMemberCount()));
             writableMap.putString("memberLimit", Integer.toString(team.getMemberLimit()));
+            writableMap.putString("creatorName", creatorInfo.getName());
+
             String introduce = team.getIntroduce();
             if (introduce == null || introduce.equals("(null)")) {
                 writableMap.putString("introduce", "");

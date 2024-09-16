@@ -203,6 +203,8 @@ NSMutableArray *_myTeams;
 -(void)getTeamInfo:(NSString *)teamId Succ:(Success)succ Err:(Errors)err{
   NIMTeam *team =   [[NIMSDK sharedSDK].teamManager teamById:teamId];
     if (team) {
+        NIMUser *creatorInfo = [[NIMSDK sharedSDK].userManager userInfo:team.owner];
+        
         NSMutableDictionary *teamDic = [NSMutableDictionary dictionary];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
@@ -216,6 +218,8 @@ NSMutableArray *_myTeams;
                 [teamDic setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.joinMode] forKey:@"verifyType"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
+                [teamDic setObject:[NSString stringWithFormat:@"%@", creatorInfo.userInfo.nickName] forKey:@"creatorName"];
+        
                 if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
                     [teamDic setObject:@"" forKey:@"introduce"];
                 } else {
