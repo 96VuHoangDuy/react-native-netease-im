@@ -470,7 +470,7 @@
             NIMTeam *team = [[NIMSDK sharedSDK].teamManager teamById:session.sessionId];
             
             NSString *teamName = team.teamName;
-            if ([teamName isEqual:@"TEAM_NAME_DEFAULT"]) {
+            if (teamName == nil || [teamName isEqual:@"TEAM_NAME_DEFAULT"]) {
                 NSString *teamNameDefault = [[TeamViewController initWithTeamViewController] getTeamNameDefault:team.teamId];
                 if (teamNameDefault != nil) {
                     teamName = teamNameDefault;
