@@ -10,10 +10,19 @@
 #import "ContactViewController.h"
 #import "ConversationViewController.h"
 #import "ChatroomViewController.h"
+#import "react-native-config/RNCConfig.h"
 
 @interface NIMViewController ()<NIMLoginManagerDelegate,NIMConversationManagerDelegate>{
     //    BOOL isLoginFailed;
+    
+//    NSDictionary *listUserInfo;
+//    NSDictionary *listCsrOrChatbot;
+//    BOOL isFetchCsrAndChatbot;
 }
+
+//@property (nonatomic, strong) NSDictionary *listUserInfo;
+//@property (nonatomic, strong) NSDictionary *listCsrOrChatbot;
+//@property (nonatomic, strong) BOOL *isFetchCsrAndChatbot;
 
 @end
 
@@ -33,6 +42,18 @@
     }
     return self;
 }
+
+-(instancetype)init {
+    self = [super init];
+    if (self) {
+        // _listUserInfo = [[NSMutableDictionary alloc] init];
+        // _listCsrOrChatbot = [[NSMutableDictionary alloc] init];
+        // _isFetchCsrAndChatbot = NO;
+    }
+    
+    return self;
+}
+
 -(void)addDelegate{
     [[NIMSDK sharedSDK].loginManager addDelegate:self];
     [[NIMSDK sharedSDK].conversationManager addDelegate:self];
@@ -245,26 +266,67 @@
     return result;
 };
 
--(BOOL) hanldeReplyStrangerByRecentContact:(NIMRecentSession *)recent {
-    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-    if ([localExt objectForKey:@"isReplyStranger"] != nil) {
-        NSNumber *replyStranger = [localExt objectForKey:@"isReplyStranger"];
-        
-        return [replyStranger boolValue];
-    }
-    
-    BOOL isReplyStranger = NO;
-    NIMMessage *lastMessage = recent.lastMessage;
-    if (lastMessage != nil && lastMessage.isOutgoingMsg) {
-        isReplyStranger = YES;
-    }
-    
-    [localExt setObject:@(isReplyStranger) forKey:@"isReplyStranger"];
-    
-    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
-    
-    return isReplyStranger;
-}
+//-(BOOL) hanldeReplyStrangerByRecentContact:(NIMRecentSession *)recent {
+//    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+//    if ([localExt objectForKey:@"isReplyStranger"] != nil) {
+//        NSNumber *replyStranger = [localExt objectForKey:@"isReplyStranger"];
+//        
+//        return [replyStranger boolValue];
+//    }
+//    
+//    BOOL isReplyStranger = NO;
+//    NIMMessage *lastMessage = recent.lastMessage;
+//    if (lastMessage != nil && lastMessage.isOutgoingMsg) {
+//        isReplyStranger = YES;
+//    }
+//    
+//    [localExt setObject:@(isReplyStranger) forKey:@"isReplyStranger"];
+//    
+//    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+//    
+//    return isReplyStranger;
+//}
+
+//-(NSDictionary *)fetchUserInfo:(NSString *)sessionId {
+//    NSString *apiUrl = [RNCConfig envFor:@"API_URL"];
+//    NSString *authKey = [RNCConfig envFor:@"API_AUTH_KEY"];
+//    NSLog(@"env => %@, %@", apiUrl, authKey);
+//    if (apiUrl == nil || authKey == nil) return nil;
+//    
+//    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/api/v1/client/users/{accid}?accid=%@", apiUrl, sessionId]];
+//    NSString *contentType = @"application/json";
+//    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+//    [request addValue:contentType forHTTPHeaderField: @"Content-Type"];
+//    [request addValue:authKey forHTTPHeaderField:@"customKey"];
+//    [request setHTTPMethod:@"GET"];
+//    
+//    NSError *error = nil;
+//    NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:&error];
+//    
+//    if (error != nil || data == nil) {
+//        if (error != nil) {
+//            NSLog(@"fetchUserInfo error: %@", error);
+//        }
+//        
+//        return nil;
+//    }
+//    
+//    NSError *jsonError = nil;
+//    NSDictionary *dict = [NSDictionary dictionaryWithDictionary:[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:&jsonError]];
+//    
+//    if (jsonError != nil) {
+//        NSLog(@"fetchUserInfo error: %@", jsonError);
+//        return nil;
+//    }
+//    
+//    NSMutableDictionary *updateListUserInfo = _listUserInfo ? [_listUserInfo mutableCopy] : [[NSMutableDictionary alloc] init];
+//    
+//    [updateListUserInfo setObject:dict forKey:sessionId];
+//    
+//    _listUserInfo = updateListUserInfo;
+//    
+//    return dict;
+//}
 
 -(NSDictionary *)handleSessionP2p:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *)totalUnreadCount {
     NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
@@ -434,6 +496,16 @@
             }
         }
         
+        if (recent.lastMessage.localExt != nil) {
+            if ([recent.lastMessage.localExt objectForKey:@"birthdayInfo"] != nil) {
+                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"birthdayInfo"] forKey:@"birthdayInfo"];
+            }
+            
+            if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"]  != nil) {
+                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
+            }
+        }
+        
         if (recent.lastMessage.remoteExt != nil) {
             if ([recent.lastMessage.remoteExt objectForKey:@"reaction"] != nil) {
                 [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"reaction"] forKey:@"reaction"];
@@ -466,14 +538,48 @@
         }
     }
     
+//    NSString *sessionName =  [self nameForRecentSession:recent];
+//    if ([sessionName isEqual:recent.session.sessionId] && !isCsr && !isChatBot) {
+//        NSDictionary *userWithApi = [_listUserInfo objectForKey:recent.session.sessionId];
+//        if (userWithApi == nil) {
+//            userWithApi = [self fetchUserInfo:recent.session.sessionId];
+//            NSLog(@"fetch api user info: %@", recent.session.sessionId);
+//        }
+//        if (userWithApi == nil) {
+//            userWithApi = [[NSMutableDictionary alloc] init];
+//        }
+//        
+//        NSString *nickname = [userWithApi objectForKey:@"nickName"];
+//        NSString *sex = [userWithApi objectForKey:@"sex"];
+//        NSString *avatar = [userWithApi objectForKey:@"avatar"];
+//        
+//        if (nickname != nil && ![nickname isEqual:@"<null>"]) {
+//            [dic setObject:nickname forKey:@"name"];
+//        } else {
+//            [dic setObject:@"USER_NAME_DEFAULT" forKey:@"name"];
+//        }
+//        
+//        if (sex != nil && ![sex isEqual:@"<null>"]) {
+//            [dic setObject:sex forKey:@"sex"];
+//        }
+//        
+//        if (avatar != nil && ![avatar isEqual:@"<null>"]) {
+//            [dic setObject:avatar forKey:@"imagePath"];
+//        } else {
+//            [dic setObject:@"" forKey:@"imagePath"];
+//        }
+//    } else {
+//        [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
+//        [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
+//    }
     
+    [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
+    [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
     [dic setObject:[NSString stringWithFormat:@"%@",recent.session.sessionId] forKey:@"contactId"];
     [dic setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
     [dic setObject: [NSNumber numberWithBool: isMyFriend] forKey:@"isMyFriend"];
-    [dic setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent] ] forKey:@"name"];
     [dic setObject:mute forKey:@"mute"];
     [dic setObject:unreadCount forKey:@"unreadCount"];
-    [dic setObject:[NSString stringWithFormat:@"%@", [self imageUrlForRecentSession:recent] ?  [self imageUrlForRecentSession:recent] : @""] forKey:@"imagePath"];
     [dic setObject:localExt forKey:@"localExt"];
     
     if (user.notifyForNewMsg && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"]) {
@@ -530,6 +636,11 @@
             if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"] != nil) {
                 [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
             }
+            
+            if ([recent.lastMessage.localExt objectForKey:@"birthdayInfo"] != nil) {
+                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"birthdayInfo"] forKey:@"birthdayInfo"];
+            }
+            
         }
         
         if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {
@@ -649,6 +760,8 @@
     [result setObject:[NSString stringWithFormat:@"%@", [self nameForRecentSession:recent]] forKey:@"name"];
     [result setObject:@"" forKey:@"imagePath"];
     [result setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
+    NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
+    [result setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
     
     if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
         *totalUnreadCount = *totalUnreadCount + [unreadCount integerValue];
@@ -787,7 +900,7 @@
             NSMutableDictionary *localExt = [recent.localExt mutableCopy];
             NSNumber *pinSessionWithEmpty = [localExt objectForKey:@"isPinSessionWithEmpty"];
             
-            NSLog(@"pinSessionWithEmpty >> %@", pinSessionWithEmpty);
+            NSLog(@"pinSessionWithEmpty >> %@, %@", pinSessionWithEmpty, recent.lastMessage);
             
             if (pinSessionWithEmpty != nil) {
                 BOOL isPinSessionWithEmpty = [pinSessionWithEmpty boolValue];

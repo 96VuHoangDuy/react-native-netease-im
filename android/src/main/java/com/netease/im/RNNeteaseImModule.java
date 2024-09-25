@@ -3268,7 +3268,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 if (code != ResponseCode.RES_SUCCESS || result == null || result.isEmpty())  {
                     promise.resolve("success");
                     return;
-                };;
+                }
 
                 IMMessage message = result.get(0);
 
@@ -3277,6 +3277,32 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 promise.resolve("success");
             }
         });
+    }
+
+    @ReactMethod
+    public void removeTemporarySessionRef(String sessionId, final Promise promise) {
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, SessionTypeEnum.P2P);
+        if (recent == null) {
+            promise.resolve("success");
+            return;
+        }
+
+        Map<String, Object> localExt = recent.getExtension();
+        if (localExt == null) {
+            localExt = new HashMap<>();
+        }
+        if (localExt.get("temporarySessionRef") == null) {
+            promise.resolve("success");
+            return;
+        }
+
+        localExt.remove("temporarySessionRef");
+
+        recent.setExtension(localExt);
+
+        NIMClient.getService(MsgService.class).updateRecent(recent);
+
+        promise.resolve("success");
     }
 
     @ReactMethod
@@ -3296,7 +3322,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             }
 
             Map<String, Object> tempSessionRef = (Map<String, Object>) localExt.get("temporarySessionRef");
-            if (tempSessionRef != null && tempSessionRef.get("sessionId") != null && tempSessionRef.get("sessionId").equals(temporarySessionId)) return;
+            if (tempSessionRef != null && tempSessionRef.get("sessionId") != null && tempSessionRef.get("sessionId").equals(temporarySessionId)) {
+                promise.resolve("success");
+                return;
+            };
 
             localExt.put("temporarySessionRef", temporarySessionRef);
 
@@ -3304,19 +3333,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
             NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
 
-            sessionService.sendMessageUpdateTemporarySession(sessionId, temporarySessionRef, new SessionService.OnSendMessageListener() {
-                @Override
-                public int onResult(int code, IMMessage message) {
-                    if (code == ResponseCode.RES_SUCCESS) {
-                        promise.resolve("success");
-                    } else {
-                        promise.reject("-1", "error: " + code);
-                    }
+            sessionService.sendMessageUpdateTemporarySession(sessionId, temporarySessionRef);
 
-                    return 0;
-                }
-            });
-
+            promise.resolve("success");
             return;
         }
 
@@ -3333,18 +3352,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
         NIMClient.getService(MsgService.class).updateRecentAndNotify(recent);
 
-        sessionService.sendMessageUpdateTemporarySession(sessionId, temporarySessionRef, new SessionService.OnSendMessageListener() {
-            @Override
-            public int onResult(int code, IMMessage message) {
-                if (code == ResponseCode.RES_SUCCESS) {
-                    promise.resolve("success");
-                } else {
-                    promise.reject("-1", "error: " + code);
-                }
 
-                return 0;
-            }
-        });
+        sessionService.sendMessageUpdateTemporarySession(sessionId, temporarySessionRef);
+
+        promise.resolve("success");
     }
 
     @ReactMethod

@@ -466,6 +466,12 @@ RCT_EXPORT_METHOD(addEmptyTemporarySession:(NSString *)sessionId temporarySessio
     }];
 }
 
+RCT_EXPORT_METHOD(removeTemporarySessionRef:(nonnull NSString *)sessionId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] removeTemporarySessionRef:sessionId success:^(id params) {
+        resolve(params);
+    }];
+}
+
 //聊天界面历史记录
 RCT_EXPORT_METHOD(queryMessageListEx:(nonnull  NSString *)messageId limit:(int)limit direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ConversationViewController initWithConversationViewController]localSession:limit currentMessageID:messageId direction:direction sessionId:sessionId sessionType:sessionType success:^(id param) {

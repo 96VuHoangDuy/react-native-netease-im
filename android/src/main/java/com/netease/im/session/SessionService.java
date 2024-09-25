@@ -534,7 +534,7 @@ public class SessionService {
         });
     }
 
-    public void sendMessageUpdateTemporarySession(String sessionId, Map<String, Object> temporarySessionRef, final OnSendMessageListener onSendMessageListener) {
+    public void sendMessageUpdateTemporarySession(String sessionId, Map<String, Object> temporarySessionRef) {
         IMMessage message = MessageBuilder.createTextMessage(sessionId, SessionTypeEnum.P2P, "");
         CustomMessageConfig config = new CustomMessageConfig();
         config.enablePush = false;
@@ -547,7 +547,7 @@ public class SessionService {
         message.setRemoteExtension(remoteExt);
         message.setConfig(config);
 
-        sendMessageSelf(message, onSendMessageListener, false, true);
+        sendMessageSelf(message, null, false, true);
     }
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
@@ -890,16 +890,29 @@ public class SessionService {
         this.createNotificationBirthday(sessionId, type, null, null);
     }
 
+    private IMMessage getAndCheckLastMessage(String sessionId, SessionTypeEnum sessionType) {
+        IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(sessionId, sessionType);
+        if (lastMessage != null && lastMessage.getSubtype() != 8) {
+            return lastMessage;
+        }
+
+        return null;
+    }
+
     public void createNotificationBirthday(String sessionId, String type, String memberContactId, String memberName) {
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
-        IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(sessionId, sessionType);
+        IMMessage lastMessage = getAndCheckLastMessage(sessionId, sessionType);
         RecentContact contact = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
         String name = memberName;
         if (memberName == null) {
             name = NimUserInfoCache.getInstance().getUserDisplayName(sessionId);
         }
 
-        String content = "NO_TEXT";
+        Map<String, Object> birthdayInfo = new HashMap<>();
+
+        birthdayInfo.put("memberName", name);
+
+        String content = "";
         String msgType = "text";
         Map<String, Object> localExt = new HashMap<String, Object>();
         Map<String, Object> msgExtend = new HashMap<String, Object>();
@@ -908,12 +921,10 @@ public class SessionService {
             team = TeamDataCache.getInstance().getTeamById(sessionId);
         }
 
-        localExt.put("notificationType", "BIRTHDAY");
         localExt.put("isSentBirthday", false);
-        localExt.put("birthdayMemberName", name);
 
         if (memberContactId != null) {
-            localExt.put("birthdayMemberContactId", memberContactId);
+            birthdayInfo.put("memberContactId", memberContactId);
         }
 
         if (lastMessage != null) {
@@ -1087,10 +1098,10 @@ public class SessionService {
             localExt.put("notificationExtend", msgExtend);
         }
 
-        String text = "NOTIFICATION_BIRTHDAY:" + msgType + ":(" + content + "):[" + name + "]";
-        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, text);
-
-        message.setContent(text);
+        birthdayInfo.put("msgType", msgType);
+        birthdayInfo.put("contentLasted", content);
+        localExt.put("birthdayInfo", birthdayInfo);
+        IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, "");
 
         CustomMessageConfig config = new CustomMessageConfig();
         config.enablePush = false;
@@ -1099,6 +1110,7 @@ public class SessionService {
         message.setConfig(config);
         message.setLocalExtension(localExt);
         message.setStatus(MsgStatusEnum.success);
+        message.setSubtype(8);
 
         NIMSDK.getMsgService().insertLocalMessage(message, sessionId);
     }

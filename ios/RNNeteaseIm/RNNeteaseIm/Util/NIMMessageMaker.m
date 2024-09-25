@@ -130,45 +130,86 @@
     return msgType;
 }
 
++(NIMMessage *)getAndCheckLastMessage:(NIMMessage *)lastMessage {
+    if (lastMessage == nil) {
+        return nil;
+    }
+    
+    if (lastMessage.messageSubType != 8) {
+        return lastMessage;
+    }
+    
+    if (lastMessage.localExt != nil) {
+        return nil;
+    }
+    
+    NSDictionary *birthdayInfo = [lastMessage.localExt objectForKey:@"birthdayInfo"];
+    if (birthdayInfo == nil || [birthdayInfo objectForKey:@"lastMessageId"] == nil) {
+        return nil;
+    }
+    
+    NSArray<NIMMessage *> *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:lastMessage.session messageIds:@[[birthdayInfo objectForKey:@"lastMessageId"]]];
+    
+    if (messages == nil || messages.count != 1) {
+        return nil;
+    }
+    
+    NIMMessage *message = messages.firstObject;
+    if (message.messageSubType == 8) {
+        return nil;
+    }
+    
+    return message;
+}
+
 +(NIMMessage *) msgWithNotificationBirthday:(NIMMessage *)lastMessage memberContactId:(NSString *)memberContactId memberName:(NSString *)memberName {
     NIMMessage *message = [[NIMMessage alloc] init];
     
     NSString *msgType = @"text";
     NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
-    NSString *content = @"(NO_TEXT)";
     
-    [localExt setObject:@"BIRTHDAY" forKey:@"notificationType"];
+    NIMMessage *_lastMessage = [self getAndCheckLastMessage:lastMessage];
+    
     [localExt setObject:@(NO) forKey:@"isSentBirthday"];
     
+    NSMutableDictionary *birthdayInfo = [[NSMutableDictionary alloc] init];
+    
+    [birthdayInfo setObject:@"" forKey:@"contentLasted"];
+    
     if (memberContactId != nil) {
-        [localExt setObject:memberContactId forKey:@"birthdayMemberContactId"];
+        [birthdayInfo setObject:memberContactId forKey:@"memberContactId"];
     }
     
-    if (lastMessage != nil) {
-        NSDictionary *remoteExt = lastMessage.remoteExt;
-        msgType = [self getMsgType:lastMessage];
+    if (_lastMessage != nil) {
+        NSDictionary *remoteExt = _lastMessage.remoteExt;
+        msgType = [self getMsgType:_lastMessage];
+        
+        [birthdayInfo setObject:_lastMessage.messageId forKey:@"lastMessageId"];
         
         if (remoteExt != nil && [[remoteExt objectForKey:@"extendType"]  isEqual: @"TEAM_NOTIFICATION_MESSAGE"]) {
             [localExt setObject:remoteExt forKey:@"notificationExtend"];
         }
         
-        if (lastMessage.messageType == NIMMessageTypeNotification) {
-            [localExt setObject:[[ConversationViewController initWithConversationViewController] setNotiTeamObj:lastMessage] forKey:@"notificationExtend"];
+        if (_lastMessage.messageType == NIMMessageTypeNotification) {
+            [localExt setObject:[[ConversationViewController initWithConversationViewController] setNotiTeamObj:_lastMessage] forKey:@"notificationExtend"];
         }
         
-        if (lastMessage.text != nil && ![lastMessage.text isEqual:@""] && ![lastMessage.text isEqual:@"(null)"]) {
-            content = [NSString stringWithFormat:@"(%@)", [[NIMViewController initWithController] messageContent:lastMessage]];
+        if (_lastMessage.text != nil && ![_lastMessage.text isEqual:@""] && ![_lastMessage.text isEqual:@"(null)"]) {
+            [birthdayInfo setObject:[[NIMViewController initWithController] messageContent:_lastMessage] forKey:@"contentLasted"];
         }
     }
     
+    [birthdayInfo setObject:msgType forKey:@"msgType"];
+    
     if (memberName != nil) {
-        [localExt setObject:memberName forKey:@"birthdayMemberName"];
+        [birthdayInfo setObject:memberName forKey:@"memberName"];
     }
     
-    NSString *text = [NSString stringWithFormat:@"NOTIFICATION_BIRTHDAY:%@:%@:[%@]", msgType, content,memberName];
+    [localExt setObject:birthdayInfo forKey:@"birthdayInfo"];
     
-    message.text = text;    
+    message.text = @"";
     message.localExt = localExt;
+    message.messageSubType = 8;
     
     return message;
 }

@@ -2884,12 +2884,6 @@
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
     if (recent == nil) return;
     
-    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-    
-    [localExt setObject:temporarySessionRef forKey:@"temporarySessionRef"];
-    
-    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
-    
     NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[messageId]];
     if (messages == nil || messages.count != 1) return;
     
@@ -2897,6 +2891,33 @@
     if (message == nil) return;
     
     [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
+    
+    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    
+    [localExt setObject:temporarySessionRef forKey:@"temporarySessionRef"];
+    
+    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+}
+
+-(void)removeTemporarySessionRef:(NSString *)sessionId success:(Success)success {
+    NIMSession *session = [NIMSession session:sessionId type:NIMSessionTypeP2P];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent == nil) {
+        success(@"success");
+        return;
+    }
+    
+    NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    if ([localExt objectForKey:@"temporarySessionRef"] == nil) {
+        success(@"success");
+        return;
+    }
+    
+    [localExt removeObjectForKey:@"temporarySessionRef"];
+    
+    [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+    
+    success(@"success");
 }
 
 -(void)addEmptyTemporarySession:(NSString *)sessionId temporarySessionRef:(NSDictionary *)temporarySessionRef success:(Success)success error:(Errors)error {
@@ -2911,7 +2932,10 @@
     if (recent != nil)  {
         NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
         NSDictionary *tempSessionRef = [localExt objectForKey:@"temporarySessionRef"];
-        if (tempSessionRef != nil && [tempSessionRef objectForKey:@"sessionId"] && [[tempSessionRef objectForKey:@"sessionId"] isEqual:temporarySessionId]) return;
+        if (tempSessionRef != nil && [tempSessionRef objectForKey:@"sessionId"] && [[tempSessionRef objectForKey:@"sessionId"] isEqual:temporarySessionId]) {
+            success(@"success");
+            return;
+        };
         
         [localExt setObject:temporarySessionRef forKey:@"temporarySessionRef"];
         
@@ -2957,7 +2981,6 @@
 
 -(void)addEmptyRecentSessionWithoutMessage:(NSString *)sessionId sessionType:(NSString *)sessionType {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
-    NSLog(@"session => %@, %@",session.sessionId, session.sessionType);
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
     if (recent != nil) return;
     

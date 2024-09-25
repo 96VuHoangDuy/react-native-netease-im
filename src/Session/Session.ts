@@ -872,6 +872,10 @@ class NimSession {
     return RNNeteaseIm.addEmptyTemporarySession(sessionId, temporarySessionRef);
   }
 
+  removeTemporarySessionRef(sessionId: string) {
+    return RNNeteaseIm.removeTemporarySessionRef(sessionId)
+  }
+
   updateRecentToTemporarySession(
     sessionId: string,
     messageId: string,

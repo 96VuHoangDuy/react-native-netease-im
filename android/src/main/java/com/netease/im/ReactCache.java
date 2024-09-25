@@ -281,15 +281,15 @@ public class ReactCache {
                     Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
                     Map<String, Object> messageRemoteExt = lastMessage.getRemoteExtension();
                     if (messageLocalExt != null) {
-                        String notificationType = (String) messageLocalExt.get("notificationType");
+                        Map<String, Object> birthdayInfo = (Map<String, Object>) messageLocalExt.get("birthdayInfo");
                         Map<String, Object> notificationExtend = (Map<String, Object>) messageLocalExt.get("notificationExtend");
-                        if (notificationType != null) {
-                            localExt.putString("notificationType", notificationType);
-                            notifyType = notificationType;
-                        }
 
                         if (notificationExtend != null) {
                             localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
+                        }
+
+                        if (birthdayInfo != null) {
+                            localExt.putMap("birthdayInfo", MapUtil.mapToReadableMap(birthdayInfo));
                         }
                     }
 
@@ -1194,7 +1194,11 @@ public class ReactCache {
             writableMap.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
             writableMap.putString("memberCount", Integer.toString(team.getMemberCount()));
             writableMap.putString("memberLimit", Integer.toString(team.getMemberLimit()));
-            writableMap.putString("creatorName", creatorInfo.getName());
+            if (creatorInfo != null) {
+                writableMap.putString("creatorName", creatorInfo.getName());
+            } else {
+                writableMap.putString("creatorName", team.getCreator());
+            }
 
             String introduce = team.getIntroduce();
             if (introduce == null || introduce.equals("(null)")) {

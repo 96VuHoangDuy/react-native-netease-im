@@ -218,11 +218,10 @@ NSMutableArray *_myTeams;
                 [teamDic setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.joinMode] forKey:@"verifyType"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
-                
+    
                 if(creatorInfo != nil){
                     [teamDic setObject:[NSString stringWithFormat:@"%@", creatorInfo.userInfo.nickName] forKey:@"creatorName"];
-                }
-        
+                }        
                 if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
                     [teamDic setObject:@"" forKey:@"introduce"];
                 } else {
