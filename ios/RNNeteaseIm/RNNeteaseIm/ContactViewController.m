@@ -201,11 +201,11 @@
         @"NIMUserInfoUpdateTagExt": @(NIMUserInfoUpdateTagExt),
     };
     
-    NSMutableDictionary<NSNumber *,id> *mapDict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSNumber *, NSString *> *mapDict = [[NSMutableDictionary alloc] init];
     
     for (id key in newUserInfo) {
         NSString *keyId = [keys objectForKey: key];
-        [mapDict setObject:[newUserInfo objectForKey:key] forKey:keyId];
+        [mapDict setObject:[[newUserInfo objectForKey:key] stringValue] forKey:keyId];
     }
     
     [[NIMSDK sharedSDK].userManager updateMyUserInfo:mapDict completion:^(NSError * _Nullable error) {

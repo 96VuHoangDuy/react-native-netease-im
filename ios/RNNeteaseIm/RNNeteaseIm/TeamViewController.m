@@ -199,47 +199,81 @@ NSMutableArray *_myTeams;
     
     }];
 }
+
+// -(void)getListTeamInfo:(NSArray *)teamIds Succ:(Success)succ Err:(Errors)err{
+// //  NIMTeam *team =   [[NIMSDK sharedSDK].teamManager teamById:teamId];
+//         /// completion 完成后的回调
+//         NIMTeamFetchTeamInfoListHandler completion = ^(NSError * __nullable error,
+//                                                        NSArray<NIMTeam *> * __nullable teams,
+//                                                        NSArray<NSString *> * __nullable failedTeamIds)
+//         {
+//             if (error == nil) {
+//                 /// 获取指定群ID信息 成功
+//                 NSLog(@"[Fetch %lu teams succeeded, %lu failed in total.]", [teams count], [failedTeamIds count]);
+//                 NSMutableArray *teamList = [NSMutableArray array];
+                
+//                 for (NIMTeam *team in teams) {
+//                     NSDictionary *dic = [self convertTeamInfo:team];
+//                     [teamList addObject:dic];
+//                 }
+                
+//                 succ(teamList);
+            
+//             } else {
+//                 /// 获取指定群ID信息 失败
+//                 NSLog(@"[NSError message: %@]", error);
+//             }
+//         };
+//         /// 获取指定群ID信息
+//         [[[NIMSDK sharedSDK] teamManager] fetchTeamInfoList:teamIds
+//                                                  completion:completion];
+// }
+
+- (NSDictionary *) convertTeamInfo:(NIMTeam *)team {
+    NIMUser *creatorInfo = [[NIMSDK sharedSDK].userManager userInfo:team.owner];
+    
+    NSMutableDictionary *teamDic = [NSMutableDictionary dictionary];
+    [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
+    [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
+    [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
+    [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
+    [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
+    [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
+    [teamDic setObject:[NSString stringWithFormat:@"%ld",team.level] forKey:@"memberLimit"];
+    [teamDic setObject:[NSString stringWithFormat:@"%f", team.createTime ] forKey:@"createTime"];
+    NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
+    [teamDic setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
+    [teamDic setObject:[NSString stringWithFormat:@"%ld",team.joinMode] forKey:@"verifyType"];
+    [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
+
+    if(creatorInfo != nil){
+        [teamDic setObject:[NSString stringWithFormat:@"%@", creatorInfo.userInfo.nickName] forKey:@"creatorName"];
+    }
+    if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
+        [teamDic setObject:@"" forKey:@"introduce"];
+    } else {
+        [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
+    }
+    if (team.avatarUrl == nil || [team.avatarUrl isEqual:@"(null)"]) {
+        [teamDic setObject:@"" forKey:@"avatar"];
+    } else {
+        [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
+    }
+    NSArray *keys = [teamDic allKeys];
+    for (NSString *tem  in keys) {
+        if ([[teamDic objectForKey:tem] isEqualToString:@"(null)"]) {
+            [teamDic setObject:@"" forKey:tem];
+        }
+    }
+    return teamDic;
+}
+
 //获取本地群资料
 -(void)getTeamInfo:(NSString *)teamId Succ:(Success)succ Err:(Errors)err{
-  NIMTeam *team =   [[NIMSDK sharedSDK].teamManager teamById:teamId];
+  NIMTeam *team = [[NIMSDK sharedSDK].teamManager teamById:teamId];
     if (team) {
-        NIMUser *creatorInfo = [[NIMSDK sharedSDK].userManager userInfo:team.owner];
-        
-        NSMutableDictionary *teamDic = [NSMutableDictionary dictionary];
-                [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamName] forKey:@"name"];
-                [teamDic setObject:[NSString stringWithFormat:@"%ld", team.type] forKey:@"type"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@",team.announcement]forKey:@"announcement"];
-                [teamDic setObject:[NSString stringWithFormat:@"%@",team.owner] forKey:@"creator"];
-                [teamDic setObject:[NSString stringWithFormat:@"%ld", team.memberNumber ] forKey:@"memberCount"];
-                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.level] forKey:@"memberLimit"];
-                [teamDic setObject:[NSString stringWithFormat:@"%f", team.createTime ] forKey:@"createTime"];
-                NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
-                [teamDic setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
-                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.joinMode] forKey:@"verifyType"];
-                [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
-    
-                if(creatorInfo != nil){
-                    [teamDic setObject:[NSString stringWithFormat:@"%@", creatorInfo.userInfo.nickName] forKey:@"creatorName"];
-                }        
-                if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
-                    [teamDic setObject:@"" forKey:@"introduce"];
-                } else {
-                    [teamDic setObject:[NSString stringWithFormat:@"%@",team.intro] forKey:@"introduce"];
-                }
-                if (team.avatarUrl == nil || [team.avatarUrl isEqual:@"(null)"]) {
-                    [teamDic setObject:@"" forKey:@"avatar"];
-                } else {
-                    [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
-                }
-                NSArray *keys = [teamDic allKeys];
-                for (NSString *tem  in keys) {
-                    if ([[teamDic objectForKey:tem] isEqualToString:@"(null)"]) {
-                        [teamDic setObject:@"" forKey:tem];
-                    }
-                }
-                succ(teamDic);
-            }
+        succ([self convertTeamInfo:team]);
+    }
 
     else{
         err(@"获取群资料失败，请重新获取");

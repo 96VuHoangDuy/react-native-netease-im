@@ -51,6 +51,8 @@ import com.netease.im.uikit.session.helper.TeamNotificationHelper;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.RequestCallbackWrapper;
+import com.netease.nimlib.sdk.ResponseCode;
 import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.friend.model.AddFriendNotify;
 import com.netease.nimlib.sdk.msg.MsgService;
@@ -74,6 +76,7 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.SystemMessage;
+import com.netease.nimlib.sdk.team.TeamService;
 import com.netease.nimlib.sdk.team.constant.TeamFieldEnum;
 import com.netease.nimlib.sdk.team.constant.TeamMessageNotifyTypeEnum;
 import com.netease.nimlib.sdk.team.model.MemberChangeAttachment;
@@ -374,8 +377,12 @@ public class ReactCache {
                         if (team.getMessageNotifyType() == TeamMessageNotifyTypeEnum.All && !isHideRecent) {
                             unreadNumTotal += _unreadCount;
                         }
+                        map.putMap("teamInfo", (ReadableMap) ReactCache.createTeamInfo(team));
+                        List<TeamMember> teamMemberList = TeamDataCache.getInstance().getTeamMemberList(team.getId());
+                        map.putArray("teamMembers", (ReadableArray) ReactCache.createTeamMemberList(teamMemberList));
                     }
                 }
+
                 map.putString("imagePath", imagePath);
                 map.putString("imageLocal", ImageLoaderKit.getMemoryCachedAvatar(imagePath));
                 map.putString("name", name);

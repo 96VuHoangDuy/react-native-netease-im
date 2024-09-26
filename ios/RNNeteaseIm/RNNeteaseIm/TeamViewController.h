@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import "NIMModel.h"
+#import <NIMSDK/NIMTeam.h>
+
 typedef void(^Success)(id param);
 typedef void(^Errors)(id erro);
 @interface TeamViewController : UIViewController
@@ -17,6 +19,8 @@ typedef void(^Errors)(id erro);
 -(NSString *)getTeamNameDefault:(NSString *)teamId;
 //获取群组列表
 -(void)getTeamList:(Success)succ Err:(Errors)err;
+
+- (NSDictionary *)convertTeamInfo:(NIMTeam *)team;
 //创建群组
 -(void)createTeam:(NSDictionary *)fields type:(NSString *)type accounts:(NSArray *)accounts Succ:(Success)succ Err:(Errors)err;
 //更新群成员名片

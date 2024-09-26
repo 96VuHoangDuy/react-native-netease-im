@@ -7,6 +7,8 @@ import {
   NIMMessageTypeEnum,
 } from '../Message/message.type';
 import {
+  NIMTeamDetailType,
+  NIMTeamMemberType,
   NIMTeamOperationType,
   NIMTeamOperationTypeUpdateDetail,
 } from '../Team/team.type';
@@ -119,6 +121,8 @@ export interface NimParamsForwardMultiTextMessageToMultipleRecipients {
 }
 
 export interface NimSessionType {
+  teamInfo?: NIMTeamDetailType;
+  teamMembers?: NIMTeamMemberType[];
   account: string;
   msgStatus: NIMMessageStatusEnum;
   msgType: NIMMessageTypeEnum;

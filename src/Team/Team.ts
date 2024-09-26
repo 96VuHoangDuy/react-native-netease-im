@@ -149,7 +149,7 @@ class NimTeam {
     fields: NIMCreateTeamOptionsType,
     type: NIMCreateTeamTypeEnum,
     accounts: string[]
-  ): Promise<{teamId: string}> {
+  ): Promise<{ teamId: string }> {
     return RNNeteaseIm.createTeam(fields, type, accounts);
   }
   /**
@@ -174,7 +174,7 @@ class NimTeam {
   }
 
   updateTeamAvatar(teamId: string, avatarUrl: string) {
-    return RNNeteaseIm.updateTeamAvatar(teamId, avatarUrl)
+    return RNNeteaseIm.updateTeamAvatar(teamId, avatarUrl);
   }
 
   /**
@@ -202,7 +202,11 @@ class NimTeam {
    * @param accounts ['abc11','abc12','abc13']
    * @returns {*}
    */
-  addMembers(teamId: string, accounts: string[], type?: string | 'from_request'): Promise<NIMResponseCode> {
+  addMembers(
+    teamId: string,
+    accounts: string[],
+    type?: string | "from_request"
+  ): Promise<NIMResponseCode> {
     return RNNeteaseIm.addMembers(teamId, accounts, type);
   }
 
@@ -276,19 +280,27 @@ class NimTeam {
   }
 
   queryAllTeams() {
-    return RNNeteaseIm.queryAllTeams()
+    return RNNeteaseIm.queryAllTeams();
   }
 
-  sendMessageTeamNotificationRequestJoin(sourceId: {
-    sourceId: string;
-    sourceName: string;
-  }, targets: {
-    targetName: string;
-    targetId: string;
-  }[], type: 
-      NIMTeamOperationType.CustomTeamOperationTypeAddUsersToRequestList 
-      | NIMTeamOperationType.CustomTeamOperationTypeAcceptUsersInRequestList): Promise<string> {
-    return RNNeteaseIm.sendMessageTeamNotificationRequestJoin(sourceId, targets, type)
+  sendMessageTeamNotificationRequestJoin(
+    sourceId: {
+      sourceId: string;
+      sourceName: string;
+    },
+    targets: {
+      targetName: string;
+      targetId: string;
+    }[],
+    type:
+      | NIMTeamOperationType.CustomTeamOperationTypeAddUsersToRequestList
+      | NIMTeamOperationType.CustomTeamOperationTypeAcceptUsersInRequestList
+  ): Promise<string> {
+    return RNNeteaseIm.sendMessageTeamNotificationRequestJoin(
+      sourceId,
+      targets,
+      type
+    );
   }
 }
 

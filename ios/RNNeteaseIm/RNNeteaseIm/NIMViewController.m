@@ -9,6 +9,7 @@
 #import "NIMViewController.h"
 #import "ContactViewController.h"
 #import "ConversationViewController.h"
+#import "TeamViewController.h"
 #import "ChatroomViewController.h"
 #import "react-native-config/RNCConfig.h"
 
@@ -762,7 +763,12 @@
     [result setObject:[NSString stringWithFormat:@"%zd",team.memberNumber] forKey:@"memberCount"];
     NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
     [result setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
-    
+    [result setObject:[[TeamViewController initWithTeamViewController]convertTeamInfo:team] forKey:@"teamInfo"];
+    [[TeamViewController initWithTeamViewController] getTeamMemberList:team.teamId Succ:^(id param) {
+        [result setObject:param forKey:@"teamMembers"];
+    } Err:^(id erro) {
+    }];
+
     if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
         *totalUnreadCount = *totalUnreadCount + [unreadCount integerValue];
     }
