@@ -225,6 +225,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void setListCustomerServiceAndChatbot(ReadableMap data, final Promise promise) {
+        CacheUsers.setListCustomerServiceAndChatbot(data);
+
+        promise.resolve("success");
+    }
+
+    @ReactMethod
     public void updateMessageSentStickerBirthday(String sessionId, String sessionType, String messageId,  Promise promise) {
         sessionService.updateMessageSentStickerBirthday(sessionId, sessionType, messageId, new SessionService.OnMessageQueryListener() {
             @Override

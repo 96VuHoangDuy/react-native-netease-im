@@ -8,16 +8,33 @@
 
 #import "CacheUsers.h"
 #import "ImConfig.h"
+#import "react-native-config/RNCConfig.h"
+
+#define HeaderAuthKey @"X-IM-SDK-AUTH-KEY"
 
 @interface CacheUsers() {
     NSDictionary *listUsers;
+    NSDictionary *listCustomerServiceAndChatbot;
+    NSString *apiUrl;
+    NSString *authKey;
 }
 
 @property (nonatomic, readwrite, strong) NSDictionary *listUsers;
+@property (nonatomic, readwrite, strong) NSDictionary *listCustomerServiceAndChatbot;
+@property (nonatomic, strong) NSString *apiUrl;
+@property (nonatomic, strong) NSString *authKey;
 
 @end
 
 @implementation CacheUsers
+
+@synthesize listUsers = _listUsers;
+
+@synthesize listCustomerServiceAndChatbot = _listCustomerServiceAndChatbot;
+
+@synthesize apiUrl = _apiUrl;
+
+@synthesize authKey = _authKey;
 
 -(void) viewDidLoad {
     [super viewDidLoad];
@@ -37,9 +54,84 @@
     self = [super init];
     if (self) {
         _listUsers = [[NSMutableDictionary alloc] init];
+        _listCustomerServiceAndChatbot = [[NSMutableDictionary alloc] init];
+        _apiUrl = [RNCConfig envFor:@"API_URL"];
+        _authKey = [RNCConfig envFor:@"API_AUTH_KEY"];
     }
     
     return self;
+}
+
+-(NSDictionary *)getUser:(NSString *)accId {
+    return [_listUsers objectForKey:accId];
+}
+
+-(void)setListCustomerServiceAndChatbot:(NSDictionary *)listCustomerServiceAndChatbot {
+    if (_listCustomerServiceAndChatbot.count == 0) {
+        _listCustomerServiceAndChatbot = listCustomerServiceAndChatbot;
+    }
+}
+
+-(NSString *)getCustomerServiceOrChatbot:(NSString *)accId {
+    return [_listCustomerServiceAndChatbot objectForKey:accId];
+}
+
+-(void)fetchUsers:(NSArray<NSString *> *)accIds completion:(NIMFetchUsersHandle)completion {
+    if (_apiUrl == nil || _authKey == nil) {
+        NSMutableDictionary *details = [[NSMutableDictionary alloc] init];
+        [details setObject:@"CacheUser fetchUsers" forKey:NSLocalizedDescriptionKey];
+        completion([NSError errorWithDomain:@"api url or auth key not found" code:404 userInfo:details]);
+        return;
+    }
+    
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/api/v1/client/im-sdk/users", _apiUrl]];
+ 
+    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+    NSMutableArray *queryItems = [NSMutableArray arrayWithArray:components.queryItems];
+    for(NSString *accId in accIds) {
+        NSURLQueryItem *queryItem = [[NSURLQueryItem alloc] initWithName:@"accId" value:accId];
+        [queryItems addObject:queryItem];
+    }
+    
+    components.queryItems = queryItems;
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[components URL]];
+    [request setHTTPMethod:@"GET"];
+    [request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [request addValue:_authKey forHTTPHeaderField:HeaderAuthKey];
+    
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *reponse, NSError *error) {
+        if (error != nil) {
+            completion(error);
+            return;
+        }
+        
+        if (data == nil) {
+            completion(nil);
+            return;
+        }
+        
+        NSError *parseDataErr = nil;
+        NSDictionary *responseData = [NSDictionary dictionaryWithDictionary:[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:&error]];
+        
+        if (parseDataErr != nil) {
+            completion(parseDataErr);
+            return;
+        }
+        
+        NSMutableDictionary *updateListUserInfo = self->_listUsers ? [self->_listUsers mutableCopy] : [[NSMutableDictionary alloc] init];
+        
+        for(NSString *accId in [responseData allKeys]) {
+            if ([responseData objectForKey:accId] != nil) {
+                [updateListUserInfo setObject:[responseData objectForKey:accId] forKey:accId];
+            }
+        }
+        
+        self->_listUsers = updateListUserInfo;
+        
+        completion(nil);
+    }];
 }
 
 @end

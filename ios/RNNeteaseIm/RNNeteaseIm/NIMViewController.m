@@ -12,6 +12,7 @@
 #import "TeamViewController.h"
 #import "ChatroomViewController.h"
 #import "react-native-config/RNCConfig.h"
+#import "CacheUsers.h"
 
 @interface NIMViewController ()<NIMLoginManagerDelegate,NIMConversationManagerDelegate>{
     //    BOOL isLoginFailed;
@@ -339,17 +340,22 @@
     BOOL isChatBot = NO;
     BOOL isCsr = NO;
     BOOL isHideSession = NO;
-    if ([localExt objectForKey:@"isChatBot"] != nil) {
-        NSNumber *chatBot = [localExt objectForKey:@"isChatBot"];
-        isChatBot = [chatBot boolValue];
+    NSString *onlineServiceType = [[CacheUsers initWithCacheUsers] getCustomerServiceOrChatbot:recent.session.sessionId];
+    if (onlineServiceType != nil) {
+        if ([onlineServiceType isEqual:@"chatbot"]) {
+            isChatBot = YES;
+            [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isChatBot"];
+        }
+        
+        if ([onlineServiceType isEqual:@"csr"]) {
+            isCsr = YES;
+            [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isCsr"];
+        }
     }
+    
     if ([localExt objectForKey:@"isHideSession"] != nil) {
         NSNumber *hideSession = [localExt objectForKey:@"isHideSession"];
         isHideSession = [hideSession boolValue];
-    }
-    if ([localExt objectForKey:@"isCsr"] != nil) {
-        NSNumber *csr = [localExt objectForKey:@"isCsr"];
-        isCsr = [csr boolValue];
     }
     
     if (recent.lastMessage == nil) {
@@ -381,6 +387,14 @@
             [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType] forKey:@"messageSubType"];
         }
         
+        if ((isChatBot && recent.lastMessage.isOutgoingMsg) || isCsr) {
+            NSArray *onlineServiceMessages =  [[ConversationViewController initWithConversationViewController] setTimeArr:@[recent.lastMessage]];
+            NIMMessage *onlineServiceMessage = onlineServiceMessages.firstObject;
+            if (onlineServiceMessage != nil) {
+                [localExt setObject:onlineServiceMessage forKey:@"onlineServiceMessage"];
+            }
+        }
+        
         if (isChatBot) {
             BOOL isMessageChatBotUpdated = NO;
             if (recent.lastMessage.localExt != nil && [recent.lastMessage.localExt objectForKey:@"chatBotType"] != nil) {
@@ -397,23 +411,6 @@
                 NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:dataRawAttchContent options:0 error:&error];
                 if (error == nil && [dict isKindOfClass:[NSDictionary class]] && [dict objectForKey:@"code"] != nil) {
                     [localExt setObject:@(YES) forKey:@"isChatBotNotifyOutSessionOfCurrentCsr"];
-                }
-            }
-        }
-        
-        if (isCsr && !recent.lastMessage.isOutgoingMsg) {
-            BOOL isMessageCsrUpdated = YES;
-            if (recent.lastMessage.localExt != nil && [recent.lastMessage.localExt objectForKey:@"isMessageCsrUpdated"] != nil) {
-                NSNumber *messageCsrUpdated = [recent.lastMessage.localExt objectForKey:@"isMessageCsrUpdated"];
-                isMessageCsrUpdated = [messageCsrUpdated boolValue];
-            }
-            
-            if (!isMessageCsrUpdated) {
-                NSArray *messagesOfCsr = [[ConversationViewController initWithConversationViewController] setTimeArr:@[recent.lastMessage]];
-                NSDictionary *messageOfCsr = messagesOfCsr.firstObject;
-                
-                if (messageOfCsr != nil) {
-                    [localExt setObject:messageOfCsr forKey:@"messageOfCsr"];
                 }
             }
         }
@@ -768,7 +765,7 @@
         [result setObject:param forKey:@"teamMembers"];
     } Err:^(id erro) {
     }];
-
+    
     if (team.notifyStateForNewMsg == NIMTeamNotifyStateAll && !isHideSession) {
         *totalUnreadCount = *totalUnreadCount + [unreadCount integerValue];
     }

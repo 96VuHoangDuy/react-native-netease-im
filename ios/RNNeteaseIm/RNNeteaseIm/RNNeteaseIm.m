@@ -20,6 +20,7 @@
 #import <React/RCTLog.h>
 #import "NIMMessageMaker.h"
 #import "ChatroomViewController.h"
+#import "CacheUsers.h"
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
@@ -1072,6 +1073,10 @@ RCT_EXPORT_METHOD(updateTeamName:(nonnull NSString *)teamId nick:(nonnull NSStri
     }];
 }
 
+RCT_EXPORT_METHOD(setListCustomerServiceAndChatbot:(nonnull NSDictionary *)data resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[CacheUsers initWithCacheUsers] setListCustomerServiceAndChatbot:data];
+    resolve(@"success");
+}
 
 #pragma mark ---- 获得缓存和处理缓存
 //获取缓存大小

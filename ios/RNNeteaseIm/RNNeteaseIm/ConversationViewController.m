@@ -14,6 +14,7 @@
 #import "NIMKitLocationPoint.h"
 #import <AVFoundation/AVFoundation.h>
 //#import "NIMKitMediaFetcher.h"
+#import "CacheUsers.h"
 
 #define NTESNotifyID        @"id"
 #define NTESCustomContent  @"content"
@@ -1207,18 +1208,36 @@
         NSMutableDictionary *fromUser = [NSMutableDictionary dictionary];
         NIMUser   *messageUser = [[NIMSDK sharedSDK].userManager userInfo:message.from];
         NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:message.session];
+        BOOL isCsr = NO;
+        BOOL isChatBot = NO;
         
-        NSNumber *isCsrNumber = [recent.localExt objectForKey:@"isCsr"];
-        NSNumber *isChatBotNumber = [recent.localExt objectForKey:@"isChatBot"];
-        BOOL isCsr = [isCsrNumber boolValue];
-        BOOL isChatBot = [isChatBotNumber boolValue];
+        NSString *onlineServiceType = [[CacheUsers initWithCacheUsers] getCustomerServiceOrChatbot:message.from];
+        
+        if ([onlineServiceType isKindOfClass:[NSString class]]) {
+            NSLog(@"onlineServiceType: %@", onlineServiceType);
+            if ([onlineServiceType isEqualToString:@"chatbot"]) {
+                isChatBot = YES;
+            }
+            
+            if ([onlineServiceType isEqualToString:@"csr"]) {
+                isCsr = YES;
+            }
+        }
         
         NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
         
-        if (isChatBot && [localExt objectForKey:@"chatBotType"] == nil) {
+        if (isChatBot && !message.isOutgoingMsg && [localExt objectForKey:@"chatBotType"] == nil) {
             [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
             
             continue;
+        }
+        
+        if (isCsr) {
+            [fromUser setObject:[NSNumber numberWithBool:isCsr] forKey:@"isCsr"];
+        }
+        
+        if (isChatBot) {
+            [fromUser setObject:[NSNumber numberWithBool:isChatBot] forKey:@"isChatBot"];
         }
         
         if (message.remoteExt != nil && [message.remoteExt objectForKey:@"reaction"] != nil) {
@@ -1247,12 +1266,6 @@
         
         [dic setObject:localExt forKey:@"localExt"];
         
-        if (recent.localExt != nil && [messageUser.userId isEqual:message.session.sessionId]) {
-            [fromUser setObject:[NSString stringWithFormat:@"%@", @(isChatBot)] forKey:@"isChatBot"];
-            
-            [fromUser setObject:[NSString stringWithFormat:@"%@", @(isCsr)] forKey:@"isCsr"];
-        }
-        
         [fromUser setObject:[NSString stringWithFormat:@"%@",messageUser.userInfo.avatarUrl] forKey:@"avatar"];
         NSString *strAlias = messageUser.alias;
         if (strAlias.length) {
@@ -1275,7 +1288,7 @@
         [fromUser setObject:[NSString stringWithFormat:@"%@", message.from] forKey:@"_id"];
         NSArray *key = [fromUser allKeys];
         for (NSString *tem  in key) {
-            if ([[fromUser objectForKey:tem] isEqualToString:@"(null)"]) {
+            if ([fromUser objectForKey:tem] != nil && [[fromUser objectForKey:tem] isKindOfClass:[NSString class]] && [[fromUser objectForKey:tem] isEqualToString:@"(null)"]) {
                 [fromUser setObject:@"" forKey:tem];
             }
         }
@@ -1751,9 +1764,11 @@
     message.setting = setting;
     
     NSMutableDictionary *localExt = [[NSMutableDictionary alloc] init];
-    [localExt setObject:@(YES) forKey:@"isHideMessage"];
+    [localExt setObject:customerServiceType forKey:@"customerServiceType"];
+    [localExt setObject:@(YES) forKey:@"isNotifyConnectCustomerService"];
     
     message.localExt = localExt;
+
     
     [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session completion:^(NSError *error) {
         if (error != nil) {

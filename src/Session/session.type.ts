@@ -33,7 +33,7 @@ export enum NIMMessageSubTypeEnum {
   MESSAGE_MULTI_MEDIA_IMAGE = 5,
   MESSAGE_MULTI_MEDIA_VIDEO = 6,
   TEMPORARY_SESSION = 7,
-  NOTIFICATION_BIRTHDAY = 8
+  NOTIFICATION_BIRTHDAY = 8,
 }
 
 export enum NIMSessionTypeEnum {
@@ -76,8 +76,8 @@ export enum NIMCustomAttachmentEnum {
 export enum NIMMessageChatBotType {
   OFFLINE = 'offline',
   OUT_SESSION = 'out_session',
-  CONNECTED_CSR = "connected_csr",
-  RECONNECT_CSR = 'reconnect_csr'
+  CONNECTED_CSR = 'connected_csr',
+  RECONNECT_CSR = 'reconnect_csr',
 }
 
 export enum NIMSendAttachmentEnum {
@@ -115,7 +115,11 @@ export interface NimParamsForwardMessagesToMultipleRecipients {
 }
 
 export interface NimParamsForwardMultiTextMessageToMultipleRecipients {
-  recipients: Array<{ sessionId: string; sessionType: NIMSessionTypeEnum, isSkipFriendCheck: boolean }>;
+  recipients: Array<{
+    sessionId: string;
+    sessionType: NIMSessionTypeEnum;
+    isSkipFriendCheck: boolean;
+  }>;
   messageText: string;
   content?: string;
 }
@@ -156,7 +160,7 @@ export interface NimSessionType {
     temporarySessionRef?: ITemporarySessionRef;
     isMessageChatBotUpdated?: boolean;
     isChatBotNotifyOutSessionOfCurrentCsr?: boolean;
-    messageOfCsr?: NIMMessage
+    onlineServiceMessage?: NIMMessage;
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;

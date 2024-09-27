@@ -891,6 +891,10 @@ class NimSession {
   updateMessageOfCsr(messageId: string, sessionId: string) {
     return RNNeteaseIm.updateMessageOfCsr(messageId, sessionId)
   }
+
+  setListCustomerServiceAndChatbot(data: Record<string, NIMSessionOnlineServiceType>) {
+    return RNNeteaseIm.setListCustomerServiceAndChatbot(data)
+  }
 }
 
 export default new NimSession();

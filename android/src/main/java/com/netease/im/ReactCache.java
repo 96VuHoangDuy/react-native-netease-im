@@ -51,8 +51,6 @@ import com.netease.im.uikit.session.helper.TeamNotificationHelper;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
-import com.netease.nimlib.sdk.RequestCallbackWrapper;
-import com.netease.nimlib.sdk.ResponseCode;
 import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.friend.model.AddFriendNotify;
 import com.netease.nimlib.sdk.msg.MsgService;
@@ -76,7 +74,6 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
 import com.netease.nimlib.sdk.msg.model.SystemMessage;
-import com.netease.nimlib.sdk.team.TeamService;
 import com.netease.nimlib.sdk.team.constant.TeamFieldEnum;
 import com.netease.nimlib.sdk.team.constant.TeamMessageNotifyTypeEnum;
 import com.netease.nimlib.sdk.team.model.MemberChangeAttachment;
@@ -264,16 +261,17 @@ public class ReactCache {
 
                 Boolean isChatBot = false;
                 Boolean isCsr = false;
-                if (localExt.hasKey("isChatBot")) {
-                    isChatBot = localExt.getBoolean("isChatBot");
-                }
-                if (localExt.hasKey("isCsr")) {
-                    isCsr = localExt.getBoolean("isCsr");
-                }
+                String onlineServiceType = CacheUsers.getCustomerServiceOrChatbot(contact.getContactId());
+                if (onlineServiceType != null) {
+                    if (onlineServiceType.equals("chatbot")) {
+                        isChatBot = true;
+                        localExt.putBoolean("isChatBot", true);
+                    }
 
-                if (contact.getSessionType() == SessionTypeEnum.P2P) {
-                    Boolean isReplyStranger = hanldeReplyStrangerByRecentContact(contact);
-                    localExt.putBoolean("isReplyStranger", isReplyStranger);
+                    if (onlineServiceType.equals("csr")) {
+                        isCsr = true;
+                        localExt.putBoolean("isCsr", true);
+                    }
                 }
 
                 if (lastMessage != null) {
@@ -334,6 +332,14 @@ public class ReactCache {
                         }
                     }
 
+                    if (isCsr || (isChatBot && isOutgoing)) {
+                        WritableMap onlineServiceMessage = createMessage(lastMessage, false);
+
+                        if (onlineServiceMessage != null) {
+                            localExt.putMap("onlineServiceMessage", onlineServiceMessage);
+                        }
+                    }
+
                     if (isChatBot) {
                         Boolean isMessageChatBotUpdated = false;
                         if (messageLocalExt != null && messageLocalExt.containsKey("isMessageChatBotUpdated")) {
@@ -341,12 +347,6 @@ public class ReactCache {
 
                             localExt.putBoolean("isMessageChatBotUpdated", isMessageChatBotUpdated);
                         }
-                    }
-
-                    if (isCsr && !isOutgoing) {
-                        WritableMap messageOfCsr = createMessage(lastMessage, false);
-
-                        localExt.putMap("messageOfCsr", messageOfCsr);
                     }
                 }
 
@@ -377,12 +377,8 @@ public class ReactCache {
                         if (team.getMessageNotifyType() == TeamMessageNotifyTypeEnum.All && !isHideRecent) {
                             unreadNumTotal += _unreadCount;
                         }
-                        map.putMap("teamInfo", (ReadableMap) ReactCache.createTeamInfo(team));
-                        List<TeamMember> teamMemberList = TeamDataCache.getInstance().getTeamMemberList(team.getId());
-                        map.putArray("teamMembers", (ReadableArray) ReactCache.createTeamMemberList(teamMemberList));
                     }
                 }
-
                 map.putString("imagePath", imagePath);
                 map.putString("imageLocal", ImageLoaderKit.getMemoryCachedAvatar(imagePath));
                 map.putString("name", name);
@@ -1944,7 +1940,16 @@ public class ReactCache {
 
         Boolean isCsr = false;
         Boolean isChatBot = false;
+        String onlineServiceType = CacheUsers.getCustomerServiceOrChatbot(item.getFromAccount());
+        if (onlineServiceType != null) {
+            if (onlineServiceType.equals("chatbot")) {
+                isChatBot = true;
+            }
 
+            if (onlineServiceType.equals("csr")) {
+                isCsr = true;
+            }
+        }
 
         if (recent != null) {
             Map<String, Object> extension = recent.getExtension();
@@ -2069,7 +2074,9 @@ public class ReactCache {
         user.putString(MessageConstant.User.USER_ID, fromAccount);
         user.putString(MessageConstant.User.AVATAR_PATH, avatar);
 
-        user.putBoolean("isChatBot", isChatBot);
+        if (isChatBot) {
+            user.putBoolean("isChatBot", true);
+        }
 
         if (isCsr) {
             user.putBoolean("isCsr", true);
