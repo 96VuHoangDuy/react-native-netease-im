@@ -590,7 +590,7 @@
 -(NSDictionary *)handleSessionTeam:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *) totalUnreadCount {
     NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
     
-    NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.lastMessage.session.sessionId];
+    NIMTeam *team = [[[NIMSDK sharedSDK] teamManager]teamById:recent.session.sessionId];
     NSMutableDictionary *localExt = recent.localExt ? [recent.localExt mutableCopy]: [[NSMutableDictionary alloc] init];
     BOOL isHideSession = NO;
     NSString *unreadCount = [NSString stringWithFormat:@"%ld", recent.unreadCount];

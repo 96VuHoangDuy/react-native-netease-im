@@ -128,6 +128,8 @@
             }
         }
         
+        [dataTask resume];
+        
         self->_listUsers = updateListUserInfo;
         
         completion(nil);
