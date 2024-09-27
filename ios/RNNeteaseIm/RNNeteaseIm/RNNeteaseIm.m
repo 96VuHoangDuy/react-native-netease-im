@@ -920,7 +920,7 @@ RCT_EXPORT_METHOD(fetchTeamMemberList:(nonnull NSString *)teamId resolve:(RCTPro
     [[TeamViewController initWithTeamViewController] getTeamMemberList:teamId Succ:^(id param) {
         resolve(param);
     } Err:^(id erro) {
-        reject(@"-1",erro,nil);
+//        reject(@"-1",erro,nil);
     }];
 }
 
