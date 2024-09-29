@@ -489,6 +489,12 @@
     }
     
     NSMutableDictionary *payload = [NSMutableDictionary dictionary];
+    NSMutableDictionary *fcmField = [[NSMutableDictionary alloc] init];
+    NSLog(@"message id =>>>>>>>>>> %@", message.messageId);
+    [fcmField setObject:message.messageId forKey:@"tag"];
+    [payload setObject:fcmField forKey:@"fcmField"];
+    
+    
 //    NSMutableDictionary *apsField = [NSMutableDictionary dictionary];
     NSString *strSessionID = @"";
     if (session.sessionType == NIMSessionTypeP2P) {//点对点

@@ -1587,6 +1587,8 @@ public class SessionService {
         final int delay = 2000;
         final Handler handler = new Handler();
         final Runnable[] sendBatchRunnable = new Runnable[1];
+        Map<String, Object> lastMedia = (Map<String, Object>) listMedia.get(listMedia.size() - 1);
+        String multiMediaType = (String) lastMedia.get("type");
 
         sendBatchRunnable[0] = new Runnable() {
             int startIndex = 0;
@@ -1596,7 +1598,6 @@ public class SessionService {
                 int endIndex = Math.min(startIndex + batchSize, listMedia.size());
                 List<Object> batch = listMedia.subList(startIndex, endIndex);
 
-                String multiMediaType = "";
                 for (Object dataMedia : batch) {
                     Map<String, Object> media = (Map<String, Object>) dataMedia;
 
@@ -1613,10 +1614,6 @@ public class SessionService {
                     }
 
                     if (mediaType.equals("image")) {
-                        if (multiMediaType.isEmpty()) {
-                            multiMediaType = "image";
-                        }
-
                         String file = (String) mediaData.get("file");
                         if (file == null) {
                             continue;
@@ -1636,9 +1633,6 @@ public class SessionService {
                         continue;
                     }
 
-                    if (multiMediaType.isEmpty()) {
-                        multiMediaType = "video";
-                    }
 
                     String file = (String) mediaData.get("file");
                     if (file == null) {
@@ -1684,7 +1678,7 @@ public class SessionService {
                     IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, parentId);
                     Map<String, Object> remoteExt = new HashMap<String, Object>();
                     remoteExt.put("parentMediaId", parentId);
-                    remoteExt.put("multiMedia", multiMediaType);
+                    remoteExt.put("multiMediaType", multiMediaType);
 
                     message.setRemoteExtension(remoteExt);
                     message.setFromAccount(message.getFromAccount());
@@ -2109,9 +2103,30 @@ public class SessionService {
         if (MessageUtil.shouldIgnoreRevoke(selectMessage)) {
             return 1;
         }
-        getMsgService().revokeMessage(selectMessage).setCallback(new RequestCallbackWrapper<Void>() {
+
+        Map<String, Object> payload = new HashMap<>();
+        String pushTitle = "";
+        String pushBody = "đã thu hồi tin nhắn";
+        if (selectMessage.getSessionType() == SessionTypeEnum.P2P) {
+            pushTitle = selectMessage.getFromNick();
+        }
+
+        if (selectMessage.getSessionType() == SessionTypeEnum.Team || selectMessage.getSessionType() == SessionTypeEnum.SUPER_TEAM) {
+            pushTitle =  SessionUtil.getSessionName(sessionId, selectMessage.getSessionType(), true);
+            pushBody = selectMessage.getFromNick() + " đã thu hồi tin nhắn";
+        }
+
+        payload.put("pushTitle", pushTitle);
+        payload.put("pushBody", pushBody);
+
+        Map<String, Object> fcmField = new HashMap<>();
+        fcmField.put("tag", selectMessage.getUuid());
+
+        payload.put("fcmField", fcmField);
+
+        getMsgService().revokeMessage(selectMessage, "revoke message", payload, false).setCallback(new RequestCallbackWrapper<Void>() {
             @Override
-            public void onResult(int code, Void aVoid, Throwable throwable) {
+            public void onResult(int code, Void result, Throwable exception) {
                 if (code == ResponseCode.RES_SUCCESS) {
                     deleteItem(selectMessage, false);
                     revokMessage(selectMessage);
@@ -2122,6 +2137,20 @@ public class SessionService {
                 }
             }
         });
+
+//        getMsgService().revokeMessage(selectMessage).setCallback(new RequestCallbackWrapper<Void>() {
+//            @Override
+//            public void onResult(int code, Void aVoid, Throwable throwable) {
+//                if (code == ResponseCode.RES_SUCCESS) {
+//                    deleteItem(selectMessage, false);
+//                    revokMessage(selectMessage);
+//                    MessageHelper.getInstance().onRevokeMessage(selectMessage);
+//                }
+//                if (onSendMessageListener != null) {
+//                    onSendMessageListener.onResult(code, selectMessage);
+//                }
+//            }
+//        });
         return 2;
     }
 
@@ -2303,6 +2332,10 @@ public class SessionService {
             message.setPushContent(message.getFromNick() + ": " + pushContent);
         }
 
+        Map<String, Object> fcmField = new HashMap<>();
+        fcmField.put("tag", message.getUuid());
+
+        payload.put("fcmField", fcmField);
         payload.put("sessionBody", body);
         message.setPushPayload(payload);
     }

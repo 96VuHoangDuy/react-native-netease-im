@@ -519,6 +519,7 @@
             
             if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                 [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                [dic setObject:[self convertMessageMedia:recent.lastMessage contentMessage:@""] forKey:@"content"];
             }
             
             if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
@@ -656,6 +657,7 @@
             
             if ([recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] != nil) {
                 [localExt setObject:[recent.lastMessage.remoteExt objectForKey:@"parentMediaId"] forKey:@"parentMediaId"];
+                [result setObject:[self convertMessageMedia:recent.lastMessage contentMessage:@""] forKey:@"content"];
             }
             
             if ([recent.lastMessage.remoteExt objectForKey:@"multiMediaType"] != nil) {
@@ -761,6 +763,7 @@
     NSString *strMute = team.notifyStateForNewMsg == NIMTeamNotifyStateAll ? @"1" : @"0";
     [result setObject:[NSString stringWithFormat:@"%@", strMute ] forKey:@"mute"];
     [result setObject:[[TeamViewController initWithTeamViewController]convertTeamInfo:team] forKey:@"teamInfo"];
+    [result setObject:localExt forKey:@"localExt"];
     [[TeamViewController initWithTeamViewController] getTeamMemberList:team.teamId Succ:^(id param) {
         [result setObject:param forKey:@"teamMembers"];
     } Err:^(id erro) {

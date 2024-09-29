@@ -15,6 +15,7 @@
 #import <AVFoundation/AVFoundation.h>
 //#import "NIMKitMediaFetcher.h"
 #import "CacheUsers.h"
+#import "TeamViewController.h"
 
 #define NTESNotifyID        @"id"
 #define NTESCustomContent  @"content"
@@ -1821,7 +1822,8 @@
         NSUInteger endIndex = MIN(startIndex + batchSize, listMedia.count);
         NSArray *batch = [listMedia subarrayWithRange:NSMakeRange(startIndex, endIndex - startIndex)];
         
-        NSString *multiMediaType;
+        NSDictionary *lastMedia = listMedia.lastObject;
+        NSString *multiMediaType = [lastMedia objectForKey:@"type"];
         for (NSDictionary *media in batch) {
             NSString *mediaType = media[@"type"];
             if (mediaType == nil || (![mediaType isEqualToString:@"image"] && ![mediaType isEqualToString:@"video"])) {
@@ -1836,17 +1838,9 @@
             }
             
             if ([mediaType isEqualToString:@"image"]) {
-                if (multiMediaType == nil) {
-                    multiMediaType = @"image";
-                }
-                
                 BOOL isHighQuality = [mediaData[@"isHighQuality"] boolValue];
                 [self sendImageMessages:mediaData[@"file"] displayName:mediaData[@"displayName"] isHighQuality:isHighQuality isSkipCheckFriend:isSkipFriendCheck parentId:parentMediaId indexCount:media[@"indexCount"]];
                 continue;
-            }
-            
-            if (multiMediaType == nil) {
-                multiMediaType = @"video";
             }
             
             [self sendVideoMessage:mediaData[@"file"] duration:mediaData[@"duration"] width:mediaData[@"width"] height:mediaData[@"height"] displayName:mediaData[@"displayName"] isSkipFriendCheck:isSkipFriendCheck parentId:parentMediaId indexCount:mediaData[@"indexCount"]];
@@ -3349,14 +3343,58 @@
 }
 //撤回消息
 -(void)revokeMessage:(NSString *)messageId success:(Success)succe Err:(Errors)err{
-    NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageId]];
-    NIMMessage *currentmessage = currentMessage[0];
+    NSArray *messages = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageId]];
+    if (messages == nil || messages.count != 1) {
+        err(@"message not found");
+        return;
+    }
     
-    NIMRevokeMessageOption *option;
-    option.apnsContent = @"";
-    option.shouldBeCounted = NO;
+    NIMMessage *message = messages.firstObject;
     
-    [[NIMSDK sharedSDK].chatManager revokeMessage:currentmessage completion:^(NSError * _Nullable error) {
+    NSMutableDictionary *alert = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *metadata = [[NSMutableDictionary alloc] init];
+    [metadata setObject:@"revokeMessage" forKey:@"messageType"];
+    NSString *title = @"";
+    NSString *body = _myUserName;
+    if (message.session.sessionType == NIMSessionTypeP2P) {
+        title = _myUserName;
+    }
+    
+    if (message.session.sessionType == NIMSessionTypeTeam || message.session.sessionType == NIMSessionTypeSuperTeam) {
+        NIMTeam *team = [[NIMSDK sharedSDK].teamManager teamById:message.session.sessionId];
+        
+        NSString *teamName = @"群聊";
+        if (team != nil) {
+            teamName = team.teamName;
+            if ([teamName isEqual:@""] || [teamName isEqual:@"TEAM_NAME_DEFAULT"]) {
+                NSString *teamNameDefault = [[TeamViewController initWithTeamViewController] getTeamNameDefault:team.teamId];
+                
+                if (teamNameDefault != nil) {
+                    teamName = teamNameDefault;
+                }
+            }
+        }
+        
+        [metadata setObject:_myUserName forKey:@"senderName"];
+        title = teamName;
+    }
+    
+    [alert setObject:title forKey:@"title"];
+    [alert setObject:body forKey:@"body"];
+    [alert setObject:messageId forKey:@"tag"];
+    NSMutableDictionary *apsField = [[NSMutableDictionary alloc] init];
+    [apsField setObject:alert forKey:@"alert"];
+    
+    [apsField setObject:metadata forKey:@"metadata"];
+    [apsField setObject:[NSNumber numberWithBool:YES] forKey:@"mutable-content"];
+    
+    NSMutableDictionary *payload = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *fcmField = [[NSMutableDictionary alloc] init];
+    [fcmField setObject:message.messageId forKey:@"tag"];
+    [payload setObject:fcmField forKey:@"fcmField"];
+    [payload setObject:apsField forKey:@"apsField"];
+    
+    [[NIMSDK sharedSDK].chatManager revokeMessage:message apnsContent:@"revoke message" apnsPayload:payload shouldBeCounted:NO completion:^(NSError * _Nullable error) {
         if (error) {
             if (error.code == NIMRemoteErrorCodeDomainExpireOld) {
                 err(@"expired");
@@ -3366,12 +3404,10 @@
         }
         else
         {
-            succe(@"success");
-            
-            NSString *tip = [self tipOnMessageRevoked:currentmessage];
+            NSString *tip = [self tipOnMessageRevoked:message];
             
             NIMMessage *tipMessage = [self msgWithTip:tip];
-            tipMessage.timestamp = currentmessage.timestamp;
+            tipMessage.timestamp = message.timestamp;
             
             NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
             tipMessage.remoteExt = remoteExt;
@@ -3381,9 +3417,45 @@
             
             // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
             [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+            
+            succe(@"success");
         }
     }];
-    
+
+//
+//    NIMRevokeMessageOption *option;
+//    option.apnsContent = @"Hihi";
+//    option.shouldBeCounted = NO;
+//    option.apnsPayload = payload;
+//    
+//    [[NIMSDK sharedSDK].chatManager revokeMessage:currentmessage completion:^(NSError * _Nullable error) {
+//        if (error) {
+//            if (error.code == NIMRemoteErrorCodeDomainExpireOld) {
+//                err(@"expired");
+//            }else{
+//                err(@"fail");
+//            }
+//        }
+//        else
+//        {
+//            succe(@"success");
+//            
+//            NSString *tip = [self tipOnMessageRevoked:currentmessage];
+//            
+//            NIMMessage *tipMessage = [self msgWithTip:tip];
+//            tipMessage.timestamp = currentmessage.timestamp;
+//            
+//            NSDictionary *remoteExt = @{@"extendType": @"revoked_success"};
+//            tipMessage.remoteExt = remoteExt;
+//            
+//            NSDictionary *deleteDict = @{@"msgId":messageId};
+//            [NIMModel initShareMD].deleteMessDict = deleteDict;
+//            
+//            // saveMessage 方法执行成功后会触发 onRecvMessages: 回调，但是这个回调上来的 NIMMessage 时间为服务器时间，和界面上的时间有一定出入，所以要提前先在界面上插入一个和被删消息的界面时间相符的 Tip, 当触发 onRecvMessages: 回调时，组件判断这条消息已经被插入过了，就会忽略掉。
+//            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+//        }
+//    }];
+//    
     
     //    BOOL isOutOfTime;
     //    NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
