@@ -189,7 +189,7 @@
 
 }
 //修改个人资料
--(void)updateMyUserInfo:(NSDictionary *)newUserInfo Success:(Success )success error:(Error )err{
+-(void)updateMyUserInfo:(NSDictionary *)newUserInfo Success:(Success)success error:(Error)err{
     const NSDictionary* keys = @{
         @"NIMUserInfoUpdateTagNick": @(NIMUserInfoUpdateTagNick),
         @"NIMUserInfoUpdateTagAvatar": @(NIMUserInfoUpdateTagAvatar),
@@ -205,7 +205,9 @@
     
     for (id key in newUserInfo) {
         NSString *keyId = [keys objectForKey: key];
-        [mapDict setObject:[[newUserInfo objectForKey:key] stringValue] forKey:keyId];
+        if ([newUserInfo objectForKey:key] != nil) {
+            [mapDict setObject:[newUserInfo objectForKey:key] forKey:keyId];
+        }
     }
     
     [[NIMSDK sharedSDK].userManager updateMyUserInfo:mapDict completion:^(NSError * _Nullable error) {

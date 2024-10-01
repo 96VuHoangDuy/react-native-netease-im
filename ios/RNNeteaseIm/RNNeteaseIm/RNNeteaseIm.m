@@ -279,7 +279,7 @@ RCT_EXPORT_METHOD(updateUserInfo:(nonnull NSString * )contactId  alias:(nonnull 
     }];
 }
 //保存用户信息
-RCT_EXPORT_METHOD(updateMyUserInfo:(NSDictionary<NSNumber *,id> *)userInFo resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+RCT_EXPORT_METHOD(updateMyUserInfo:(NSDictionary *)userInFo resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ContactViewController initWithContactViewController] updateMyUserInfo:userInFo Success:^(id param) {
         resolve(param);
     } error:^(NSString *error) {
@@ -625,8 +625,8 @@ RCT_EXPORT_METHOD(clearMessage:(nonnull  NSString *)sessionId sessionId:(nonnull
     [[ConversationViewController initWithConversationViewController] clearMsg:sessionId type:type];
 }
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
-RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds messageSubType:(NSInteger )messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck) {
-    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds messageSubType:messageSubType isSkipFriendCheck:isSkipFriendCheck];
+RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds messageSubType:(NSInteger )messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+    [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds messageSubType:messageSubType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
     RCTLogWarn(@"RCT_EXPORT_METHOD sendTextMessage at %@", content);
 }
 
@@ -635,12 +635,12 @@ RCT_EXPORT_METHOD(setCancelResendMessage:(nonnull NSString *)messageId sessionId
 }
 
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
-RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString *)aspectRatio atUserIds:(NSArray *)atUserIds isSkipFriendCheck:(BOOL *)isSkipFriendCheck) {
-    [[ConversationViewController initWithConversationViewController] sendGifMessage:url aspectRatio:aspectRatio andApnsMembers:atUserIds isSkipFriendCheck:isSkipFriendCheck];
+RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString *)aspectRatio atUserIds:(NSArray *)atUserIds isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+    [[ConversationViewController initWithConversationViewController] sendGifMessage:url aspectRatio:aspectRatio andApnsMembers:atUserIds isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
-RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isSkipFriendCheck:(BOOL *)isSkipFriendCheck resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia parentId:parentId isSkipFriendCheck:isSkipFriendCheck success:^(id params) {
+RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia parentId:parentId isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger success:^(id params) {
         resolve(params);
     } error:^(id err) {
         reject(@"-1", err, nil);
@@ -648,8 +648,8 @@ RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable 
 }
 
 //发送图片消息
-RCT_EXPORT_METHOD(sendImageMessages:(nonnull NSString *)path displayName:(nonnull NSString *)displayName isHighQuality:(nonnull BOOL *)isHighQuality isSkipCheckFriend:(nonnull BOOL *)isSkipCheckFriend) {
-    [[ConversationViewController initWithConversationViewController] sendImageMessages:path displayName:displayName isHighQuality:isHighQuality isSkipCheckFriend:isSkipCheckFriend parentId:nil indexCount:nil];
+RCT_EXPORT_METHOD(sendImageMessages:(nonnull NSString *)path displayName:(nonnull NSString *)displayName isHighQuality:(nonnull BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+    [[ConversationViewController initWithConversationViewController] sendImageMessages:path displayName:displayName isHighQuality:isHighQuality isSkipCheckFriend:isSkipCheckFriend isSkipTipForStranger:isSkipTipForStranger parentId:nil indexCount:nil];
 }
 
 RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName fileType:(NSString *)fileType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
@@ -674,8 +674,8 @@ RCT_EXPORT_METHOD(sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary 
 //}
 
 //发送音频消息
-RCT_EXPORT_METHOD(sendAudioMessage:(nonnull NSString *)file duration:(nonnull NSString *)duration isSkipFriendCheck:(nonnull BOOL *)isSkipFriendCheck){
-    [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isSkipFriendCheck:isSkipFriendCheck];
+RCT_EXPORT_METHOD(sendAudioMessage:(nonnull NSString *)file duration:(nonnull NSString *)duration isSkipFriendCheck:(nonnull BOOL *)isSkipFriendCheck isSkipTipForStranger:(nonnull BOOL *)isSkipTipForStranger){
+    [[ConversationViewController initWithConversationViewController]sendAudioMessage:file duration:duration isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
 //发送自定义消息
@@ -730,8 +730,8 @@ RCT_EXPORT_METHOD(updateMessageOfChatBot:(nonnull NSString *)messageId sessionId
 }
 
 //发送视频消息
-RCT_EXPORT_METHOD(sendVideoMessage:(nonnull NSString *)file duration:(nonnull NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isSkipFriendCheck:(BOOL *)isSkipFriendCheck){
-    [[ConversationViewController initWithConversationViewController] sendVideoMessage:file duration:duration width:width height:height displayName:displayName isSkipFriendCheck:isSkipFriendCheck parentId:nil indexCount:nil];
+RCT_EXPORT_METHOD(sendVideoMessage:(nonnull NSString *)file duration:(nonnull NSString *)duration width:(nonnull  NSNumber *)width height:(nonnull  NSNumber *)height displayName:(nonnull  NSString *)displayName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger){
+    [[ConversationViewController initWithConversationViewController] sendVideoMessage:file duration:duration width:width height:height displayName:displayName isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger parentId:nil indexCount:nil];
 }
 
 //

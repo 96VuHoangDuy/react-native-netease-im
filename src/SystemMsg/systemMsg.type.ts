@@ -1,3 +1,4 @@
+import { ITemporarySessionRef } from "react-native-netease-im/src/Session/session.type";
 import { NIMCommonBooleanType } from "../utils/common.type";
 
 export enum NIMSystemMsgTypeEnum {
@@ -49,7 +50,14 @@ export enum NIMCustomNotificationTypeEnum {
   OBSERVE_RECEIVE_FRIEND_REMOVED_ME = 2,
   OBSERVE_RECEIVE_REVOKE_FRIEND_REQUEST = 3,
   OBSERVE_FRIEND_ACCEPT_MY_FRIEND_REQUEST = 4,
-  IS_TYPING = 5
+  IS_TYPING = 5,
+  OBSERVE_RECEIVE_TEMPORARY_SESSION = 6
+}
+
+export interface ICustomerNotificationDataTemporarySession {
+  sessionRef: ITemporarySessionRef;
+  expiredAt: Date;
+  userId: string;
 }
 
 export interface ICustomNotificationDataDict {
@@ -61,5 +69,6 @@ export interface ICustomNotificationDataDict {
   isObserveFriendRevokedFriendRequest?:boolean;
   isObserveFriendAcceptMyFriendRequest?: boolean;
   isTyping?: boolean;
-  time?: number
+  time?: number;
+  temporarySession?:ICustomerNotificationDataTemporarySession
 }

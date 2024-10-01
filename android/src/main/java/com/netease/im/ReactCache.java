@@ -986,6 +986,7 @@ public class ReactCache {
         Boolean isObserveFriendAcceptMyFriendRequest = data.getBoolean("isObserveFriendAcceptMyFriendRequest");
         Boolean isTyping = data.getBoolean("isTyping");
         Integer time = data.getInteger("time");
+        Map<String, Object> temporarySession = (Map<String, Object>) data.get("temporarySession");
 
         notification.putInt("type",type);
         notification.putString("sessionId",sessionId);
@@ -1015,6 +1016,10 @@ public class ReactCache {
 
         if(time != null){
             notification.putInt("time", time);
+        }
+
+        if (temporarySession != null) {
+            notification.putMap("temporarySession", MapUtil.mapToReadableMap(temporarySession));
         }
 
         return notification;

@@ -547,7 +547,7 @@ public class SessionService {
         message.setRemoteExtension(remoteExt);
         message.setConfig(config);
 
-        sendMessageSelf(message, null, false, true);
+        sendMessageSelf(message, null, false, true, true);
     }
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
@@ -845,7 +845,7 @@ public class SessionService {
 //                onMsgSend(item);
 //                appendPushConfig(item);
 //                getMsgService().sendMessage(item, true);
-        sendMessageSelf(item, null, true, false);
+        sendMessageSelf(item, null, true, false, false);
     }
 
     public void updateMessageSentStickerBirthday(String sessionId, String type, String messageId, OnMessageQueryListener onMessageQueryListener) {
@@ -1345,13 +1345,13 @@ public class SessionService {
         if (!messageSubType.equals(0)) {
             message.setSubtype(messageSubType);
         }
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     /**
      * @param content
      */
-    public void sendTextMessage(String content, List<String> selectedMembers, Integer messageSubType, Boolean isSkipFriendCheck, OnSendMessageListener onSendMessageListener) {
+    public void sendTextMessage(String content, List<String> selectedMembers, Integer messageSubType, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger,OnSendMessageListener onSendMessageListener) {
 
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
         if (!messageSubType.equals(0)) {
@@ -1365,7 +1365,7 @@ public class SessionService {
 //            message.setPushContent("有人@了你");
             message.setMemberPushOption(option);
         }
-        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void sendGifMessageWithSession(String url, String aspectRatio, String sessionId, String typeStr, String sessionName, OnSendMessageListener onSendMessageListener) {
@@ -1379,10 +1379,10 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
-    public void sendGifMessage(String url, String aspectRatio, List<String> selectedMembers, Boolean isSkipFriendCheck, OnSendMessageListener onSendMessageListener) {
+    public void sendGifMessage(String url, String aspectRatio, List<String> selectedMembers, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
 
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "[动图]");
 
@@ -1398,7 +1398,7 @@ public class SessionService {
 //            message.setPushContent("有人@了你");
             message.setMemberPushOption(option);
         }
-        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
 
@@ -1418,7 +1418,7 @@ public class SessionService {
         config.enableUnreadCount = false;
         message.setConfig(config);
 
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     /**
@@ -1448,7 +1448,7 @@ public class SessionService {
                 message.setStatus(MsgStatusEnum.success);
                 getMsgService().saveMessageToLocal(message, true);
             } else {
-                sendMessageSelf(message, onSendMessageListener, false, false);
+                sendMessageSelf(message, onSendMessageListener, false, false, false);
             }
         }
     }
@@ -1480,7 +1480,7 @@ public class SessionService {
 
             IMMessage messageLocation = MessageBuilder.createLocationMessage(sessionId, sessionTypeEnum, locationAttachment.getLatitude(), locationAttachment.getLongitude(), title);
 
-            sendMessageSelf(messageLocation, null, false, false);
+            sendMessageSelf(messageLocation, null, false, false, false);
             return;
         }
 
@@ -1518,10 +1518,10 @@ public class SessionService {
         Map<String, Object> localExt = new HashMap<String, Object>();
         messageForward.setLocalExtension(localExt);
 
-        sendMessageSelf(messageForward, null, false, false);
+        sendMessageSelf(messageForward, null, false, false, false);
     }
 
-    public void handleForwardMessageToRecipient(List<String> messageIds, String sessionId, SessionTypeEnum sessionType, String content, String parentId, Boolean isHaveMultiMedia, Boolean isSkipFriendCheck) {
+    public void handleForwardMessageToRecipient(List<String> messageIds, String sessionId, SessionTypeEnum sessionType, String content, String parentId, Boolean isHaveMultiMedia, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger) {
         NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> messages, Throwable exception) {
@@ -1554,34 +1554,34 @@ public class SessionService {
                     message.setRemoteExtension(remoteExt);
                     message.setConfig(config);
 
-                    sendMessageSelf(message, null, false, isSkipFriendCheck);
+                    sendMessageSelf(message, null, false, isSkipFriendCheck, isSkipTipForStranger);
                 }
 
                 if (content != null && !content.isEmpty()) {
                     IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
-                    sendMessageSelf(message, null, false, isSkipFriendCheck);
+                    sendMessageSelf(message, null, false, isSkipFriendCheck, isSkipTipForStranger);
                 }
             }
         });
     }
 
-    public void handleForwardMultiTextMessageToRecipient(String sessionId, SessionTypeEnum sessionTypeEnum, String messageText, String content, Boolean isSkipFriendCheck) {
+    public void handleForwardMultiTextMessageToRecipient(String sessionId, SessionTypeEnum sessionTypeEnum, String messageText, String content, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger) {
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, messageText);
 
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
         remoteExt.put("extendType", "forwardMultipleText");
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, null, false, isSkipFriendCheck);
+        sendMessageSelf(message, null, false, isSkipFriendCheck, isSkipTipForStranger);
 
         if (content != null && !content.isEmpty()) {
             IMMessage messageContent = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
 
-            sendMessageSelf(messageContent, null, false, isSkipFriendCheck);
+            sendMessageSelf(messageContent, null, false, isSkipFriendCheck, isSkipTipForStranger);
         }
     }
 
-    public void sendMultiMediaMessage(ReadableArray data, String parentId, Boolean isSkipFriendCheck, final Promise promise) {
+    public void sendMultiMediaMessage(ReadableArray data, String parentId, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger ,final Promise promise) {
         List<Object> listMedia = MapUtil.readableArrayToArray(data);
         final int batchSize = 3;
         final int delay = 2000;
@@ -1629,7 +1629,7 @@ public class SessionService {
                             isHighQuality = false;
                         }
 
-                        sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, parentId, (Double) media.get("indexCount"), null);
+                        sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger,parentId, (Double) media.get("indexCount"), null);
                         continue;
                     }
 
@@ -1671,7 +1671,7 @@ public class SessionService {
                         }
                     }
 
-                    sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck, parentId, (Double) media.get("indexCount"), null);
+                    sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck, isSkipTipForStranger,parentId, (Double) media.get("indexCount"), null);
                 }
 
                 if (parentId != null && startIndex == 0) {
@@ -1690,7 +1690,7 @@ public class SessionService {
 
                     message.setConfig(config);
 
-                    sendMessageSelf(message, null, false, isSkipFriendCheck);
+                    sendMessageSelf(message, null, false, isSkipFriendCheck, isSkipTipForStranger);
 //                    if (isCustomerService) {
 //                        List<IMMessage> list = new ArrayList<>(1);
 //                        list.add(message);
@@ -1726,10 +1726,10 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
-    public void sendImageMessage(String file, String displayName, boolean isHighQuality, boolean isSkipFriendCheck, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessage(String file, String displayName, boolean isHighQuality, boolean isSkipFriendCheck, Boolean isSkipTipForStranger, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
@@ -1753,7 +1753,7 @@ public class SessionService {
         message.setRemoteExtension(remoteExt);
 
 
-        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void sendFileMessageWitSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
@@ -1765,7 +1765,7 @@ public class SessionService {
         Map<String, Object> remoteExt = new HashMap<String, Object>();
         remoteExt.put("fileType", fileType);
         message.setRemoteExtension(remoteExt);
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     public void sendFileMessage(String filePath, String fileName, String fileType, OnSendMessageListener onSendMessageListener) {
@@ -1776,15 +1776,15 @@ public class SessionService {
         Map<String, Object> remoteExt = new HashMap<String, Object>();
         remoteExt.put("fileType", fileType);
         message.setRemoteExtension(remoteExt);
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
-    public void sendAudioMessage(String file, long duration, boolean isSkipFriendCheck, OnSendMessageListener onSendMessageListener) {
+    public void sendAudioMessage(String file, long duration, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
 
         IMMessage message = MessageBuilder.createAudioMessage(sessionId, sessionTypeEnum, f, duration);
-        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     //        String md5Path = StorageUtil.getWritePath(filename, StorageType.TYPE_VIDEO);
@@ -1792,7 +1792,7 @@ public class SessionService {
 //        long duration = mediaPlayer == null ? 0 : mediaPlayer.getDuration();
 //        int height = mediaPlayer == null ? 0 : mediaPlayer.getVideoHeight();
 //        int width = mediaPlayer == null ? 0 : mediaPlayer.getVideoWidth();
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isSkipFriendCheck, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
 
 //        String filename = md5 + "." + FileUtil.getExtensionName(file);
         file = Uri.parse(file).getPath();
@@ -1820,7 +1820,7 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
@@ -1857,7 +1857,7 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, OnSendMessageListener onSendMessageListener) {
@@ -1899,7 +1899,7 @@ public class SessionService {
         attachment.setDigst(digst);
         attachment.setContent(content);
         IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, digst, attachment, config);
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     public void sendRedPacketOpenMessage(String sendId, String openId, String hasRedPacket, String serialNo, OnSendMessageListener onSendMessageListener) {
@@ -1922,7 +1922,7 @@ public class SessionService {
         RedPacketAttachement attachment = new RedPacketAttachement();
         attachment.setParams(type, comments, serialNo);
         IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, comments, attachment, config);
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, OnSendMessageListener onSendMessageListener) {
@@ -1938,7 +1938,7 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     public void forwardMultipleTextMessage(ReadableMap dataDict, String sessionId, String sessionType, String content, OnSendMessageListener onSendMessageListener) {
@@ -1949,14 +1949,14 @@ public class SessionService {
         remoteExt.put("extendType", "forwardMultipleText");
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
 
         if (content.isEmpty()) {
             return;
         }
 
         IMMessage messageText = MessageBuilder.createTextMessage(sessionId, sessionTypeE, content);
-        sendMessageSelf(messageText, onSendMessageListener, false, false);
+        sendMessageSelf(messageText, onSendMessageListener, false, false, false);
     }
 
     public void sendBankTransferMessage(String amount, String comments, String serialNo, OnSendMessageListener onSendMessageListener) {
@@ -1964,7 +1964,7 @@ public class SessionService {
         BankTransferAttachment attachment = new BankTransferAttachment();
         attachment.setParams(amount, comments, serialNo);
         IMMessage message = MessageBuilder.createCustomMessage(sessionId, sessionTypeEnum, comments, attachment, config);
-        sendMessageSelf(message, onSendMessageListener, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
     public int sendForwardMessage(List<IMMessage> selectMessages, final String sessionId, final String sessionType, String content, final String parentId, final boolean isHaveMultiMedia, OnSendMessageListener onSendMessageListener) {
@@ -1999,7 +1999,7 @@ public class SessionService {
             Map<String, Object> localExt = new HashMap<String, Object>();
             message.setLocalExtension(localExt);
 
-            sendMessageSelf(message, onSendMessageListener, false, false);
+            sendMessageSelf(message, onSendMessageListener, false, false, false);
         }
 
         if (parentId != null && isHaveMultiMedia) {
@@ -2013,12 +2013,12 @@ public class SessionService {
             config.enableUnreadCount = false;
             localMessage.setConfig(config);
 
-            sendMessageSelf(localMessage, onSendMessageListener, false, false);
+            sendMessageSelf(localMessage, onSendMessageListener, false, false, false);
         }
 
         if (!content.isEmpty()) {
             IMMessage messageSelf = MessageBuilder.createTextMessage(sessionId, sessionTypeE, content);
-            sendMessageSelf(messageSelf, onSendMessageListener, false, false);
+            sendMessageSelf(messageSelf, onSendMessageListener, false, false, false);
         }
         return 2;
     }
@@ -2206,7 +2206,7 @@ public class SessionService {
         getMsgService().updateIMMessageStatus(message);
     }
 
-    public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isSkipFriendCheck) {
+    public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isSkipFriendCheck, boolean isSkipTipForStranger) {
         appendPushConfig(message);
         if (sessionTypeEnum == SessionTypeEnum.P2P) {
             sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
@@ -2227,7 +2227,9 @@ public class SessionService {
                 config.enableUnreadCount = false;
                 message.setConfig(config);
                 getMsgService().saveMessageToLocal(message, true);
-                sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
+                if (!isSkipTipForStranger) {
+                    sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
+                }
                 return;
             }
         }

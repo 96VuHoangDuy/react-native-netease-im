@@ -1448,12 +1448,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      * @param promise
      */
     @ReactMethod
-    public void sendTextMessage(String content, ReadableArray atUserIds, Integer messageSubType,boolean isSkipFriendCheck, final Promise promise) {
+    public void sendTextMessage(String content, ReadableArray atUserIds, Integer messageSubType,boolean isSkipFriendCheck, Boolean isSkipTipForStranger, final Promise promise) {
        try {
            LogUtil.w(TAG, "sendTextMessage" + content);
 
            List<String> atUserIdList = array2ListString(atUserIds);
-           sessionService.sendTextMessage(content, atUserIdList, messageSubType, isSkipFriendCheck, new SessionService.OnSendMessageListener() {
+           sessionService.sendTextMessage(content, atUserIdList, messageSubType, isSkipFriendCheck,isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                @Override
                public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1466,10 +1466,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
        }
     }
 
-    public void sendTextMessage(String content,Integer messageSubType, boolean isSkipFriendCheck,final Promise promise) {
+    public void sendTextMessage(String content,Integer messageSubType, boolean isSkipFriendCheck, boolean isSkipTipForStranger,final Promise promise) {
        try {
            LogUtil.w(TAG, "sendTextMessage" + content);
-           sessionService.sendTextMessage(content, null, messageSubType, isSkipFriendCheck,new SessionService.OnSendMessageListener() {
+           sessionService.sendTextMessage(content, null, messageSubType, isSkipFriendCheck,isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                @Override
                public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1498,9 +1498,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendGifMessage(String url, String aspectRatio, ReadableArray atUserIds, boolean isSkipFriendCheck, final Promise promise) {
+    public void sendGifMessage(String url, String aspectRatio, ReadableArray atUserIds, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendGifMessage(url, aspectRatio, null, isSkipFriendCheck, new SessionService.OnSendMessageListener() {
+            sessionService.sendGifMessage(url, aspectRatio, null, isSkipFriendCheck,isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
 //                promise.resolve(ReactCache.createMessage(message,null));
@@ -1532,9 +1532,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    file, // 图片文件对象
 //    displayName // 文件显示名字，如果第三方 APP 不关注，可以为 null
     @ReactMethod
-    public void sendImageMessage(String file, String displayName, boolean isHighQuality,boolean isSkipFriendCheck, final Promise promise) {
+    public void sendImageMessage(String file, String displayName, boolean isHighQuality,boolean isSkipFriendCheck, boolean isSkipTipForStranger,final Promise promise) {
         try {
-            sessionService.sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, null, null, new SessionService.OnSendMessageListener() {
+            sessionService.sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger,null, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1595,7 +1595,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    file, // 音频文件
 //    duration // 音频持续时间，单位是ms
     @ReactMethod
-    public void sendAudioMessage(String file, String duration, boolean isSkipFriendCheck, final Promise promise) {
+    public void sendAudioMessage(String file, String duration, boolean isSkipFriendCheck, boolean isSkipTipForStranger,final Promise promise) {
         long durationL = 0;
         try {
             durationL = Long.parseLong(duration);
@@ -1603,7 +1603,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             e.printStackTrace();
         }
         try {
-            sessionService.sendAudioMessage(file, durationL, isSkipFriendCheck, new SessionService.OnSendMessageListener() {
+            sessionService.sendAudioMessage(file, durationL, isSkipFriendCheck,isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1622,9 +1622,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 //    height, // 视频高度
 //    displayName // 视频显示名，可为空
     @ReactMethod
-    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isSkipFriendCheck, final Promise promise) {
+    public void sendVideoMessage(String file, String duration, int width, int height, String displayName, boolean isSkipFriendCheck,boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck, null, null, new SessionService.OnSendMessageListener() {
+            sessionService.sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck,isSkipTipForStranger, null, null, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1808,6 +1808,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             String sessionId = (String) recipient.get("sessionId");
             String sessionType = (String) recipient.get("sessionType");
             Boolean isSkipFriendCheck = (Boolean) recipient.get("isSkipFriendCheck");
+            Boolean isSkipTipForStranger = (Boolean) recipient.get("isSkipTipForStranger");
             if (sessionId == null || sessionType == null || sessionId.isEmpty() || sessionType.isEmpty()) {
                 continue;
             }
@@ -1815,7 +1816,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
             Log.e(TAG, "test =>>>>>>>>>>>> " + sessionId + " " + sessionType);
 
-            new Thread(() -> sessionService.handleForwardMultiTextMessageToRecipient(sessionId, sessionTypeEnum, messageText, content,isSkipFriendCheck)).start();
+            new Thread(() -> sessionService.handleForwardMultiTextMessageToRecipient(sessionId, sessionTypeEnum, messageText, content,isSkipFriendCheck, isSkipTipForStranger)).start();
         }
 
         promise.resolve("200");
@@ -1842,13 +1843,14 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             String sessionId = (String) recipient.get("sessionId");
             String sessionType = (String) recipient.get("sessionType");
             Boolean isSkipFriendCheck = (Boolean) recipient.get("isSkipFriendCheck");
+            Boolean isSkipTipForStranger = (Boolean) recipient.get("isSkipTipForStranger");
             if (sessionId == null || sessionType == null || sessionId.isEmpty() || sessionType.isEmpty()) {
                 continue;
             }
 
             SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
 
-            new Thread(() -> sessionService.handleForwardMessageToRecipient(messageIds, sessionId, sessionTypeEnum, content, parentId, isHaveMultiMedia, isSkipFriendCheck)).start();
+            new Thread(() -> sessionService.handleForwardMessageToRecipient(messageIds, sessionId, sessionTypeEnum, content, parentId, isHaveMultiMedia, isSkipFriendCheck, isSkipTipForStranger)).start();
         }
 
 
@@ -1896,8 +1898,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendMultiMediaMessage(ReadableArray listMedia, String parentId, Boolean isSkipFriendCheck, final Promise promise) {
-        sessionService.sendMultiMediaMessage(listMedia, parentId, isSkipFriendCheck, promise);
+    public void sendMultiMediaMessage(ReadableArray listMedia, String parentId, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger,  final Promise promise) {
+        sessionService.sendMultiMediaMessage(listMedia, parentId, isSkipFriendCheck, isSkipTipForStranger, promise);
     }
 
     /**

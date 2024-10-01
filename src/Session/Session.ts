@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native";
+import { NativeModules, Platform } from 'react-native';
 import {
   CustomMessageType,
   NIMSessionTypeEnum,
@@ -12,7 +12,7 @@ import {
   NimParamsForwardMessagesToMultipleRecipients,
   NimParamsForwardMultiTextMessageToMultipleRecipients,
   ITemporarySessionRef,
-} from "./session.type";
+} from './session.type';
 import {
   INimMessageReaction,
   NIMMessage,
@@ -20,8 +20,8 @@ import {
   NIMMessageMedia,
   NIMMessageTypeEnum,
   NimMessageTypeExtend,
-} from "../Message/message.type";
-import { ICustomNotificationDataDict } from "../SystemMsg/systemMsg.type";
+} from '../Message/message.type';
+import { ICustomNotificationDataDict } from '../SystemMsg/systemMsg.type';
 const { RNNeteaseIm } = NativeModules;
 
 class NimSession {
@@ -80,10 +80,10 @@ class NimSession {
   startSession(
     sessionId: string,
     type: NIMSessionTypeEnum,
-    myUserName: string = "",
-    myUserID: string = ""
+    myUserName: string = '',
+    myUserID: string = ''
   ) {
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       return RNNeteaseIm.startSession(sessionId, type, myUserName, myUserID);
     }
     return RNNeteaseIm.startSession(sessionId, type);
@@ -203,13 +203,15 @@ class NimSession {
     content: string,
     atUserIds?: string[],
     messageSubType?: number,
-    isSkipFriendCheck?: boolean
+    isSkipFriendCheck?: boolean,
+    isSkipTipForStranger?: boolean
   ) {
     return RNNeteaseIm.sendTextMessage(
       content,
       atUserIds ?? [],
       messageSubType ?? NIMMessageSubTypeEnum.DEFAULT,
-      isSkipFriendCheck ?? false
+      isSkipFriendCheck ?? false,
+      isSkipTipForStranger ?? false
     );
   }
 
@@ -224,13 +226,15 @@ class NimSession {
     url: string,
     aspectRatio: string,
     atUserIds?: string[],
-    isSkipFriendCheck?: boolean
+    isSkipFriendCheck?: boolean,
+    isSkipTipForStranger?: boolean
   ) {
     return RNNeteaseIm.sendGifMessage(
       url,
       aspectRatio,
       atUserIds ?? [],
-      isSkipFriendCheck ?? false
+      isSkipFriendCheck ?? false,
+      isSkipTipForStranger ?? false
     );
   }
 
@@ -245,22 +249,25 @@ class NimSession {
     file: string,
     displayName?: string,
     isHighQuality?: boolean,
-    isSkipFriendCheck?: boolean
+    isSkipFriendCheck?: boolean,
+    isSkipTipForStranger?: boolean
   ) {
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       return RNNeteaseIm.sendImageMessages(
         file,
-        displayName ?? "",
+        displayName ?? '',
         isHighQuality ?? false,
-        isSkipFriendCheck ?? false
+        isSkipFriendCheck ?? false,
+        isSkipTipForStranger ?? false
       );
     }
 
     return RNNeteaseIm.sendImageMessage(
-      file.replace("file://", ""),
-      displayName ?? "",
+      file.replace('file://', ''),
+      displayName ?? '',
       isHighQuality ?? false,
-      isSkipFriendCheck ?? false
+      isSkipFriendCheck ?? false,
+      isSkipTipForStranger ?? false
     );
   }
 
@@ -273,24 +280,28 @@ class NimSession {
   sendAudioMessage(
     file: string,
     duration: string,
-    isSkipFriendCheck?: boolean
+    isSkipFriendCheck?: boolean,
+    isSkipTipForStranger?: boolean
   ) {
     return RNNeteaseIm.sendAudioMessage(
       file,
       duration,
-      isSkipFriendCheck ?? false
+      isSkipFriendCheck ?? false,
+      isSkipTipForStranger ?? false
     );
   }
 
   sendMultiMediaMessage(
     listMedia: NIMMessageMedia[],
     parentId: string | null,
-    isSkipFriendCheck?: boolean
+    isSkipFriendCheck?: boolean,
+    isSkipTipForStranger?: boolean
   ) {
     return RNNeteaseIm.sendMultiMediaMessage(
       listMedia,
       parentId,
-      isSkipFriendCheck ?? false
+      isSkipFriendCheck ?? false,
+      isSkipTipForStranger ?? false
     );
   }
 
@@ -309,7 +320,8 @@ class NimSession {
     width: number,
     height: number,
     displayName?: string,
-    isSkipFriendCheck?: boolean
+    isSkipFriendCheck?: boolean,
+    isSkipTipForStranger?: boolean
   ) {
     return RNNeteaseIm.sendVideoMessage(
       file,
@@ -317,7 +329,8 @@ class NimSession {
       width,
       height,
       displayName,
-      isSkipFriendCheck ?? false
+      isSkipFriendCheck ?? false,
+      isSkipTipForStranger ?? false
     );
   }
   /**
@@ -371,7 +384,7 @@ class NimSession {
     return RNNeteaseIm.sendRedPacketMessage(type, comments, serialNo);
   }
 
-  setMessageNotify(contactId: string, needNotify: "0" | "1") {
+  setMessageNotify(contactId: string, needNotify: '0' | '1') {
     return RNNeteaseIm.setMessageNotify(contactId, needNotify);
   }
 
@@ -576,7 +589,7 @@ class NimSession {
   }
 
   getLaunch() {
-    if (Platform.OS === "android") {
+    if (Platform.OS === 'android') {
       return RNNeteaseIm.getLaunch();
     }
   }

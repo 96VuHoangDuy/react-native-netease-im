@@ -132,7 +132,7 @@
         currentM.remoteExt = newRemoteExt;
     }
     
-    if (self._session.sessionType == NIMSessionTypeP2P && ![self isFriendToSendMessage:currentM isSkipFriendCheck:NO]) {
+    if (self._session.sessionType == NIMSessionTypeP2P && ![self isFriendToSendMessage:currentM isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
         return;
     }
     
@@ -1535,11 +1535,11 @@
 
 
 //发送录音
--(void)sendAudioMessage:(NSString *)file duration:(NSString *)duration isSkipFriendCheck:(BOOL *)isSkipFriendCheck{
+-(void)sendAudioMessage:(NSString *)file duration:(NSString *)duration isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger{
     if (file == nil) return;
     
     NIMMessage *message = [NIMMessageMaker msgWithAudio:file andeSession:self._session senderName:_myUserName];
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[[NIMSDK sharedSDK] chatManager] sendMessage:message toSession:self._session error:nil];
     }
     
@@ -1577,10 +1577,10 @@
 }
 
 //发送文字消息
--(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members messageSubType:(NSInteger)messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck {
+-(void)sendMessage:(NSString *)mess andApnsMembers:(NSArray *)members messageSubType:(NSInteger)messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger  {
     NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session senderName:_myUserName messageSubType:messageSubType];
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
@@ -1688,10 +1688,10 @@
 }
 
 //send gif message
--(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isSkipFriendCheck:(BOOL *)isSkipFriendCheck{
+-(void)sendGifMessage:(NSString *)url aspectRatio:(NSString *)aspectRatio andApnsMembers:(NSArray *)members isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger{
     NIMMessage *message = [NIMMessageMaker msgWithGif:url aspectRatio:aspectRatio andSession:self._session senderName:_myUserName];
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
@@ -1782,7 +1782,7 @@
 }
 
 //发送图片
--(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isHighQuality:(BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber *)indexCount {
+-(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isHighQuality:(BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber *)indexCount {
     UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
     NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session isHighQuality:isHighQuality senderName:_myUserName];
     
@@ -1802,12 +1802,12 @@
         message.text = parentId;
     }
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipCheckFriend]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipCheckFriend isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
 
-- (void)sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isSkipFriendCheck:(BOOL *)isSkipFriendCheck success:(Success)success error:(Errors)error {
+- (void)sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger success:(Success)success error:(Errors)error {
     
     NSString *parentMediaId;
     if ([listMedia count] > 1) {
@@ -1839,11 +1839,11 @@
             
             if ([mediaType isEqualToString:@"image"]) {
                 BOOL isHighQuality = [mediaData[@"isHighQuality"] boolValue];
-                [self sendImageMessages:mediaData[@"file"] displayName:mediaData[@"displayName"] isHighQuality:isHighQuality isSkipCheckFriend:isSkipFriendCheck parentId:parentMediaId indexCount:media[@"indexCount"]];
+                [self sendImageMessages:mediaData[@"file"] displayName:mediaData[@"displayName"] isHighQuality:isHighQuality isSkipCheckFriend:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger parentId:parentMediaId indexCount:media[@"indexCount"]];
                 continue;
             }
             
-            [self sendVideoMessage:mediaData[@"file"] duration:mediaData[@"duration"] width:mediaData[@"width"] height:mediaData[@"height"] displayName:mediaData[@"displayName"] isSkipFriendCheck:isSkipFriendCheck parentId:parentMediaId indexCount:mediaData[@"indexCount"]];
+            [self sendVideoMessage:mediaData[@"file"] duration:mediaData[@"duration"] width:mediaData[@"width"] height:mediaData[@"height"] displayName:mediaData[@"displayName"] isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger parentId:parentMediaId indexCount:mediaData[@"indexCount"]];
         }
         
         if (parentId != nil && [listMedia count] > 1 && startIndex == 0) {
@@ -1894,7 +1894,7 @@
 }
 
 //发送视频
--(void)sendVideoMessage:(NSString *)path duration:(NSString *)duration width:(NSNumber *)width height:(NSNumber *)height displayName:(  NSString *)displayName isSkipFriendCheck:(BOOL *)isSkipFriendCheck parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber*)indexCount {
+-(void)sendVideoMessage:(NSString *)path duration:(NSString *)duration width:(NSNumber *)width height:(NSNumber *)height displayName:(  NSString *)displayName isSkipFriendCheck:(BOOL *)isSkipFriendCheck  isSkipTipForStranger:(BOOL *)isSkipTipForStranger parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber*)indexCount {
     if ([path hasPrefix:@"file:///private"]) {
         path = [path stringByReplacingOccurrencesOfString:@"file:///private" withString:@""];
     }
@@ -1911,7 +1911,7 @@
     }
     message.remoteExt = msgRemoteExt;
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
@@ -1942,7 +1942,7 @@
 -(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName fileType:(NSString *)fileType success:(Success)succe Err:(Errors)err{
     NIMMessage *message = [NIMMessageMaker msgWithFile:filePath fileName:fileName fileType:fileType andeSession:self._session senderName:_myUserName];
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
         NSError *error;
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&error];
         
@@ -1962,7 +1962,7 @@
     obj.custType = custType;
     obj.dataDict = dataDict;
     message = [NIMMessageMaker msgWithCustomAttachment:obj andeSession:self._session senderName:_myUserName];
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
@@ -1979,7 +1979,7 @@
     message.apnsContent = @"[聊天记录]";
     [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
         
         if ([content length] != 0) {
@@ -1998,7 +1998,7 @@
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     
     NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:session senderName:_myUserName];
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
         NSError *error;
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
         
@@ -2068,7 +2068,7 @@
     
     NIMMessage *message = [NIMMessageMaker msgWithCard:cardSessionId cardSessionType:cardSessionType cardSessionName:name avatar:strImgPath andSession:session senderName:_myUserName];
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
     }
 }
@@ -3074,6 +3074,7 @@
     NSArray *recipients = [params objectForKey:@"recipients"];
     NSString *messageText = [params objectForKey:@"messageText"];
     NSString *content = [params objectForKey:@"content"];
+    NSLog(@"forwardMultiTextMessageToMultipleRecipients content: %@", content);
     if (recipients == nil) {
         err(@"recipients is required!");
         return;
@@ -3087,7 +3088,9 @@
         NSString *sessionId = [recipient objectForKey:@"sessionId"];
         NSString *sessionType = [recipient objectForKey:@"sessionType"];
         NSNumber *skipFriendCheck = [recipient objectForKey:@"isSkipFriendCheck"];
+        NSNumber *skipTipForStranger = [recipient objectForKey:@"isSkipTipForStranger"];
         BOOL isSkipFriendCheck = [skipFriendCheck boolValue];
+        BOOL isSkipTipForStranger = [skipTipForStranger boolValue];
         if (sessionId == nil || sessionType == nil) continue;
         
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void) {
@@ -3101,15 +3104,16 @@
             message.apnsContent = @"[聊天记录]";
             [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
             
-            if ([self checkFriendBeforeSendMessage:message sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck]) {
+            if ([self checkFriendBeforeSendMessage:message sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
                 [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
             }
             
             if (content != nil && [content length] > 0) {
+                NSLog(@"forwardMultiTextMessageToMultipleRecipients content >: %@", content);
                 NIMMessage *messageContent = [[NIMMessage alloc] init];
                 messageContent.text = content;
                 
-                if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck]) {
+                if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
                     [[NIMSDK sharedSDK].chatManager sendMessage:messageContent toSession:session error:nil];
                 }
             }
@@ -3119,7 +3123,7 @@
     success(@"success");
 }
 
--(void) handleMessageFoward:(NIMMessage *)message session:(NIMSession *)session parentId:(NSString *)parentId isHaveMultiMedia:(BOOL)isHaveMultiMedia sessionType:(NSString *)sessionType isSkipFriendCheck:(BOOL)isSkipFriendCheck {
+-(void) handleMessageFoward:(NIMMessage *)message session:(NIMSession *)session parentId:(NSString *)parentId isHaveMultiMedia:(BOOL)isHaveMultiMedia sessionType:(NSString *)sessionType isSkipFriendCheck:(BOOL)isSkipFriendCheck isSkipTipForStranger:(BOOL)isSkipTipForStranger {
     if (message.messageType == NIMMessageTypeLocation) {
         NIMLocationObject *object = message.messageObject;
         NSError *jsonErr;
@@ -3142,7 +3146,7 @@
         NIMKitLocationPoint *locationPoint = [[NIMKitLocationPoint alloc] initWithLocationObject:locationObj];
         NIMMessage *messageLocation = [NIMMessageMaker msgWithLocation:locationPoint andeSession:session senderName:_myUserName];
         
-        if ([self checkFriendBeforeSendMessage:messageLocation sessionId:session.sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck]) {
+        if ([self checkFriendBeforeSendMessage:messageLocation sessionId:session.sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
             [[NIMSDK sharedSDK].chatManager sendMessage:messageLocation toSession:session error:nil];
         }
         return;
@@ -3171,7 +3175,7 @@
     
     message.localExt = @{};
     
-    if ([self checkFriendBeforeSendMessage:message sessionId:session.sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck]) {
+    if ([self checkFriendBeforeSendMessage:message sessionId:session.sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
     }
 }
@@ -3235,7 +3239,9 @@
         NSString *sessionId = [recipient objectForKey:@"sessionId"];
         NSString *sessionType = [recipient objectForKey:@"sessionType"];
         NSNumber *skipFriendCheck = [recipient objectForKey:@"isSkipFriendCheck"];
+        NSNumber *skipTipForStranger = [recipient objectForKey:@"isSkipTipForStranger"];
         BOOL isSkipFriendCheck = [skipFriendCheck boolValue];
+        BOOL isSkipTipForStranger = [skipTipForStranger boolValue];
         
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
@@ -3251,7 +3257,7 @@
                     }
                 }
                 
-                [self handleMessageFoward:message session:session parentId:parentId isHaveMultiMedia:isHaveMultiMedia sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck];
+                [self handleMessageFoward:message session:session parentId:parentId isHaveMultiMedia:isHaveMultiMedia sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
             }
             
             if (parentId != nil && isHaveMultiMedia) {
@@ -3269,7 +3275,7 @@
                 messageParent.remoteExt = remoteExt;
                 messageParent.setting = seting;
                 
-                if ([self checkFriendBeforeSendMessage:messageParent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck]) {
+                if ([self checkFriendBeforeSendMessage:messageParent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
                     [[NIMSDK sharedSDK].chatManager sendMessage:messageParent toSession:session error:nil];
                 }
             }
@@ -3278,7 +3284,7 @@
                 NIMMessage *messageContent = [[NIMMessage alloc] init];
                 messageContent.text = content;
                 
-                if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck]){
+                if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]){
                     [[NIMSDK sharedSDK].chatManager sendMessage:messageContent toSession:session error:nil];
                 }
             }
@@ -3675,7 +3681,7 @@
     [[NIMSDK sharedSDK].systemNotificationManager removeDelegate:self];
 }
 
--(BOOL) checkFriendBeforeSendMessage:(NIMMessage *)message sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType isSkipFriendCheck:(BOOL *)isSkipFriendCheck {
+-(BOOL) checkFriendBeforeSendMessage:(NIMMessage *)message sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
     if (isSkipFriendCheck || [sessionType integerValue] != NIMSessionTypeP2P) return YES;
     if ([[NIMSDK sharedSDK].userManager isMyFriend:sessionId]) return YES;
     
@@ -3683,52 +3689,58 @@
     
     message.localExt = @{@"isFriend":@"NO", @"isCancelResend":[NSNumber numberWithBool:YES]};
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
-    NSString *sessionName = @"";
-    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
-    if ([user.alias length]) {
-        sessionName = user.alias;
-    }else{
-        NIMUserInfo *userInfo = user.userInfo;
-        sessionName = userInfo.nickName;
+
+    if (!isSkipTipForStranger) {
+        NSString *sessionName = @"";
+        NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
+        if ([user.alias length]) {
+            sessionName = user.alias;
+        }else{
+            NIMUserInfo *userInfo = user.userInfo;
+            sessionName = userInfo.nickName;
+        }
+        
+        NSString *tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
+        NIMMessage *tipMessage = [self msgWithTip:tip];
+        tipMessage.timestamp = message.timestamp+1;
+        [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:session completion:nil];
     }
-    
-    NSString *tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
-    NIMMessage *tipMessage = [self msgWithTip:tip];
-    tipMessage.timestamp = message.timestamp+1;
-    [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:session completion:nil];
     
     return NO;
 }
 
 //判断是不是好友
-- (BOOL)isFriendToSendMessage:(NIMMessage *)message isSkipFriendCheck:(BOOL *)isSkipFriendCheck{
-    if (isSkipFriendCheck) return YES;
-    
-    if (self._session.sessionType == NIMSessionTypeP2P) {//点对点
-        NSString *strSessionId = self._session.sessionId;
-        if ([[NIMSDK sharedSDK].userManager isMyFriend:strSessionId]) {//判断是否为自己好友
-            return YES;
-        }else{
-            message.localExt = @{@"isFriend":@"NO", @"isCancelResend":[NSNumber numberWithBool:YES]};
-            [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
-            NSString *strSessionName = @"";
-            NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:strSessionId];
-            if ([user.alias length]) {
-                strSessionName = user.alias;
-            }else{
-                NIMUserInfo *userInfo = user.userInfo;
-                strSessionName = userInfo.nickName;
-            }
-            
-            NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
-            NIMMessage *tipMessage = [self msgWithTip:tip];
-            tipMessage.timestamp = message.timestamp+1;
-            [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
-            return NO;
-        }
-    }else{
+- (BOOL)isFriendToSendMessage:(NIMMessage *)message isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
+    if (isSkipFriendCheck || self._session.sessionType != NIMSessionTypeP2P) return YES;
+    NSString *sessionId = self._session.sessionId;
+    if ([[NIMSDK sharedSDK].userManager isMyFriend:sessionId]) {
         return YES;
     }
+    
+    NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    [localExt setObject:@"NO" forKey:@"isFriend"];
+    [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isCancelResend"];
+    
+    message.localExt = localExt;
+    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
+    
+    if (!isSkipTipForStranger) {
+        NSString *strSessionName = @"";
+        NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
+        if ([user.alias length]) {
+            strSessionName = user.alias;
+        }else{
+            NIMUserInfo *userInfo = user.userInfo;
+            strSessionName = userInfo.nickName;
+        }
+        
+        NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
+        NIMMessage *tipMessage = [self msgWithTip:tip];
+        tipMessage.timestamp = message.timestamp+1;
+        [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+    }
+    
+    return NO;
 }
 
 @end

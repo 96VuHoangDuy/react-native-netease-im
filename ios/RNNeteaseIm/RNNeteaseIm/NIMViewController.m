@@ -478,10 +478,10 @@
             }
         } else {
             if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"forwardMultipleText"]) {
-                recent.lastMessage.text = @"[聊天记录]";
                 NSMutableDictionary *extend = [NSMutableDictionary dictionary];
                 [extend setObject:recent.lastMessage.text forKey:@"messages"];
                 [dic setObject:extend forKey:@"extend"];
+                [dic setObject:@"[聊天记录]" forKey:@"content"];
                 [dic setObject:@"forwardMultipleText" forKey:@"msgType"];
             } else if ([[recent.lastMessage.remoteExt objectForKey:@"extendType"]  isEqual: @"card"]) {
                 [dic setObject:recent.lastMessage.remoteExt forKey:@"extend"];
@@ -501,6 +501,10 @@
             
             if ([recent.lastMessage.localExt objectForKey:@"notificationExtend"]  != nil) {
                 [localExt setObject:[recent.lastMessage.localExt objectForKey:@"notificationExtend"] forKey:@"notificationExtend"];
+            }
+            
+            if ([recent.lastMessage.localExt objectForKey:@"isCancelResend"] != nil) {
+                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"isCancelResend"] forKey:@"isCancelResend"];
             }
         }
         

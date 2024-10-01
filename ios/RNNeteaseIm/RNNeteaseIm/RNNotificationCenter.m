@@ -155,6 +155,8 @@
                 break;
             case 5: //IS_TYPING_MESSAGE
                 break;
+            case 6:
+                break;
 //            case 4://拆红包消息
 ////            {
 ////                [self saveTheRedPacketOpenMsg:[notiDict objectForKey:@"data"] andTime:timestamp];
