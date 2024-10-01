@@ -214,7 +214,10 @@ class NimSession {
   }
 
   sendCustomMessageOfChatbot(sessionId: string, customerServiceType: string) {
-    return RNNeteaseIm.sendCustomMessageOfChatbot(sessionId, customerServiceType)
+    return RNNeteaseIm.sendCustomMessageOfChatbot(
+      sessionId,
+      customerServiceType
+    );
   }
 
   sendGifMessage(
@@ -566,7 +569,7 @@ class NimSession {
   /**
    * 更新录音消息是否播放过的状态
    * @param messageId
-  * @returns {*}
+   * @returns {*}
    */
   updateAudioMessagePlayStatus(messageId: string) {
     return RNNeteaseIm.updateAudioMessagePlayStatus(messageId);
@@ -582,8 +585,14 @@ class NimSession {
     return RNNeteaseIm.addEmptyRecentSession(sessionId, sessionType);
   }
 
-  addEmptyRecentSessionWithoutMessage(sessionId: string, sessionType: NIMSessionTypeEnum) {
-    return RNNeteaseIm.addEmptyRecentSessionWithoutMessage(sessionId, sessionType)
+  addEmptyRecentSessionWithoutMessage(
+    sessionId: string,
+    sessionType: NIMSessionTypeEnum
+  ) {
+    return RNNeteaseIm.addEmptyRecentSessionWithoutMessage(
+      sessionId,
+      sessionType
+    );
   }
 
   cancelSendingMessage(
@@ -873,7 +882,7 @@ class NimSession {
   }
 
   removeTemporarySessionRef(sessionId: string) {
-    return RNNeteaseIm.removeTemporarySessionRef(sessionId)
+    return RNNeteaseIm.removeTemporarySessionRef(sessionId);
   }
 
   updateRecentToTemporarySession(
@@ -889,11 +898,21 @@ class NimSession {
   }
 
   updateMessageOfCsr(messageId: string, sessionId: string) {
-    return RNNeteaseIm.updateMessageOfCsr(messageId, sessionId)
+    return RNNeteaseIm.updateMessageOfCsr(messageId, sessionId);
   }
 
-  setListCustomerServiceAndChatbot(data: Record<string, NIMSessionOnlineServiceType>) {
-    return RNNeteaseIm.setListCustomerServiceAndChatbot(data)
+  setListCustomerServiceAndChatbot(
+    data: Record<string, NIMSessionOnlineServiceType>
+  ) {
+    return RNNeteaseIm.setListCustomerServiceAndChatbot(data);
+  }
+
+  startObserverMediaChange() {
+    return RNNeteaseIm.startObserverMediaChange();
+  }
+
+  stopObserverMediaChange() {
+    return RNNeteaseIm.stopObserverMediaChange();
   }
 }
 

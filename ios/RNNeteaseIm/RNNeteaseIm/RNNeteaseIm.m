@@ -21,6 +21,7 @@
 #import "NIMMessageMaker.h"
 #import "ChatroomViewController.h"
 #import "CacheUsers.h"
+#import <Photos/Photos.h>
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
@@ -95,6 +96,16 @@
     return dispatch_get_main_queue();
 }
 
+// Implement the change observer method
+- (void)photoLibraryDidChange:(PHChange *)changeInstance {
+    // This method is called whenever the photo library changes
+    NSLog(@"Photo library has changed.");
+    NSDictionary *param = @{@"photoLibraryDidChange": @YES};
+    [_bridge.eventDispatcher sendDeviceEventWithName:@"observePhotoLibraryDidChange" body:param];
+
+    // You can handle specific changes, such as detecting new photos added here
+}
+
 RCT_EXPORT_MODULE()
 
 //手动登录
@@ -117,6 +128,16 @@ RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)to
     
     [NIMViewController initWithController].strToken = token;
     [NIMViewController initWithController].strAccount = account;
+}
+
+RCT_EXPORT_METHOD(startObserverMediaChange){
+    if (!self) return;
+    [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
+}
+
+RCT_EXPORT_METHOD(stopObserverMediaChange){
+    if (!self) return;
+    [[PHPhotoLibrary sharedPhotoLibrary] unregisterChangeObserver:self];
 }
 
 //手动登录

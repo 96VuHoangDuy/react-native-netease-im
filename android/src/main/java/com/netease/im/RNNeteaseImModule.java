@@ -3,13 +3,16 @@ package com.netease.im;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
@@ -139,6 +142,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     FriendListService friendListService;
     FriendObserver friendObserver;
     private Handler handler = new Handler(Looper.getMainLooper());
+    private ContentObserver galleryObserver;
 
     public RNNeteaseImModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -165,6 +169,26 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @Override
     public String getName() {
         return NAME;
+    }
+
+    @ReactMethod
+    public void startObserverMediaChange() {
+        ContentResolver contentResolver = this.reactContext.getContentResolver();
+
+        Handler handler = new Handler();
+        galleryObserver = new GalleryObserver(handler, this.reactContext);
+
+        // Register the content observer
+        contentResolver.registerContentObserver(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, true, galleryObserver);
+    }
+
+    // Unregister the content observer
+    @ReactMethod
+    public void stopObserverMediaChange() {
+        if (galleryObserver != null) {
+            this.reactContext.getContentResolver().unregisterContentObserver(galleryObserver);
+        }
     }
 
     @ReactMethod
