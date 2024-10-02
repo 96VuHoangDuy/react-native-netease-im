@@ -911,7 +911,6 @@
             NSMutableDictionary *localExt = [recent.localExt mutableCopy];
             NSNumber *pinSessionWithEmpty = [localExt objectForKey:@"isPinSessionWithEmpty"];
             
-            NSLog(@"pinSessionWithEmpty >> %@, %@", pinSessionWithEmpty, recent.lastMessage);
             
             if (pinSessionWithEmpty != nil) {
                 BOOL isPinSessionWithEmpty = [pinSessionWithEmpty boolValue];

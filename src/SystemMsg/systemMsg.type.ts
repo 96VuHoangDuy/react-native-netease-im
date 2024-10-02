@@ -56,7 +56,7 @@ export enum NIMCustomNotificationTypeEnum {
 
 export interface ICustomerNotificationDataTemporarySession {
   sessionRef: ITemporarySessionRef;
-  expiredAt: Date;
+  expiredAt: string | null;
   userId: string;
 }
 
