@@ -758,6 +758,7 @@
         }
     }
     
+    [result setObject:[NSNumber numberWithBool: recent.lastMessage.isOutgoingMsg] forKey:@"isOutgoing"];
     [result setObject:[NSString stringWithFormat:@"%@", recent.session.sessionId] forKey:@"contactId"];
     [result setObject:[NSString stringWithFormat:@"%zd", recent.session.sessionType] forKey:@"sessionType"];
     [result setObject:unreadCount forKey:@"unreadCount"];
