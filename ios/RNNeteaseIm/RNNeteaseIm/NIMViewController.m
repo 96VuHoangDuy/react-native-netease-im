@@ -13,6 +13,7 @@
 #import "ChatroomViewController.h"
 #import "react-native-config/RNCConfig.h"
 #import "CacheUsers.h"
+#import "UserStrangers.h"
 
 @interface NIMViewController ()<NIMLoginManagerDelegate,NIMConversationManagerDelegate>{
     //    BOOL isLoginFailed;
@@ -20,10 +21,11 @@
 //    NSDictionary *listUserInfo;
 //    NSDictionary *listCsrOrChatbot;
 //    BOOL isFetchCsrAndChatbot;
+//    NSDictionary *listStranger;
 }
 
 //@property (nonatomic, strong) NSDictionary *listUserInfo;
-//@property (nonatomic, strong) NSDictionary *listCsrOrChatbot;
+//@property (nonatomic, strong) NSDictionary *listStranger;
 //@property (nonatomic, strong) BOOL *isFetchCsrAndChatbot;
 
 @end
@@ -51,6 +53,7 @@
         // _listUserInfo = [[NSMutableDictionary alloc] init];
         // _listCsrOrChatbot = [[NSMutableDictionary alloc] init];
         // _isFetchCsrAndChatbot = NO;
+//        _listStranger = [[NSMutableDictionary alloc] init];
     }
     
     return self;
@@ -587,6 +590,25 @@
     
     if (user.notifyForNewMsg && !isHideSession && ![recent.session.sessionId isEqual:@"cmd10000"]) {
         *totalUnreadCount = *totalUnreadCount + [unreadCount integerValue];
+    }
+    
+    if ([[dic objectForKey:@"name"] isEqual:[dic objectForKey:@"contactId"]] && !isCsr && !isChatBot) {
+        NSDictionary *userWithCache = [[CacheUsers initWithCacheUsers] getUser:recent.session.sessionId];
+        
+        if (userWithCache != nil) {
+            NSString *nameWithCache = [userWithCache objectForKey:@"nickname"];
+            NSString *avatarWithCache = [userWithCache objectForKey:@"avatar"];
+            
+            if (nameWithCache != nil) {
+                [dic setObject:nameWithCache forKey:@"name"];
+            }
+            
+            if (avatarWithCache != nil && ![avatarWithCache isEqual:@"(null)"]) {
+                [dic setObject:avatarWithCache forKey:@"imagePath"];
+            }
+        } else {
+            [[UserStrangers initWithUserStrangers] setStranger:recent.session.sessionId];
+        }
     }
     
     return dic;

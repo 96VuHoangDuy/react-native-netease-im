@@ -10,7 +10,7 @@
 #import "NIMModel.h"
 #import "ImConfig.h"
 
-typedef void(^NIMFetchUsersHandle)(NSError * __nullable error);
+typedef void(^NIMFetchUsersHandle)(NSDictionary * _Nullable response,NSError * __nullable error);
 
 @interface CacheUsers : UIViewController
 

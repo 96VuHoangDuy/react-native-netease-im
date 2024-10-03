@@ -80,16 +80,28 @@
     if (_apiUrl == nil || _authKey == nil) {
         NSMutableDictionary *details = [[NSMutableDictionary alloc] init];
         [details setObject:@"CacheUser fetchUsers" forKey:NSLocalizedDescriptionKey];
-        completion([NSError errorWithDomain:@"api url or auth key not found" code:404 userInfo:details]);
+        completion(nil, [NSError errorWithDomain:@"api url or auth key not found" code:404 userInfo:details]);
         return;
     }
+    
+    NSLog(@"fetchUsers: %@, %@, %@",accIds, _apiUrl, _authKey);
+//    
+//    NSMutableString *endpoint = [NSMutableString stringWithFormat:@"%@/api/v1/client/im-sdk/users", _apiUrl];
+//    for(int i = 0; i < [accIds count]; i++) {
+//        if (i == 0) {
+//            [endpoint appendFormat:@"?accId=%@", [accIds objectAtIndex:i]];
+//            continue;
+//        }
+//        
+//        [endpoint appendFormat:@"&accId=%@", [accIds objectAtIndex:i]]
+//    }
     
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/api/v1/client/im-sdk/users", _apiUrl]];
  
     NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
     NSMutableArray *queryItems = [NSMutableArray arrayWithArray:components.queryItems];
     for(NSString *accId in accIds) {
-        NSURLQueryItem *queryItem = [[NSURLQueryItem alloc] initWithName:@"accId" value:accId];
+        NSURLQueryItem *queryItem = [[NSURLQueryItem alloc] initWithName:@"accIds" value:accId];
         [queryItems addObject:queryItem];
     }
     
@@ -103,12 +115,14 @@
     NSURLSession *session = [NSURLSession sharedSession];
     NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *reponse, NSError *error) {
         if (error != nil) {
-            completion(error);
+            NSLog(@"fetchUsers error: %@",error);
+            completion(nil, error);
             return;
         }
         
-        if (data == nil) {
-            completion(nil);
+        NSLog(@"fetchUsers data: %@", data);
+        if (data == nil ) {
+            completion(nil, nil);
             return;
         }
         
@@ -116,11 +130,14 @@
         NSDictionary *responseData = [NSDictionary dictionaryWithDictionary:[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:&error]];
         
         if (parseDataErr != nil) {
-            completion(parseDataErr);
+            NSLog(@"fetchUsers parseDataErr: %@", parseDataErr);
+            completion(nil, parseDataErr);
             return;
         }
         
-        NSMutableDictionary *updateListUserInfo = self->_listUsers ? [self->_listUsers mutableCopy] : [[NSMutableDictionary alloc] init];
+        NSLog(@"fetchUsers responseData: %@", responseData);
+        
+        NSMutableDictionary *updateListUserInfo = self.listUsers ? [self.listUsers mutableCopy] : [[NSMutableDictionary alloc] init];
         
         for(NSString *accId in [responseData allKeys]) {
             if ([responseData objectForKey:accId] != nil) {
@@ -128,12 +145,12 @@
             }
         }
         
-        [dataTask resume];
+        self.listUsers = updateListUserInfo;
         
-        self->_listUsers = updateListUserInfo;
-        
-        completion(nil);
+        completion(responseData,nil);
     }];
+    
+    [dataTask resume];
 }
 
 @end

@@ -340,23 +340,36 @@
 
 -(void)replyMessage:(nonnull NSDictionary *)params success:(Success)success err:(Errors)err {
     //    NIMSession *session = [NIMSession session:[params objectForKey:@"sessionId"] type:[[params objectForKey:@"sessionType"] intValue]];
+    NSNumber *skipFriendCheck = [params objectForKey:@"isSkipFriendCheck"];
+    NSNumber *skipTipForStranger = [params objectForKey:@"isSkipTipForStranger"];
+    BOOL isSkipTipForStranger = [skipTipForStranger boolValue];
+    BOOL isSkipFriendCheck = [skipFriendCheck boolValue];
     
     NIMMessage *newWessage = [NIMMessageMaker msgWithText:[params objectForKey:@"content"] andApnsMembers:@[] andeSession:self._session senderName:_myUserName messageSubType:@0];
     newWessage.remoteExt = @{@"repliedId": [params objectForKey:@"messageId"]};
     NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:@[[params objectForKey:@"messageId"]]];
     
     NIMMessage *repliedMessage = messages.firstObject;
-    NSError *copyError = nil;
-    [[[NIMSDK sharedSDK] chatExtendManager] reply:newWessage
-                                               to:repliedMessage
-                                            error:&copyError];
     
-    if (copyError == nil) {
-        success(@"200");
-    }else{
-        err(copyError);
-        NSLog(@"%@:%@",[copyError description],@"''");
+    if ([self isFriendToSendMessage:newWessage isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger])  {
+        
+        NSError *copyError = nil;
+        [[[NIMSDK sharedSDK] chatExtendManager] reply:newWessage
+                                                   to:repliedMessage
+                                                error:&copyError];
+        
+        if (copyError == nil) {
+            success(@"200");
+        }else{
+            err(copyError);
+            NSLog(@"%@:%@",[copyError description],@"''");
+        }
+        
+        return;
     }
+    
+    
+    success(@"200");
 }
 
 //聊天界面历史记录

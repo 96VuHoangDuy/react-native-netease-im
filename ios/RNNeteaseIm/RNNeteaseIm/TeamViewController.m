@@ -8,15 +8,20 @@
 
 #import "TeamViewController.h"
 #import "ImConfig.h"
+#import "UserStrangers.h"
+#import "CacheUsers.h"
 
 @interface TeamViewController ()<NIMTeamManagerDelegate>
 {
-NSMutableArray *_myTeams;
+  NSMutableArray *_myTeams;
 }
+
+@property (nonatomic, strong) NSDictionary *teamMemberStranger;
 
 @end
 
 @implementation TeamViewController
+
 
 +(instancetype)initWithTeamViewController{
     static TeamViewController *teamVC = nil;
@@ -265,6 +270,8 @@ NSMutableArray *_myTeams;
             [teamDic setObject:@"" forKey:tem];
         }
     }
+    
+    
     return teamDic;
 }
 
@@ -442,6 +449,37 @@ NSMutableArray *_myTeams;
                         [memb setObject:@"" forKey:tem];
                     }
                 }
+                
+                if ([memb objectForKey:@"name"] != nil && [[memb objectForKey:@"name"] isEqual:@""] && [memb objectForKey:@"nickname"] != nil && [[memb objectForKey:@"nickname"] isEqual:@""]) {
+                    NSDictionary *userWithCache = [[CacheUsers initWithCacheUsers] getUser:member.userId];
+                    
+                    if (userWithCache != nil) {
+                        NSString *nameWithCache = [userWithCache objectForKey:@"nickname"];
+                        NSString *avatarWithCache = [userWithCache objectForKey:@"avatar"];
+                        NSString *genderWithCache = [userWithCache objectForKey:@"gender"];
+                        if (nameWithCache != nil) {
+                            [memb setObject:nameWithCache forKey:@"name"];
+                        }
+                        
+                        if (avatarWithCache != nil && ![avatarWithCache isEqual:@"(null)"]) {
+                            [memb setObject:avatarWithCache forKey:@"avatar"];
+                        }
+                        
+                        NSString *gender = @"0";
+                        if (gender != nil && [gender isEqual:@"male"]) {
+                            gender = @"1";
+                        }
+                        
+                        if (gender != nil && [gender isEqual:@"female"]) {
+                            gender = @"2";
+                        }
+                        
+                        [memb setObject:gender forKey:@"gender"];
+                    } else {
+                        [[UserStrangers initWithUserStrangers] setStranger:member.userId];
+                    }
+                }
+                
                 [arr addObject:memb];
             }
         succ(arr);

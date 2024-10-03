@@ -188,9 +188,11 @@ class NimSession {
   /**
    *1.发送文本消息
    * @param content 文本内容
-   * @param atUserIds @的群成员ID ["abc","abc12"]
+  * @param atUserIds @的群成员ID ["abc","abc12"]
    */
-  replyMessage(params: { content: string; messageId: string }) {
+  replyMessage(params: { content: string; messageId: string,
+    isSkipFriendCheck?: boolean;
+    isSkipTipForStranger?: boolean; }) {
     return RNNeteaseIm.replyMessage(params);
   }
 

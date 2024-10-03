@@ -18,9 +18,11 @@ typedef void(^ERROR)(NSString *error);
 @property (copy, nonatomic) NSString *lastMessageId;
 @property (assign, nonatomic) BOOL isUpdated;
 
-@property (nonatomic, strong) NSDictionary *listUserInfo;
-@property (nonatomic, strong) NSDictionary *listCsrOrChatbot;
-@property (assign, nonatomic) BOOL isFetchCsrAndChatbot;
+//@property (nonatomic, strong) NSDictionary *listUserInfo;
+//@property (nonatomic, strong) NSDictionary *listCsrOrChatbot;
+//@property (assign, nonatomic) BOOL isFetchCsrAndChatbot;
+
+@property (nonatomic, strong) NSDictionary *listStranger;
 
 +(instancetype)initWithController;
 -(instancetype)initWithNIMController;

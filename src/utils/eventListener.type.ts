@@ -14,6 +14,7 @@ export enum NIMEventListenerEnum {
   observeOnKick = "observeOnKick",
   observeCustomNotification = "observeCustomNotification",
   observeProgressSend = "observeProgressSend",
+  observeUserStranger = "observeUserStranger"
 }
 
 export enum NIMAudioMsgStatusType {
@@ -22,3 +23,12 @@ export enum NIMAudioMsgStatusType {
   COMPLETED = "completed",
   STOP = "stop",
 }
+
+export interface NIMUserStranger {
+  avatar: string | null;
+  nickname: string;
+  accId: string;
+  gender: string
+}
+
+export type NIMDataObserveUserStranger = Record<string, NIMUserStranger>

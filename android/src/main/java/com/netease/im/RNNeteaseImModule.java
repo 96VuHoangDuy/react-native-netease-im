@@ -212,6 +212,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     public void replyMessage(ReadableMap params, final  Promise promise) {
         Map<String, Object> data = MapUtil.readableMaptoMap(params);
 
+//        Boolean isSkipTipForStranger = (Boolean) data.get("isSkipTipForStranger");
+//        Boolean isSkipFriendCheck = (Boolean) data.get("isSkipFriendCheck");
+
         List<String> uuids = new ArrayList<>();
         String messageId = (String) data.get("messageId");
         uuids.add(messageId);
@@ -227,6 +230,15 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         }
         localExt.put("repliedId", messageId);
         message.setRemoteExtension(localExt);
+//
+//        if (message.getSessionType() == SessionTypeEnum.P2P) {
+//            Boolean isFriend = NIMClient.getService(FriendService.class).isMyFriend(message.getSessionId());
+//            if (!isFriend && !isSkipFriendCheck && !isSkipTipForStranger) {
+//                SessionService.getInstance().sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
+//                promise.resolve("200");
+//                return;
+//            }
+//        }
 
         NIMClient.getService(MsgService.class).replyMessage(message, replymessage.get(0), false).setCallback(new RequestCallback<Void>() {
             @Override

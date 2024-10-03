@@ -22,6 +22,7 @@
 #import "ChatroomViewController.h"
 #import "CacheUsers.h"
 #import <Photos/Photos.h>
+#import "UserStrangers.h"
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
@@ -1324,6 +1325,7 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
     [[NIMViewController initWithController] addDelegate];
     [[NoticeViewController initWithNoticeViewController]initWithDelegate];
     [RNNotificationCenter sharedCenter];
+    [[UserStrangers initWithUserStrangers] setIm:self];
 }
 
 -(void)setSendState{

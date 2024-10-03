@@ -24,60 +24,82 @@ class ResponseFetchUser {
     public void setData(Map<String, Object> data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "Data";
+    }
 }
 
 public class CacheUsers {
     private final static String TAG = "CacheUsers";
     private final static String HeaderAuthKey = "X-IM-SDK-AUTH-KEY";
 
-    private Map<String, Object> listUsers;
-    private Map<String, Object> listCustomerServiceAndChatbot;
-    private String apiUrl;
-    private String authKey;
+    private static Map<String, Object> listUsers;
+    private static Map<String, Object> listCustomerServiceAndChatbot;
+    private static String apiUrl;
+    private static String authKey;
 
-    public static CacheUsers cacheUsers = new CacheUsers();
+    private static CacheUsers instance;
 
     public CacheUsers() {
         listUsers = new HashMap<>();
         listCustomerServiceAndChatbot = new HashMap<>();
     }
 
-    public static void setApiUrl(String url) {
-        Log.e(TAG, "apiUrl: " + url);
-        cacheUsers.apiUrl = url;
+    public static CacheUsers getInstance() {
+        if (instance != null) {
+            instance = new CacheUsers();
+        }
+
+        return instance;
     }
 
-    public static void setAuthKey(String authKey) {
-        Log.e(TAG, "authKey: " + authKey);
-        cacheUsers.authKey = authKey;
+    public static void setApiUrl(String url) {
+        Log.e(TAG, "apiUrl: " + url);
+        apiUrl = url;
+    }
+
+    public static void setAuthKey(String key) {
+        Log.e(TAG, "authKey: " + key);
+        authKey = key;
     }
 
     public static Map<String, Object> getUser(String accId) {
-        return (Map<String, Object>) cacheUsers.listUsers.get(accId);
+        if (listUsers == null) {
+            listUsers = new HashMap<>();
+        }
+
+        return (Map<String, Object>) listUsers.get(accId);
     }
 
     public static String getCustomerServiceOrChatbot(String accId) {
-        return (String) cacheUsers.listCustomerServiceAndChatbot.get(accId);
+        if (listCustomerServiceAndChatbot == null) {
+            listCustomerServiceAndChatbot = new HashMap<>();
+        }
+        return (String) listCustomerServiceAndChatbot.get(accId);
     }
 
     public static void setListCustomerServiceAndChatbot(ReadableMap data) {
-        if (cacheUsers.listCustomerServiceAndChatbot.isEmpty()) {
-            cacheUsers.listCustomerServiceAndChatbot = MapUtil.readableMaptoMap(data);
+        if (listCustomerServiceAndChatbot == null || listCustomerServiceAndChatbot.isEmpty()) {
+            listCustomerServiceAndChatbot = MapUtil.readableMaptoMap(data);
         }
     }
 
     public static void fetchUsers(List<String> accIds, OnCompletion onCompletion) {
         try {
-            StringBuilder endpoint = new StringBuilder(cacheUsers.apiUrl + "/api/v1/client/im-sdk/users");
+            StringBuilder endpoint = new StringBuilder(apiUrl + "/api/v1/client/im-sdk/users");
             for(int i = 0; i < accIds.size(); i++) {
                 String accId = accIds.get(i);
                 if (i == 0) {
-                    endpoint.append("?accId=").append(accId);
+                    endpoint.append("?accIds=").append(accId);
                     continue;
                 }
 
-                endpoint.append("&accId=").append(accId);
+                endpoint.append("&accIds=").append(accId);
             }
+
+            Log.e(TAG, "fetchUsers " + endpoint);
 
             URL url = new URL(endpoint.toString());
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -85,10 +107,10 @@ public class CacheUsers {
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
             connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty(HeaderAuthKey, cacheUsers.authKey);
+            connection.setRequestProperty(HeaderAuthKey, authKey);
             int responseCode = connection.getResponseCode();
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                onCompletion.onResult(responseCode);
+                onCompletion.onResult(null);
                 return;
             }
 
@@ -101,18 +123,35 @@ public class CacheUsers {
             }
             in.close();
 
-            ResponseFetchUser data = JSON.parseObject(response.toString(), ResponseFetchUser.class);
+            Log.e(TAG, "response data string" + response.toString());
 
-            cacheUsers.listUsers = data.getData();
+            Map<String, Object> data = JSON.parseObject(response.toString(), Map.class);
 
-            onCompletion.onResult(200);
+            Log.e(TAG, "response data " + data);
+
+            if (data == null) {
+                onCompletion.onResult(null);
+                return;
+            }
+
+            for(Map.Entry<String, Object> entry : data.entrySet()) {
+                if (listUsers != null && listUsers.containsKey(entry.getKey())) continue;
+
+                if (listUsers == null) {
+                    listUsers = new HashMap<>();
+                }
+
+                listUsers.put(entry.getKey(), entry.getValue());
+            }
+
+            onCompletion.onResult(data);
         } catch (Exception e) {
             Log.e(TAG, "CacheUser fetchUsers error: " + e.getMessage());
-            onCompletion.onResult(500);
+            onCompletion.onResult(null);
         }
     }
 
     public interface OnCompletion {
-        void onResult(int code);
+        void onResult(Map<String, Object> data);
     }
 }

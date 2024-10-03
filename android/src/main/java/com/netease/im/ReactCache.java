@@ -100,9 +100,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import okhttp3.Cache;
 
 /**
  * Created by dowin on 2017/4/28.
@@ -114,6 +117,7 @@ public class ReactCache {
     public final static String observeFriend = "observeFriend";//'联系人'
     public final static String observeTeam = "observeTeam";//'群组'
     public final static String observeReceiveMessage = "observeReceiveMessage";//'接收消息'
+    public final static String observeUserStranger = "observeUserStranger";
 
     public final static String observeDeleteMessage = "observeDeleteMessage";//'撤销后删除消息'
     public final static String observeReceiveSystemMsg = "observeReceiveSystemMsg";
@@ -718,6 +722,24 @@ public class ReactCache {
                     content = contact.getContent();
                 }
 
+                if (name.equals(contactId)) {
+                    Map<String, Object> userWithCache = CacheUsers.getUser(contactId);
+                    if (userWithCache != null) {
+                        String nameWithCache = (String) userWithCache.get("nickname");
+                        String avatarWithCache = (String) userWithCache.get("avatar");
+
+                        if (nameWithCache != null) {
+                            map.putString("name", nameWithCache);
+                        }
+
+                        if (avatarWithCache != null) {
+                            map.putString("imagePath", avatarWithCache);
+                        }
+                    } else {
+                        UserStrangers.setStranger(contactId);
+                    }
+                }
+
                 map.putString("content", content);
                 array.pushMap(map);
 
@@ -1230,11 +1252,14 @@ public class ReactCache {
     public static WritableMap createTeamMemberInfo(TeamMember teamMember) {
         WritableMap writableMap = Arguments.createMap();
         if (teamMember != null) {
-            writableMap.putString("contactId", teamMember.getAccount());
+            String name = NimUserInfoCache.getInstance().getUserDisplayName(teamMember.getAccount());
+            String contactId = teamMember.getAccount();
+
+            writableMap.putString("contactId", contactId);
             writableMap.putString("type", Integer.toString(teamMember.getType().getValue()));
             writableMap.putString("alias", NimUserInfoCache.getInstance().getUserDisplayName(teamMember.getAccount()));
             //            writableMap.putString("name", TeamDataCache.getInstance().getTeamMemberDisplayName(teamMember.getTid(), teamMember.getAccount()));
-            writableMap.putString("name", NimUserInfoCache.getInstance().getUserDisplayName(teamMember.getAccount()));
+            writableMap.putString("name", name);
             writableMap.putString("nickname", teamMember.getTeamNick());
             writableMap.putString("joinTime", TimeUtil.getTimeShowString(teamMember.getJoinTime(), true));
             String avatar = NimUserInfoCache.getInstance().getAvatar(teamMember.getAccount());
@@ -1246,6 +1271,24 @@ public class ReactCache {
             writableMap.putString("isMe", boolean2String(TextUtils.equals(teamMember.getAccount(), LoginService.getInstance().getAccount())));
 
             NimUserInfo memberInfo = NIMClient.getService(UserService.class).getUserInfo(teamMember.getAccount());
+            if (name.equals(contactId)) {
+                Map<String, Object> userWithCache = CacheUsers.getUser(contactId);
+                if (userWithCache != null) {
+                    String nameWithCache = (String) userWithCache.get("nickname");
+                    String avatarWithCache = (String) userWithCache.get("avatar");
+
+                    if (nameWithCache != null) {
+                        writableMap.putString("name", nameWithCache);
+                    }
+
+                    if (avatarWithCache != null) {
+                        writableMap.putString("avatar", avatarWithCache);
+                    }
+                } else {
+                    UserStrangers.setStranger(contactId);
+                }
+            }
+
             if (memberInfo != null) {
                 String birthday = memberInfo.getBirthday();
 
