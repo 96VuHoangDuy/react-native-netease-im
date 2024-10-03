@@ -792,14 +792,14 @@
         [imgObj setObject:[NSString stringWithFormat:@"%@",mediaCoverPath] forKey:@"coverPath"];
     }
     
-    if (message.deliveryState == NIMMessageDeliveryStateDeliveried  && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
-            NSError *removeItemError = nil;
-            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
-                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
-            }
-        }
-    }
+//    if (message.deliveryState == NIMMessageDeliveryStateDeliveried  && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])) {
+//        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
+//            NSError *removeItemError = nil;
+//            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
+//                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+//            }
+//        }
+//    }
     
     return imgObj;
 }
@@ -837,15 +837,21 @@
         [fileObj setObject:@true forKey:@"isFileDownloading"];
     }
     
-    
-    if (message.deliveryState == NIMMessageDeliveryStateDeliveried  && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
-            NSError *removeItemError = nil;
-            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
-                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
-            }
-        }
-    }
+    NSLog(@"object.path: %@", object.path);
+//    if (message.deliveryState == NIMMessageDeliveryStateDeliveried  && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])) {
+//        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
+//            NSError *removeItemError = nil;
+//            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
+//                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+//            }
+//        }
+//    }
+//    if (message.deliveryState == NIMMessageDeliveryStateDeliveried && [[NSFileManager defaultManager] fileExistsAtPath:object.path] && [[NSFileManager defaultManager] fileExistsAtPath:mediaPath] ) {
+//            NSError *removeItemError = nil;
+//            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
+//                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+//            }
+//    }
     
     return fileObj;
 }
@@ -897,14 +903,14 @@
         [videoObj setObject:[NSString stringWithFormat:@"%@",mediaCoverPath] forKey:@"coverPath"];
     }
     
-    if (message.deliveryState == NIMMessageDeliveryStateDeliveried && message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
-            NSError *removeItemError = nil;
-            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
-                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
-            }
-        }
-    }
+//    if (message.deliveryState == NIMMessageDeliveryStateDeliveried && message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && ([downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"])) {
+//        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
+//            NSError *removeItemError = nil;
+//            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
+//                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+//            }
+//        }
+//    }
     
     return videoObj;
 }
@@ -936,14 +942,14 @@
         [voiceObj setObject:@true forKey:@"isFileDownloading"];
     }
     
-    if (message.deliveryState == NIMMessageDeliveryStateDeliveried && message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && [downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
-            NSError *removeItemError = nil;
-            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
-                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
-            }
-        }
-    }
+//    if (message.deliveryState == NIMMessageDeliveryStateDeliveried && message.localExt != nil && [isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && [downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) {
+//        if ([[NSFileManager defaultManager] fileExistsAtPath:object.path]){
+//            NSError *removeItemError = nil;
+//            if (![[NSFileManager defaultManager] removeItemAtPath:object.path error:&removeItemError]) {
+//                NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+//            }
+//        }
+//    }
     
     return voiceObj;
 }
@@ -1056,6 +1062,7 @@
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
     
     if (([isReplaceSuccess length] && [isReplaceSuccess isEqual:@"YES"] && [downloadAttStatus length] && [downloadAttStatus isEqual:@"downloadSuccess"]) || [[NSFileManager defaultManager] fileExistsAtPath:cacheMediaPath]) {
+
         return cacheMediaPath;
     }
     
@@ -1063,6 +1070,16 @@
         NSError *copyError = nil;
         if (![[NSFileManager defaultManager] copyItemAtPath:originPath toPath:cacheMediaPath error:&copyError]) {
             NSLog(@"[copyError description]: %@", [copyError description]);
+            
+            dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5);
+            dispatch_after(delay, dispatch_get_main_queue(), ^(void){
+                if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
+                    NSError *removeItemError = nil;
+                    if (![[NSFileManager defaultManager] removeItemAtPath:originPath error:&removeItemError]) {
+                        NSLog(@"[removeItemError description]: %@", [removeItemError description]);
+                    }
+                }
+            });
             return nil;
         }
         // because sometime reponse setTimeArr run after this function so this trick is make this function run after setTimeArr
@@ -1803,6 +1820,7 @@
     
     if (parentId != nil) {
         [msgRemoteExt setValue:parentId forKey:@"parentId"];
+        message.text = parentId;
     }
     
     if (indexCount != nil) {
@@ -1811,9 +1829,9 @@
     
     message.remoteExt = msgRemoteExt;
     
-    if (parentId != nil) {
-        message.text = parentId;
-    }
+//    if (parentId != nil) {
+//        message.text = parentId;
+//    }
     
     if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipCheckFriend isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];

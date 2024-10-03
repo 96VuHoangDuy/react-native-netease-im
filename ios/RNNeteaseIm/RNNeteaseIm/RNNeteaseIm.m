@@ -23,12 +23,18 @@
 #import "CacheUsers.h"
 #import <Photos/Photos.h>
 #import "UserStrangers.h"
+#import "EventSender.h"
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
 @interface RNNeteaseIm(){
     NSString *strUserAgent;
 }
+
+@property (nonatomic, strong) EventSender *eventSenderReceive;
+@property (nonatomic, strong) EventSender *eventSenderStatus;
+@property (nonatomic, strong) EventSender *eventSenderProgress;
+@property (nonatomic, strong) NSTimer *debounceTimer; // Timer to debounce the event
 
 @end
 
@@ -43,6 +49,11 @@
         
     }
     [self initController];
+    
+    self.eventSenderReceive = [[EventSender alloc] initWithIm:self];
+    self.eventSenderStatus = [[EventSender alloc] initWithIm:self];
+    self.eventSenderProgress = [[EventSender alloc] initWithIm:self];
+
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(clickObserveNotification:) name:@"ObservePushNotification" object:nil];
     return self;
 }
@@ -81,6 +92,66 @@
         }
     }
     
+}
+
+// Debounce function
+- (void)debounceSendEventWithParam:(NSDictionary *)param debounceInterval:(NSTimeInterval)interval {
+    // Invalidate any existing timer to reset the debounce window
+    [self.debounceTimer invalidate];
+    
+    // Schedule a new timer
+    self.debounceTimer = [NSTimer scheduledTimerWithTimeInterval:interval
+                                                          target:self
+                                                        selector:@selector(fireDebouncedEvent:)
+                                                        userInfo:param
+                                                         repeats:NO];
+}
+
+// This is the function that actually sends the event
+- (void)fireDebouncedEvent:(NSTimer *)timer {
+    NSDictionary *param = (NSDictionary *)timer.userInfo;
+    [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:param];
+}
+
+- (void)onSendEventMsgReceive:(NSArray *)param {
+    NSDictionary *message = [param firstObject];
+    [self.eventSenderReceive addParam:message withIdKey:@"msgId"];
+    
+    if (self.eventSenderReceive.mainArray.count >= 5) {
+        [self.eventSenderReceive sendEventToReactNativeWithType:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:5];
+    } else {
+        [self.eventSenderReceive triggerSendEventAfterDelay:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:5];
+    }
+}
+
+
+- (void)onSendEventMsgStatus:(NSArray *)param {
+    NSDictionary *message = [param firstObject];
+    NSString *msgType = message[@"msgType"];
+//    [dic2 setObject:@"image" forKey:@"msgType"];
+
+    if ([msgType isEqual:@"image"] || [msgType isEqual:@"video"]) {
+        [self.eventSenderStatus addParam:message withIdKey:@"msgId"];
+        
+        if (self.eventSenderStatus.mainArray.count >= 5) {
+            [self.eventSenderStatus sendEventToReactNativeWithType:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:5];
+        } else {
+            [self.eventSenderStatus triggerSendEventAfterDelay:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:5];
+        }
+    } else{
+        [_bridge.eventDispatcher sendDeviceEventWithName:@"observeMsgStatus" body:@{@"data": param}];
+    }
+    
+}
+
+- (void)onUploadQueueAttachment:(NSDictionary *)param {
+    [self.eventSenderProgress addParam:param withIdKey:@"messageId"];
+    
+    if (self.eventSenderProgress.mainArray.count >= 10) {
+        [self.eventSenderProgress sendEventToReactNativeWithType:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:10];
+    } else {
+        [self.eventSenderProgress triggerSendEventAfterDelay:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:10];
+    }
 }
 
 - (NSDictionary *)dictChangeFromJson:(NSString *)strJson{
@@ -1339,7 +1410,9 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
             case 1:
                 //最近会话列表
                 //                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:@{@"sessionList":param}];
-                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:(NSDictionary *)param];
+//                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:(NSDictionary *)param];
+                [self debounceSendEventWithParam:param debounceInterval:1];
+
                 break;
             case 2:
                 //被踢出 status：1是被挤下线，2是被服务器踢下线，3是另一个客户端手动踢下线（这是在支持多客户端登录的情况下）
@@ -1363,7 +1436,8 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
                 break;
             case 7:
                 //收到新消息、聊天记录
-                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeReceiveMessage" body:param];
+//                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeReceiveMessage" body:param];
+                [self onSendEventMsgReceive:param];
                 break;
             case 8:
                 //开始发送
@@ -1375,7 +1449,9 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
                 break;
             case 10:
                 //发送进度（'附件图片等'）
-                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeProgressSend" body:param];
+//                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeProgressSend" body:param];
+                [self onUploadQueueAttachment: param];
+                
                 break;
             case 11:
                 //已读回执
@@ -1383,7 +1459,8 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
                 break;
             case 12:
                 //发送消息
-                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeMsgStatus" body:param];
+//                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeMsgStatus" body:param];
+                [self onSendEventMsgStatus: param];
                 break;
             case 13:
                 //黑名单列表

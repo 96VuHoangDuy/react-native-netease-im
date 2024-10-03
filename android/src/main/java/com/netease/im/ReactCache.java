@@ -1,11 +1,9 @@
 package com.netease.im;
 
-import static com.netease.im.IMApplication.getSdkStorageRooPath;
 import static com.netease.nimlib.sdk.NIMClient.getService;
 import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
 
 import android.content.Context;
-import android.os.Environment;
 
 import android.text.TextUtils;
 import android.util.Log;
@@ -14,9 +12,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
-import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -86,10 +82,6 @@ import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.nimlib.sdk.uinfo.model.UserInfo;
 
 
-import org.apache.lucene.portmobile.file.Files;
-import org.apache.lucene.portmobile.file.Paths;
-import org.apache.lucene.portmobile.file.Path;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -106,12 +98,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import okhttp3.Cache;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by dowin on 2017/4/28.
  */
 
 public class ReactCache {
+    public static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    public static Runnable runnable;
+    public static EventSender eventSenderMsgStatus = new EventSender();
+    public static EventSender eventSenderMsgReceive = new EventSender();;
+    public static EventSender eventSenderMsgProgress = new EventSender();;
+
     public final static String observeRecentContact = "observeRecentContact";//'最近会话'
     public final static String observeOnlineStatus = "observeOnlineStatus";//'在线状态'
     public final static String observeFriend = "observeFriend";//'联系人'
@@ -139,13 +140,72 @@ public class ReactCache {
         ReactCache.reactContext = reactContext;
     }
 
+    public static void debounce(final Runnable task, long delay) {
+        // Cancel the previous task if it's still scheduled
+        if (runnable != null) {
+            executor.shutdownNow();
+            executor = Executors.newSingleThreadScheduledExecutor(); // Create a new executor after shutting down
+        }
+
+        // Schedule the new task to run after the delay
+        runnable = task;
+        executor.schedule(runnable, delay, TimeUnit.MILLISECONDS);
+    }
+
     public static ReactContext getReactContext() {
         return reactContext;
     }
 
     public static void emit(String eventName, Object date) {
         try {
-            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
+            switch (eventName) {
+                case observeRecentContact:
+                    ReactCache.debounce(() -> {
+                        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
+                    }, 1000);
+                    break;
+                case observeMsgStatus:
+                    if (date instanceof WritableArray) {
+                        WritableArray dataMap = (WritableArray) date;
+                        if (((WritableArray) date).size() > 0) {
+                                eventSenderMsgStatus.addParam(dataMap.getMap(0), "msgId");
+                                if ( eventSenderMsgStatus.mainArray.size() >= 10) {
+                                    eventSenderMsgStatus.sendEventToReactNativeWithType(observeMsgStatus, observeMsgStatus, 10);
+                                } else {
+                                    eventSenderMsgStatus.triggerSendEventAfterDelay(observeMsgStatus, observeMsgStatus, 10);
+                                }
+                        }
+                    }
+                case observeReceiveMessage:
+                    if (date instanceof WritableArray) {
+                        WritableArray dataMap = (WritableArray) date;
+                        if (((WritableArray) date).size() > 0) {
+                            eventSenderMsgReceive.addParam(dataMap.getMap(0), "msgId");
+                            if ( eventSenderMsgReceive.mainArray.size() >= 10) {
+                                eventSenderMsgReceive.sendEventToReactNativeWithType(observeReceiveMessage, observeReceiveMessage, 10);
+                            } else {
+                                eventSenderMsgReceive.triggerSendEventAfterDelay(observeReceiveMessage, observeReceiveMessage, 10);
+                            }
+                        }
+                    }
+                case observeProgressSend:
+                        WritableMap dataMap = (WritableMap) date;
+                        if (((WritableMap) date).hasKey("messageId")) {
+                            eventSenderMsgProgress.addParam(dataMap, "messageId");
+                            Log.d(">>> eventSenderMs.", String.valueOf(eventSenderMsgProgress.mainArray.size()));
+                            if ( eventSenderMsgProgress.mainArray.size() >= 10) {
+                                eventSenderMsgProgress.sendEventToReactNativeWithType(observeProgressSend, observeProgressSend, 10);
+                            } else {
+                                eventSenderMsgProgress.triggerSendEventAfterDelay(observeProgressSend, observeProgressSend, 10);
+                            }
+                        }
+                    break;
+                default:
+                    reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
+                    break;
+            }
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1661,7 +1721,7 @@ public class ReactCache {
                         }
                     };
                     Map<String, Object> newLocalExt = MapBuilder.newHashMap();
-                    newLocalExt.put("downloadStatus", "downloading");
+                    newLocalExt.put("isFileDownloading", true);
 
                     setLocalExtension(item, newLocalExt);
 
@@ -1695,7 +1755,7 @@ public class ReactCache {
             imageObj.putBoolean("needRefreshMessage", false);
 
             Boolean isFilePathDeleted = false;
-            Boolean isFileDownloading = true;
+//            Boolean isFileDownloading = false;
             Log.d("imageAttachment", imageAttachment.getPath() + "");
 //            Log.d("localExtension.get()", localExtension.get("isReplacePathSuccess") + "");
 
@@ -1748,7 +1808,8 @@ public class ReactCache {
                     imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
                     imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
                 }
-
+//                isFileDownloading = true;
+//                imageObj.putBoolean("isFileDownloading", isFileDownloading);
                 SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
             }
         }
@@ -1769,7 +1830,7 @@ public class ReactCache {
             fileObj.putBoolean("needRefreshMessage", false);
 
             Boolean isFilePathDeleted = false;
-            Boolean isFileDownloading = true;
+//            Boolean isFileDownloading = true;
 
             if (localExtension.get("isReplacePathSuccess").equals(true) && fileAttachment.getPath() == null) {
                 fileObj.putBoolean("isFilePathDeleted", true);

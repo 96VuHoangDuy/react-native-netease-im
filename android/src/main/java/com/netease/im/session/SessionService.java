@@ -2401,6 +2401,7 @@ public class SessionService {
             public void onSuccess(Void result) {
                 Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                 newLocalExt.put("downloadStatus", "success");
+                newLocalExt.put("isFileDownloading", false);
                 setLocalExtension(message, newLocalExt);
                 ReactCache.createMessage(message, true);
                 Log.d("onSuccess download", "onSuccess download" + "");
@@ -2417,7 +2418,7 @@ public class SessionService {
             }
         };
         Map<String, Object> newLocalExt = MapBuilder.newHashMap();
-        newLocalExt.put("downloadStatus", "downloading");
+        newLocalExt.put("isFileDownloading", true);
 
         setLocalExtension(message, newLocalExt);
 

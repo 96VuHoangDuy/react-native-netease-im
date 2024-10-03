@@ -13,6 +13,7 @@ typedef void(^Success)(id param);
 typedef void(^Errors)(id erro);
 @interface ConversationViewController : UIViewController<NIMChatManagerDelegate,NIMConversationManagerDelegate>
 +(instancetype)initWithConversationViewController;
+@property (nonatomic,strong,readonly) NIMSession *_session;
 -(void)localSession:(NSInteger)index currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err;
 -(void)startSession:(NSString *)sessionID withType:(NSString *)type myUserName:(NSString *)myUserName myUserID:(NSString *)myUserID;
 -(void)stopSession;
