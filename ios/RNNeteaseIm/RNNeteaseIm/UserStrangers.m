@@ -113,8 +113,9 @@
 }
 
 - (void)handleDebounced {
+    if ([self.listStrangers count] == 0) return;
     NSMutableArray *accIds = [[NSMutableArray alloc] init];
-    for(NSString *accId in [_listStrangers allKeys]) {
+    for(NSString *accId in [self.listStrangers allKeys]) {
         NSDictionary *user = [[CacheUsers initWithCacheUsers] getUser:accId];
         if (user == nil) {
             [accIds addObject:accId];
