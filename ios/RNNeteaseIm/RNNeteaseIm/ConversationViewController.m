@@ -16,6 +16,7 @@
 //#import "NIMKitMediaFetcher.h"
 #import "CacheUsers.h"
 #import "TeamViewController.h"
+#import "UserStrangers.h"
 
 #define NTESNotifyID        @"id"
 #define NTESCustomContent  @"content"
@@ -656,6 +657,16 @@
         //            [targets addObject:@"你"];
         //        }else{
         NSString *targetShowName = [NIMKitUtil showNick:item inSession:message.session];
+        if ([item isEqual:targetShowName]) {
+            NSDictionary *userWithCache = [[CacheUsers initWithCacheUsers] getUser:item];
+            
+            if (userWithCache != nil) {
+                targetShowName = [userWithCache objectForKey:@"nickname"];
+            } else {
+                [[UserStrangers initWithUserStrangers] setStranger:item];
+            }
+        }
+        
         const NSDictionary *target = @{@"targetName":targetShowName, @"targetId":item};
         [targets addObject:target];
         //        }
