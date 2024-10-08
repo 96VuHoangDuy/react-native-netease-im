@@ -7,6 +7,7 @@ def DEFAULT_MIN_SDK_VERSION       = 16
 def DEFAULT_SUPPOR_LIBVERSION = "27.0.3"
 
 android {
+    namespace 'com.netease.im'
 //    useLibrary 'org.apache.http.legacy'
 
     compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
@@ -34,6 +35,9 @@ android {
     }
     lintOptions {
         abortOnError false
+    }
+    buildFeatures {
+        aidl true
     }
 }
 

@@ -69,7 +69,7 @@ public class UserStrangers {
             CacheUsers.fetchUsers(accIds, new CacheUsers.OnCompletion() {
                 @Override
                 public void onResult(Map<String, Object> data) {
-                    if (data != null) {
+                    if (data != null && !data.isEmpty()) {
                         ReactCache.emit(ReactCache.observeUserStranger, MapUtil.mapToReadableMap(data));
                     }
                 }

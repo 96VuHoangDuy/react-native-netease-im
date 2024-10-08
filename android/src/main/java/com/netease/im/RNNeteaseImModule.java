@@ -2438,6 +2438,9 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
                         promise.resolve(a);
                         return;
+                    } else {
+                        WritableArray a = (WritableArray) Arguments.createArray();
+                        promise.resolve(a);
                     }
                 }
                 promise.reject("" + code, "");

@@ -1,8 +1,8 @@
 package com.netease.im;
 
 import android.content.Context;
-import android.content.pm.IPackageDataObserver;
-import android.content.pm.IPackageStatsObserver;
+//import android.content.pm.IPackageDataObserver;
+//import android.content.pm.IPackageStatsObserver;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
@@ -180,19 +180,19 @@ public class FileCacheUtil {
         return all;
     }
 
-    private static void getCacheSize(IPackageStatsObserver.Stub observer) {
-        Context context = IMApplication.getContext();
-        String pkg = context.getPackageName();
-        PackageManager pm = context.getPackageManager();
-        try {
-            LogUtil.w(TAG, "name:" + pm.getClass().getName());
-            Method getPackageSizeInfo = pm.getClass().getMethod("getPackageSizeInfo", String.class, IPackageStatsObserver.class);
-            getPackageSizeInfo.invoke(pm, pkg, observer);
-        } catch (Exception ex) {
-            LogUtil.e("", "NoSuchMethodException");
-            ex.printStackTrace();
-        }
-    }
+//    private static void getCacheSize(IPackageStatsObserver.Stub observer) {
+//        Context context = IMApplication.getContext();
+//        String pkg = context.getPackageName();
+//        PackageManager pm = context.getPackageManager();
+//        try {
+//            LogUtil.w(TAG, "name:" + pm.getClass().getName());
+//            Method getPackageSizeInfo = pm.getClass().getMethod("getPackageSizeInfo", String.class, IPackageStatsObserver.class);
+//            getPackageSizeInfo.invoke(pm, pkg, observer);
+//        } catch (Exception ex) {
+//            LogUtil.e("", "NoSuchMethodException");
+//            ex.printStackTrace();
+//        }
+//    }
 
     private static Set<String> getCacheDir(String sessionId) {
 //        StorageType[] storageTypes = StorageType.values();
@@ -233,19 +233,19 @@ public class FileCacheUtil {
         return statFs.getBlockCount() * statFs.getBlockSize();
     }
 
-    private static void freeStorageAndNotify(IPackageDataObserver.Stub observer) {
-
-        try {
-            Context context = IMApplication.getContext();
-            PackageManager pm = context.getPackageManager();
-            LogUtil.w(TAG, "name:" + pm.getClass().getName());
-            Method localMethod = pm.getClass().getMethod("freeStorageAndNotify", Long.TYPE,
-                    IPackageDataObserver.class);
-            long localLong = Long.valueOf(getEnvironmentSize() - 1L);
-
-            localMethod.invoke(pm, localLong, observer);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+//    private static void freeStorageAndNotify(IPackageDataObserver.Stub observer) {
+//
+//        try {
+//            Context context = IMApplication.getContext();
+//            PackageManager pm = context.getPackageManager();
+//            LogUtil.w(TAG, "name:" + pm.getClass().getName());
+//            Method localMethod = pm.getClass().getMethod("freeStorageAndNotify", Long.TYPE,
+//                    IPackageDataObserver.class);
+//            long localLong = Long.valueOf(getEnvironmentSize() - 1L);
+//
+//            localMethod.invoke(pm, localLong, observer);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

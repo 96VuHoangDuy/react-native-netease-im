@@ -162,17 +162,17 @@ public class ReactCache {
                 case observeRecentContact:
                     ReactCache.debounce(() -> {
                         reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
-                    }, 1000);
+                    }, 2000);
                     break;
                 case observeMsgStatus:
                     if (date instanceof WritableArray) {
                         WritableArray dataMap = (WritableArray) date;
                         if (((WritableArray) date).size() > 0) {
                                 eventSenderMsgStatus.addParam(dataMap.getMap(0), "msgId");
-                                if ( eventSenderMsgStatus.mainArray.size() >= 10) {
-                                    eventSenderMsgStatus.sendEventToReactNativeWithType(observeMsgStatus, observeMsgStatus, 10);
+                                if ( eventSenderMsgStatus.mainArray.size() >= 15) {
+                                    eventSenderMsgStatus.sendEventToReactNativeWithType(observeMsgStatus, observeMsgStatus, 15);
                                 } else {
-                                    eventSenderMsgStatus.triggerSendEventAfterDelay(observeMsgStatus, observeMsgStatus, 10);
+                                    eventSenderMsgStatus.triggerSendEventAfterDelay(observeMsgStatus, observeMsgStatus, 15);
                                 }
                         }
                     }
@@ -181,29 +181,32 @@ public class ReactCache {
                         WritableArray dataMap = (WritableArray) date;
                         if (((WritableArray) date).size() > 0) {
                             eventSenderMsgReceive.addParam(dataMap.getMap(0), "msgId");
-                            if ( eventSenderMsgReceive.mainArray.size() >= 10) {
-                                eventSenderMsgReceive.sendEventToReactNativeWithType(observeReceiveMessage, observeReceiveMessage, 10);
+                            if ( eventSenderMsgReceive.mainArray.size() >= 15) {
+                                eventSenderMsgReceive.sendEventToReactNativeWithType(observeReceiveMessage, observeReceiveMessage, 15);
                             } else {
-                                eventSenderMsgReceive.triggerSendEventAfterDelay(observeReceiveMessage, observeReceiveMessage, 10);
+                                eventSenderMsgReceive.triggerSendEventAfterDelay(observeReceiveMessage, observeReceiveMessage, 15);
                             }
                         }
                     }
                 case observeProgressSend:
+                    if (date instanceof  WritableMap) {
                         WritableMap dataMap = (WritableMap) date;
                         if (((WritableMap) date).hasKey("messageId")) {
                             eventSenderMsgProgress.addParam(dataMap, "messageId");
                             Log.d(">>> eventSenderMs.", String.valueOf(eventSenderMsgProgress.mainArray.size()));
-                            if ( eventSenderMsgProgress.mainArray.size() >= 10) {
-                                eventSenderMsgProgress.sendEventToReactNativeWithType(observeProgressSend, observeProgressSend, 10);
+                            if ( eventSenderMsgProgress.mainArray.size() >= 15) {
+                                eventSenderMsgProgress.sendEventToReactNativeWithType(observeProgressSend, observeProgressSend, 15);
                             } else {
-                                eventSenderMsgProgress.triggerSendEventAfterDelay(observeProgressSend, observeProgressSend, 10);
+                                eventSenderMsgProgress.triggerSendEventAfterDelay(observeProgressSend, observeProgressSend, 15);
                             }
                         }
+                    }
                     break;
                 default:
                     reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
                     break;
             }
+//            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
 
 
         } catch (Exception e) {
@@ -2213,7 +2216,7 @@ public class ReactCache {
                     videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
                 }
 
-                if (!isOriginVideoHasDownloaded(item)) {
+                if (!isOriginVideoHasDownloaded(item) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false)) && (!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false))) {
                     DownloadCallback callback = new DownloadCallback() {
                         @Override
                         public void onSuccess(Void result) {
@@ -2321,9 +2324,10 @@ public class ReactCache {
                     imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
                     imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
                 }
-//                isFileDownloading = true;
-//                imageObj.putBoolean("isFileDownloading", isFileDownloading);
-                SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
+
+                if ((!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false)) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false))) {
+                    SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
+                }
             }
         }
 
@@ -2394,7 +2398,9 @@ public class ReactCache {
                     }
                 }
 
-                SessionService.getInstance().downloadAttachment(item, fileAttachment.getThumbPath() == null);
+                if ((!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false)) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false))) {
+                    SessionService.getInstance().downloadAttachment(item, fileAttachment.getThumbPath() == null);
+                }
             }
         }
 
@@ -2451,7 +2457,9 @@ public class ReactCache {
                 } else {
                     audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED, false);
                 }
-                SessionService.getInstance().downloadAttachment(item, false);
+                if ((!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false)) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false))) {
+                    SessionService.getInstance().downloadAttachment(item, false);
+                }
             }
         }
 
