@@ -2185,6 +2185,10 @@ public class ReactCache {
                 isFilePathDeleted = true;
             }
 
+            if (localExtension.containsKey("isFileDownloading")) {
+                videoDic.putBoolean("isFileDownloading", localExtension.get("isFileDownloading").equals(true) ? true : false);
+            }
+
             videoDic.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
             if (!isFilePathDeleted) {
@@ -2291,6 +2295,10 @@ public class ReactCache {
                     isFilePathDeleted = true;
             }
 
+            if (localExtension.containsKey("isFileDownloading")) {
+                imageObj.putBoolean("isFileDownloading", localExtension.get("isFileDownloading").equals(true) ? true : false);
+            }
+
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
             if (!isFilePathDeleted) {
@@ -2352,6 +2360,10 @@ public class ReactCache {
             if (localExtension.get("isReplacePathSuccess").equals(true) && fileAttachment.getPath() == null) {
                 fileObj.putBoolean("isFilePathDeleted", true);
                 isFilePathDeleted = true;
+            }
+
+            if (localExtension.containsKey("isFileDownloading")) {
+                fileObj.putBoolean("isFileDownloading", localExtension.get("isFileDownloading").equals(true) ? true : false);
             }
 
             fileObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
@@ -2423,6 +2435,10 @@ public class ReactCache {
             if (localExtension.get("isReplacePathSuccess").equals(true) && audioAttachment.getPath() == null) {
                 audioObj.putBoolean("isFilePathDeleted", true);
                 isFilePathDeleted = true;
+            }
+
+            if (localExtension.containsKey("isFileDownloading")) {
+                audioObj.putBoolean("isFileDownloading", localExtension.get("isFileDownloading").equals(true) ? true : false);
             }
 
             audioObj.putBoolean("isFilePathDeleted", isFilePathDeleted);

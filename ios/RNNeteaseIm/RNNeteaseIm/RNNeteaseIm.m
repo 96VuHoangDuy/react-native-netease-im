@@ -117,10 +117,10 @@
     NSDictionary *message = [param firstObject];
     [self.eventSenderReceive addParam:message withIdKey:@"msgId"];
     
-    if (self.eventSenderReceive.mainArray.count >= 5) {
-        [self.eventSenderReceive sendEventToReactNativeWithType:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:5];
+    if (self.eventSenderReceive.mainArray.count >= 10) {
+        [self.eventSenderReceive sendEventToReactNativeWithType:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:10];
     } else {
-        [self.eventSenderReceive triggerSendEventAfterDelay:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:5];
+        [self.eventSenderReceive triggerSendEventAfterDelay:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:10];
     }
 }
 
@@ -133,10 +133,10 @@
     if ([msgType isEqual:@"image"] || [msgType isEqual:@"video"]) {
         [self.eventSenderStatus addParam:message withIdKey:@"msgId"];
         
-        if (self.eventSenderStatus.mainArray.count >= 5) {
-            [self.eventSenderStatus sendEventToReactNativeWithType:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:5];
+        if (self.eventSenderStatus.mainArray.count >= 10) {
+            [self.eventSenderStatus sendEventToReactNativeWithType:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:10];
         } else {
-            [self.eventSenderStatus triggerSendEventAfterDelay:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:5];
+            [self.eventSenderStatus triggerSendEventAfterDelay:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:10];
         }
     } else{
         [_bridge.eventDispatcher sendDeviceEventWithName:@"observeMsgStatus" body:@{@"data": param}];
@@ -147,10 +147,10 @@
 - (void)onUploadQueueAttachment:(NSDictionary *)param {
     [self.eventSenderProgress addParam:param withIdKey:@"messageId"];
     
-    if (self.eventSenderProgress.mainArray.count >= 10) {
-        [self.eventSenderProgress sendEventToReactNativeWithType:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:10];
+    if (self.eventSenderProgress.mainArray.count >= 12) {
+        [self.eventSenderProgress sendEventToReactNativeWithType:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:12];
     } else {
-        [self.eventSenderProgress triggerSendEventAfterDelay:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:10];
+        [self.eventSenderProgress triggerSendEventAfterDelay:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:12];
     }
 }
 

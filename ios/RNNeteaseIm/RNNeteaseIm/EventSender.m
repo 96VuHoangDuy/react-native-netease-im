@@ -79,7 +79,7 @@
 
 - (void)triggerSendEventAfterDelay:(NSString *)type eventName:(NSString *)eventName countLimit:(NSUInteger)countLimit {
     [self.sendEventTimer invalidate];
-    self.sendEventTimer = [NSTimer scheduledTimerWithTimeInterval:0.5
+    self.sendEventTimer = [NSTimer scheduledTimerWithTimeInterval:1
                                                            target:self
                                                          selector:@selector(sendEventTimerFired:)
                                                          userInfo:@{@"type": type, @"eventName": eventName, @"countLimit": @(countLimit)}
