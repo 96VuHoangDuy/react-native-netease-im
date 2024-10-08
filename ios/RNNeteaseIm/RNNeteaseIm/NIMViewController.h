@@ -34,4 +34,8 @@ typedef void(^ERROR)(NSString *error);
 - (void)getResouces;
 
 - (NSString *)messageContent:(NIMMessage*)lastMessage;
+
+-(NSDictionary *)handleSessionP2p:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *)totalUnreadCount;
+
+-(NSDictionary *)handleSessionTeam:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *)totalUnreadCount;
 @end

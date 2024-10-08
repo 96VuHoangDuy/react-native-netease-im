@@ -12,6 +12,7 @@ import {
   NimParamsForwardMessagesToMultipleRecipients,
   NimParamsForwardMultiTextMessageToMultipleRecipients,
   ITemporarySessionRef,
+  NimSessionType,
 } from './session.type';
 import {
   INimMessageReaction,
@@ -295,13 +296,11 @@ class NimSession {
 
   sendMultiMediaMessage(
     listMedia: NIMMessageMedia[],
-    parentId: string | null,
     isSkipFriendCheck?: boolean,
     isSkipTipForStranger?: boolean
   ) {
     return RNNeteaseIm.sendMultiMediaMessage(
       listMedia,
-      parentId,
       isSkipFriendCheck ?? false,
       isSkipTipForStranger ?? false
     );
@@ -603,7 +602,7 @@ class NimSession {
   addEmptyRecentSessionWithoutMessage(
     sessionId: string,
     sessionType: NIMSessionTypeEnum
-  ) {
+  ): Promise<NimSessionType> {
     return RNNeteaseIm.addEmptyRecentSessionWithoutMessage(
       sessionId,
       sessionType

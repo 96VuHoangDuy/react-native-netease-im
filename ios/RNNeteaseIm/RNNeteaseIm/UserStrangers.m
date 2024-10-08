@@ -130,7 +130,10 @@
                 return;
             }
             
-            [self.im.bridge.eventDispatcher sendDeviceEventWithName:@"observeUserStranger" body:response];
+            if (response != nil && [response count] > 0) {
+               [self.im.bridge.eventDispatcher sendDeviceEventWithName:@"observeUserStranger" body:response];
+            }
+             
         }];
     }
     

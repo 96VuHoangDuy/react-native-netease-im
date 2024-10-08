@@ -1849,11 +1849,47 @@
     }
 }
 
-- (void)sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger success:(Success)success error:(Errors)error {
-    
-    NSString *parentMediaId;
+- (void)sendMultiMediaMessage:(NSArray *)listMedia isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger success:(Success)success error:(Errors)error {
+    BOOL isSendMultiMedia = NO;
     if ([listMedia count] > 1) {
-        parentMediaId = parentId;
+        isSendMultiMedia = YES;
+    }
+    
+    NSError *errorWithMsgParent = nil;
+    NSString *parentMediaId = nil;
+    
+    if (isSendMultiMedia) {
+        NSDictionary *lastMedia = listMedia.lastObject;
+        NSString *multiMediaType = [lastMedia objectForKey:@"type"];
+        
+        NIMMessage *message = [[NIMMessage alloc] init];
+        
+        parentMediaId = message.messageId;
+        message.text = message.messageId;
+        
+        NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
+        [remoteExt setObject:parentMediaId forKey:@"parentMediaId"];
+        
+        NIMMessageSetting *setting = [[NIMMessageSetting alloc] init];
+        setting.apnsEnabled = NO;
+        setting.shouldBeCounted = NO;
+        message.setting = setting;
+        NSInteger messageSubType = 6;
+        if ([multiMediaType isEqual:@"image"]) {
+            messageSubType = 5;
+        }
+        [remoteExt setObject:multiMediaType forKey:@"multiMediaType"];
+        message.messageSubType = messageSubType;
+        message.remoteExt = remoteExt;
+        
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&errorWithMsgParent];
+    }
+    
+    
+    if (errorWithMsgParent != nil) {
+        NSLog(@"sendMultiMediaMessage send message parent error: %@", errorWithMsgParent);
+        error(errorWithMsgParent);
+        return;
     }
     
     NSUInteger batchSize = 3;
@@ -1864,8 +1900,7 @@
         NSUInteger endIndex = MIN(startIndex + batchSize, listMedia.count);
         NSArray *batch = [listMedia subarrayWithRange:NSMakeRange(startIndex, endIndex - startIndex)];
         
-        NSDictionary *lastMedia = listMedia.lastObject;
-        NSString *multiMediaType = [lastMedia objectForKey:@"type"];
+        
         for (NSDictionary *media in batch) {
             NSString *mediaType = media[@"type"];
             if (mediaType == nil || (![mediaType isEqualToString:@"image"] && ![mediaType isEqualToString:@"video"])) {
@@ -1888,26 +1923,6 @@
             [self sendVideoMessage:mediaData[@"file"] duration:mediaData[@"duration"] width:mediaData[@"width"] height:mediaData[@"height"] displayName:mediaData[@"displayName"] isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger parentId:parentMediaId indexCount:mediaData[@"indexCount"]];
         }
         
-        if (parentId != nil && [listMedia count] > 1 && startIndex == 0) {
-            NIMMessage *message = [[NIMMessage alloc] init];
-            message.text = parentId;
-            NSMutableDictionary *remoteExt = [[NSMutableDictionary alloc] init];
-            [remoteExt setObject:parentId forKey:@"parentMediaId"];
-            
-            NIMMessageSetting *setting = [[NIMMessageSetting alloc] init];
-            setting.apnsEnabled = NO;
-            setting.shouldBeCounted = NO;
-            message.setting = setting;
-            NSInteger messageSubType = 6;
-            if ([multiMediaType isEqual:@"image"]) {
-                messageSubType = 5;
-            }
-            [remoteExt setObject:multiMediaType forKey:@"multiMediaType"];
-            message.messageSubType = messageSubType;
-            message.remoteExt = remoteExt;
-            
-            [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
-        }
         
         
         startIndex += batchSize;
@@ -3030,15 +3045,61 @@
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session];
 }
 
--(void)addEmptyRecentSessionWithoutMessage:(NSString *)sessionId sessionType:(NSString *)sessionType {
+-(void)addEmptyRecentSessionWithoutMessage:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success error:(Errors)error {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
-    if (recent != nil) return;
+    NSInteger count = 0;
+    if (recent != nil) {
+        NSDictionary *result;
+        switch ([sessionType integerValue]) {
+            case NIMSessionTypeP2P:
+                result = [[NIMViewController initWithController] handleSessionP2p:recent totalUnreadCount:&count];
+                break;
+                
+            case NIMSessionTypeTeam:
+                result = [[NIMViewController initWithController] handleSessionTeam:recent totalUnreadCount:&count];
+                break;
+                
+            default:
+                result = nil;
+                break;
+        }
+        
+        success(result);
+        
+        return;
+    };
     
     NIMAddEmptyRecentSessionBySessionOption *option = [[NIMAddEmptyRecentSessionBySessionOption alloc] init];
     option.addEmptyMsgIfNoLastMsgExist = NO;
     
     [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session option:option];
+    
+    recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    
+    if (recent == nil) {
+        error(@"Create empty session failed!");
+        return;
+    }
+    
+    NSDictionary *result;
+    switch ([sessionType integerValue]) {
+        case NIMSessionTypeP2P:
+            result = [[NIMViewController initWithController] handleSessionP2p:recent totalUnreadCount:&count];
+            break;
+            
+        case NIMSessionTypeTeam:
+            result = [[NIMViewController initWithController] handleSessionTeam:recent totalUnreadCount:&count];
+            break;
+            
+        default:
+            result = nil;
+            break;
+    }
+    
+    success(result);
+    
+    return;
 }
 
 -(void)addEmptyPinRecentSession:(NSString *)sessionId sessionType:(NSString *)sessionType {

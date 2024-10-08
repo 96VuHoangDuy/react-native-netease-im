@@ -1581,15 +1581,50 @@ public class SessionService {
         }
     }
 
-    public void sendMultiMediaMessage(ReadableArray data, String parentId, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger ,final Promise promise) {
+    private void sendMedia(List<Object> listMedia, String parentMediaId, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger, final Promise promise) {
+
+    }
+
+    public void sendMultiMediaMessage(ReadableArray data, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger ,final Promise promise) {
         List<Object> listMedia = MapUtil.readableArrayToArray(data);
+        String parentMediaId = "";
+
+        Boolean isSendMultiMedia = false;
+        if (listMedia.size() > 1) {
+            isSendMultiMedia = true;
+        }
+
+        if (isSendMultiMedia) {
+            Map<String, Object> lastMedia = (Map<String, Object>) listMedia.get(listMedia.size() - 1);
+            String multiMediaType = (String) lastMedia.get("type");
+            IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "");
+
+            parentMediaId = message.getUuid();
+            message.setContent(message.getUuid());
+
+            Map<String, Object> remoteExt = new HashMap<String, Object>();
+            remoteExt.put("parentMediaId", message.getUuid());
+            remoteExt.put("multiMediaType", multiMediaType);
+
+            message.setRemoteExtension(remoteExt);
+            message.setFromAccount(message.getFromAccount());
+            message.setDirect(message.getDirect());
+
+            CustomMessageConfig config = new CustomMessageConfig();
+            config.enableUnreadCount = false;
+            config.enablePush = false;
+
+            message.setConfig(config);
+
+            sendMessageSelf(message, null, false, isSkipFriendCheck, isSkipTipForStranger);
+        }
+
         final int batchSize = 3;
         final int delay = 2000;
         final Handler handler = new Handler();
         final Runnable[] sendBatchRunnable = new Runnable[1];
-        Map<String, Object> lastMedia = (Map<String, Object>) listMedia.get(listMedia.size() - 1);
-        String multiMediaType = (String) lastMedia.get("type");
 
+        String finalParentMediaId = parentMediaId;
         sendBatchRunnable[0] = new Runnable() {
             int startIndex = 0;
 
@@ -1629,7 +1664,7 @@ public class SessionService {
                             isHighQuality = false;
                         }
 
-                        sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger,parentId, (Double) media.get("indexCount"), null);
+                        sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger, finalParentMediaId, (Double) media.get("indexCount"), null);
                         continue;
                     }
 
@@ -1671,32 +1706,7 @@ public class SessionService {
                         }
                     }
 
-                    sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck, isSkipTipForStranger,parentId, (Double) media.get("indexCount"), null);
-                }
-
-                if (parentId != null && startIndex == 0) {
-                    IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, parentId);
-                    Map<String, Object> remoteExt = new HashMap<String, Object>();
-                    remoteExt.put("parentMediaId", parentId);
-                    remoteExt.put("multiMediaType", multiMediaType);
-
-                    message.setRemoteExtension(remoteExt);
-                    message.setFromAccount(message.getFromAccount());
-                    message.setDirect(message.getDirect());
-
-                    CustomMessageConfig config = new CustomMessageConfig();
-                    config.enableUnreadCount = false;
-                    config.enablePush = false;
-
-                    message.setConfig(config);
-
-                    sendMessageSelf(message, null, false, isSkipFriendCheck, isSkipTipForStranger);
-//                    if (isCustomerService) {
-//                        List<IMMessage> list = new ArrayList<>(1);
-//                        list.add(message);
-//                        Object a = ReactCache.createMessageList(list);
-//                        ReactCache.emit(ReactCache.observeMsgStatus, a);
-//                    }
+                    sendVideoMessage(file, duration, width, height, displayName, isSkipFriendCheck, isSkipTipForStranger, finalParentMediaId, (Double) media.get("indexCount"), null);
                 }
 
                 startIndex += batchSize;
@@ -1708,7 +1718,6 @@ public class SessionService {
             }
         };
 
-        // Post the first batch immediately
         handler.post(sendBatchRunnable[0]);
     }
 

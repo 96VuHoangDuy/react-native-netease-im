@@ -921,7 +921,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void updateMemberNick(String teamId, String contactId, String nick, final Promise promise) {
-        NIMClient.getService(TeamService.class).updateMemberNick(teamId, contactId, nick)
+        NIMClient.getService(TeamService.class).updateMyTeamNick(teamId, nick)
                 .setCallback(new RequestCallbackWrapper<Void>() {
                     @Override
                     public void onResult(int code, Void aVoid, Throwable throwable) {
@@ -1910,8 +1910,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendMultiMediaMessage(ReadableArray listMedia, String parentId, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger,  final Promise promise) {
-        sessionService.sendMultiMediaMessage(listMedia, parentId, isSkipFriendCheck, isSkipTipForStranger, promise);
+    public void sendMultiMediaMessage(ReadableArray listMedia, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger,  final Promise promise) {
+        sessionService.sendMultiMediaMessage(listMedia, isSkipFriendCheck, isSkipTipForStranger, promise);
     }
 
     /**
@@ -3486,13 +3486,18 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
         RecentContact recent =  NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
         if (recent != null) {
-            promise.resolve("success");
+            promise.resolve(ReactCache.createRecent(recent));
             return;
         }
 
-        NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, sessionTypeEnum, 0, System.currentTimeMillis(), true, false);
+        recent =  NIMClient.getService(MsgService.class).createEmptyRecentContact(sessionId, sessionTypeEnum, 0, System.currentTimeMillis(), true, false);
 
-        promise.resolve("success");
+        if (recent == null) {
+            promise.reject("addEmptyRecentSessionWithoutMessage", "Error: Create empty session failed");
+            return;
+        }
+
+        promise.resolve(ReactCache.createRecent(recent));
     }
 
     @ReactMethod

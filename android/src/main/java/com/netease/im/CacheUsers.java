@@ -4,7 +4,6 @@ import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.facebook.react.bridge.ReadableMap;
-import com.netease.nimlib.sdk.msg.model.IMMessage;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -14,46 +13,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class ResponseFetchUser {
-    private Map<String, Object> data;
-
-    public Map<String, Object> getData() {
-        return this.data;
-    }
-
-    public void setData(Map<String, Object> data) {
-        this.data = data;
-    }
-
-    @Override
-    public String toString() {
-        return "Data";
-    }
-}
-
 public class CacheUsers {
     private final static String TAG = "CacheUsers";
     private final static String HeaderAuthKey = "X-IM-SDK-AUTH-KEY";
 
-    private static Map<String, Object> listUsers;
-    private static Map<String, Object> listCustomerServiceAndChatbot;
+    private static Map<String, Object> listUsers = new HashMap<>();
+    private static Map<String, Object> listCustomerServiceAndChatbot = new HashMap<>();
     private static String apiUrl;
     private static String authKey;
-
-    private static CacheUsers instance;
-
-    public CacheUsers() {
-        listUsers = new HashMap<>();
-        listCustomerServiceAndChatbot = new HashMap<>();
-    }
-
-    public static CacheUsers getInstance() {
-        if (instance != null) {
-            instance = new CacheUsers();
-        }
-
-        return instance;
-    }
 
     public static void setApiUrl(String url) {
         Log.e(TAG, "apiUrl: " + url);
@@ -66,17 +33,10 @@ public class CacheUsers {
     }
 
     public static Map<String, Object> getUser(String accId) {
-        if (listUsers == null) {
-            listUsers = new HashMap<>();
-        }
-
         return (Map<String, Object>) listUsers.get(accId);
     }
 
     public static String getCustomerServiceOrChatbot(String accId) {
-        if (listCustomerServiceAndChatbot == null) {
-            listCustomerServiceAndChatbot = new HashMap<>();
-        }
         return (String) listCustomerServiceAndChatbot.get(accId);
     }
 
@@ -136,10 +96,6 @@ public class CacheUsers {
 
             for(Map.Entry<String, Object> entry : data.entrySet()) {
                 if (listUsers != null && listUsers.containsKey(entry.getKey())) continue;
-
-                if (listUsers == null) {
-                    listUsers = new HashMap<>();
-                }
 
                 listUsers.put(entry.getKey(), entry.getValue());
             }

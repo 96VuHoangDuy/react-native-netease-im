@@ -271,6 +271,517 @@ public class ReactCache {
         return isReplyStranger;
     }
 
+    public static Object createRecent(RecentContact contact) {
+        WritableMap map;
+        Boolean isMessageAfterRevoke = contact.getContent() == "" && contact.getFromAccount() == null && contact.getRecentMessageId() == "" && contact.getMsgType() == MsgTypeEnum.text;
+
+        int recentUnreadCount = contact.getUnreadCount();
+        int updatedUnreadCount = contact.getUnreadCount() - 1;
+        if(contact.getUnreadCount() < 0){
+            updatedUnreadCount = 0;
+        }
+        int _unreadCount = isMessageAfterRevoke ? updatedUnreadCount : recentUnreadCount;
+
+        map = Arguments.createMap();
+        String contactId = contact.getContactId();
+        map.putString("contactId", contactId);
+        map.putString("unreadCount", String.valueOf(_unreadCount));
+        String name = "";
+        SessionTypeEnum sessionType = contact.getSessionType();
+        String imagePath = "";
+        Map<String, Object> extension = contact.getExtension();
+        IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
+        String notifyType = "";
+
+        if (lastMessage != null) {
+            map.putInt("messageSubType", lastMessage.getSubtype());
+        }
+
+
+        WritableMap localExt;
+
+        if (extension == null) {
+            localExt = Arguments.createMap();
+        } else {
+            localExt = MapUtil.mapToReadableMap(extension);
+        }
+
+        Boolean isChatBot = false;
+        Boolean isCsr = false;
+        String onlineServiceType = CacheUsers.getCustomerServiceOrChatbot(contact.getContactId());
+        if (onlineServiceType != null) {
+            if (onlineServiceType.equals("chatbot")) {
+                isChatBot = true;
+                localExt.putBoolean("isChatBot", true);
+            }
+
+            if (onlineServiceType.equals("csr")) {
+                isCsr = true;
+                localExt.putBoolean("isCsr", true);
+            }
+        }
+
+        if (lastMessage != null) {
+            Boolean isOutgoing = LoginService.getInstance().getAccount().equals(lastMessage.getFromAccount());
+
+            map.putBoolean("isOutgoing",isOutgoing);
+
+            Map<String, Object> messageLocalExt = lastMessage.getLocalExtension();
+            Map<String, Object> messageRemoteExt = lastMessage.getRemoteExtension();
+            if (messageLocalExt != null) {
+                Map<String, Object> birthdayInfo = (Map<String, Object>) messageLocalExt.get("birthdayInfo");
+                Map<String, Object> notificationExtend = (Map<String, Object>) messageLocalExt.get("notificationExtend");
+
+                if (notificationExtend != null) {
+                    localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
+                }
+
+                if (birthdayInfo != null) {
+                    localExt.putMap("birthdayInfo", MapUtil.mapToReadableMap(birthdayInfo));
+                }
+            }
+
+            if (messageRemoteExt != null) {
+                Map<String, Object> reaction = (Map<String, Object>) messageRemoteExt.get("reaction");
+                Map<String, Object> dataRemoveReaction = (Map<String, Object>) messageRemoteExt.get("dataRemoveReaction");
+                Map<String, Object> revokeMessage = (Map<String, Object>) messageRemoteExt.get("revokeMessage");
+                Map<String, Object> temporarySessionRef = (Map<String, Object>) messageRemoteExt.get("temporarySessionRef");
+                String parentMediaId = (String) messageRemoteExt.get("parentMediaId");
+                String extendType = (String) messageRemoteExt.get("extendType");
+                String multiMediaType = (String) messageRemoteExt.get("multiMediaType");
+
+                if (multiMediaType != null) {
+                    localExt.putString("multiMediaType", multiMediaType);
+                }
+
+                if (extendType != null && extendType.equals("gif")) {
+                    map.putMap("extend", MapUtil.mapToReadableMap(messageRemoteExt));
+                }
+
+                if (parentMediaId != null) {
+                    localExt.putString("parentMediaId", parentMediaId);
+                }
+
+                if (reaction != null) {
+                    localExt.putMap("reaction", MapUtil.mapToReadableMap(reaction));
+                }
+
+                if (dataRemoveReaction != null) {
+                    localExt.putMap("dataRemoveReaction", MapUtil.mapToReadableMap(dataRemoveReaction));
+                }
+
+                if(revokeMessage != null){
+                    localExt.putMap("revokeMessage", MapUtil.mapToReadableMap(revokeMessage));
+                }
+
+                if (temporarySessionRef != null) {
+                    localExt.putMap("temporarySessionRef", MapUtil.mapToReadableMap(temporarySessionRef));
+                }
+            }
+
+            if (isCsr || (isChatBot && isOutgoing)) {
+                WritableMap onlineServiceMessage = createMessage(lastMessage, false);
+
+                if (onlineServiceMessage != null) {
+                    localExt.putMap("onlineServiceMessage", onlineServiceMessage);
+                }
+            }
+
+            if (isChatBot) {
+                Boolean isMessageChatBotUpdated = false;
+                if (messageLocalExt != null && messageLocalExt.containsKey("isMessageChatBotUpdated")) {
+                    isMessageChatBotUpdated = (Boolean) messageLocalExt.get("isMessageChatBotUpdated");
+
+                    localExt.putBoolean("isMessageChatBotUpdated", isMessageChatBotUpdated);
+                }
+            }
+        }
+
+        map.putMap("localExt", localExt);
+
+        Team team = null;
+
+        if (sessionType == SessionTypeEnum.P2P) {
+            map.putString("teamType", "-1");
+            NimUserInfoCache nimUserInfoCache = NimUserInfoCache.getInstance();
+            imagePath = nimUserInfoCache.getAvatar(contactId);
+            Boolean isNeedMessageNotify = NIMClient.getService(FriendService.class).isNeedMessageNotify(contactId);
+            map.putString("mute", boolean2String(!isNeedMessageNotify));
+            map.putBoolean("isMyFriend", NIMClient.getService(FriendService.class).isMyFriend(contactId));
+
+            name = nimUserInfoCache.getUserDisplayName(contactId);
+        } else if (sessionType == SessionTypeEnum.Team) {
+            team = TeamDataCache.getInstance().getTeamById(contactId);
+            if (team != null) {
+                name = team.getName();
+                map.putString("teamType", Integer.toString(team.getType().getValue()));
+                imagePath = team.getIcon();
+                map.putString("memberCount", Integer.toString(team.getMemberCount()));
+                map.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
+            }
+        }
+        map.putString("imagePath", imagePath);
+        map.putString("imageLocal", ImageLoaderKit.getMemoryCachedAvatar(imagePath));
+        map.putString("name", name);
+        map.putString("sessionType", Integer.toString(contact.getSessionType().getValue()));
+
+        String fromAccount = contact.getFromAccount();
+        String content = contact.getContent();
+        switch (contact.getMsgType()) {
+            case text:
+                if (contact.getContent() != null && contact.getContent().equals("[动图]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
+                    content = name + " : [动图]";
+                    break;
+                }
+                if (contact.getContent() != null && contact.getContent().equals("[个人名片]") && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
+                    content = name + " : [个人名片]";
+                    break;
+                }
+
+                content = contact.getContent();
+                break;
+            case image:
+                if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
+                    content = name + " : [图片]";
+                } else {
+                    content = "[图片]";
+                }
+                break;
+            case video:
+                if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
+                    content = name + " : [视频]";
+                } else {
+                    content = "[视频]";
+                }
+                break;
+            case audio:
+                if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
+                    content = name + " : [语音消息]";
+                } else {
+                    content = "[语音消息]";
+                }
+                break;
+            case location:
+                if (!TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount) && sessionType == SessionTypeEnum.Team) {
+                    content = name + " : [位置]";
+                } else {
+                    content = "[位置]";
+                }
+                break;
+            case tip:
+                List<String> uuids = new ArrayList<>();
+                uuids.add(contact.getRecentMessageId());
+                List<IMMessage> messages = NIMClient.getService(MsgService.class).queryMessageListByUuidBlock(uuids);
+                if (messages != null && messages.size() > 0) {
+                    content = messages.get(0).getContent();
+                }
+                break;
+            case notification:
+                if (sessionType == SessionTypeEnum.Team && team != null) {
+                    content = TeamNotificationHelper.getTeamNotificationText(contact.getContactId(),
+                            contact.getFromAccount(),
+                            (NotificationAttachment) contact.getAttachment());
+                    WritableMap notiObj = Arguments.createMap();
+
+                    NotificationAttachment attachment = (NotificationAttachment) contact.getAttachment();
+                    NotificationType operationType = attachment.getType();
+                    String sourceId = contact.getFromAccount();
+
+                    WritableMap sourceIdMap = Arguments.createMap();
+                    sourceIdMap.putString("sourceName", getTeamUserDisplayName(contactId, sourceId));
+                    sourceIdMap.putString("sourceId", sourceId);
+
+                    notiObj.putInt("operationType", operationType.getValue());
+                    notiObj.putMap("sourceId", sourceIdMap);
+
+                    switch (operationType) {
+                        case InviteMember:
+                        case KickMember:
+                        case PassTeamApply:
+                        case TransferOwner:
+                        case AddTeamManager:
+                        case RemoveTeamManager:
+                        case AcceptInvite:
+                        case MuteTeamMember:
+                            MemberChangeAttachment memberAttachment = (MemberChangeAttachment) attachment;
+                            ArrayList<String> targets = memberAttachment.getTargets();
+
+                            WritableArray targetsWritableArray = Arguments.createArray();
+
+                            for (String targetId : targets) {
+                                String targetName = getTeamUserDisplayName(contactId, targetId);
+
+                                WritableMap target = Arguments.createMap();
+                                target.putString("targetName", targetName);
+                                target.putString("targetId", targetId);
+
+                                targetsWritableArray.pushMap(target);
+                            }
+
+                            if (operationType == NotificationType.MuteTeamMember) {
+                                MuteMemberAttachment muteMemberAttachment = (MuteMemberAttachment) attachment;
+                                notiObj.putString("isMute", muteMemberAttachment.isMute() ? "mute" : "unmute");
+                            }
+
+                            notiObj.putArray("targets", targetsWritableArray);
+                            if (memberAttachment.getExtension() != null && memberAttachment.getExtension().containsKey("ext") && memberAttachment.getExtension().get("ext").equals("from_request")) {
+                                notiObj.putInt("operationType", 12);
+                            }
+                            break;
+                        case LeaveTeam:
+                        case DismissTeam:
+                            notiObj.putArray("targets", null);
+                            break;
+                        case UpdateTeam:
+                            Map<TeamFieldEnum, String> mockUpKeys = new HashMap();
+                            mockUpKeys.put(TeamFieldEnum.Name, "NIMTeamUpdateTagName");
+                            mockUpKeys.put(TeamFieldEnum.Introduce, "NIMTeamUpdateTagIntro");
+                            mockUpKeys.put(TeamFieldEnum.Announcement, "NIMTeamUpdateTagAnouncement");
+                            mockUpKeys.put(TeamFieldEnum.VerifyType, "NIMTeamUpdateTagJoinMode");
+                            mockUpKeys.put(TeamFieldEnum.ICON, "NIMTeamUpdateTagAvatar");
+                            mockUpKeys.put(TeamFieldEnum.InviteMode, "NIMTeamUpdateTagInviteMode");
+                            mockUpKeys.put(TeamFieldEnum.BeInviteMode, "NIMTeamUpdateTagBeInviteMode");
+                            mockUpKeys.put(TeamFieldEnum.TeamUpdateMode, "NIMTeamUpdateTagUpdateInfoMode");
+                            mockUpKeys.put(TeamFieldEnum.AllMute, "NIMTeamUpdateTagMuteMode");
+
+                            UpdateTeamAttachment updateTeamAttachment = (UpdateTeamAttachment) attachment;
+                            Set<Map.Entry<TeamFieldEnum, Object>> updateTeamAttachmentDetail = updateTeamAttachment.getUpdatedFields().entrySet();
+                            WritableMap updateDetail = Arguments.createMap();
+
+                            for (Map.Entry<TeamFieldEnum, Object> field : updateTeamAttachmentDetail) {
+                                updateDetail.putString("type", mockUpKeys.get(field.getKey()));
+                                updateDetail.putString("value", field.getValue().toString());
+                            }
+                            notiObj.putMap("updateDetail", updateDetail);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    map.putMap(MESSAGE_EXTEND, notiObj);
+                }
+                break;
+            default:
+                if (content == null) {
+                    content = "";
+                }
+                break;
+        }
+//                map.putString("msgType", getMessageType(contact.getMsgType(),(CustomAttachment) contact.getAttachment()));
+        if (contact.getMsgType() == MsgTypeEnum.custom) {
+            if (contact.getContactId().equals("cmd10000") && lastMessage != null) {
+                CustomAttachment customAttachment  = (CustomAttachment) lastMessage.getAttachment();
+
+                if (customAttachment != null && customAttachment instanceof WarningBlockAttachment) {
+                    WritableMap extend = ((WarningBlockAttachment) customAttachment).getWritableMap();
+
+                    map.putMap(MESSAGE_EXTEND, extend);
+                }
+
+                if (customAttachment != null && customAttachment instanceof WarningLoginAttachment) {
+                    WritableMap extend = ((WarningLoginAttachment) customAttachment).getWritableMap();
+
+                    map.putMap(MESSAGE_EXTEND, extend);
+                }
+            }
+
+
+            map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), (CustomAttachment) contact.getAttachment()));
+        } else {
+            if (lastMessage != null && lastMessage.getRemoteExtension() != null) {
+                Map<String, Object> extensionMsg = lastMessage.getRemoteExtension();
+
+                if (extensionMsg.containsKey("extendType")) {
+                    String extendType = extensionMsg.get("extendType").toString();
+                    if (extendType.equals("forwardMultipleText")) {
+                        WritableMap extend = Arguments.createMap();
+
+
+                        content = "[聊天记录]";
+                        extend.putString("messages", contact.getContent());
+                        map.putMap(MESSAGE_EXTEND, extend);
+                        map.putString(MessageConstant.Message.MSG_TYPE, "forwardMultipleText");
+                    }
+
+                    if (extendType.equals("card")) {
+                        WritableMap writableMapExtend = new WritableNativeMap();
+
+                        for (Map.Entry<String, Object> entry : extensionMsg.entrySet()) {
+                            writableMapExtend.putString(entry.getKey(), entry.getValue().toString());
+                        }
+
+                        map.putMap(MESSAGE_EXTEND, writableMapExtend);
+                        map.putString(MessageConstant.Message.MSG_TYPE, "card");
+                    }
+
+                    if (extendType.equals("revoked_success")) {
+                        WritableMap writableMapExtend = new WritableNativeMap();
+                        writableMapExtend.putString("tipMsg", contact.getContent());
+
+                        map.putString("unreadCount", String.valueOf(_unreadCount));
+                        map.putMap(MESSAGE_EXTEND, writableMapExtend);
+                        map.putString(MessageConstant.Message.MSG_TYPE, "notification");
+                    }
+
+                    if (extendType.equals("TEAM_NOTIFICATION_MESSAGE")) {
+                        map.putMap(MESSAGE_EXTEND, MapUtil.mapToReadableMap(extensionMsg));
+                        map.putString(MessageConstant.Message.MSG_TYPE, "notification");
+                    }
+                } else {
+                    map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
+                    map.putMap(MESSAGE_EXTEND, MapUtil.mapToReadableMap(extensionMsg));
+                }
+            } else {
+                map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
+            }
+
+//                    if (contact.getExtension() != null) {
+//                        WritableMap extend = Arguments.createMap();
+//
+//                        extend.putString("messages", contact.getContent());
+//                        map.putMap(MESSAGE_EXTEND, extend);
+//                        map.putString(MessageConstant.Message.MSG_TYPE, "forwardMultipleText");
+//                    } else {
+//                        map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
+//                    }
+        }
+        map.putString("msgStatus", Integer.toString(contact.getMsgStatus().getValue()));
+        map.putString("messageId", contact.getRecentMessageId());
+
+        map.putString("fromAccount", fromAccount);
+        if (lastMessage == null) {
+            map.putString("time", "0");
+        } else {
+            map.putString("time", TimeUtil.getTimeShowString(contact.getTime(), true));
+        }
+
+
+        String fromNick = "";
+        String teamNick = "";
+        if (!TextUtils.isEmpty(fromAccount)) {
+            try {
+                fromNick = contact.getFromNick();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            fromNick = TextUtils.isEmpty(fromNick) ? NimUserInfoCache.getInstance().getUserDisplayName(fromAccount) : fromNick;
+            map.putString("nick", fromNick);
+
+            if (contact.getSessionType() == SessionTypeEnum.Team && !TextUtils.equals(LoginService.getInstance().getAccount(), fromAccount)) {
+                String tid = contact.getContactId();
+                teamNick = TextUtils.isEmpty(fromAccount) ? "" : getTeamUserDisplayName(tid, fromAccount) + ": ";
+                if ((contact.getAttachment() instanceof NotificationAttachment)) {
+                    if (AitHelper.hasAitExtention(contact)) {
+                        if (contact.getUnreadCount() == 0) {
+                            AitHelper.clearRecentContactAited(contact);
+                        } else {
+                            content = AitHelper.getAitAlertString(content);
+                        }
+                    }
+                }
+            }
+        }
+        CustomAttachment attachment = null;
+        try {
+            if (contact.getMsgType() == MsgTypeEnum.custom) {
+                attachment = (CustomAttachment) contact.getAttachment();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (attachment != null) {
+            map.putString("custType", attachment.getType());
+            switch (attachment.getType()) {
+                case CustomAttachmentType.RedPacket:
+                    if (attachment instanceof RedPacketAttachement) {
+                        content = "[红包] " + ((RedPacketAttachement) attachment).getComments();
+                    }
+                    break;
+                case CustomAttachmentType.BankTransfer:
+                    if (attachment instanceof BankTransferAttachment) {
+                        content = "[转账] " + ((BankTransferAttachment) attachment).getComments();
+                    }
+                    break;
+                case CustomAttachmentType.LinkUrl:
+                    if (attachment instanceof LinkUrlAttachment) {
+                        content = ((LinkUrlAttachment) attachment).getTitle();
+                    }
+                    break;
+                case CustomAttachmentType.AccountNotice:
+                    if (attachment instanceof AccountNoticeAttachment) {
+                        content = ((AccountNoticeAttachment) attachment).getTitle();
+                    }
+                    break;
+                case CustomAttachmentType.RedPacketOpen:
+                    if (attachment instanceof RedPacketOpenAttachement) {
+                        teamNick = "";
+                        RedPacketOpenAttachement rpOpen = (RedPacketOpenAttachement) attachment;
+                        if (sessionType == SessionTypeEnum.Team && !rpOpen.isSelf()) {
+                            content = "";
+                        } else {
+                            content = rpOpen.getTipMsg(false);
+                        }
+                    }
+                    break;
+//                        case CustomAttachmentType.Card:
+//                            if (attachment instanceof CardAttachment) {
+//                                String str;
+//                                if (fromAccount.equals(LoginService.getInstance().getAccount())) {
+//                                    str = "推荐了";
+//                                } else {
+//                                    str = "向你推荐了";
+//                                }
+//                                content = str + ((CardAttachment) attachment).getName();
+//                            }
+//                            break;
+                default:
+                    if (attachment instanceof DefaultCustomAttachment) {
+                        content = ((DefaultCustomAttachment) attachment).getDigst();
+                        if (TextUtils.isEmpty(content)) {
+                            content = "[未知消息]";
+                        }
+                    }
+                    break;
+            }
+        }
+        if (notifyType.equals("BIRTHDAY") || (contact.getContent() != null && contact.getContent().contains("NOTIFICATION_BIRTHDAY"))) {
+            content =  contact.getContent();
+        } else {
+            content = teamNick + content;
+        }
+
+        if (contact.getContent() == null) {
+            content = "";
+        }
+
+        if (lastMessage != null && (lastMessage.getSubtype() == 2 || lastMessage.getSubtype() == 3) && contact.getContent() != null) {
+            content = contact.getContent();
+        }
+
+        if (name.equals(contactId)) {
+            Map<String, Object> userWithCache = CacheUsers.getUser(contactId);
+            if (userWithCache != null) {
+                String nameWithCache = (String) userWithCache.get("nickname");
+                String avatarWithCache = (String) userWithCache.get("avatar");
+
+                if (nameWithCache != null) {
+                    map.putString("name", nameWithCache);
+                }
+
+                if (avatarWithCache != null) {
+                    map.putString("imagePath", avatarWithCache);
+                }
+            } else {
+                UserStrangers.setStranger(contactId);
+            }
+        }
+
+        map.putString("content", content);
+
+        return map;
+    }
+
     public static Object createRecentList(List<RecentContact> recents, int unreadNum) {
         LogUtil.w(TAG, "size:" + (recents == null ? 0 : recents.size()));
         // recents参数即为最近联系人列表（最近会话列表）
@@ -1492,13 +2003,15 @@ public class ReactCache {
             case sending:
                 return MessageConstant.MsgStatus.SEND_SENDING;
             case success:
+            case read:
+            case unread:
                 return MessageConstant.MsgStatus.SEND_SUCCESS;
             case fail:
                 return MessageConstant.MsgStatus.SEND_FAILE;
-            case read:
-                return MessageConstant.MsgStatus.RECEIVE_READ;
-            case unread:
-                return MessageConstant.MsgStatus.RECEIVE_UNREAD;
+//            case read:
+//                return MessageConstant.MsgStatus.RECEIVE_READ;
+//            case unread:
+//                return MessageConstant.MsgStatus.RECEIVE_UNREAD;
             default:
                 return MessageConstant.MsgStatus.SEND_DRAFT;
         }

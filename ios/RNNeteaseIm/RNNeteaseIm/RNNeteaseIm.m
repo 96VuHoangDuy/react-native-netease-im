@@ -577,8 +577,11 @@ RCT_EXPORT_METHOD(queryMessageListEx:(nonnull  NSString *)messageId limit:(int)l
 
 
 RCT_EXPORT_METHOD(addEmptyRecentSessionWithoutMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] addEmptyRecentSessionWithoutMessage:sessionId sessionType:sessionType];
-    resolve(@"200");
+    [[ConversationViewController initWithConversationViewController] addEmptyRecentSessionWithoutMessage:sessionId sessionType:sessionType success:^(id params) {
+        resolve(params);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
 }
 
 RCT_EXPORT_METHOD(sendCustomMessageOfChatbot:(nonnull NSString *)sessionId customerServiceType:(nonnull NSString *)customerServiceType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
@@ -711,8 +714,8 @@ RCT_EXPORT_METHOD(sendGifMessage:(nonnull  NSString *)url aspectRatio:(NSString 
     [[ConversationViewController initWithConversationViewController] sendGifMessage:url aspectRatio:aspectRatio andApnsMembers:atUserIds isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
-RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia parentId:(nullable NSString *)parentId isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia parentId:parentId isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger success:^(id params) {
+RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendMultiMediaMessage:listMedia isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger success:^(id params) {
         resolve(params);
     } error:^(id err) {
         reject(@"-1", err, nil);
@@ -1411,6 +1414,7 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
                 //最近会话列表
                 //                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:@{@"sessionList":param}];
 //                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:(NSDictionary *)param];
+//                [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:param];
                 [self debounceSendEventWithParam:param debounceInterval:1];
 
                 break;
