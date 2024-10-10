@@ -8,6 +8,8 @@
 
 #import "NIMKitUtil.h"
 #import "NIMKitInfoFetchOption.h"
+#import "UserStrangers.h"
+#import "CacheUsers.h"
 
 @implementation NIMKitUtil
 
@@ -34,9 +36,34 @@
     if (!uid.length) {
         return nil;
     }
-    NIMKitInfoFetchOption *option = [[NIMKitInfoFetchOption alloc] init];
-    option.session = session;
-    return [[NIMKit sharedKit] infoByUser:uid option:option].showName;
+    
+    NSString *result = nil;
+    if (session.sessionType == NIMSessionTypeTeam) {
+        NIMTeamMember *member = [[NIMSDK sharedSDK].teamManager teamMember:uid inTeam:session.sessionId];
+        
+        if (member != nil && member.nickname != nil && ![member.nickname isEqual:@""] && ![member.nickname isEqual:@"(null)"] && ![member.nickname isEqual:uid]) {
+            result = member.nickname;
+        }
+    }
+    if (result == nil || [result isEqual:@""] || [result isEqual:@"(null)"] || [result isEqual:uid]) {
+        NIMKitInfoFetchOption *option = [[NIMKitInfoFetchOption alloc] init];
+        option.session = session;
+        result =  [[NIMKit sharedKit] infoByUser:uid option:option].showName;
+        
+    }
+    if (result == nil || [result isEqual:@""] || [result isEqual:@"(null)"]  || [result isEqual:uid]) {
+        NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:uid];
+        result = user.userInfo.nickName;
+    }
+    
+    NSDictionary *userCache = [[CacheUsers initWithCacheUsers] getUser:uid];
+    if (userCache != nil) {
+        result = [userCache objectForKey:@"nickname"];
+    } else {
+        [[UserStrangers initWithUserStrangers] setStranger:uid];
+    }
+    
+    return result;
 }
 
 
