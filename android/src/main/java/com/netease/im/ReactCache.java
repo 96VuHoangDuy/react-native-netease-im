@@ -2048,10 +2048,24 @@ public class ReactCache {
         OutputStream outStream = null;
         final int BUFFERSIZE = 4 * 1024;
 
+
+
         try {
+            Log.d("isCreate isCreate 1", String.valueOf(!bfile.exists()) + "..." + bfile.getAbsoluteFile() + "..." + bfile.getAbsolutePath());
+
+            if (!bfile.exists()) {
+                File parentfile = new File(bfile.getParent());
+                if (!parentfile.exists()) {
+                    parentfile.mkdirs();
+
+                    bfile.createNewFile();
+                }
+
+            }
+
             FileInputStream fin = new FileInputStream(afile);
             FileOutputStream fout = new FileOutputStream(bfile);
-
+            Log.d("fin fin", String.valueOf(fin.available()));
             byte[] buffer = new byte[BUFFERSIZE];
 
             while (fin.available() != 0) {
@@ -2063,6 +2077,7 @@ public class ReactCache {
             ismove = true;
             System.out.println("File is copied successful!");
         } catch (IOException e) {
+            Log.d("eeeee", e.getMessage());
             e.printStackTrace();
         } finally {
             if (inStream != null) {
@@ -2112,9 +2127,10 @@ public class ReactCache {
 
         File to = new File(directory + "/nim" + typeDir + sessionId, currentFileName.trim() + extension);
         File toMkdir = new File(directory + "/nim" + typeDir + sessionId);
-
+        Log.d("toMkdir.exists()", String.valueOf(toMkdir.exists()));
         if (!toMkdir.exists()) {
             toMkdir.mkdir();
+//            to.createNewFile();
         }
 
         try {
@@ -2206,6 +2222,10 @@ public class ReactCache {
 
                             Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                             newLocalExt.put("isReplacePathSuccess", true);
+                            if(item.getDirect() == MsgDirectionEnum.Out) {
+                                newLocalExt.put("isFileDownloading", false);
+                                videoDic.putBoolean("isFileDownloading", false);
+                            }
                             setLocalExtension(item, newLocalExt);
                             videoDic.putBoolean("isReplacePathSuccess", true);
 
@@ -2317,10 +2337,15 @@ public class ReactCache {
 
                         Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                         newLocalExt.put("isReplacePathSuccess", true);
+                        if(item.getDirect() == MsgDirectionEnum.Out) {
+                            newLocalExt.put("isFileDownloading", false);
+                            imageObj.putBoolean("isFileDownloading", false);
+                        }
                         setLocalExtension(item, newLocalExt);
 
                         imageObj.putBoolean("isReplacePathSuccess", true);
                         imageObj.putBoolean("needRefreshMessage", true);
+
                     }
                 } else {
                     if (item.getDirect() == MsgDirectionEnum.Out) {
@@ -2387,6 +2412,10 @@ public class ReactCache {
 
                         Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                         newLocalExt.put("isReplacePathSuccess", true);
+                        if(item.getDirect() == MsgDirectionEnum.Out) {
+                            newLocalExt.put("isFileDownloading", false);
+                            fileObj.putBoolean("isFileDownloading", false);
+                        }
 
                         setLocalExtension(item, newLocalExt);
                         fileObj.putBoolean("isReplacePathSuccess", true);
@@ -2458,6 +2487,10 @@ public class ReactCache {
 
                         Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                         newLocalExt.put("isReplacePathSuccess", true);
+                        if(item.getDirect() == MsgDirectionEnum.Out) {
+                            newLocalExt.put("isFileDownloading", false);
+                            audioObj.putBoolean("isFileDownloading", false);
+                        }
                         setLocalExtension(item, newLocalExt);
                         audioObj.putBoolean("isReplacePathSuccess", true);
                         audioObj.putBoolean("needRefreshMessage", true);
@@ -2468,12 +2501,8 @@ public class ReactCache {
                     audioObj.putString(MessageConstant.MediaFile.URL, audioAttachment.getUrl());
                     audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
                 }
-                if (item.getStatus() == MsgStatusEnum.read) {
-                    audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED, true);
-                } else {
-                    audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED, false);
-                }
-                if ((!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false)) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false))) {
+                audioObj.putBoolean(MessageConstant.MediaFile.IS_PLAYED, item.getStatus() == MsgStatusEnum.read);
+                if ((!localExtension.containsKey("isReplacePathSuccess") || Objects.equals(localExtension.get("isReplacePathSuccess"), false)) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false))) {
                     SessionService.getInstance().downloadAttachment(item, false);
                 }
             }

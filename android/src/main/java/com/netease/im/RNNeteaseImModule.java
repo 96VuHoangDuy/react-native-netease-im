@@ -230,6 +230,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         }
         localExt.put("repliedId", messageId);
         message.setRemoteExtension(localExt);
+
+        sessionService.appendPushConfig(message);
 //
 //        if (message.getSessionType() == SessionTypeEnum.P2P) {
 //            Boolean isFriend = NIMClient.getService(FriendService.class).isMyFriend(message.getSessionId());

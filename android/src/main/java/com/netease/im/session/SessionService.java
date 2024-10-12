@@ -2280,7 +2280,7 @@ public class SessionService {
         return modifiedString;
     }
 
-    private void appendPushConfig(IMMessage message) {
+    public void appendPushConfig(IMMessage message) {
 //        CustomPushContentProvider customConfig = null;//NimUIKit.getCustomPushContentProvider();
 //        if (customConfig != null) {
 //            String content = customConfig.getPushContent(message);

@@ -37,30 +37,34 @@
         return nil;
     }
     
-    NSString *result = nil;
     if (session.sessionType == NIMSessionTypeTeam) {
         NIMTeamMember *member = [[NIMSDK sharedSDK].teamManager teamMember:uid inTeam:session.sessionId];
         
         if (member != nil && member.nickname != nil && ![member.nickname isEqual:@""] && ![member.nickname isEqual:@"(null)"] && ![member.nickname isEqual:uid]) {
-            result = member.nickname;
+            return member.nickname;
         }
     }
-    if (result == nil || [result isEqual:@""] || [result isEqual:@"(null)"] || [result isEqual:uid]) {
-        NIMKitInfoFetchOption *option = [[NIMKitInfoFetchOption alloc] init];
-        option.session = session;
-        result =  [[NIMKit sharedKit] infoByUser:uid option:option].showName;
-        
-    }
+    
+    NIMKitInfoFetchOption *option = [[NIMKitInfoFetchOption alloc] init];
+    option.session = session;
+    NSString *result = [[NIMKit sharedKit] infoByUser:uid option:option].showName;
     if (result == nil || [result isEqual:@""] || [result isEqual:@"(null)"]  || [result isEqual:uid]) {
         NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:uid];
         result = user.userInfo.nickName;
     }
-    
-    NSDictionary *userCache = [[CacheUsers initWithCacheUsers] getUser:uid];
-    if (userCache != nil) {
-        result = [userCache objectForKey:@"nickname"];
-    } else {
-        [[UserStrangers initWithUserStrangers] setStranger:uid];
+    if ([result isEqual:@""] || [result isEqual:@"(null)"]  || [result isEqual:uid]) {
+        NSDictionary *userCache = [[CacheUsers initWithCacheUsers] getUser:uid];
+        if (userCache != nil) {
+            NSString *nicknameWithCache = [userCache objectForKey:@"nickname"];
+            if (nicknameWithCache != nil && ![nicknameWithCache isEqual:@""] && ![nicknameWithCache isEqual:@"(null)"] && ![nicknameWithCache isEqual:uid]) {
+                result = [userCache objectForKey:@"nickname"];
+            }
+        } else {
+            [[UserStrangers initWithUserStrangers] setStranger:uid];
+        }
+    }
+    if (result == nil || [result isEqual:@"(null)"] || [result isEqual:@""]) {
+        result = @"";
     }
     
     return result;

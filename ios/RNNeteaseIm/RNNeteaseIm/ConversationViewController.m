@@ -657,16 +657,18 @@
         //            [targets addObject:@"你"];
         //        }else{
         NSString *targetShowName = [NIMKitUtil showNick:item inSession:message.session];
-        if ([item isEqual:targetShowName]) {
-            NSDictionary *userWithCache = [[CacheUsers initWithCacheUsers] getUser:item];
-            
-            if (userWithCache != nil) {
-                targetShowName = [userWithCache objectForKey:@"nickname"];
-            } else {
-                [[UserStrangers initWithUserStrangers] setStranger:item];
-            }
-        }
-        
+        NSLog(@"targetShowName: %@", targetShowName);
+//        if ([item isEqual:targetShowName]) {
+//            NSDictionary *userWithCache = [[CacheUsers initWithCacheUsers] getUser:item];
+//            
+//            if (userWithCache != nil) {
+//                NSString *nameWithCache = [userWithCache objectForKey:@"nickname"];
+//                if (nameWithCache != nil && ![nameWithCache isEqual:@"(null)"] && ![nameWithCache isEqual:@""]) {
+//                    targetShowName = [userWithCache objectForKey:@"nickname"];
+//                }
+//            }
+//        }
+//        
         const NSDictionary *target = @{@"targetName":targetShowName, @"targetId":item};
         [targets addObject:target];
         //        }
