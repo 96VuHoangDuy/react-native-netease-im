@@ -17,6 +17,7 @@ public class CustomAttachParser implements MsgAttachmentParser {
     private static final String KEY_DATA = "data";
 
     private CustomAttachment getAttachmentWithData(JSONObject data) {
+        Log.d("TEST DATA", data.toJSONString());
         String dataLoginType = data.getString(MessageConstant.WarningLogin.WARINING_TYPE);
         if (dataLoginType != null) {
             return new WarningLoginAttachment();
@@ -25,6 +26,10 @@ public class CustomAttachParser implements MsgAttachmentParser {
         String dataBlockType = data.getString(MessageConstant.WarningBlock.BLOCK_TYPE);
         if (dataBlockType != null && (dataBlockType.equals("PERMANENT_LOCK") || dataBlockType.equals("TEMPORARY_LOCK"))) {
             return new WarningBlockAttachment();
+        }
+
+        if (data.get("data") != null && data.get("code") != null) {
+            return new CustomMessageChatBotAttachment();
         }
 
         return null;

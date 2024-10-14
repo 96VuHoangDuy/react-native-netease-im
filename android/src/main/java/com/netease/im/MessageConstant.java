@@ -160,4 +160,8 @@ public class MessageConstant {
         public final static String DAYS_BLOCK = "dayBlocks";
         public final static String DAY_EXPIRED_BLOCK = "dayExpiredBlock";
     }
+
+    public static class CustomMessageChatBot {
+        public final static String CUSTOM_SERVICE_TYPE = "customServiceType";
+    }
 }

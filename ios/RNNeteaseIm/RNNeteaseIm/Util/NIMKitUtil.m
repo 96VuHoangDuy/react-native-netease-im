@@ -52,6 +52,9 @@
         NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:uid];
         result = user.userInfo.nickName;
     }
+    if (result == nil || [result isEqual:@"(null)"] || [result isEqual:@""]) {
+        result = @"";
+    }
     if ([result isEqual:@""] || [result isEqual:@"(null)"]  || [result isEqual:uid]) {
         NSDictionary *userCache = [[CacheUsers initWithCacheUsers] getUser:uid];
         if (userCache != nil) {
@@ -62,9 +65,6 @@
         } else {
             [[UserStrangers initWithUserStrangers] setStranger:uid];
         }
-    }
-    if (result == nil || [result isEqual:@"(null)"] || [result isEqual:@""]) {
-        result = @"";
     }
     
     return result;

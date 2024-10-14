@@ -45,7 +45,7 @@ import com.netease.im.session.AudioMessageService;
 import com.netease.im.session.AudioPlayService;
 import com.netease.im.session.SessionService;
 import com.netease.im.session.SessionUtil;
-import com.netease.im.session.extension.CustomMessageChatBot;
+import com.netease.im.session.extension.CustomMessageChatBotAttachment;
 import com.netease.im.team.TeamListService;
 import com.netease.im.team.TeamObserver;
 import com.netease.im.uikit.cache.NimUserInfoCache;
@@ -3507,8 +3507,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void sendCustomMessageOfChatbot(String sessionId, String customerServiceType, final Promise promise) {
-        CustomMessageChatBot attachment = new CustomMessageChatBot();
-        attachment.setCustomerServiceType(customerServiceType);
+        CustomMessageChatBotAttachment attachment = new CustomMessageChatBotAttachment();
+        attachment.setCustomServiceType(customerServiceType);
 
         CustomMessageConfig config = new CustomMessageConfig();
         config.enablePush = false;

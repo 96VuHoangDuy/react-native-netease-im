@@ -2246,6 +2246,7 @@ public class ReactCache {
                         public void onSuccess(Void result) {
                             Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                             newLocalExt.put("downloadStatus", "success");
+                            newLocalExt.put("isFileDownloading", false);
                             setLocalExtension(item, newLocalExt);
                             ReactCache.createMessage(item, true);
                         }

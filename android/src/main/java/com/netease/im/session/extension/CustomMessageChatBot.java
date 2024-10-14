@@ -37,4 +37,27 @@ public class CustomMessageChatBot implements MsgAttachment {
 
         return object.toString();
     }
+
+
+    public WritableMap getWritableMap() {
+        return toReactNative();
+    }
+
+    protected void parseData(com.alibaba.fastjson.JSONObject data) {
+        customerServiceType = data.getString(KEY_DATA);
+    }
+
+    protected com.alibaba.fastjson.JSONObject packData(){
+        com.alibaba.fastjson.JSONObject object = new com.alibaba.fastjson.JSONObject();
+        object.put(KEY_DATA, customerServiceType);
+        object.put(KEY_CODE, 18939912);
+
+        return object;
+    }
+
+    protected WritableMap toReactNative() {
+        WritableMap map = Arguments.createMap();
+        map.putString(MessageConstant.CustomMessageChatBot.CUSTOM_SERVICE_TYPE, customerServiceType);
+        return map;
+    }
 }
