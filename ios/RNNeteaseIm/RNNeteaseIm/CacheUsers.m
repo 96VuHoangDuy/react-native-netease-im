@@ -63,6 +63,10 @@
 }
 
 -(NSDictionary *)getUser:(NSString *)accId {
+    if ([_listCustomerServiceAndChatbot objectForKey:accId] != nil) {
+        return nil;
+    }
+    
     return [_listUsers objectForKey:accId];
 }
 
@@ -98,19 +102,31 @@
     
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/api/v1/client/im-sdk/users", _apiUrl]];
  
-    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
-    NSMutableArray *queryItems = [NSMutableArray arrayWithArray:components.queryItems];
-    for(NSString *accId in accIds) {
-        NSURLQueryItem *queryItem = [[NSURLQueryItem alloc] initWithName:@"accIds" value:accId];
-        [queryItems addObject:queryItem];
-    }
-    
-    components.queryItems = queryItems;
-    
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[components URL]];
-    [request setHTTPMethod:@"GET"];
+//    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+//    NSMutableArray *queryItems = [NSMutableArray arrayWithArray:components.queryItems];
+//    for(NSString *accId in accIds) {
+//        NSURLQueryItem *queryItem = [[NSURLQueryItem alloc] initWithName:@"accIds" value:accId];
+//        [queryItems addObject:queryItem];
+//    }
+//    
+//    components.queryItems = queryItems;
+//    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    [request setHTTPMethod:@"POST"];
     [request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [request addValue:_authKey forHTTPHeaderField:HeaderAuthKey];
+    
+    NSMutableDictionary *body = [[NSMutableDictionary alloc] init];
+    [body setObject:accIds forKey:@"accIds"];
+    NSError *error;
+    NSData *bodyData = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
+    if (error != nil) {
+        NSLog(@"fetchUsers: %@", error);
+        completion(nil, error);
+        return;
+    }
+    
+    request.HTTPBody = bodyData;
     
     NSURLSession *session = [NSURLSession sharedSession];
     NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *reponse, NSError *error) {

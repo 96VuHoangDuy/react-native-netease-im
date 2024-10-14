@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import okhttp3.Cache;
+
 public class UserStrangers {
     public final static String TAG = "UserStranger";
     public final static String observeUserStranger = "observeUserStranger";
@@ -33,6 +35,7 @@ public class UserStrangers {
 
     public static void setStranger(String accId) {
         if (listStrangers != null && listStrangers.get(accId) != null) return;
+        if (CacheUsers.getCustomerServiceOrChatbot(accId) != null) return;
 
         Map<String, Object> userWithCache = CacheUsers.getUser(accId);
         if (userWithCache != null) return;
@@ -69,6 +72,7 @@ public class UserStrangers {
             CacheUsers.fetchUsers(accIds, new CacheUsers.OnCompletion() {
                 @Override
                 public void onResult(Map<String, Object> data) {
+                    Log.e(TAG, "result data stranger " + data);
                     if (data != null && !data.isEmpty()) {
                         ReactCache.emit(ReactCache.observeUserStranger, MapUtil.mapToReadableMap(data));
                     }

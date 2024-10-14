@@ -3,12 +3,15 @@ package com.netease.im;
 import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.facebook.react.bridge.ReadableMap;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,27 +52,41 @@ public class CacheUsers {
     public static void fetchUsers(List<String> accIds, OnCompletion onCompletion) {
         try {
             StringBuilder endpoint = new StringBuilder(apiUrl + "/api/v1/client/im-sdk/users");
-            for(int i = 0; i < accIds.size(); i++) {
-                String accId = accIds.get(i);
-                if (i == 0) {
-                    endpoint.append("?accIds=").append(accId);
-                    continue;
-                }
-
-                endpoint.append("&accIds=").append(accId);
-            }
+//            for(int i = 0; i < accIds.size(); i++) {
+//                String accId = accIds.get(i);
+//                if (i == 0) {
+//                    endpoint.append("?accIds=").append(accId);
+//                    continue;
+//                }
+//
+//                endpoint.append("&accIds=").append(accId);
+//            }
 
             Log.e(TAG, "fetchUsers " + endpoint);
 
             URL url = new URL(endpoint.toString());
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
+            connection.setRequestMethod("POST");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
-            connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty(HeaderAuthKey, authKey);
+
+            connection.setDoOutput(true);
+
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+
+            JSONObject object =new JSONObject();
+            object.put("accIds", accIds);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = object.toJSONString().getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
             int responseCode = connection.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
+            Log.e(TAG, "response code => " + responseCode);
+            if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_CREATED) {
                 onCompletion.onResult(null);
                 return;
             }

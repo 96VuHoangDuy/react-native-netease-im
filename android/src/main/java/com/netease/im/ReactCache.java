@@ -514,6 +514,17 @@ public class ReactCache {
                             for (String targetId : targets) {
                                 String targetName = getTeamUserDisplayName(contactId, targetId);
 
+                                if (targetId.equals(targetName)) {
+                                    Map<String, Object> userWithCache = CacheUsers.getUser(targetId);
+                                    String nicknameWithCache = (String) userWithCache.get("nickname");
+                                    if (nicknameWithCache != null && !nicknameWithCache.isEmpty()) {
+                                        targetName = nicknameWithCache;
+                                    }
+                                }
+                                if (targetId.equals(targetName)) {
+                                    UserStrangers.setStranger(targetId);
+                                }
+
                                 WritableMap target = Arguments.createMap();
                                 target.putString("targetName", targetName);
                                 target.putString("targetId", targetId);
