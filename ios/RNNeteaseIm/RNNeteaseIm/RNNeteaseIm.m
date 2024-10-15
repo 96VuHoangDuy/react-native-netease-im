@@ -1234,7 +1234,6 @@ RCT_EXPORT_METHOD(cleanSessionCache:(NSString *)sessionId resolve:(RCTPromiseRes
 
 RCT_EXPORT_METHOD(getListSessionsCacheSize:(NSArray *)sessionIds resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     NSString *documentPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSLog(@"documentPath %@", documentPath);
     NSString *strDocPath = documentPath;
     NSArray *files = [[NSFileManager defaultManager] subpathsOfDirectoryAtPath:documentPath error:nil];
     if ([[NSFileManager defaultManager] fileExistsAtPath:documentPath]) {
@@ -1254,9 +1253,10 @@ RCT_EXPORT_METHOD(getListSessionsCacheSize:(NSArray *)sessionIds resolve:(RCTPro
         allSize += cacheSize;
         NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:cacheSize
                                                                    countStyle:NSByteCountFormatterCountStyleFile];
-        [arraySize addObject:@{@"sessionId": sessionId, @"size": displayFileSize}];
+        [arraySize addObject:@{@"sessionId": sessionId, @"size": displayFileSize, @"cacheSize": @(cacheSize)}];
     }
     
+    [arraySize sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"cacheSize" ascending:NO]]];
     resolve(@{@"data": arraySize, @"totalSize": [NSByteCountFormatter stringFromByteCount:allSize
                                                                                countStyle:NSByteCountFormatterCountStyleFile]});
 }
