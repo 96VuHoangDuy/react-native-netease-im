@@ -2855,7 +2855,9 @@
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
     
     if (recent == nil) {
-        [self addEmptyRecentSession:sessionId sessionType:sessionType];
+        NIMAddEmptyRecentSessionBySessionOption *option = [[NIMAddEmptyRecentSessionBySessionOption alloc] init];
+        option.withLastMsg = NO;
+        [[NIMSDK sharedSDK].conversationManager addEmptyRecentSessionBySession:session option:option];
     }
     
     recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];

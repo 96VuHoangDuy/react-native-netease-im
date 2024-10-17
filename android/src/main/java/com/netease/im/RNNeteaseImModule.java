@@ -3465,7 +3465,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         SessionTypeEnum sessionType = SessionUtil.getSessionType(type);
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
         if (recent == null) {
-            addEmptyRecentSession(sessionId, type);
+            NIMSDK.getMsgService().createEmptyRecentContact(sessionId, sessionType, 0, System.currentTimeMillis(), true, false);
         }
 
         recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
@@ -3473,7 +3473,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         String latestMsgId = recent.getRecentMessageId();
 
         recent.setExtension(handleRecentLocalExtWithActionHide(recent, latestMsgId, isHideSession, isPinCode));
-        NIMSDK.getMsgService().updateRecent(recent);
+        NIMSDK.getMsgService().updateRecentAndNotify(recent);
         promise.resolve("success");
     }
 
