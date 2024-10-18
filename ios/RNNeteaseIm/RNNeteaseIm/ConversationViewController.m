@@ -465,9 +465,13 @@
 
 -(void) searchTextMessages:(NSString *)searchContent success:(Success)success err:(Errors)err {
     NIMMessageSearchOption *option = [[NIMMessageSearchOption alloc] init];
+    NSMutableArray<NSNumber *> *messageSubTypes = [[NSMutableArray alloc] init];
+    [messageSubTypes addObject:[NSNumber numberWithInt:0]];
+    [messageSubTypes addObject:[NSNumber numberWithInt:1]];
     option.searchContent = searchContent;
     option.messageTypes = @[[NSNumber numberWithInt:NIMMessageTypeText]];
     option.order = NIMMessageSearchOrderDesc;
+    option.messageSubTypes = messageSubTypes;
     
     [[NIMSDK sharedSDK].conversationManager searchAllMessages:option result:^(NSError * _Nullable error, NSDictionary<NIMSession *,NSArray<NIMMessage *> *> * _Nullable messages) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];

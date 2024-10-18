@@ -12,6 +12,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
@@ -491,7 +492,21 @@ public class ReactCache {
                     String sourceId = contact.getFromAccount();
 
                     WritableMap sourceIdMap = Arguments.createMap();
-                    sourceIdMap.putString("sourceName", getTeamUserDisplayName(contactId, sourceId));
+                    String sourceName = getTeamUserDisplayName(contactId, sourceId);
+                    if (sourceName.equals(sourceId)) {
+                        Map<String, Object> userWithCache = CacheUsers.getUser(sourceId);
+
+                        if (userWithCache != null) {
+                            String nicknameWithCache = (String) userWithCache.get("nickname");
+                            if (nicknameWithCache != null) {
+                                sourceName = nicknameWithCache;
+                            }
+                        }
+                    }
+                    if (sourceName.equals(sourceId)) {
+                        UserStrangers.setStranger(sourceId);
+                    }
+                    sourceIdMap.putString("sourceName", sourceName);
                     sourceIdMap.putString("sourceId", sourceId);
 
                     notiObj.putInt("operationType", operationType.getValue());
@@ -516,9 +531,11 @@ public class ReactCache {
 
                                 if (targetId.equals(targetName)) {
                                     Map<String, Object> userWithCache = CacheUsers.getUser(targetId);
-                                    String nicknameWithCache = (String) userWithCache.get("nickname");
-                                    if (nicknameWithCache != null && !nicknameWithCache.isEmpty()) {
-                                        targetName = nicknameWithCache;
+                                    if (userWithCache != null) {
+                                        String nicknameWithCache = (String) userWithCache.get("nickname");
+                                        if (nicknameWithCache != null && !nicknameWithCache.isEmpty()) {
+                                            targetName = nicknameWithCache;
+                                        }
                                     }
                                 }
                                 if (targetId.equals(targetName)) {
@@ -839,6 +856,18 @@ public class ReactCache {
                     map.putInt("messageSubType", lastMessage.getSubtype());
                 }
 
+//                if (sessionType == SessionTypeEnum.Team) {
+//                    try {
+//                        ReadableMap teamInfo = (ReadableMap) TeamDataCache.getInstance().fetchSyncTeamById(contactId);
+//                        map.putMap("teamInfo", teamInfo);
+//
+//                        ReadableArray teamMembers = (ReadableArray) TeamDataCache.getInstance().fetchSyncTeamMemberList(contactId);
+//                        map.putArray("teamMembers", teamMembers);
+//                    } catch (Exception error) {
+//                        error.printStackTrace();
+//                    }
+//                }
+
 
                 WritableMap localExt = Arguments.createMap();
 
@@ -1036,7 +1065,21 @@ public class ReactCache {
                             String sourceId = contact.getFromAccount();
 
                             WritableMap sourceIdMap = Arguments.createMap();
-                            sourceIdMap.putString("sourceName", getTeamUserDisplayName(contactId, sourceId));
+                            String sourceName = getTeamUserDisplayName(contactId, sourceId);
+                            if (sourceName.equals(sourceId)) {
+                                Map<String, Object> userWithCache = CacheUsers.getUser(sourceId);
+
+                                if (userWithCache != null) {
+                                    String nicknameWithCache = (String) userWithCache.get("nickname");
+                                    if (nicknameWithCache != null) {
+                                        sourceName = nicknameWithCache;
+                                    }
+                                }
+                            }
+                            if (sourceName.equals(sourceId)) {
+                                UserStrangers.setStranger(sourceId);
+                            }
+                            sourceIdMap.putString("sourceName", sourceName);
                             sourceIdMap.putString("sourceId", sourceId);
 
                             notiObj.putInt("operationType", operationType.getValue());
@@ -1059,6 +1102,18 @@ public class ReactCache {
                                     for (String targetId : targets) {
                                         String targetName = getTeamUserDisplayName(contactId, targetId);
 
+                                        if (targetId.equals(targetName)) {
+                                            Map<String, Object> userWithCache = CacheUsers.getUser(targetId);
+                                            if (userWithCache != null) {
+                                                String nicknameWithCache = (String) userWithCache.get("nickname");
+                                                if (nicknameWithCache != null) {
+                                                    targetName = nicknameWithCache;
+                                                }
+                                            }
+                                        }
+                                        if (targetId.equals(targetName)) {
+                                            UserStrangers.setStranger(targetId);
+                                        }
                                         WritableMap target = Arguments.createMap();
                                         target.putString("targetName", targetName);
                                         target.putString("targetId", targetId);
@@ -2825,7 +2880,21 @@ public class ReactCache {
                     String sourceId = item.getFromAccount();
 
                     WritableMap sourceIdMap = Arguments.createMap();
-                    sourceIdMap.putString("sourceName", getTeamUserDisplayName(item.getSessionId(), sourceId));
+                    String sourceName = getTeamUserDisplayName(item.getSessionId(), sourceId);
+                    if (sourceName.equals(sourceId)) {
+                        Map<String, Object> userWithCache = CacheUsers.getUser(sourceId);
+
+                        if (userWithCache != null) {
+                            String nicknameWithCache = (String) userWithCache.get("nickname");
+                            if (nicknameWithCache != null) {
+                                sourceName = nicknameWithCache;
+                            }
+                        }
+                    }
+                    if (sourceName.equals(sourceId)) {
+                        UserStrangers.setStranger(sourceId);
+                    }
+                    sourceIdMap.putString("sourceName", sourceName);
                     sourceIdMap.putString("sourceId", sourceId);
 
                     notiObj.putInt("operationType", operationType.getValue());
@@ -2846,6 +2915,19 @@ public class ReactCache {
 
                             for (String targetId : targets) {
                                 String targetName = getTeamUserDisplayName(item.getSessionId(), targetId);
+
+                                if (targetId.equals(targetName)) {
+                                    Map<String, Object> userWithCache = CacheUsers.getUser(targetId);
+                                    if (userWithCache != null) {
+                                        String nicknameWithCache = (String) userWithCache.get("nickname");
+                                        if (nicknameWithCache != null && !nicknameWithCache.isEmpty()) {
+                                            targetName = nicknameWithCache;
+                                        }
+                                    }
+                                }
+                                if (targetId.equals(targetName)) {
+                                    UserStrangers.setStranger(targetId);
+                                }
 
                                 WritableMap target = Arguments.createMap();
                                 target.putString("targetName", targetName);

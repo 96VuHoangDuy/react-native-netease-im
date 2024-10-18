@@ -17,11 +17,13 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.MapBuilder;
+import com.netease.im.CacheUsers;
 import com.netease.im.IMApplication;
 import com.netease.im.MapUtil;
 import com.netease.im.MessageConstant;
 import com.netease.im.MessageUtil;
 import com.netease.im.ReactCache;
+import com.netease.im.UserStrangers;
 import com.netease.im.login.LoginService;
 import com.netease.im.session.extension.BankTransferAttachment;
 import com.netease.im.session.extension.CardAttachment;
@@ -1002,7 +1004,21 @@ public class SessionService {
                         String sourceId = lastMessage.getFromAccount();
 
                         Map<String, Object> sourceIdMap = new HashMap<String, Object>();
-                        sourceIdMap.put("sourceName", TeamDataCache.getInstance().getTeamMemberDisplayName(sessionId, sourceId));
+                        String sourceName = TeamDataCache.getInstance().getTeamMemberDisplayName(sessionId, sourceId);
+                        if (sourceName.equals(sourceId)) {
+                            Map<String, Object> userWithCache = CacheUsers.getUser(sourceId);
+
+                            if (userWithCache != null) {
+                                String nicknameWithCache = (String) userWithCache.get("nickname");
+                                if (nicknameWithCache != null) {
+                                    sourceName = nicknameWithCache;
+                                }
+                            }
+                        }
+                        if (sourceName.equals(sourceId)) {
+                            UserStrangers.setStranger(sourceId);
+                        }
+                        sourceIdMap.put("sourceName", sourceName);
                         sourceIdMap.put("sourceId", sourceId);
 
                         msgExtend.put("operationType", operationType.getValue());
@@ -1025,6 +1041,18 @@ public class SessionService {
                                 for (String targetId : targets) {
                                     String targetName = TeamDataCache.getInstance().getTeamMemberDisplayName(sessionId, targetId);
 
+                                    if (targetId.equals(targetName)) {
+                                        Map<String, Object> userWithCache = CacheUsers.getUser(targetId);
+                                        if (userWithCache != null) {
+                                            String nicknameWithCache = (String) userWithCache.get("nickname");
+                                            if (nicknameWithCache != null && !nicknameWithCache.isEmpty()) {
+                                                targetName = nicknameWithCache;
+                                            }
+                                        }
+                                    }
+                                    if (targetId.equals(targetName)) {
+                                        UserStrangers.setStranger(targetId);
+                                    }
                                     Map<String, Object> target = new HashMap<String, Object>();
                                     target.put("targetName", targetName);
                                     target.put("targetId", targetId);

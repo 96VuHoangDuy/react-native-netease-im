@@ -2,6 +2,8 @@ package com.netease.im.uikit.cache;
 
 import android.text.TextUtils;
 
+import com.facebook.react.bridge.WritableMap;
+import com.netease.im.ReactCache;
 import com.netease.im.login.LoginService;
 import com.netease.im.uikit.common.util.log.LogUtil;
 import com.netease.nimlib.sdk.NIMClient;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * 群信息/群成员数据监听&缓存
@@ -204,6 +207,35 @@ public class TeamDataCache {
         });
     }
 
+    public Object fetchSyncTeamById(String teamId) throws Exception {
+        Team result = getTeamById(teamId);
+        if (result != null) {
+            return ReactCache.createTeamInfo(result);
+        }
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final Team[] resultHolder = new Team[1];
+
+        fetchTeamById(teamId, new SimpleCallback<Team>() {
+            @Override
+            public void onResult(boolean success, Team result) {
+                if (success && result != null) {
+                    resultHolder[0] = result;
+                }
+
+                latch.countDown();
+            }
+        });
+
+        latch.await();
+
+        if (resultHolder[0] == null) {
+            return null;
+        }
+
+        return ReactCache.createTeamInfo(resultHolder[0]);
+    }
+
     /**
      * 同步从本地获取Team（先从缓存中查询，如果不存在再从SDK DB中查询）
      */
@@ -284,6 +316,35 @@ public class TeamDataCache {
 
     public void clearTeamMemberCache() {
         teamMemberCache.clear();
+    }
+
+    public Object fetchSyncTeamMemberList(String teamId) throws Exception {
+        List<TeamMember> result = getTeamMemberList(teamId);
+        if (result != null && !result.isEmpty()) {
+            return ReactCache.createTeamMemberList(result);
+        }
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final List<TeamMember>[] resultHolder = new List[1];
+
+        fetchTeamMemberList(teamId, new SimpleCallback<List<TeamMember>>() {
+            @Override
+            public void onResult(boolean success, List<TeamMember> result) {
+                if (success && result != null) {
+                    resultHolder[0] = result;
+                }
+
+                latch.countDown();
+            }
+        });
+
+        latch.await();
+
+        if (resultHolder[0] == null) {
+            return null;
+        }
+
+        return ReactCache.createTeamMemberList(resultHolder[0]);
     }
 
     /**
