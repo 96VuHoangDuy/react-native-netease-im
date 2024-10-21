@@ -122,6 +122,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.netease.im.ReactCache.setLocalExtension;
 import static com.netease.im.ReceiverMsgParser.getIntent;
@@ -2487,7 +2488,11 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         option.setOrder(direction == 1 ? SearchOrderEnum.ASC : SearchOrderEnum.DESC);
 
         if (messageSubTypes != null && messageSubTypes.size() > 0) {
-            ArrayList<Integer> _messageSubTypes = (ArrayList<Integer>) (ArrayList<?>) (messageSubTypes.toArrayList());
+            List<Object> arrObject =  MapUtil.readableArrayToArray(messageSubTypes);
+            List<Integer> _messageSubTypes = arrObject.stream()
+                    .map(ob->(Double)ob)
+                    .map(Double::intValue)
+                    .collect(Collectors.toList());
 
             option.setMessageSubTypes(_messageSubTypes);
         }
@@ -2514,7 +2519,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
             option.setMessageTypes(arrayListMessageTypes);
         }
 
-        if (anchorId.isEmpty() || anchorId == null) {
+        if ( anchorId == null || anchorId.isEmpty()) {
             IMMessage anchor;
             anchor = MessageBuilder.createEmptyMessage(sessionService.getSessionId(), sessionService.getSessionTypeEnum(), 0);
             option.setStartTime(direction == 1 ? anchor.getTime() : 0);
@@ -2524,6 +2529,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                     .setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
                         @Override
                         public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                            Log.e(TAG, "search message hihi => " + result + " " + code);
                             if (code == ResponseCode.RES_SUCCESS) {
                                 if (result != null && result.size() > 0) {
                                     List<IMMessage> messages = result;
@@ -2535,6 +2541,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                     promise.resolve(messageObjectList);
                                     return;
                                 }
+                            }
+
+                            if (exception != null) {
+                                Log.e(TAG, "searchMessage error " + exception.getMessage());
                             }
                             promise.reject("" + code, "");
                         }
