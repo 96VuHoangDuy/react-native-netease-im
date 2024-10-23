@@ -224,6 +224,10 @@ public class SessionService {
                 && message.getSessionId().equals(sessionId);
     }
 
+    public boolean getIsSeenMessage() {
+        return  isSeenMessage;
+    }
+
     /**
      * 列表加入新消息时，更新时间显示
      *
@@ -2273,6 +2277,7 @@ public class SessionService {
         getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+                Log.e(TAG, "send messsage success");
             }
 
             @Override

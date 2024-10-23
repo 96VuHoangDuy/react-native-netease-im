@@ -2541,6 +2541,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                     promise.resolve(messageObjectList);
                                     return;
                                 }
+
+                                WritableMap _result = Arguments.createMap();
+                                promise.resolve(_result);
+                                return;
                             }
 
                             if (exception != null) {
@@ -2674,11 +2678,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                 if (code == ResponseCode.RES_SUCCESS) {
                     if (result != null && result.size() > 0) {
                         List<IMMessage> messages = result;
-                        if (direction == 0) {
-                            Collections.reverse(messages);
-                            getMsgService().sendMessageReceipt(sessionId, messages.get(0));
-                        } else {
-                            getMsgService().sendMessageReceipt(sessionId, messages.get(messages.size() - 1));
+                        if (sessionService.getIsSeenMessage()) {
+                            if (direction == 0) {
+                                Collections.reverse(messages);
+                                getMsgService().sendMessageReceipt(sessionId, messages.get(0));
+                            } else {
+                                getMsgService().sendMessageReceipt(sessionId, messages.get(messages.size() - 1));
+                            }
                         }
 
                         WritableArray a = ReactCache.createMessageList(messages);
