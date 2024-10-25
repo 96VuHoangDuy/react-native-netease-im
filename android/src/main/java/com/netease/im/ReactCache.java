@@ -893,7 +893,11 @@ public class ReactCache {
                 }
 
                 if (lastMessage != null) {
-                    Boolean isOutgoing = LoginService.getInstance().getAccount().equals(lastMessage.getFromAccount());
+                    String account = LoginService.getInstance().getAccount();
+                    Boolean isOutgoing = false;
+                    if (account != null) {
+                        isOutgoing =  account.equals(lastMessage.getFromAccount());
+                    }
 
                     map.putBoolean("isOutgoing",isOutgoing);
 
@@ -2108,7 +2112,7 @@ public class ReactCache {
         void onException(Throwable exception);
     }
 
-    private static boolean filemovetoanotherfolder(File afile, File bfile) throws IOException {
+    private static boolean filemovetoanotherfolder(File afile, File bfile,Boolean isDisableDeleteAFile) throws IOException {
         boolean ismove = false;
         InputStream inStream = null;
         OutputStream outStream = null;
@@ -2139,7 +2143,10 @@ public class ReactCache {
                 fout.write(buffer, 0, bytesRead);
             }
             // delete the original file
-            afile.delete();
+            if (!isDisableDeleteAFile) {
+                afile.delete();
+            }
+
             ismove = true;
             System.out.println("File is copied successful!");
         } catch (IOException e) {
@@ -2169,12 +2176,21 @@ public class ReactCache {
 
         File from = new File(path);
         boolean isFromPathExits = from.exists();
+
         if (!isFromPathExits) return null;
+        String[] directories = String.valueOf(from.getParentFile()).split("/");
+        String last = directories[directories.length - 1 ];
+        Log.d("lastlast", last);
+        Log.d("from.get", String.valueOf(from.getPath()) + "..");
+        Log.d("from.getParentFile", String.valueOf(from.getParentFile()) + "...");
+//        Log.d("from.getParentFile", Objects.requireNonNull(from.getParent()) + "...");
 
         Context context = IMApplication.getContext();
         String directory = context.getCacheDir().getAbsolutePath();
 
         String typeDir = "";
+        boolean isDisableDeleteFromPath = !(last.equals("video") | last.equals("image") | type.equals("audio") | type.equals("file"));
+    Log.d(">>>>isDisableDeleteFromPath", isDisableDeleteFromPath + "...." + last);
         switch (type) {
             case "video":
                 typeDir = "/video/";
@@ -2189,18 +2205,15 @@ public class ReactCache {
                 typeDir = "/file/";
                 break;
         }
+
         Log.d("directory", directory + "......" + directory + "/nim" + typeDir + sessionId + "......." + currentFileName.trim() + extension);
 
         File to = new File(directory + "/nim" + typeDir + sessionId, currentFileName.trim() + extension);
         File toMkdir = new File(directory + "/nim" + typeDir + sessionId);
         Log.d("toMkdir.exists()", String.valueOf(toMkdir.exists()));
-        if (!toMkdir.exists()) {
-            toMkdir.mkdir();
-//            to.createNewFile();
-        }
 
         try {
-            boolean isMoveSuccess = filemovetoanotherfolder(from, to);
+            boolean isMoveSuccess = filemovetoanotherfolder(from, to, isDisableDeleteFromPath);
 
             if (isMoveSuccess) {
                 return to;
@@ -2272,7 +2285,9 @@ public class ReactCache {
             }
 
             videoDic.putBoolean("isFilePathDeleted", isFilePathDeleted);
-
+            Log.d(">>>> videoAttachment.getPath()", videoAttachment.getPath());
+            Log.d(">>>> videoDic", videoDic.toString());
+            Log.d(">>>> localExtension", localExtension.toString());
             if (!isFilePathDeleted) {
                 if (videoAttachment.getPath() != null) {
                     if ((!videoAttachment.getPath().contains(".mp4")
@@ -2387,6 +2402,10 @@ public class ReactCache {
             }
 
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            Log.d(">>>> videoAttachment.getPath()", imageAttachment.getPath());
+            Log.d(">>>> videoDic", imageObj.toString());
+            Log.d(">>>> localExtension", localExtension.toString());
 
             if (!isFilePathDeleted) {
                 imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));

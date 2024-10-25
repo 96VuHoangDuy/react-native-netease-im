@@ -656,26 +656,32 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         NIMClient.getService(TeamService.class).queryTeamList().setCallback(new RequestCallbackWrapper<List<Team>>() {
             @Override
             public void onResult(int code, List<Team> result, Throwable exception) {
-                WritableArray arr = Arguments.createArray();
+                if (code == ResponseCode.RES_SUCCESS && result != null && !result.isEmpty()) {
+                    WritableArray arr = Arguments.createArray();
 
-                for(Team team : result) {
-                    WritableMap teamInfo = Arguments.createMap();
+                    for(Team team : result) {
+                        WritableMap teamInfo = Arguments.createMap();
 
-                    teamInfo.putString("teamId", team.getId());
-                    teamInfo.putString("name", team.getName());
-                    teamInfo.putString("avatar", team.getIcon());
-                    teamInfo.putString("avatarLocal", ImageLoaderKit.getMemoryCachedAvatar(team.getIcon()));
-                    teamInfo.putString("type", Integer.toString(team.getType().getValue()));
-                    teamInfo.putString("introduce", team.getIntroduce());
-                    teamInfo.putString("createTime", TimeUtil.getTimeShowString(team.getCreateTime(), true));
-                    teamInfo.putString("creator", team.getCreator());
-                    teamInfo.putString("mute", ReactCache.getMessageNotifyType(team.getMessageNotifyType()));
-                    teamInfo.putString("memberCount", Integer.toString(team.getMemberCount()));
-                    teamInfo.putString("memberLimit", Integer.toString(team.getMemberLimit()));
+                        teamInfo.putString("teamId", team.getId());
+                        teamInfo.putString("name", team.getName());
+                        teamInfo.putString("avatar", team.getIcon());
+                        teamInfo.putString("avatarLocal", ImageLoaderKit.getMemoryCachedAvatar(team.getIcon()));
+                        teamInfo.putString("type", Integer.toString(team.getType().getValue()));
+                        teamInfo.putString("introduce", team.getIntroduce());
+                        teamInfo.putString("createTime", TimeUtil.getTimeShowString(team.getCreateTime(), true));
+                        teamInfo.putString("creator", team.getCreator());
+                        teamInfo.putString("mute", ReactCache.getMessageNotifyType(team.getMessageNotifyType()));
+                        teamInfo.putString("memberCount", Integer.toString(team.getMemberCount()));
+                        teamInfo.putString("memberLimit", Integer.toString(team.getMemberLimit()));
 
-                    arr.pushMap(teamInfo);
+                        arr.pushMap(teamInfo);
+                    }
+
+                    promise.resolve(arr);
+                    return;
                 }
 
+                WritableArray arr = Arguments.createArray();
                 promise.resolve(arr);
             }
         });

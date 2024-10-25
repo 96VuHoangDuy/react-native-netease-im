@@ -1485,7 +1485,7 @@ public class SessionService {
         }
     }
 
-    private void handleForwardMessage(IMMessage message, String sessionId, SessionTypeEnum sessionTypeEnum, String parentId, Boolean isHaveMultiMedia) {
+    private void handleForwardMessage(IMMessage message, String sessionId, SessionTypeEnum sessionTypeEnum, String parentId, Boolean isHaveMultiMedia, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger) {
         if (message.getMsgType() == MsgTypeEnum.location) {
             LocationAttachment locationAttachment = (LocationAttachment) message.getAttachment();
             Log.e(TAG, "location test => " + locationAttachment);
@@ -1539,7 +1539,6 @@ public class SessionService {
             remoteExt.remove("repliedId");
         }
 
-        message.setRemoteExtension(remoteExt);
 
         IMMessage messageForward = MessageBuilder.createForwardMessage(message, sessionId, sessionTypeEnum);
 
@@ -1549,8 +1548,31 @@ public class SessionService {
 
         Map<String, Object> localExt = new HashMap<String, Object>();
         messageForward.setLocalExtension(localExt);
+        messageForward.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(messageForward, null, false, false, false);
+//        if ((message.getMsgType() == MsgTypeEnum.video || message.getMsgType() == MsgTypeEnum.image)) {
+//            Map<String, Object> msgLocalExt = message.getLocalExtension();
+//            if (msgLocalExt == null) {
+//                msgLocalExt = new HashMap<>();
+//            }
+//
+//            WritableMap videoDic = Arguments.createMap();
+//            MsgAttachment attachment = message.getAttachment();
+//            if (attachment instanceof VideoAttachment) {
+//                VideoAttachment videoAttachment = (VideoAttachment) attachment;
+//                String path = videoAttachment.getPath();
+//                if (path != null) {
+//
+//                }
+//            }
+//
+//            msgLocalExt.put("isReplacePathSuccess", false);
+//            message.setLocalExtension(msgLocalExt);
+//
+//            NIMClient.getService(MsgService.class).updateIMMessage(message);
+//        }
+
+        sendMessageSelf(messageForward, null, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void handleForwardMessageToRecipient(List<String> messageIds, String sessionId, SessionTypeEnum sessionType, String content, String parentId, Boolean isHaveMultiMedia, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger) {
@@ -1570,7 +1592,7 @@ public class SessionService {
                             multiMediaType = "image";
                         }
                     }
-                    handleForwardMessage(message, sessionId, sessionTypeEnum, parentId, isHaveMultiMedia);
+                    handleForwardMessage(message, sessionId, sessionType, parentId, isHaveMultiMedia, isSkipFriendCheck, isSkipTipForStranger);
                 }
 
                 if (parentId != null && !parentId.isEmpty() && isHaveMultiMedia) {
