@@ -10,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.netease.im.IMApplication;
 import com.netease.im.uikit.common.util.file.AttachmentStore;
@@ -25,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 
 public class ImageUtil {
@@ -285,16 +287,16 @@ public class ImageUtil {
 
         String tempFilePath = getTempFilePath(FileUtil.getExtensionName(filePath));
         File tempImageFile = AttachmentStore.create(tempFilePath);
+
         if (tempImageFile == null) {
             return null;
         }
 
-        CompressFormat compressFormat = isHighQuality ? CompressFormat.PNG : CompressFormat.JPEG;
         // 压缩数值由第三方开发者自行决定
         int maxWidth = isHighQuality ? 1000 : 720;
-        int quality = isHighQuality ? 100 : 60;
+        int quality = isHighQuality ? 100 : 50;
 
-        if (ImageUtil.scaleImage(imageFile, tempImageFile, maxWidth, compressFormat, quality)) {
+        if (ImageUtil.scaleImage(imageFile, tempImageFile, maxWidth, CompressFormat.JPEG, quality)) {
             return tempImageFile;
         } else {
             return null;
@@ -431,9 +433,8 @@ public class ImageUtil {
     }
 
     public static boolean isInvalidPictureFile(String mimeType) {
-        String lowerCaseFilepath = mimeType.toLowerCase();
-        return (lowerCaseFilepath.contains("jpg") || lowerCaseFilepath.contains("jpeg")
-                || lowerCaseFilepath.toLowerCase().contains("png") || lowerCaseFilepath.toLowerCase().contains("bmp") || lowerCaseFilepath
-                .toLowerCase().contains("gif"));
+        String[] mimeTypes = {"image/jpg", "image/jpeg", "image/png", "image/bmp", "image/gif", "image/webp"};
+        String lowerCaseMimeType = mimeType.toLowerCase();
+        return Arrays.asList(mimeTypes).contains(lowerCaseMimeType);
     }
 }

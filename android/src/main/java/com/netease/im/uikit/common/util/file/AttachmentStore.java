@@ -1,9 +1,12 @@
 
 package com.netease.im.uikit.common.util.file;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.text.TextUtils;
+import android.util.Log;
 
+import com.facebook.react.bridge.ReactApplicationContext;
 import com.netease.im.uikit.common.util.log.LogUtil;
 
 import java.io.BufferedOutputStream;
@@ -15,11 +18,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * 用于把附件保存到文件系统中
  */
+
 public class AttachmentStore {
+    private static ReactApplicationContext reactContext;
+
     public static long copy(String srcPath, String dstPath) {
     	if (TextUtils.isEmpty(srcPath) || TextUtils.isEmpty(dstPath)) {
     		return -1;
@@ -136,23 +144,21 @@ public class AttachmentStore {
   
         return srcFile.renameTo(dstFile);
     }
+
     
     public static File create(String filePath) {
         if (TextUtils.isEmpty(filePath)) {
             return null;
         }
 
-        File f = new File(filePath);
-        if (!f.getParentFile().exists()) {// 如果不存在上级文件夹
-            f.getParentFile().mkdirs();
-        }
+        File outputFile;
         try {
-            f.createNewFile();
-            return f;
+            @SuppressLint("SimpleDateFormat")
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            outputFile = File.createTempFile("IMG_" + timeStamp, ".png");
+
+            return outputFile;
         } catch (IOException e) {
-        	if(f!=null && f.exists()){
-        		f.delete();
-        	}
             return null;
         }    
     }
