@@ -2285,9 +2285,9 @@ public class ReactCache {
             }
 
             videoDic.putBoolean("isFilePathDeleted", isFilePathDeleted);
-            Log.d(">>>> videoAttachment.getPath()", videoAttachment.getPath());
-            Log.d(">>>> videoDic", videoDic.toString());
-            Log.d(">>>> localExtension", localExtension.toString());
+//            Log.d(">>>> videoAttachment.getPath()", videoAttachment.getPath());
+//            Log.d(">>>> videoDic", videoDic.toString());
+//            Log.d(">>>> localExtension", localExtension.toString());
             if (!isFilePathDeleted) {
                 if (videoAttachment.getPath() != null) {
                     if ((!videoAttachment.getPath().contains(".mp4")
@@ -2403,9 +2403,9 @@ public class ReactCache {
 
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
-            Log.d(">>>> videoAttachment.getPath()", imageAttachment.getPath());
-            Log.d(">>>> videoDic", imageObj.toString());
-            Log.d(">>>> localExtension", localExtension.toString());
+//            Log.d(">>>> videoAttachment.getPath()", imageAttachment.getPath());
+//            Log.d(">>>> videoDic", imageObj.toString());
+//            Log.d(">>>> localExtension", localExtension.toString());
 
             if (!isFilePathDeleted) {
                 imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
