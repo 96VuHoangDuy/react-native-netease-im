@@ -2848,7 +2848,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
                 message.setLocalExtension(localExtension);
 
-                NIMClient.getService(MsgService.class).updateRecentByMessage(message, false);
+                NIMClient.getService(MsgService.class).updateIMMessage(message);
 
                 promise.resolve("success");
                 return 0;

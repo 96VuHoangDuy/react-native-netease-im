@@ -161,6 +161,17 @@ public class ReactCache {
         try {
             switch (eventName) {
                 case observeRecentContact:
+                    if (date instanceof  WritableMap) {
+                        WritableMap map = (WritableMap) date;
+                        Boolean isDebounceObserve = map.getBoolean("isDebounceObserve");
+
+                        if (!isDebounceObserve) {
+                            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
+
+                            break;
+                        }
+                    }
+
                     ReactCache.debounce(() -> {
                         reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
                     }, 2000);
@@ -818,6 +829,7 @@ public class ReactCache {
         // recents参数即为最近联系人列表（最近会话列表）
         WritableMap writableMap = Arguments.createMap();
         WritableArray array = Arguments.createArray();
+        Boolean isDebounceObserve = true;
         int unreadNumTotal = 0;
          if (recents != null && !recents.isEmpty()) {
             WritableMap map;
@@ -890,6 +902,9 @@ public class ReactCache {
                         isCsr = true;
                         localExt.putBoolean("isCsr", true);
                     }
+                }
+                if (i == 0 && (isCsr || isChatBot)) {
+                    isDebounceObserve = false;
                 }
 
                 if (lastMessage != null) {
@@ -1403,6 +1418,7 @@ public class ReactCache {
         }
         writableMap.putArray("recents", array);
         writableMap.putString("unreadCount", Integer.toString(unreadNumTotal));
+        writableMap.putBoolean("isDebounceObserve", isDebounceObserve);
         return writableMap;
     }
 

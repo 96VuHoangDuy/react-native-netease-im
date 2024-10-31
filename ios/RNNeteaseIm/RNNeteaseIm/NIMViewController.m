@@ -333,7 +333,7 @@
 //    return dict;
 //}
 
--(NSDictionary *)handleSessionP2p:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *)totalUnreadCount {
+-(NSDictionary *)handleSessionP2p:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *)totalUnreadCount isDebounceObserve:(BOOL *)isDebounceObserve {
     NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
     BOOL isMyFriend = [[NIMSDK sharedSDK].userManager isMyFriend:recent.session.sessionId];
     NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
@@ -354,6 +354,9 @@
             isCsr = YES;
             [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isCsr"];
         }
+    }
+    if ((isCsr || isChatBot) && isDebounceObserve != nil) {
+        *isDebounceObserve = NO;
     }
     
     if ([localExt objectForKey:@"isHideSession"] != nil) {
@@ -854,7 +857,7 @@
     for (NIMRecentSession *recent in NIMlistArr) {
         switch (recent.session.sessionType) {
             case NIMSessionTypeP2P: {
-                NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum];
+                NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum isDebounceObserve:nil];
                 [sessionList addObject:dic];
                 break;
             }
@@ -905,10 +908,12 @@
     NSArray *NIMlistArr = [[NIMSDK sharedSDK].conversationManager.allRecentSessions mutableCopy];
     
     NSMutableArray *sessionList = [NSMutableArray array];
+    BOOL isDebounceObserve = YES;
+    NSInteger index = 0;
     for (NIMRecentSession *recent in NIMlistArr) {
         switch (recent.session.sessionType) {
             case NIMSessionTypeP2P: {
-                NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum];
+                NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum isDebounceObserve:index == 0 ? &isDebounceObserve : nil];
                 [sessionList addObject:dic];
                 break;
             }
@@ -944,9 +949,11 @@
                 }
             }
         }
+        
+        index++;
     }
     
-    NSDictionary *recentDict = @{@"recents":sessionList,@"unreadCount":[NSString stringWithFormat:@"%zd",allUnreadNum]};
+    NSDictionary *recentDict = @{@"recents":sessionList,@"unreadCount":[NSString stringWithFormat:@"%zd",allUnreadNum], @"isDebounceObserve": [NSNumber numberWithBool:isDebounceObserve]};
     [NIMModel initShareMD].recentDict = recentDict;
 }
 //会话标题

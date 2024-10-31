@@ -3061,7 +3061,7 @@
         NSDictionary *result;
         switch ([sessionType integerValue]) {
             case NIMSessionTypeP2P:
-                result = [[NIMViewController initWithController] handleSessionP2p:recent totalUnreadCount:&count];
+                result = [[NIMViewController initWithController] handleSessionP2p:recent totalUnreadCount:&count isDebounceObserve:nil];
                 break;
                 
             case NIMSessionTypeTeam:
@@ -3093,7 +3093,7 @@
     NSDictionary *result;
     switch ([sessionType integerValue]) {
         case NIMSessionTypeP2P:
-            result = [[NIMViewController initWithController] handleSessionP2p:recent totalUnreadCount:&count];
+            result = [[NIMViewController initWithController] handleSessionP2p:recent totalUnreadCount:&count isDebounceObserve:nil];
             break;
             
         case NIMSessionTypeTeam:

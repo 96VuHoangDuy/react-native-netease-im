@@ -96,6 +96,13 @@
 
 // Debounce function
 - (void)debounceSendEventWithParam:(NSDictionary *)param debounceInterval:(NSTimeInterval)interval {
+    NSNumber *debounceObserve = [param objectForKey:@"isDebounceObserve"];
+    BOOL isDebounceObserve = [debounceObserve boolValue];
+    if (!isDebounceObserve) {
+        [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:param];
+        return;
+    }
+    
     // Invalidate any existing timer to reset the debounce window
     [self.debounceTimer invalidate];
     
