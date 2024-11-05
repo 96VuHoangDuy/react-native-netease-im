@@ -2485,7 +2485,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void searchMessagesinCurrentSession(String keyWords, String anchorId, int limit, ReadableArray messageTypes, int direction, ReadableArray messageSubTypes, final Promise promise) {
+    public void searchMessagesinCurrentSession(String keyWords, String anchorId, int limit, ReadableArray messageTypes, int direction, ReadableArray messageSubTypes, Boolean isDisableDownloadMedia, final Promise promise) {
         ArrayList<String> _messageTypes = (ArrayList<String>) (ArrayList<?>) (messageTypes.toArrayList());
 
         MsgSearchOption option = new MsgSearchOption();
@@ -2543,7 +2543,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                                         Collections.reverse(messages);
                                     }
 
-                                    WritableMap messageObjectList = ReactCache.createMessageObjectList(result);
+                                    WritableMap messageObjectList = ReactCache.createMessageObjectList(result, isDisableDownloadMedia);
                                     promise.resolve(messageObjectList);
                                     return;
                                 }
@@ -2848,7 +2848,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
                 message.setLocalExtension(localExtension);
 
-                NIMClient.getService(MsgService.class).updateIMMessage(message);
+                NIMClient.getService(MsgService.class).updateRecentByMessage(message, false);
 
                 promise.resolve("success");
                 return 0;

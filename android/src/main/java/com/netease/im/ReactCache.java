@@ -161,24 +161,26 @@ public class ReactCache {
         try {
             switch (eventName) {
                 case observeRecentContact:
-                    if (date instanceof  WritableMap) {
-                        WritableMap map = (WritableMap) date;
-                        Boolean isDebounceObserve = map.getBoolean("isDebounceObserve");
+                if (date instanceof  WritableMap) {
+                    WritableMap map = (WritableMap) date;
+                    Boolean isDebounceObserve = map.getBoolean("isDebounceObserve");
 
-                        if (!isDebounceObserve) {
-                            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
+                    if (!isDebounceObserve) {
+                        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
 
-                            break;
-                        }
+                        break;
                     }
+                }
 
                     ReactCache.debounce(() -> {
                         reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(eventName, date);
                     }, 2000);
                     break;
+
                 case observeMsgStatus:
                     if (date instanceof WritableArray) {
                         WritableArray dataMap = (WritableArray) date;
+
                         if (((WritableArray) date).size() > 0) {
                                 eventSenderMsgStatus.addParam(dataMap.getMap(0), "msgId");
                                 if ( eventSenderMsgStatus.mainArray.size() >= 15) {
@@ -188,6 +190,8 @@ public class ReactCache {
                                 }
                         }
                     }
+                    break;
+
                 case observeReceiveMessage:
                     if (date instanceof WritableArray) {
                         WritableArray dataMap = (WritableArray) date;
@@ -200,6 +204,8 @@ public class ReactCache {
                             }
                         }
                     }
+                    break;
+
                 case observeProgressSend:
                     if (date instanceof  WritableMap) {
                         WritableMap dataMap = (WritableMap) date;
@@ -1823,18 +1829,22 @@ public class ReactCache {
         return writableArray;
     }
 
+    public static WritableMap createMessageObjectList(List<IMMessage> messageList) {
+        return createMessageObjectList(messageList, false);
+    }
+
       /**
      * @param messageList
      * @return Object
      */
-    public static WritableMap createMessageObjectList(List<IMMessage> messageList) {
+    public static WritableMap createMessageObjectList(List<IMMessage> messageList, Boolean isDisableDownloadMedia) {
         WritableMap objectGroupMessages = Arguments.createMap();
         Map<String, WritableArray> listHashMap = new HashMap<>();
 
         if (messageList != null) {
             for (IMMessage item : messageList) {
                 if (item != null) {
-                    WritableMap itemMap = createMessage(item, false);
+                    WritableMap itemMap = createMessage(item, false, isDisableDownloadMedia);
                     String sessionId = item.getSessionId();
                     WritableArray array = listHashMap.get(sessionId);
                     if (array == null) {
@@ -2262,7 +2272,7 @@ public class ReactCache {
         return map;
     }
 
-    public static WritableMap generateVideoExtend(IMMessage item) {
+    public static WritableMap generateVideoExtend(IMMessage item, boolean isDisableDownloadMedia) {
         Log.d("getSdkStorageRooPath", IMApplication.getContext().getCacheDir().getAbsolutePath());
 
         WritableMap videoDic = Arguments.createMap();
@@ -2315,7 +2325,7 @@ public class ReactCache {
                             item.setAttachment(videoAttachment);
                             getMsgService().updateIMMessageStatus(item);
                             videoDic.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
-                            videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+                            videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getThumbPath());
 
                             Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                             newLocalExt.put("isReplacePathSuccess", true);
@@ -2329,15 +2339,15 @@ public class ReactCache {
                             videoDic.putBoolean("needRefreshMessage", true);
                         }
                     } else {
-                        videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getPath());
+                        videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getThumbPath());
                         videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
                     }
                 } else {
-                    videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getPath());
+                    videoDic.putString(MessageConstant.MediaFile.THUMB_PATH, videoAttachment.getThumbPath());
                     videoDic.putString(MessageConstant.MediaFile.PATH, videoAttachment.getPath());
                 }
 
-                if (!isOriginVideoHasDownloaded(item) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false)) && (!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false))) {
+                if (!isDisableDownloadMedia && !isOriginVideoHasDownloaded(item) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false)) && (!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false))) {
                     DownloadCallback callback = new DownloadCallback() {
                         @Override
                         public void onSuccess(Void result) {
@@ -2378,7 +2388,7 @@ public class ReactCache {
         return videoDic;
     }
 
-    public static WritableMap generateImageExtend(IMMessage item) {
+    public static WritableMap generateImageExtend(IMMessage item, boolean isDisableDownloadMedia) {
         MsgAttachment attachment = item.getAttachment();
         WritableMap imageObj = Arguments.createMap();
 
@@ -2435,7 +2445,7 @@ public class ReactCache {
                         item.setAttachment(imageAttachment);
                         getMsgService().updateIMMessageStatus(item);
                         imageObj.putString(MessageConstant.MediaFile.PATH, newFile.getPath());
-                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, newFile.getPath());
+                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getThumbPath());
 
                         Map<String, Object> newLocalExt = MapBuilder.newHashMap();
                         newLocalExt.put("isReplacePathSuccess", true);
@@ -2451,7 +2461,7 @@ public class ReactCache {
                     }
                 } else {
                     if (item.getDirect() == MsgDirectionEnum.Out) {
-                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getPath());
+                        imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getThumbPath());
                     } else {
                         imageObj.putString(MessageConstant.MediaFile.THUMB_PATH, imageAttachment.getThumbPath());
                     }
@@ -2460,7 +2470,7 @@ public class ReactCache {
                     imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
                 }
 
-                if ((!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false)) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false))) {
+                if (!isDisableDownloadMedia && (!localExtension.containsKey("isReplacePathSuccess") || localExtension.get("isReplacePathSuccess").equals(false)) && (!localExtension.containsKey("isFileDownloading") || localExtension.get("isFileDownloading").equals(false))) {
                     SessionService.getInstance().downloadAttachment(item, imageAttachment.getThumbPath() == null);
                 }
             }
@@ -2629,6 +2639,9 @@ public class ReactCache {
      * @return
      */
     public static WritableMap createMessage(IMMessage item, boolean isNoti) {
+        return createMessage(item, isNoti, false);
+    }
+    public static WritableMap createMessage(IMMessage item, boolean isNoti, boolean isDisableDownloadMedia) {
         WritableMap itemMap = Arguments.createMap();
         itemMap.putString(MessageConstant.Message.MSG_ID, item.getUuid());
         RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(item.getSessionId(), item.getSessionType());
@@ -2879,7 +2892,7 @@ public class ReactCache {
             }
 
             if (item.getMsgType() == MsgTypeEnum.image) {
-                WritableMap imageObj = generateImageExtend(item);
+                WritableMap imageObj = generateImageExtend(item, isDisableDownloadMedia);
 
                 itemMap.putMap(MESSAGE_EXTEND, imageObj);
             } else if (item.getMsgType() == MsgTypeEnum.audio) {
@@ -2887,7 +2900,7 @@ public class ReactCache {
 
                 itemMap.putMap(MESSAGE_EXTEND, audioObj);
             } else if (item.getMsgType() == MsgTypeEnum.video) {
-                WritableMap videoDic = generateVideoExtend(item);
+                WritableMap videoDic = generateVideoExtend(item, isDisableDownloadMedia);
 
                 itemMap.putMap(MESSAGE_EXTEND, videoDic);
             } else if (item.getMsgType() == MsgTypeEnum.file) {
