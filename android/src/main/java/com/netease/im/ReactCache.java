@@ -212,10 +212,10 @@ public class ReactCache {
                         if (((WritableMap) date).hasKey("messageId")) {
                             eventSenderMsgProgress.addParam(dataMap, "messageId");
                             Log.d(">>> eventSenderMs.", String.valueOf(eventSenderMsgProgress.mainArray.size()));
-                            if ( eventSenderMsgProgress.mainArray.size() >= 15) {
-                                eventSenderMsgProgress.sendEventToReactNativeWithType(observeProgressSend, observeProgressSend, 15);
+                            if ( eventSenderMsgProgress.mainArray.size() >= 10) {
+                                eventSenderMsgProgress.sendEventToReactNativeWithType(observeProgressSend, observeProgressSend, 10);
                             } else {
-                                eventSenderMsgProgress.triggerSendEventAfterDelay(observeProgressSend, observeProgressSend, 15);
+                                eventSenderMsgProgress.triggerSendEventAfterDelay(observeProgressSend, observeProgressSend, 10);
                             }
                         }
                     }

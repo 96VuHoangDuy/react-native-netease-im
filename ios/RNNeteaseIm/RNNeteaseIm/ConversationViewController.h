@@ -101,6 +101,8 @@ typedef void(^Errors)(id erro);
 
 -(NSMutableArray *)setTimeArr:(NSArray *)messageArr;
 
+-(NSMutableArray *)setTimeArr:(NSArray *)messageArr isDisableDownloadMedia:(BOOL *) isDisableDownloadMedia;
+
 -(void) reactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId reaction:(NSDictionary *)reaction success:(Success)success err:(Errors)err;
 
 - (void) setCancelResendMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType;
@@ -166,7 +168,7 @@ typedef void(^Errors)(id erro);
 
 -(void)cancelSendingMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err;
 
-- (void)searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction messageSubTypes:(NSArray *)messageSubTypes success:(Success)succe err:(Errors)err;
+- (void)searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction messageSubTypes:(NSArray *)messageSubTypes isDisableDownloadMedia:(BOOL *) isDisableDownloadMedia success:(Success)succe err:(Errors)err;
 
 - (NSString *)teamNotificationSourceName:(NIMMessage *)message;
 

@@ -140,6 +140,7 @@ class NimSession {
     messageType,
     direction,
     messageSubTypes,
+    isDisableDownloadMedia,
   }: {
     keyWords: string;
     anchorId: string;
@@ -147,14 +148,17 @@ class NimSession {
     messageType: Array<NIMMessageTypeEnum>;
     direction: QueryDirectionType;
     messageSubTypes?: Array<NIMMessageSubTypeEnum>;
+    isDisableDownloadMedia?: boolean;
   }): Promise<Record<string, NIMMessage[]>> {
+    
     return RNNeteaseIm.searchMessagesinCurrentSession(
       keyWords,
       anchorId,
       limit,
       messageType,
       direction,
-      messageSubTypes
+      messageSubTypes,
+      isDisableDownloadMedia ?? false,
     );
   }
 

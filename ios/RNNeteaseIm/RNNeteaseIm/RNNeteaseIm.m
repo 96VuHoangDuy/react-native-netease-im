@@ -145,7 +145,7 @@
         } else {
             [self.eventSenderStatus triggerSendEventAfterDelay:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:10];
         }
-    } else{
+    } else {
         [_bridge.eventDispatcher sendDeviceEventWithName:@"observeMsgStatus" body:@{@"data": param}];
     }
     
@@ -154,10 +154,10 @@
 - (void)onUploadQueueAttachment:(NSDictionary *)param {
     [self.eventSenderProgress addParam:param withIdKey:@"messageId"];
     
-    if (self.eventSenderProgress.mainArray.count >= 12) {
-        [self.eventSenderProgress sendEventToReactNativeWithType:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:12];
+    if (self.eventSenderProgress.mainArray.count >= 7) {
+        [self.eventSenderProgress sendEventToReactNativeWithType:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:7];
     } else {
-        [self.eventSenderProgress triggerSendEventAfterDelay:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:12];
+        [self.eventSenderProgress triggerSendEventAfterDelay:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:7];
     }
 }
 
@@ -480,8 +480,8 @@ RCT_EXPORT_METHOD(getMessageById:(nonnull NSString *)sessionId sessionType:(nonn
 }
 
 //search local Messages in session
-RCT_EXPORT_METHOD(searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction messageSubTypes:(NSArray *)messageSubTypes resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ConversationViewController initWithConversationViewController] searchMessagesinCurrentSession:keyWords anchorId:anchorId limit:limit messageType:messageType direction:direction messageSubTypes:messageSubTypes success:^(id param) {
+RCT_EXPORT_METHOD(searchMessagesinCurrentSession:(NSString *)keyWords anchorId:(NSString *)anchorId limit:(int)limit messageType:(NSArray *)messageType direction:(int)direction messageSubTypes:(NSArray *)messageSubTypes isDisableDownloadMedia:(BOOL *) isDisableDownloadMedia resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] searchMessagesinCurrentSession:keyWords anchorId:anchorId limit:limit messageType:messageType direction:direction messageSubTypes:messageSubTypes isDisableDownloadMedia:isDisableDownloadMedia success:^(id param) {
         NSLog(@"paramparamparamparam %@", param);
         resolve(param);
     } err:^(id erro) {
