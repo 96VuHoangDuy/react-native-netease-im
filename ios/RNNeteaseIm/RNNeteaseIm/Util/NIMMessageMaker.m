@@ -340,13 +340,33 @@
     return message;
 }
 
-+ (NIMMessage*)msgWithVideo:(NSString*)filePath andeSession:(NIMSession *)session senderName:(NSString *)senderName
++(NSInteger)getVideoDuration:(NSString *)path {
+    NSURL *url = [[NSURL alloc] initFileURLWithPath:path];
+    AVURLAsset *avUrl = [AVURLAsset assetWithURL:url];
+    CMTime time = [avUrl duration];
+    return (NSInteger)ceil(time.value/time.timescale) * 1000;
+}
+
++ (NIMMessage*)msgWithVideo:(NSString*)filePath andeSession:(NIMSession *)session senderName:(NSString *)senderName duration:(NSString *)duration
 {
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm"];
     NSString *dateString = [dateFormatter stringFromDate:[NSDate date]];
     NIMVideoObject *videoObject = [[NIMVideoObject alloc] initWithSourcePath:filePath];
     videoObject.displayName = [NSString stringWithFormat:@"视频发送于%@",dateString];
+    NSInteger _duration = 0;
+    if (duration != nil) {
+        _duration = [duration intValue];
+    }
+    if (videoObject.duration >= 1000 && videoObject.duration != _duration) {
+        _duration = videoObject.duration;
+    }
+    if (videoObject.duration < 1000 && [duration intValue] < 1000) {
+        _duration = [self getVideoDuration:filePath];
+    }
+    if (_duration >= 1000) {
+        videoObject.duration = _duration;
+    }
     NIMMessage *message = [[NIMMessage alloc] init];
     message.messageObject = videoObject;
     NSString *content = @"[视频]";

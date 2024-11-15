@@ -31,7 +31,7 @@
 
 + (NIMMessage *)msgWithImagePath:(NSString *)path andeSession:(NIMSession *)session senderName:(NSString *)senderName;
 
-+ (NIMMessage *)msgWithVideo:(NSString *)filePath andeSession:(NIMSession *)session senderName:(NSString *)senderName;
++ (NIMMessage *)msgWithVideo:(NSString *)filePath andeSession:(NIMSession *)session senderName:(NSString *)senderName duration:(NSString *)duration;
 
 + (NIMMessage *)msgWithLocation:(NIMKitLocationPoint*)locationPoint andeSession:(NIMSession *)session senderName:(NSString *)senderName;
 

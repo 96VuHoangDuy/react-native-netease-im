@@ -1864,9 +1864,17 @@ public class SessionService {
         long durationL = 0;
         try {
             durationL = Long.parseLong(duration);
+            if (durationL < 1) {
+                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                retriever.setDataSource(file);
+                String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                durationL = Long.parseLong(time);
+            }
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
+
+        Log.e(TAG, "sendVideoMessage => duration " + durationL);
 
         IMMessage message = MessageBuilder.createVideoMessage(sessionId, sessionTypeEnum, f, durationL, width, height, md5);
 

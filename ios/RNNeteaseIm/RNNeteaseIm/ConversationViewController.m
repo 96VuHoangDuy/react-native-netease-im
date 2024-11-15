@@ -869,6 +869,7 @@
     [videoObj setObject:[NSString stringWithFormat:@"%f",object.coverSize.height ] forKey:@"coverSizeHeight"];
     [videoObj setObject:[NSString stringWithFormat:@"%f", object.coverSize.width ] forKey:@"coverSizeWidth"];
     [videoObj setObject:[NSString stringWithFormat:@"%ld",object.duration ] forKey:@"duration"];
+    NSLog(@"makeExtendVideo duration: %@", [NSString stringWithFormat:@"%ld",object.duration]);
     [videoObj setObject:[NSString stringWithFormat:@"%lld",object.fileLength] forKey:@"fileLength"];
     
     NSString *mediaPath = [self moveFiletoSessionDir:message isDisableDownloadMedia:isDisableDownloadMedia];
@@ -1945,18 +1946,19 @@
     }
     
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
-    NIMMessage *message = [NIMMessageMaker msgWithVideo:path andeSession:session senderName:sessionName];
+    NIMMessage *message = [NIMMessageMaker msgWithVideo:path andeSession:session senderName:sessionName duration:nil];
     
     [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
 }
 
 //发送视频
 -(void)sendVideoMessage:(NSString *)path duration:(NSString *)duration width:(NSNumber *)width height:(NSNumber *)height displayName:(  NSString *)displayName isSkipFriendCheck:(BOOL *)isSkipFriendCheck  isSkipTipForStranger:(BOOL *)isSkipTipForStranger parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber*)indexCount {
+    NSLog(@"path =>>>>> %@", path);
     if ([path hasPrefix:@"file:///private"]) {
         path = [path stringByReplacingOccurrencesOfString:@"file:///private" withString:@""];
     }
     
-    NIMMessage *message = [NIMMessageMaker msgWithVideo:path andeSession:self._session senderName:_myUserName];
+    NIMMessage *message = [NIMMessageMaker msgWithVideo:path andeSession:self._session senderName:_myUserName duration:duration];
     NSMutableDictionary *msgRemoteExt = [[NSMutableDictionary alloc] initWithDictionary: message.remoteExt ? message.remoteExt : @{}];
     
     if (parentId != nil) {
@@ -1968,7 +1970,9 @@
     }
     message.remoteExt = msgRemoteExt;
     
+    NSLog(@"test =>>> %@, %@", [NSNumber numberWithBool:isSkipFriendCheck], [NSNumber numberWithBool:isSkipTipForStranger]);
     if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
+        NSLog(@"sendMessage");
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
     }
 }
