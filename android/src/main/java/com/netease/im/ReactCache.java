@@ -1941,7 +1941,7 @@ public class ReactCache {
             writableMap.putString("isMe", boolean2String(TextUtils.equals(teamMember.getAccount(), LoginService.getInstance().getAccount())));
 
             NimUserInfo memberInfo = NIMClient.getService(UserService.class).getUserInfo(teamMember.getAccount());
-            if (name.equals(contactId)) {
+//            if (name.equals(contactId)) {
                 Map<String, Object> userWithCache = CacheUsers.getUser(contactId);
                 if (userWithCache != null) {
                     String nameWithCache = (String) userWithCache.get("nickname");
@@ -1957,7 +1957,7 @@ public class ReactCache {
                 } else {
                     UserStrangers.setStranger(contactId);
                 }
-            }
+//            }
 
             if (memberInfo != null) {
                 String birthday = memberInfo.getBirthday();

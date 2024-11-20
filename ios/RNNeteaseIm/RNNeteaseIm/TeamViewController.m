@@ -450,7 +450,7 @@
                     }
                 }
                 
-                if ([memb objectForKey:@"name"] != nil && [[memb objectForKey:@"name"] isEqual:@""] && [memb objectForKey:@"nickname"] != nil && [[memb objectForKey:@"nickname"] isEqual:@""]) {
+//                if ([memb objectForKey:@"name"] != nil && [[memb objectForKey:@"name"] isEqual:@""] && [memb objectForKey:@"nickname"] != nil && [[memb objectForKey:@"nickname"] isEqual:@""]) {
                     NSDictionary *userWithCache = [[CacheUsers initWithCacheUsers] getUser:member.userId];
                     
                     if (userWithCache != nil) {
@@ -478,7 +478,7 @@
                     } else {
                         [[UserStrangers initWithUserStrangers] setStranger:member.userId];
                     }
-                }
+//                }
                 
                 [arr addObject:memb];
             }
