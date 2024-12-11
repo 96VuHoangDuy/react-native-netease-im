@@ -1296,6 +1296,50 @@ public class SessionService {
         });
     }
 
+    private String getReactedMessageType(IMMessage message) {
+        String result = "text";
+        MsgTypeEnum messageType = message.getMsgType();
+        switch (messageType) {
+            case image:
+                result = "image";
+                break;
+            case video:
+                result = "video";
+                break;
+            case audio:
+                result = "voice";
+                break;
+            case location:
+                result = "location";
+                break;
+            case file:
+                result = "file";
+                break;
+            default:
+                result = "text";
+                break;
+        }
+
+        Map<String, Object> remoteExt = message.getRemoteExtension();
+        if (remoteExt != null) {
+            String extendType = (String) remoteExt.get("extendType");
+
+            if (extendType != null) {
+                if (extendType.equals("forwardMultipleText")) {
+                    result = "forwardMultipleText";
+                }
+                if (extendType.equals("card")) {
+                    result = "card";
+                }
+                if (extendType.equals("gif")) {
+                    result = "gif";
+                }
+            }
+        }
+
+        return result;
+    }
+
     public void reactionMessage(String sessionId, String sessionType, String messageId, ReadableMap reaction, final Promise promise) {
         SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
         RecentContact recentContact = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
@@ -1325,6 +1369,22 @@ public class SessionService {
                     return;
                 }
 
+                Map<String, Object> _reaction = MapUtil.readableMaptoMap(reaction);
+                if (_reaction == null) {
+                    _reaction = new HashMap<>();
+                }
+                Map<String, Object> reactedMessage = new HashMap<>();
+                String reactedMessageType = getReactedMessageType(message);
+
+                reactedMessage.put("userId", message.getFromAccount());
+                reactedMessage.put("messageType", reactedMessageType);
+                if (reactedMessageType.equals("text")) {
+                    reactedMessage.put("content", message.getContent());
+                }
+
+                _reaction.put("reactedMessage", reactedMessage);
+
+                Log.e(TAG, "_reaction " + _reaction);
                 Map<String, Object> localExt = message.getLocalExtension();
                 if (localExt == null) {
                     localExt = new HashMap<String, Object>();
@@ -1335,7 +1395,7 @@ public class SessionService {
                     reactions = new ArrayList<Map<String, Object>>();
                 }
 
-                reactions.add(MapUtil.readableMaptoMap(reaction));
+                reactions.add(_reaction);
                 localExt.put("reactions", reactions);
 
                 message.setLocalExtension(localExt);
@@ -1344,7 +1404,7 @@ public class SessionService {
 
                 IMMessage newMessage = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, messageId);
                 Map<String, Object> remoteExt = new HashMap<String, Object>();
-                remoteExt.put("reaction", MapUtil.readableMaptoMap(reaction));
+                remoteExt.put("reaction", _reaction);
 
                 newMessage.setRemoteExtension(remoteExt);
                 newMessage.setSubtype(2);

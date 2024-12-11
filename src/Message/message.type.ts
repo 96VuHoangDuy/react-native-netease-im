@@ -106,6 +106,12 @@ export interface INimMessageReactionSymbol {
   symbol: string;
 }
 
+export interface INimReactedMessage {
+  userId: string;
+  messageType: NIMMessageTypeEnum
+  content?: string
+}
+
 export interface INimMessageReaction {
   accId: string;
   type: INimMessageReactionEnum;
@@ -113,7 +119,10 @@ export interface INimMessageReaction {
   nickname: string;
   avatar: string;
   id: string;
+  reactedMessage: INimReactedMessage
 }
+
+export type INimCreateMessageReaction = Omit<INimMessageReaction, "reactedMessage">
 
 export interface INimMessageRemoveReaction {
   sessionId: string;

@@ -265,6 +265,46 @@
     
 }
 
+-(NSString *)getReactedMessageType:(NIMMessage *)message {
+    NSString *result;
+    switch (message.messageType) {
+        case NIMMessageTypeAudio:
+            result = @"voice";
+            break;
+        case NIMMessageTypeImage:
+            result = @"image";
+            break;
+        case NIMMessageTypeVideo:
+            result = @"video";
+            break;
+        case NIMMessageTypeLocation:
+            result = @"location";
+            break;
+        case NIMMessageTypeFile:
+            result = @"file";
+            break;
+        default:
+            result = @"text";
+            break;
+    }
+    
+    NSDictionary *remoteExt = message.remoteExt;
+    NSString *extendType = [remoteExt objectForKey:@"extendType"];
+    if (extendType != nil) {
+        if ([extendType isEqual:@"forwardMultipleText"]) {
+            result = @"forwardMultipleText";
+        }
+        if ([extendType isEqual:@"card"]) {
+            result = @"card";
+        }
+        if ([extendType isEqual:@"gif"]) {
+            result = @"gif";
+        }
+    }
+    
+    return result;
+}
+
 -(void) reactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId reaction:(NSDictionary *)reaction success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
@@ -279,6 +319,17 @@
         return;
     }
     NIMMessage *message = [messages firstObject];
+    NSMutableDictionary *_reaction = reaction ? [reaction mutableCopy] : [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *reactedMessage = [[NSMutableDictionary alloc] init];
+    [reactedMessage setObject:message.from forKey:@"userId"];
+    NSString *reactedMessageType = [self getReactedMessageType:message];
+    [reactedMessage setObject:reactedMessageType forKey:@"messageType"];
+    if ([reactedMessageType isEqual:@"text"]) {
+        [reactedMessage setObject:message.text forKey:@"content"];
+    }
+    
+    [_reaction setObject:reactedMessage forKey:@"reactedMessage"];
+    
     NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
     NSMutableArray *reactions;
     if ([localExt objectForKey:@"reactions"] != nil) {
@@ -287,12 +338,12 @@
         reactions = [[NSMutableArray alloc] init];
     }
     
-    [reactions addObject:reaction];
+    [reactions addObject:_reaction];
     [localExt setObject:reactions forKey:@"reactions"];
     
     message.localExt = localExt;
     
-    NIMMessage *newMessage = [NIMMessageMaker msgWithReaction:messageId reaction:reaction];
+    NIMMessage *newMessage = [NIMMessageMaker msgWithReaction:messageId reaction:_reaction];
     
     [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:session completion:nil];
     

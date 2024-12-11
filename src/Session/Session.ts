@@ -15,6 +15,7 @@ import {
   NimSessionType,
 } from './session.type';
 import {
+    INimCreateMessageReaction,
   INimMessageReaction,
   NIMMessage,
   NIMMessageChatBotInfo,
@@ -830,7 +831,7 @@ class NimSession {
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
     messageId: string,
-    reaction: INimMessageReaction
+    reaction: INimCreateMessageReaction 
   ) {
     return RNNeteaseIm.reactionMessage(
       sessionId,
