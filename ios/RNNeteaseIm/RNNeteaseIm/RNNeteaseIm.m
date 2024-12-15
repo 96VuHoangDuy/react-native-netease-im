@@ -24,6 +24,7 @@
 #import <Photos/Photos.h>
 #import "UserStrangers.h"
 #import "EventSender.h"
+#import "react-native-config/RNCConfig.h"
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
@@ -192,7 +193,11 @@ RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)to
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject){
     //请将 NIMMyAccount 以及 NIMMyToken 替换成您自己提交到此App下的账号和密码
-    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:@"ZYZJIM_IOS"];
+    NSString *cerName = [RNCConfig envFor:@"IM_CER_NAME"];
+    if (cerName == nil) {
+        cerName = @"ZYZJIM";
+    }
+    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
     
     [[[NIMSDK sharedSDK] loginManager] login:account token:token authType:NIMSDKAuthTypeDynamicToken loginExt:@"" completion:^(NSError *error)
      {
@@ -224,8 +229,11 @@ RCT_EXPORT_METHOD(autoLogin:(nonnull NSString *)account token:(nonnull NSString 
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject){
     
-    
-    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:@"ZYZJIM_IOS"];
+    NSString *cerName = [RNCConfig envFor:@"IM_CER_NAME"];
+    if (cerName == nil) {
+        cerName = @"ZYZJIM";
+    }
+    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
     
     NIMAutoLoginData *loginData = [[NIMAutoLoginData alloc] init];
     loginData.account = account;
