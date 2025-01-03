@@ -1185,6 +1185,39 @@ public class SessionService {
                 message.setLocalExtension(localExt);
                 NIMClient.getService(MsgService.class).updateIMMessage(message);
 
+                RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+                Log.e(TAG, "recent hihi =>>>> " + recent);
+                if (recent != null) {
+                   Map<String, Object> recentLocalExt = recent.getExtension();
+                   if (recentLocalExt == null) {
+                       recentLocalExt = new HashMap<>();
+                   }
+                   ArrayList<Map<String, Object>> reactedUsers = (ArrayList<Map<String, Object>>) recentLocalExt.get("reactedUsers");
+                   Log.e(TAG, "recent reactedUsers hihi =>>>> " + reactedUsers);
+                   if (reactedUsers != null) {
+                       ArrayList<Map<String, Object>> updateReactedUsers = new ArrayList<>();
+                       for(Map<String, Object> reactedUser : reactedUsers) {
+                           Log.e(TAG, "test hihi =>>>>>>>> reactedUser " + reactedUser + " accId " + accId + " messageId " + messageId);
+                           String reactedUserId = (String) reactedUser.get("accId");
+                           String reactedMessageId = (String) reactedUser.get("messageId");
+                           if (reactedMessageId == null || reactedUserId == null) {
+                               continue;
+                           }
+                           if (reactedMessageId.equals(messageId) && reactedUserId.equals(accId)) {
+                               continue;
+                           }
+
+                           updateReactedUsers.add(reactedUser);
+                       }
+
+
+                       recentLocalExt.put("reactedUsers", updateReactedUsers);
+                       recent.setExtension(recentLocalExt);
+
+                       NIMClient.getService(MsgService.class).updateRecent(recent);
+                   }
+                }
+
                 if (isSendMessage) {
                     SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
                     IMMessage newMessage = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, "");
@@ -1268,7 +1301,40 @@ public class SessionService {
                     return;
                 }
 
-                reactions.add(MapUtil.readableMaptoMap(reaction));
+                Map<String, Object> _reaction = MapUtil.readableMaptoMap(reaction);
+                Map<String, Object> reactedMessage = (Map<String, Object>) _reaction.get("reactedMessage");
+                if (reactedMessage != null) {
+                    String reactionType  = (String) _reaction.get("type");
+                    String accId = (String) _reaction.get("accId");
+                    String nickname = (String) _reaction.get("nickname");
+                    String reactedUserId = (String) reactedMessage.get("userId");
+                    RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+                    if (recent != null && reactionType != null && reactedUserId != null && accId != null && reactedUserId.equals(LoginService.getInstance().getAccount()) && !accId.equals(LoginService.getInstance().getAccount())) {
+                        Map<String, Object> recentLocalExt = recent.getExtension();
+                        if (recentLocalExt == null) {
+                            recentLocalExt = new HashMap<>();
+                        }
+                        ArrayList<Map<String, Object>> reactedUsers = (ArrayList<Map<String, Object>>) recentLocalExt.get("reactedUsers");
+                        if (reactedUsers == null) {
+                            reactedUsers = new ArrayList<>();
+                        }
+
+                        Map<String, Object> reactedUser = new HashMap<>();
+                        reactedUser.put("reactionType", reactionType);
+                        reactedUser.put("messageId", messageId);
+                        reactedUser.put("accId", accId);
+                        if (nickname != null) {
+                            reactedUser.put("nickname", nickname);
+                        }
+
+                        reactedUsers.add(reactedUser);
+                        recentLocalExt.put("reactedUsers", reactedUsers);
+                        recent.setExtension(recentLocalExt);
+                        NIMClient.getService(MsgService.class).updateRecent(recent);
+                     }
+                }
+
+                reactions.add(_reaction);
                 localExt.put("reactions", reactions);
 
                 message.setLocalExtension(localExt);

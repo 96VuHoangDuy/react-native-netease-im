@@ -2089,6 +2089,19 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         try {
             SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
             NIMClient.getService(MsgService.class).clearChattingHistory(sessionId, sessionTypeEnum);
+            RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+            if (recent != null) {
+                Map<String, Object> localExt = recent.getExtension();
+                if (localExt == null) {
+                    localExt = new HashMap<>();
+                }
+                if (localExt.get("reactedUsers") != null) {
+                    localExt.remove("reactedUsers");
+                }
+
+                recent.setExtension(localExt);
+                NIMClient.getService(MsgService.class).updateRecent(recent);
+            }
             promise.resolve("200");
         } catch (Exception e) {
             promise.reject("CLEAR_ERROR", "Failed to clear chat history: " + e.getMessage());

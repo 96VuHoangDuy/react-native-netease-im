@@ -393,6 +393,15 @@
             [dic setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType] forKey:@"messageSubType"];
         }
         
+        if (recent.lastMessage.messageSubType == 2) {
+            NSArray<NIMMessage *> *messagesReacted = [[NIMSDK sharedSDK].conversationManager messagesInSession:recent.session messageIds:@[recent.lastMessage.text]];
+            
+            if (messagesReacted != nil && messagesReacted.count > 0) {
+                NSMutableArray *_messagesReacted = [[ConversationViewController initWithConversationViewController] setTimeArr:messagesReacted];
+                [localExt setObject:_messagesReacted.lastObject forKey:@"messageReacted"];
+            }
+        }
+        
         if ((isChatBot && recent.lastMessage.isOutgoingMsg) || isCsr) {
             NSArray *onlineServiceMessages =  [[ConversationViewController initWithConversationViewController] setTimeArr:@[recent.lastMessage]];
             NIMMessage *onlineServiceMessage = onlineServiceMessages.firstObject;
@@ -658,6 +667,14 @@
             [result setObject:[NSString stringWithFormat:@"%@", [self contentForRecentSession:recent] ] forKey:@"content"];
             [result setObject:[NSString stringWithFormat:@"%f", recent.lastMessage.timestamp * 1000 ] forKey:@"time"];
             [result setObject:[NSNumber numberWithInteger:recent.lastMessage.messageSubType] forKey:@"messageSubType"];
+        }
+        
+        if (recent.lastMessage.messageSubType == 2) {
+            NSArray<NIMMessage *> *messagesReacted = [[NIMSDK sharedSDK].conversationManager messagesInSession:recent.session messageIds:@[recent.lastMessage.text]];
+            if (messagesReacted != nil) {
+                NSMutableArray *_messagesReacted = [[ConversationViewController initWithConversationViewController] setTimeArr:messagesReacted];
+                [localExt setObject:_messagesReacted.lastObject forKey:@"messageReacted"];
+            }
         }
         
         if (recent.lastMessage.localExt != nil) {

@@ -224,6 +224,30 @@
         }
     }
     
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent != nil) {
+        NSMutableDictionary *recentLocalExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        NSArray *reactedUsers = [recentLocalExt objectForKey:@"reactedUsers"];
+        if (reactedUsers != nil) {
+            NSMutableArray *updateReactedUsers = [[NSMutableArray alloc] init];
+            for(NSDictionary *reactedUser in reactedUsers) {
+                NSString *reactedUserId = [reactedUser objectForKey:@"accId"];
+                NSString *reactedMessageId = [reactedUser objectForKey:@"messageId"];
+                if (reactedUserId == nil || reactedMessageId == nil) {
+                    continue;
+                }
+                if ([reactedUserId isEqual:accId] && [reactedMessageId isEqual:messageId]) {
+                    continue;
+                }
+                
+                [updateReactedUsers addObject:reactedUser];
+            }
+            
+            [recentLocalExt setObject:updateReactedUsers forKey:@"reactedUsers"];
+            [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:recentLocalExt recentSession:recent];
+        }
+    }
+    
     success(@"200");
 }
 
@@ -247,6 +271,32 @@
     if (isReaction) {
         success(@"REACTION_READY!");
         return;
+    }
+    
+    NSDictionary *reactedMessage = [reaction objectForKey:@"reactedMessage"];
+    if (reactedMessage != nil) {
+        NSString *reactionType = [reaction objectForKey:@"type"];
+        NSString *reactedUserId = [reactedMessage objectForKey:@"userId"];
+        NSString *accId = [reaction objectForKey:@"accId"];
+        NSString *nickname = [reaction objectForKey:@"nickname"];
+        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+        
+        if (reactionType != nil && reactedUserId != nil && [reactedUserId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]] && recent != nil && accId != nil && ![accId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+            NSMutableDictionary *recentLocalExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+            NSMutableArray *reactedUsers = [recentLocalExt objectForKey:@"reactedUsers"] != nil ? [[recentLocalExt objectForKey:@"reactedUsers"] mutableCopy] : [[NSMutableArray alloc] init];
+            NSMutableDictionary *reactedUser = [[NSMutableDictionary alloc] init];
+            [reactedUser setObject:reactionType forKey:@"reactionType"];
+            [reactedUser setObject:messageId forKey:@"messageId"];
+            [reactedUser setObject:accId forKey:@"accId"];
+            if (nickname != nil) {
+                [reactedUser setObject:nickname forKey:@"nickname"];
+            }
+            
+            [reactedUsers addObject:reactedUser];
+            [recentLocalExt setObject:reactedUsers forKey:@"reactedUsers"];
+            
+            [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:recentLocalExt recentSession:recent];
+        }
     }
     
     [reactions addObject:reaction];
@@ -3767,6 +3817,15 @@
     NIMDeleteMessagesOption *option = [[NIMDeleteMessagesOption alloc]init];
     option.removeSession = NO;
     [[NIMSDK sharedSDK].conversationManager deleteAllmessagesInSession:session option:option];
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent != nil) {
+        NSMutableDictionary *localExt = recent.localExt != nil ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        if ([localExt objectForKey:@"reactedUsers"] != nil) {
+            [localExt removeObjectForKey:@"reactedUsers"];
+        }
+        
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:localExt recentSession:recent];
+    }
     //    [[NIMSDK sharedSDK].conversationManager deleteAllmessagesInSession:session removeRecentSession:NO];
 }
 - (NIMMessage *)msgWithTip:(NSString *)tip

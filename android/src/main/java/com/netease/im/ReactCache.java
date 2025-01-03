@@ -48,6 +48,8 @@ import com.netease.im.uikit.session.helper.TeamNotificationHelper;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.RequestCallbackWrapper;
+import com.netease.nimlib.sdk.ResponseCode;
 import com.netease.nimlib.sdk.friend.FriendService;
 import com.netease.nimlib.sdk.friend.model.AddFriendNotify;
 import com.netease.nimlib.sdk.msg.MsgService;
@@ -95,6 +97,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -828,6 +831,33 @@ public class ReactCache {
         map.putString("content", content);
 
         return map;
+    }
+
+    private static WritableMap getReactedMessage(String sessionId, SessionTypeEnum sessionType, String messageId) {
+        List<String> msgIds = new ArrayList<String>();
+        msgIds.add(messageId);
+        CompletableFuture<WritableMap> future = new CompletableFuture<>();
+
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(msgIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS || result.isEmpty()) {
+                    future.completeExceptionally(new RuntimeException("Error code: " + code, exception));
+                    return;
+                }
+
+                IMMessage message = result.get(result.size() - 1);
+
+
+                future.complete(createMessage(message, false));
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch messages", e);
+        }
     }
 
     public static Object createRecentList(List<RecentContact> recents, int unreadNum) {

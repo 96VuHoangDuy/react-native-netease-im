@@ -3,6 +3,7 @@ import {
   INimMessageReaction,
   INimMessageRemoveReaction,
   NIMMessage,
+  NIMMessageReactionEnum,
   NIMMessageStatusEnum,
   NIMMessageTypeEnum,
 } from '../Message/message.type';
@@ -86,6 +87,13 @@ export enum NIMSendAttachmentEnum {
   ONE_TO_MANY_RANDOM_AMOUNT = '2',
 }
 
+export interface NIMReactedUserType {
+  messageId: string;
+  reactionType: NIMMessageReactionEnum;
+  accId: string;
+  nickname: string;
+}
+
 export interface CustomMessageType {
   width: number;
   height: number;
@@ -161,6 +169,8 @@ export interface NimSessionType {
     isMessageChatBotUpdated?: boolean;
     isChatBotNotifyOutSessionOfCurrentCsr?: boolean;
     onlineServiceMessage?: NIMMessage;
+    reactedUsers?: NIMReactedUserType[];
+    messageReacted?: NIMMessage;
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;
