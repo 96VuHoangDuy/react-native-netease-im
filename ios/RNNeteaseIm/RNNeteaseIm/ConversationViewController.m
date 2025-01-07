@@ -3759,6 +3759,10 @@
 //删除一条信息
 -(void)deleteMsg:(NSString *)messageId success:(Success)success err:(Errors)err {
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageId]];
+    if (currentMessage == nil || currentMessage.count == 0) {
+        success(@"SUCCESS");
+        return;
+    }
     NIMMessage *message = currentMessage[0];
     [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
     
