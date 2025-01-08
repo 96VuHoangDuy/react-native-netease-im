@@ -10,7 +10,7 @@
 #import "NIMModel.h"
 #import "NTESClientUtil.h"
 typedef void(^SUCCESS) (id param);
-typedef void(^ERROR)(NSString *error);
+typedef void(^ERROR)(id error);
 @interface NIMViewController : UIViewController
 
 @property (copy, nonatomic) NSString *strAccount;
@@ -29,7 +29,7 @@ typedef void(^ERROR)(NSString *error);
 -(void)deleteCurrentSession:(NSString *)recentContactId andback:(ERROR)error;
 //获取最近聊天列表回调
 -(void)getRecentContactListsuccess:(SUCCESS)suc andError:(ERROR)err;
--(void)removeSession:(NSString *)sessionId sessionType:(NSString *)sessionType;
+-(void)removeSession:(NSString *)sessionId sessionType:(NSString *)sessionType success:(SUCCESS)success error:(ERROR)error;
 -(void)addDelegate;
 - (void)getResouces;
 

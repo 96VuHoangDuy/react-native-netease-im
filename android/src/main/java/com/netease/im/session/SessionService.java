@@ -1256,7 +1256,19 @@ public class SessionService {
         });
     }
 
-    public void updateReactionMessage(String sessionId, String sessionType, String messageId, String messageNotifyReactionId, ReadableMap reaction, final Promise promise) {
+    public void updateReactionMessage(Map<String, Object> params, final Promise promise) {
+        String sessionId = (String) params.get("sessionId");
+        String sessionType = (String) params.get("sessionType");
+        String messageId = (String) params.get("messageId");
+        String messageNotifyReactionId = (String) params.get("messageNotifyReactionId");
+        Map<String, Object> reaction = (Map<String, Object>) params.get("reaction");
+        Boolean isSkipUpdateReactedUsers = (Boolean) params.get("isSkipUpdateReactedUsers");
+        Log.e(TAG, "hihii updateReactionMessage =>> " + sessionId + ", " + sessionType + ", " + messageNotifyReactionId + ", " + reaction + ", " + isSkipUpdateReactedUsers);
+        if (sessionId == null || sessionType == null || messageId == null || messageNotifyReactionId == null || reaction == null || isSkipUpdateReactedUsers == null) {
+            promise.reject("Error", "params is not null!");
+            return;
+        }
+
         SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
         List<String> messageIds = new ArrayList<String>();
         messageIds.add(messageId);
@@ -1279,7 +1291,7 @@ public class SessionService {
                     localExt = new HashMap<String, Object>();
                 }
 
-                String reactionId = reaction.getString("id");
+                String reactionId = (String) reaction.get("id");
 
                 List<Map<String, Object>> reactions = (List<Map<String, Object>>) localExt.get("reactions");
                 if (reactions == null) {
@@ -1301,15 +1313,14 @@ public class SessionService {
                     return;
                 }
 
-                Map<String, Object> _reaction = MapUtil.readableMaptoMap(reaction);
-                Map<String, Object> reactedMessage = (Map<String, Object>) _reaction.get("reactedMessage");
+                Map<String, Object> reactedMessage = (Map<String, Object>) reaction.get("reactedMessage");
                 if (reactedMessage != null) {
-                    String reactionType  = (String) _reaction.get("type");
-                    String accId = (String) _reaction.get("accId");
-                    String nickname = (String) _reaction.get("nickname");
+                    String reactionType  = (String) reaction.get("type");
+                    String accId = (String) reaction.get("accId");
+                    String nickname = (String) reaction.get("nickname");
                     String reactedUserId = (String) reactedMessage.get("userId");
                     RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
-                    if (recent != null && reactionType != null && reactedUserId != null && accId != null && reactedUserId.equals(LoginService.getInstance().getAccount()) && !accId.equals(LoginService.getInstance().getAccount())) {
+                    if (recent != null && reactionType != null && reactedUserId != null && accId != null && reactedUserId.equals(LoginService.getInstance().getAccount()) && !accId.equals(LoginService.getInstance().getAccount()) && !isSkipUpdateReactedUsers) {
                         Map<String, Object> recentLocalExt = recent.getExtension();
                         if (recentLocalExt == null) {
                             recentLocalExt = new HashMap<>();
@@ -1334,7 +1345,7 @@ public class SessionService {
                      }
                 }
 
-                reactions.add(_reaction);
+                reactions.add(reaction);
                 localExt.put("reactions", reactions);
 
                 message.setLocalExtension(localExt);

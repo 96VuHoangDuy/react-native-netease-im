@@ -1433,8 +1433,14 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void updateReactionMessage(String sessionId, String sessionType, String messageId, String messageNotifyReactionId, ReadableMap reaction, final Promise promise) {
-        sessionService.updateReactionMessage(sessionId, sessionType, messageId, messageNotifyReactionId, reaction, promise);
+    public void updateReactionMessage(ReadableMap params, final Promise promise) {
+        Map<String, Object> _params = MapUtil.readableMaptoMap(params);
+        Log.e(TAG, "updateReactionMessage => " + _params);
+        if (_params == null) {
+            promise.reject("error", "params is not null!");
+            return;
+        }
+        sessionService.updateReactionMessage(_params, promise);
     }
 
     @ReactMethod
@@ -2089,6 +2095,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         try {
             SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
             NIMClient.getService(MsgService.class).clearChattingHistory(sessionId, sessionTypeEnum);
+            NIMClient.getService(MsgService.class).clearServerHistory(sessionId, sessionTypeEnum, true, "");
             RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
             if (recent != null) {
                 Map<String, Object> localExt = recent.getExtension();
@@ -2353,6 +2360,23 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         promise.reject("" + code, "");
                     }
                 });
+    }
+
+    @ReactMethod
+    public void removeReactedUsers(String sessionId, String sessionType, final Promise promise) {
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
+        if (recent == null || recent.getExtension() == null) {
+            promise.resolve("200");
+            return;
+        }
+
+        Map<String, Object> localExt = recent.getExtension();
+        localExt.remove("reactedUsers");
+        recent.setExtension(localExt);
+
+        NIMClient.getService(MsgService.class).updateRecent(recent);
+        promise.resolve("200");
     }
 
     @ReactMethod

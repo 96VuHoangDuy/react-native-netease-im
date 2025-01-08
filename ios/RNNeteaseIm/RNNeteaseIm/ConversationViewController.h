@@ -43,6 +43,8 @@ typedef void(^Errors)(id erro);
 
 -(void) sendCustomMessageOfChatbot:(NSString *)sessionId customerServiceType:(NSString *)customerServiceType success:(Success)success err:(Errors)err;
 
+-(void)removeReactedUsers:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success error:(Errors)error;
+
 -(void)addEmptyRecentSessionWithoutMessage:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success error:(Errors)error;
 
 -(void)downloadAttachment:(nonnull NSString *)messageId sessionId:(nonnull NSString *)sessionId toSessionType:(nonnull NSString *)toSessionType;
@@ -71,7 +73,7 @@ typedef void(^Errors)(id erro);
 
 -(void) removeReactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId accId:(NSString *)accId isSendMessage:(BOOL *)isSendMessage success:(Success)success err:(Errors)err;
 
--(void) updateReactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId messageNotifyReactionId:(NSString *)messageNotifyReactionId reaction:(NSDictionary *)reaction success:(Success)success err:(Errors)err;
+-(void) updateReactionMessage:(NSDictionary *)params success:(Success)success err:(Errors)err;
 
 -(void)handleInComeMultiMediaMessage:(NIMMessage *)message callFrom:(NSString *)callFrom;
 

@@ -303,8 +303,13 @@ RCT_EXPORT_METHOD(deleteRecentContact:(nonnull NSString * )recentContactId resol
     }];
 }
 
-RCT_EXPORT_METHOD(removeSession:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType) {
-    [[NIMViewController initWithController] removeSession:sessionId sessionType:sessionType];
+RCT_EXPORT_METHOD(removeSession:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    [[NIMViewController initWithController] removeSession:sessionId sessionType:sessionType success:^(id params){
+        resolve(params);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
 }
 //回调最近聊天列表
 RCT_EXPORT_METHOD(getRecentContactList:(RCTPromiseResolveBlock)resolve
@@ -339,9 +344,9 @@ RCT_EXPORT_METHOD(removeReactionMessage:(nonnull NSString *)sessionId sessionTyp
     }];
 }
 
-RCT_EXPORT_METHOD(updateReactionMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId messageNotifyReactionId:(nonnull NSString *)messageNotifyReactionId reaction:(nonnull NSDictionary *)reaction resolve:(RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(updateReactionMessage:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] updateReactionMessage:sessionId sessionType:sessionType messageId:messageId messageNotifyReactionId:messageNotifyReactionId reaction:reaction success:^(id param) {
+    [[ConversationViewController initWithConversationViewController] updateReactionMessage:params success:^(id param) {
         resolve(param);
     } err:^(id error) {
         reject(@"-1", error, nil);
@@ -714,6 +719,15 @@ RCT_EXPORT_METHOD(deleteMessage:(nonnull NSString *)messageId resolve:(RCTPromis
 RCT_EXPORT_METHOD(clearMessage:(nonnull  NSString *)sessionId sessionId:(nonnull  NSString *)type){
     [[ConversationViewController initWithConversationViewController] clearMsg:sessionId type:type];
 }
+
+RCT_EXPORT_METHOD(removeReactedUsers:(NSString *)sessionId sessionType:(NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] removeReactedUsers:sessionId sessionType:sessionType success:^(id params) {
+        resolve(params);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //发送文字消息,atUserIds为@用户名单，@功能仅适用于群组
 RCT_EXPORT_METHOD(sendTextMessage:(nonnull  NSString *)content atUserIds:(NSArray *)atUserIds messageSubType:(NSInteger )messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
     [[ConversationViewController initWithConversationViewController]sendMessage:content andApnsMembers:atUserIds messageSubType:messageSubType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];

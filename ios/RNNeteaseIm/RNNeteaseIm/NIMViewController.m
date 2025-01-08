@@ -134,11 +134,21 @@
     }
 }
 
--(void)removeSession:(NSString *)sessionId sessionType:(NSString *)sessionType {
+-(void)removeSession:(NSString *)sessionId sessionType:(NSString *)sessionType success:(SUCCESS)success error:(ERROR)error {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
-    NIMDeleteMessagesOption *option = [[NIMDeleteMessagesOption alloc] init];
-    option.removeSession = YES;
-    [[NIMSDK sharedSDK].conversationManager deleteAllmessagesInSession:session option:option];
+    
+    NIMClearMessagesOption *opt = [[NIMClearMessagesOption alloc] init];
+    [[NIMSDK sharedSDK].conversationManager deleteSelfRemoteSession:session option:opt completion:^(NSError *err) {
+        if (err != nil) {
+            NSLog(@"removeSession error: %@", err);
+            error(err);
+        } else {
+            NIMDeleteMessagesOption *option = [[NIMDeleteMessagesOption alloc] init];
+            option.removeSession = YES;
+            [[NIMSDK sharedSDK].conversationManager deleteAllmessagesInSession:session option:option];
+            success(@"200");
+        }
+    }];
 }
 
 /*
@@ -398,7 +408,9 @@
             
             if (messagesReacted != nil && messagesReacted.count > 0) {
                 NSMutableArray *_messagesReacted = [[ConversationViewController initWithConversationViewController] setTimeArr:messagesReacted];
-                [localExt setObject:_messagesReacted.lastObject forKey:@"messageReacted"];
+                if (_messagesReacted != nil && _messagesReacted.count > 0) {
+                    [localExt setObject:_messagesReacted.lastObject forKey:@"messageReacted"];
+                }
             }
         }
         
@@ -638,14 +650,14 @@
         isHideSession = [hideSession boolValue];
     }
     
-    if (recent.lastMessage == nil) {
+    if (recent.lastMessage == nil || recent.lastMessage.from == nil) {
         [result setObject:[NSString stringWithFormat:@"%zd", NIMMessageDeliveryStateDeliveried] forKey:@"msgStatus"];
         [result setObject:@"" forKey:@"messageId"];
         [result setObject:@"0" forKey:@"time"];
         [result setObject:@"" forKey:@"content"];
     }
     
-    if (recent.lastMessage != nil) {
+    if (recent.lastMessage != nil && recent.lastMessage.from != nil) {
         [result setObject:[NSString stringWithFormat:@"%@", recent.lastMessage.from] forKey:@"account"];
         
         if (recent.lastMessage.messageType == NIMMessageTypeNotification) {
@@ -671,9 +683,11 @@
         
         if (recent.lastMessage.messageSubType == 2) {
             NSArray<NIMMessage *> *messagesReacted = [[NIMSDK sharedSDK].conversationManager messagesInSession:recent.session messageIds:@[recent.lastMessage.text]];
-            if (messagesReacted != nil) {
+            if (messagesReacted != nil  && messagesReacted.count > 0) {
                 NSMutableArray *_messagesReacted = [[ConversationViewController initWithConversationViewController] setTimeArr:messagesReacted];
-                [localExt setObject:_messagesReacted.lastObject forKey:@"messageReacted"];
+                if (_messagesReacted != nil && _messagesReacted.count > 0) {
+                    [localExt setObject:_messagesReacted.lastObject forKey:@"messageReacted"];
+                }
             }
         }
         

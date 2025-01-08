@@ -858,18 +858,16 @@ class NimSession {
   }
 
   updateReactionMessage(
-    sessionId: string,
-    sessionType: NIMSessionTypeEnum,
-    messageId: string,
-    messageNotifyReactionId: string,
-    reaction: INimMessageReaction
-  ) {
+    params: {
+      sessionId: string;
+      sessionType: NIMSessionTypeEnum;
+      messageId: string;
+      messageNotifyReactionId: string;
+      reaction: INimMessageReaction;
+      isSkipUpdateReactedUsers: boolean
+    }) {
     return RNNeteaseIm.updateReactionMessage(
-      sessionId,
-      sessionType,
-      messageId,
-      messageNotifyReactionId,
-      reaction
+      params
     );
   }
 
@@ -932,6 +930,10 @@ class NimSession {
 
   stopObserverMediaChange() {
     return RNNeteaseIm.stopObserverMediaChange();
+  }
+
+  removeReactedUsers(sessionId: string, sessionType: NIMSessionTypeEnum) {
+    return RNNeteaseIm.removeReactedUsers(sessionId, sessionType)
   }
 }
 
