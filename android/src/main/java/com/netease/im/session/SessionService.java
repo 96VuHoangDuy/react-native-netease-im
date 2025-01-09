@@ -1256,6 +1256,77 @@ public class SessionService {
         });
     }
 
+    private void updateReactedUsers(String sessionId, SessionTypeEnum sessionType, Map<String, Object> reaction, String messageId, String messageNotifyReactionId, Boolean isSkipUpdateReactedUsers) {
+        if (isSkipUpdateReactedUsers) {
+            return;
+        }
+
+        Map<String, Object> reactedMessage = (Map<String, Object>) reaction.get("reactedMessage");
+        if (reactedMessage == null) {
+            return;
+        }
+
+        RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionType);
+        if (recent == null) {
+            return;
+        }
+
+        List<String> messagesNotifyReactionId = new ArrayList<>();
+        messagesNotifyReactionId.add(messageNotifyReactionId);
+
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messagesNotifyReactionId).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS || result == null || result.isEmpty()) {
+                    return;
+                }
+
+                IMMessage messageNotifyReaction = result.get(0);
+
+                String type  = (String) reaction.get("type");
+                String accId = (String) reaction.get("accId");
+                String nickname = (String) reaction.get("nickname");
+                String reactedUserId = (String) reactedMessage.get("userId");
+                if (type == null || accId == null || reactedUserId == null) {
+                    return;
+                }
+
+                if (reactedUserId.equals(LoginService.getInstance().getAccount()) && !accId.equals(LoginService.getInstance().getAccount())) {
+                    Map<String, Object> recentLocalExt = recent.getExtension();
+                    if (recentLocalExt == null) {
+                        recentLocalExt = new HashMap<>();
+                    }
+                    ArrayList<Map<String, Object>> reactedUsers = (ArrayList<Map<String, Object>>) recentLocalExt.get("reactedUsers");
+                    if (reactedUsers == null) {
+                        reactedUsers = new ArrayList<>();
+                    }
+
+                    Map<String, Object> reactedUser = new HashMap<>();
+                    reactedUser.put("reactionType", type);
+                    reactedUser.put("messageId", messageId);
+                    reactedUser.put("accId", accId);
+                    reactedUser.put("timestamp", messageNotifyReaction.getTime());
+                    if (nickname != null) {
+                        reactedUser.put("nickname", nickname);
+                    }
+
+                    reactedUsers.add(reactedUser);
+
+                    reactedUsers.sort((a, b) -> {
+                        Long timestampA = (Long) a.get("timestamp");
+                        Long timestampB = (Long) b.get("timestamp");
+
+                        return timestampA.compareTo(timestampB);
+                    });
+
+                    recentLocalExt.put("reactedUsers", reactedUsers);
+                    recent.setExtension(recentLocalExt);
+                    NIMClient.getService(MsgService.class).updateRecent(recent);
+                }
+            }
+        });
+    }
+
     public void updateReactionMessage(Map<String, Object> params, final Promise promise) {
         String sessionId = (String) params.get("sessionId");
         String sessionType = (String) params.get("sessionType");
@@ -1313,37 +1384,7 @@ public class SessionService {
                     return;
                 }
 
-                Map<String, Object> reactedMessage = (Map<String, Object>) reaction.get("reactedMessage");
-                if (reactedMessage != null) {
-                    String reactionType  = (String) reaction.get("type");
-                    String accId = (String) reaction.get("accId");
-                    String nickname = (String) reaction.get("nickname");
-                    String reactedUserId = (String) reactedMessage.get("userId");
-                    RecentContact recent = NIMClient.getService(MsgService.class).queryRecentContact(sessionId, sessionTypeEnum);
-                    if (recent != null && reactionType != null && reactedUserId != null && accId != null && reactedUserId.equals(LoginService.getInstance().getAccount()) && !accId.equals(LoginService.getInstance().getAccount()) && !isSkipUpdateReactedUsers) {
-                        Map<String, Object> recentLocalExt = recent.getExtension();
-                        if (recentLocalExt == null) {
-                            recentLocalExt = new HashMap<>();
-                        }
-                        ArrayList<Map<String, Object>> reactedUsers = (ArrayList<Map<String, Object>>) recentLocalExt.get("reactedUsers");
-                        if (reactedUsers == null) {
-                            reactedUsers = new ArrayList<>();
-                        }
-
-                        Map<String, Object> reactedUser = new HashMap<>();
-                        reactedUser.put("reactionType", reactionType);
-                        reactedUser.put("messageId", messageId);
-                        reactedUser.put("accId", accId);
-                        if (nickname != null) {
-                            reactedUser.put("nickname", nickname);
-                        }
-
-                        reactedUsers.add(reactedUser);
-                        recentLocalExt.put("reactedUsers", reactedUsers);
-                        recent.setExtension(recentLocalExt);
-                        NIMClient.getService(MsgService.class).updateRecent(recent);
-                     }
-                }
+                updateReactedUsers(sessionId, sessionTypeEnum, reaction, messageId, messageNotifyReactionId, isSkipUpdateReactedUsers);
 
                 reactions.add(reaction);
                 localExt.put("reactions", reactions);

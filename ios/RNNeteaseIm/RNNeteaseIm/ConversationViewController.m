@@ -251,6 +251,63 @@
     success(@"200");
 }
 
+-(void)updateReactedMessage:(NIMSession *)session reaction:(NSDictionary *)reaction messageId:(NSString *)messageId messageNotifyReactionId:(NSString *)messageNotifyReactionId isSkipUpdateReactedUsers:(BOOL)isSkipUpdateReactedUsers {
+    if (isSkipUpdateReactedUsers) {
+        return;
+    }
+    
+    NSDictionary *reactedMessage = [reaction objectForKey:@"reactedMessage"];
+    if (reactedMessage == nil) {
+        return;
+    }
+    
+    NSArray *messagesNotifyReaction = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[messageNotifyReactionId]];
+    if (messagesNotifyReaction == nil || messagesNotifyReaction.count == 0) {
+        return;
+    }
+    
+    NIMMessage *messageNotifyReaction = messagesNotifyReaction.lastObject;
+    
+    NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
+    if (recent == nil) {
+        return;
+    }
+    
+    NSString *type = [reaction objectForKey:@"type"];
+    NSString *accId = [reaction objectForKey:@"accId"];
+    NSString *nickname = [reaction objectForKey:@"nickname"];
+    NSString *reactedUserId = [reactedMessage objectForKey:@"userId"];
+    if (type == nil || accId == nil || reactedUserId == nil) {
+        return;
+    }
+    if ([reactedUserId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]] && ![accId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+        NSMutableDictionary *recentLocalExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+        NSMutableArray *reactedUsers = [recentLocalExt objectForKey:@"reactedUsers"] != nil ? [[recentLocalExt objectForKey:@"reactedUsers"] mutableCopy] : [[NSMutableArray alloc] init];
+        NSMutableDictionary *reactedUser = [[NSMutableDictionary alloc] init];
+        [reactedUser setObject:type forKey:@"reactionType"];
+        [reactedUser setObject:messageId forKey:@"messageId"];
+        [reactedUser setObject:accId forKey:@"accId"];
+        if (nickname != nil) {
+            [reactedUser setObject:nickname forKey:@"nickname"];
+        }
+        
+        NSNumber *timestamp = [NSNumber numberWithDouble:messageNotifyReaction.timestamp * 1000];
+        [reactedUser setObject:timestamp forKey:@"timestamp"];
+        
+        [reactedUsers addObject:reactedUser];
+        
+        NSArray *sortedReactedUsers = [reactedUsers sortedArrayUsingComparator:^(NSDictionary *a, NSDictionary *b) {
+            NSNumber *timestampA = [a objectForKey:@"timestamp"];
+            NSNumber *timestampB = [b objectForKey:@"timestamp"];
+            
+            return [timestampA compare:timestampB];
+        }];
+        [recentLocalExt setObject:sortedReactedUsers forKey:@"reactedUsers"];
+        
+        [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:recentLocalExt recentSession:recent];
+    }
+}
+
 -(void) updateReactionMessage:(NSDictionary *)params success:(Success)success err:(Errors)err {
     if (params == nil) {
         err(@"params is not null!");
@@ -291,31 +348,7 @@
         return;
     }
     
-    NSDictionary *reactedMessage = [reaction objectForKey:@"reactedMessage"];
-    if (reactedMessage != nil) {
-        NSString *reactionType = [reaction objectForKey:@"type"];
-        NSString *reactedUserId = [reactedMessage objectForKey:@"userId"];
-        NSString *accId = [reaction objectForKey:@"accId"];
-        NSString *nickname = [reaction objectForKey:@"nickname"];
-        NIMRecentSession *recent = [[NIMSDK sharedSDK].conversationManager recentSessionBySession:session];
-        
-        if (reactionType != nil && reactedUserId != nil && [reactedUserId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]] && recent != nil && accId != nil && ![accId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]] && !isSkipUpdateReactedUsers) {
-            NSMutableDictionary *recentLocalExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-            NSMutableArray *reactedUsers = [recentLocalExt objectForKey:@"reactedUsers"] != nil ? [[recentLocalExt objectForKey:@"reactedUsers"] mutableCopy] : [[NSMutableArray alloc] init];
-            NSMutableDictionary *reactedUser = [[NSMutableDictionary alloc] init];
-            [reactedUser setObject:reactionType forKey:@"reactionType"];
-            [reactedUser setObject:messageId forKey:@"messageId"];
-            [reactedUser setObject:accId forKey:@"accId"];
-            if (nickname != nil) {
-                [reactedUser setObject:nickname forKey:@"nickname"];
-            }
-            
-            [reactedUsers addObject:reactedUser];
-            [recentLocalExt setObject:reactedUsers forKey:@"reactedUsers"];
-            
-            [[NIMSDK sharedSDK].conversationManager updateRecentLocalExt:recentLocalExt recentSession:recent];
-        }
-    }
+    [self updateReactedMessage:session reaction:reaction messageId:messageId messageNotifyReactionId:messageNotifyReactionId isSkipUpdateReactedUsers:isSkipUpdateReactedUsers];
     
     [reactions addObject:reaction];
     [localExt setObject:reactions forKey:@"reactions"];
