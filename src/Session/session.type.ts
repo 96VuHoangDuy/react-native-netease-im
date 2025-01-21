@@ -171,6 +171,7 @@ export interface NimSessionType {
     onlineServiceMessage?: NIMMessage;
     reactedUsers?: NIMReactedUserType[];
     messageReacted?: NIMMessage;
+    isTransferUpdated?: boolean;
   };
   isOutgoing: boolean;
   mute: NIMCommonBooleanType;

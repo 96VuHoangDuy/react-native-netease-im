@@ -586,6 +586,22 @@ RCT_EXPORT_METHOD(removeTemporarySessionRef:(nonnull NSString *)sessionId resolv
     }];
 }
 
+RCT_EXPORT_METHOD(hasMultipleMessages:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] hasMultipleMessages:sessionId sessionType:sessionType success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(updateIsTransferMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType messageId:(nonnull NSString *)messageId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] updateIsTransferMessage:sessionId sessionType:sessionType messageId:messageId success:^(id params) {
+        resolve(params);
+    } error:^(id error) {
+        reject(@"-1", error, nil);
+    }];
+}
+
 //聊天界面历史记录
 RCT_EXPORT_METHOD(queryMessageListEx:(nonnull  NSString *)messageId limit:(int)limit direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
     [[ConversationViewController initWithConversationViewController]localSession:limit currentMessageID:messageId direction:direction sessionId:sessionId sessionType:sessionType success:^(id param) {
@@ -856,6 +872,14 @@ RCT_EXPORT_METHOD(sendLocationMessage:(nonnull NSString *)sessionId sessionType:
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);
+    }];
+}
+
+RCT_EXPORT_METHOD(getOwnedGroupCount:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] getOwnedGroupCount:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        reject(@"-1", error, nil);
     }];
 }
 

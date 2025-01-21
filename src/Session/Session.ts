@@ -935,6 +935,18 @@ class NimSession {
   removeReactedUsers(sessionId: string, sessionType: NIMSessionTypeEnum) {
     return RNNeteaseIm.removeReactedUsers(sessionId, sessionType)
   }
+
+  getOwnedGroupCount(): Promise<number> {
+    return RNNeteaseIm.getOwnedGroupCount()
+  }
+
+  hasMultipleMessages(sessionId: string, sessionType: NIMSessionTypeEnum): Promise<boolean> {
+    return RNNeteaseIm.hasMultipleMessages(sessionId, sessionType)
+  }
+
+  updateIsTransferMessage(sessionId: string, sessionType: NIMSessionTypeEnum, messageId: string) {
+    return RNNeteaseIm.updateIsTransferMessage(sessionId, sessionType, messageId)
+  }
 }
 
 export default new NimSession();

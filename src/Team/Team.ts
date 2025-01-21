@@ -279,7 +279,10 @@ class NimTeam {
     return RNNeteaseIm.queryTeamByName(search);
   }
 
-  queryAllTeams() {
+  queryAllTeams(): Promise<{
+    teams:NIMTeamDetailType[],
+    ownedGroupCount: number
+  } | null> {
     return RNNeteaseIm.queryAllTeams();
   }
 

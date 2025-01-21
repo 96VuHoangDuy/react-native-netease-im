@@ -525,6 +525,48 @@
     success(@"200");
 }
 
+-(void) updateIsTransferMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success error:(Errors)error {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NSArray<NIMMessage *> *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:@[messageId]];
+    NSLog(@"updateIsTransferMessage => %@", messages);
+    if (messages == nil || messages.count == 0) {
+        success(@"success");
+        return;
+    }
+    
+    NIMMessage *message = messages.firstObject;
+    NSMutableDictionary *localExt = message.localExt ? [message.localExt copy] : [[NSMutableDictionary alloc] init];
+    [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isTransferUpdated"];
+    
+    message.localExt = localExt;
+    
+    [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:session completion:^(NSError *err) {
+        if (err != nil) {
+            error(err);
+            return;
+        }
+        
+        success(@"success");
+    }];
+}
+
+-(void) hasMultipleMessages:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success err:(Errors)err {
+    NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+    NIMGetMessagesDynamicallyParam *params = [[NIMGetMessagesDynamicallyParam alloc] init];
+    params.session = session;
+    
+    [[NIMSDK sharedSDK].conversationManager getMessagesDynamically:params completion:^(NSError *error, BOOL isReliable, NSArray<NIMMessage *> *messages) {
+        if (error != nil) {
+            NSLog(@"hasMultipleMessages error: %@", error);
+            err(error);
+            return;
+        }
+        
+        BOOL isMultipleMessages = messages.count >= 2;
+        success([NSNumber numberWithBool:isMultipleMessages]);
+    }];
+}
+
 //聊天界面历史记录
 - (void)localSession:(NSInteger)limit currentMessageID:(NSString *)currentMessageID direction:(int)direction sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)succe err:(Errors)err{
     NIMSession *session = [sessionId length] && [sessionType length] ? [NIMSession session:sessionId type:[sessionType integerValue]] : self._session;
@@ -1779,12 +1821,35 @@
     }
 }
 
+-(void)getOwnedGroupCount:(Success)success err:(Errors)err {
+    NSTimeInterval timeInterval = 0;
+    NIMTeamFetchTeamsHandler completion = ^(NSError * __nullable error, NSArray<NIMTeam *> * __nullable teams){
+        if(error == nil) {
+            NSMutableArray *arr = [[NSMutableArray alloc] init];
+            NSInteger ownedGroupCount = 0;
+            for(NIMTeam *team in teams) {
+                if ([team.owner isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+                    ownedGroupCount++;
+                }
+            }
+            
+            NSNumber *result = [NSNumber numberWithInt:ownedGroupCount];
+            
+            success(result);
+        } else {
+            err(error);
+        }
+    };
+    
+    [[[NIMSDK sharedSDK] teamManager] fetchTeamsWithTimestamp:timeInterval completion:completion];
+}
+
 -(void)queryAllTeams:(Success)success err:(Errors)err {
     NSTimeInterval timeInterval = 0;
     NIMTeamFetchTeamsHandler completion = ^(NSError * __nullable error, NSArray<NIMTeam *> * __nullable teams){
         if(error == nil) {
             NSMutableArray *arr = [[NSMutableArray alloc] init];
-            
+            NSInteger ownedGroupCount = 0;
             for(NIMTeam *team in teams) {
                 NSMutableDictionary *teamDic = [[NSMutableDictionary alloc] init];
                 [teamDic setObject:[NSString stringWithFormat:@"%@",team.teamId] forKey:@"teamId"];
@@ -1801,6 +1866,8 @@
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
+                BOOL isOwner = [team.owner isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]];
+                [teamDic setObject:[NSNumber numberWithBool:isOwner] forKey:@"isOwner"];
                 if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
                     [teamDic setObject:@"" forKey:@"introduce"];
                 } else {
@@ -1811,10 +1878,18 @@
                 } else {
                     [teamDic setObject:[NSString stringWithFormat:@"%@", team.avatarUrl] forKey:@"avatar"];
                 }
+                if (isOwner) {
+                    ownedGroupCount++;
+                }
+                
                 [arr addObject:teamDic];
             }
             
-            success(arr);
+            NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+            [result setObject:arr forKey:@"teams"];
+            [result setObject:[NSNumber numberWithInt:ownedGroupCount] forKey:@"ownedGroupCount"];
+            
+            success(result);
         } else {
             err(error);
         }

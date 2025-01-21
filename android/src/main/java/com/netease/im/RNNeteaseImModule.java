@@ -652,13 +652,35 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
+    public void getOwnedGroupCount(final Promise promise) {
+        NIMClient.getService(TeamService.class).queryTeamList().setCallback(new RequestCallbackWrapper<List<Team>>() {
+            @Override
+            public void onResult(int code, List<Team> result, Throwable exception) {
+                if (code == ResponseCode.RES_SUCCESS && result != null && !result.isEmpty()) {
+                    int ownedGroupCount = 0;
+                    for(Team team : result) {
+                      if (LoginService.getInstance().getAccount().equals(team.getCreator())) {
+                          ownedGroupCount++;
+                      }
+                    }
+
+                    promise.resolve(ownedGroupCount);
+                    return;
+                }
+
+                promise.reject("error", "getOwnedGroupCount error code " + code);
+            }
+        });
+    }
+
+    @ReactMethod
     public void queryAllTeams(final  Promise promise) {
         NIMClient.getService(TeamService.class).queryTeamList().setCallback(new RequestCallbackWrapper<List<Team>>() {
             @Override
             public void onResult(int code, List<Team> result, Throwable exception) {
                 if (code == ResponseCode.RES_SUCCESS && result != null && !result.isEmpty()) {
                     WritableArray arr = Arguments.createArray();
-
+                    int ownedGroupCount = 0;
                     for(Team team : result) {
                         WritableMap teamInfo = Arguments.createMap();
 
@@ -674,10 +696,20 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         teamInfo.putString("memberCount", Integer.toString(team.getMemberCount()));
                         teamInfo.putString("memberLimit", Integer.toString(team.getMemberLimit()));
 
+                        boolean isOwner = LoginService.getInstance().getAccount().equals(team.getCreator());
+                        teamInfo.putBoolean("isOwner", isOwner);
+                        if (isOwner) {
+                            ownedGroupCount++;
+                        }
+
                         arr.pushMap(teamInfo);
                     }
 
-                    promise.resolve(arr);
+                    WritableMap _result = Arguments.createMap();
+                    _result.putInt("ownedGroupCount", ownedGroupCount);
+                    _result.putArray("teams", arr);
+
+                    promise.resolve(_result);
                     return;
                 }
 
@@ -2696,6 +2728,61 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         }
 
         return result;
+    }
+
+    @ReactMethod
+    public void updateIsTransferMessage(String sessionId, String sessionType, String messageId, final Promise promise) {
+        if (sessionId == null || sessionType == null || messageId == null) {
+            promise.reject("error", "Session id or session type is not null!");
+            return;
+        }
+
+        ArrayList<String> messageIds = new ArrayList<>();
+        messageIds.add(messageId);
+        NIMClient.getService(MsgService.class).queryMessageListByUuid(messageIds).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS || result == null || result.isEmpty()) {
+                    promise.reject("updateIsTransferMessage", "error with code " + code);
+                    return;
+                }
+
+                IMMessage message = result.get(0);
+                Map<String, Object> localExt = message.getLocalExtension();
+                if (localExt == null) {
+                    localExt = new HashMap<>();
+                }
+
+                localExt.put("isTransferUpdated", true);
+
+                message.setLocalExtension(localExt);
+                NIMClient.getService(MsgService.class).updateIMMessage(message);
+
+                promise.resolve("success");
+            }
+        });
+    }
+
+    @ReactMethod
+    public void hasMultipleMessages(String sessionId, String sessionType, final Promise promise) {
+        if (sessionId == null || sessionType == null) {
+            promise.reject("error", "Session id or session type is not null!");
+            return;
+        }
+
+        SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
+        MsgSearchOption option = new MsgSearchOption();
+        NIMClient.getService(MsgService.class).searchMessage(sessionTypeEnum, sessionId, option).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
+            @Override
+            public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                if (code != ResponseCode.RES_SUCCESS || result == null || result.isEmpty()) {
+                    promise.reject("-1", "get messages error");
+                    return;
+                }
+
+                promise.resolve(result.size() >= 2);
+            }
+        });
     }
 
     /**

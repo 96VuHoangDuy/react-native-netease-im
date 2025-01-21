@@ -700,6 +700,9 @@
                 [localExt setObject:[recent.lastMessage.localExt objectForKey:@"birthdayInfo"] forKey:@"birthdayInfo"];
             }
             
+            if ([recent.lastMessage.localExt objectForKey:@"isTransferUpdated"] != nil) {
+                [localExt setObject:[recent.lastMessage.localExt objectForKey:@"isTransferUpdated"] forKey:@"isTransferUpdated"];
+            }
         }
         
         if (recent.lastMessage != nil && recent.lastMessage.remoteExt != nil) {

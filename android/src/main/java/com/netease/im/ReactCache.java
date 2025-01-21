@@ -355,6 +355,7 @@ public class ReactCache {
             if (messageLocalExt != null) {
                 Map<String, Object> birthdayInfo = (Map<String, Object>) messageLocalExt.get("birthdayInfo");
                 Map<String, Object> notificationExtend = (Map<String, Object>) messageLocalExt.get("notificationExtend");
+                Boolean isTransferUpdated = (Boolean) messageLocalExt.get("isTransferUpdated");
 
                 if (notificationExtend != null) {
                     localExt.putMap("notificationExtend", MapUtil.mapToReadableMap(notificationExtend));
@@ -362,6 +363,10 @@ public class ReactCache {
 
                 if (birthdayInfo != null) {
                     localExt.putMap("birthdayInfo", MapUtil.mapToReadableMap(birthdayInfo));
+                }
+
+                if (isTransferUpdated != null) {
+                    localExt.putBoolean("isTransferUpdated", isTransferUpdated);
                 }
             }
 

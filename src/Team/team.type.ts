@@ -108,6 +108,7 @@ export interface NIMTeamDetailType {
   teamId: string;
   type: NIMCreateTeamTypeEnum;
   verifyType?: NIMCreateTeamVerifyEnum;
+  isOwner: boolean;
 }
 
 export enum NIMTeamMemberEnum {

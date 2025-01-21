@@ -67,7 +67,13 @@ typedef void(^Errors)(id erro);
 
 -(void)removeMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType;
 
+-(void)getOwnedGroupCount:(Success)success err:(Errors)err;
+
 -(void)queryAllTeams:(Success)success err:(Errors)err;
+
+-(void) hasMultipleMessages:(NSString *)sessionId sessionType:(NSString *)sessionType success:(Success)success err:(Errors)err;
+
+-(void) updateIsTransferMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success error:(Errors)error;
 
 -(void)updateMessageSentStickerBirthday:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId success:(Success)success err:(Errors)err;
 
