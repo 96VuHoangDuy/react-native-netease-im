@@ -189,11 +189,11 @@ class NimTeam {
 
   /**
    * disband team
-   * @param teamId
+   * @param teamIds
    * @returns {*}
    */
-  dismissTeam(teamId: string): Promise<NIMResponseCode> {
-    return RNNeteaseIm.dismissTeam(teamId);
+  dismissTeams(teamIds: string[]): Promise<NIMResponseCode> {
+    return RNNeteaseIm.dismissTeams(teamIds);
   }
 
   /**
@@ -222,11 +222,11 @@ class NimTeam {
 
   /**
    * 主动退群
-   * @param teamId
+   * @param teamIds
    * @returns {*}
    */
-  quitTeam(teamId: string): Promise<NIMResponseCode> {
-    return RNNeteaseIm.quitTeam(teamId);
+  quitTeams(teamIds: string[]): Promise<NIMResponseCode> {
+    return RNNeteaseIm.quitTeams(teamIds);
   }
 
   /**

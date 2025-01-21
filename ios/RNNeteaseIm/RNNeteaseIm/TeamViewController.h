@@ -42,13 +42,13 @@ typedef void(^Errors)(id erro);
 //开启/关闭消息提醒
 -(void)muteTeam:(NSString *)teamId mute:(NSString *)mute Succ:(Success)succ Err:(Errors)err;
 //解散群组
--(void)dismissTeam:(NSString *)teamId Succ:(Success)succ Err:(Errors)err;
+-(void)dismissTeams:(NSArray *)teamIds Succ:(Success)succ Err:(Errors)err;
 //拉人入群
 -(void)addMembers:(NSString *)teamId accounts:(NSArray *)count type:(NSString *)type Succ:(Success)succ Err:(Errors)err;
 //踢人出群
 -(void)removeMember:(NSString *)teamId accounts:(NSArray *)count Succ:(Success)succ Err:(Errors)err;
 //主动退群
--(void)quitTeam:(NSString *)teamId Succ:(Success)succ Err:(Errors)err;
+-(void)quitTeams:(NSArray *)teamIds Succ:(Success)succ Err:(Errors)err;
 //转让群组
 -(void)transferManagerWithTeam:(NSString *)teamId
                     newOwnerId:(NSString *)newOwnerId quit:(NSString *)quit Succ:(Success)succ Err:(Errors)err;

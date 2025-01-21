@@ -545,14 +545,30 @@
 
 }
 //解散群组
--(void)dismissTeam:(NSString *)teamId Succ:(Success)succ Err:(Errors)err{
-    [[NIMSDK sharedSDK].teamManager dismissTeam:teamId completion:^(NSError *error) {
-        if (!error) {
-            succ(@"200");
-        }else{
-            err([NSString stringWithFormat:@"解散失败 code:%zd",error.code]);
-        }
-    }];
+-(void)dismissTeams:(NSArray *)teamIds Succ:(Success)succ Err:(Errors)err{
+    __block NSInteger completedCount = 0;
+    __block BOOL hasErrorOccurred = NO;
+    
+    for (NSString *teamId in teamIds) {
+        [[NIMSDK sharedSDK].teamManager dismissTeam:teamId completion:^(NSError *error) {
+            if(hasErrorOccurred){
+                return;
+            }
+            
+            if(error){
+                hasErrorOccurred = YES;
+                err([NSString stringWithFormat:@"解散失败 code:%zd",error.code]);
+                return;
+            }
+            
+            completedCount++;
+            if(completedCount == [teamIds count]){
+                succ(@"200");
+            }
+        }];
+    }
+    
+    
 
 }
 //拉人入群
@@ -577,15 +593,30 @@
         }];
 }
 //主动退群
--(void)quitTeam:(NSString *)teamId Succ:(Success)succ Err:(Errors)err{
-    [[NIMSDK sharedSDK].teamManager quitTeam:teamId completion:^(NSError * _Nullable error) {
-        if (!error) {
-            succ(@"200");
-        }else{
-            err(error);
-        }
-    }];
+-(void)quitTeams:(NSArray *)teamIds Succ:(Success)succ Err:(Errors)err {
+    __block NSInteger completedCount = 0;
+    __block BOOL hasErrorOccurred = NO;
+
+    for (NSString *teamId in teamIds) {
+        [[NIMSDK sharedSDK].teamManager quitTeam:teamId completion:^(NSError * _Nullable error) {
+            if (hasErrorOccurred) {
+                return;
+            }
+
+            if (error) {
+                hasErrorOccurred = YES;
+                err(error);
+                return;
+            }
+
+            completedCount++;
+            if (completedCount == [teamIds count]) {
+                succ(@"200");
+            }
+        }];
+    }
 }
+
 //转让群组
 -(void)transferManagerWithTeam:(NSString *)teamId
                     newOwnerId:(NSString *)newOwnerId quit:(NSString *)quit Succ:(Success)succ Err:(Errors)err{

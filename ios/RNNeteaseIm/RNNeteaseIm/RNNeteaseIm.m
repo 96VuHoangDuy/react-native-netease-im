@@ -1122,8 +1122,8 @@ RCT_EXPORT_METHOD(applyJoinTeam:(nonnull NSString *)teamId reason:(nonnull NSStr
 }
 
 //解散群组
-RCT_EXPORT_METHOD(dismissTeam:(nonnull NSString *)teamId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[TeamViewController initWithTeamViewController] dismissTeam:teamId Succ:^(id param) {
+RCT_EXPORT_METHOD(dismissTeams:(nonnull NSArray *)teamIds resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[TeamViewController initWithTeamViewController] dismissTeams:teamIds Succ:^(id param) {
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);
@@ -1159,8 +1159,8 @@ RCT_EXPORT_METHOD(removeMember:(nonnull NSString *)teamId accounts:(nonnull NSAr
     }];
 }
 //主动退群
-RCT_EXPORT_METHOD(quitTeam:(nonnull NSString *)teamId  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[TeamViewController initWithTeamViewController]quitTeam:teamId Succ:^(id param) {
+RCT_EXPORT_METHOD(quitTeams:(nonnull NSArray *)teamIds  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[TeamViewController initWithTeamViewController]quitTeams:teamIds Succ:^(id param) {
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);

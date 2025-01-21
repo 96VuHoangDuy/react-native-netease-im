@@ -122,6 +122,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.netease.im.ReactCache.setLocalExtension;
@@ -705,7 +707,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
                         arr.pushMap(teamInfo);
                     }
 
-                    WritableMap _result = Arguments.createMap();
+WritableMap _result = Arguments.createMap();
                     _result.putInt("ownedGroupCount", ownedGroupCount);
                     _result.putArray("teams", arr);
 
@@ -1247,22 +1249,42 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     /**
      * 解散群组
      *
-     * @param teamId
+     * @param teamIds
      * @param promise
      */
     @ReactMethod
-    public void dismissTeam(String teamId, final Promise promise) {
-        NIMClient.getService(TeamService.class).dismissTeam(teamId)
-                .setCallback(new RequestCallbackWrapper<Void>() {
-                    @Override
-                    public void onResult(int code, Void aVoid, Throwable throwable) {
-                        if (code == ResponseCode.RES_SUCCESS) {
-                            promise.resolve("" + code);
-                        } else {
-                            promise.reject("" + code, "");
+    public void dismissTeams(ReadableArray teamIds, final Promise promise) {
+        String[] teamIdArray = new String[teamIds.size()];
+        for (int i = 0; i < teamIds.size(); i++) {
+            teamIdArray[i] = teamIds.getString(i);
+        }
+
+
+        final int totalTeams = teamIdArray.length;
+        final AtomicInteger completedCount = new AtomicInteger(0);
+        final AtomicBoolean hasErrorOccurred = new AtomicBoolean(false);
+
+        for(String teamId : teamIdArray){
+            NIMClient.getService(TeamService.class).dismissTeam(teamId)
+                    .setCallback(new RequestCallbackWrapper<Void>() {
+                        @Override
+                        public void onResult(int code, Void aVoid, Throwable throwable) {
+                            if(hasErrorOccurred.get()){
+                                return;
+                            }
+
+                            if(code != ResponseCode.RES_SUCCESS){
+                                hasErrorOccurred.set(true);
+                                promise.reject("" + code, "");
+                                return;
+                            }
+
+                            if(completedCount.incrementAndGet() == totalTeams){
+                                promise.resolve("" + code);
+                            }
                         }
-                    }
-                });
+                    });
+        }
     }
 
     List<String> array2ListString(ReadableArray accounts) {
@@ -1333,22 +1355,41 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     /**
      * 主动退群
      *
-     * @param teamId
+     * @param teamIds
      * @param promise
      */
     @ReactMethod
-    public void quitTeam(String teamId, final Promise promise) {
-        NIMClient.getService(TeamService.class).quitTeam(teamId)
-                .setCallback(new RequestCallbackWrapper<Void>() {
-                    @Override
-                    public void onResult(int code, Void aVoid, Throwable throwable) {
-                        if (code == ResponseCode.RES_SUCCESS) {
-                            promise.resolve("" + code);
-                        } else {
-                            promise.reject("" + code, "");
+    public void quitTeams(ReadableArray teamIds, final Promise promise) {
+        String[] teamIdArray = new String[teamIds.size()];
+        for (int i = 0; i < teamIds.size(); i++) {
+            teamIdArray[i] = teamIds.getString(i);
+        }
+
+        final int totalTeams = teamIdArray.length;
+        final AtomicInteger completedCount = new AtomicInteger(0);
+        final AtomicBoolean hasErrorOccurred = new AtomicBoolean(false);
+
+        for (String teamId : teamIdArray){
+            NIMClient.getService(TeamService.class).quitTeam(teamId)
+                    .setCallback(new RequestCallbackWrapper<Void>() {
+                        @Override
+                        public void onResult(int code, Void aVoid, Throwable throwable) {
+                            if(hasErrorOccurred.get()){
+                                return;
+                            }
+
+                            if(code != ResponseCode.RES_SUCCESS){
+                                hasErrorOccurred.set(true);
+                                promise.reject("" + code, "");
+                                return;
+                            }
+
+                            if(completedCount.incrementAndGet() == totalTeams){
+                                promise.resolve("" + code);
+                            }
                         }
-                    }
-                });
+                    });
+        }
     }
 
     boolean string2Boolean(String bool) {
@@ -2729,7 +2770,7 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
         return result;
     }
-
+    
     @ReactMethod
     public void updateIsTransferMessage(String sessionId, String sessionType, String messageId, final Promise promise) {
         if (sessionId == null || sessionType == null || messageId == null) {
