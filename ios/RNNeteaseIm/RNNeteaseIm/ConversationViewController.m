@@ -3461,6 +3461,22 @@
     success(@"success");
 }
 
+-(BOOL) checkMessageForwardHasTag:(NSString *)content {
+    NSString *pattern = @"@\\[[^\\]]+\\]\\([^\\)]+\\)";
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:&error];
+    if (error != nil) {
+        return NO;
+    }
+    
+    NSArray<NSTextCheckingResult *> *matches = [regex matchesInString:content options:0 range:NSMakeRange(0, content.length)];
+    if (matches == nil || matches.count == 0) {
+        return NO;
+    }
+    
+    return YES;
+}
+
 -(void) handleMessageFoward:(NIMMessage *)message session:(NIMSession *)session parentId:(NSString *)parentId isHaveMultiMedia:(BOOL)isHaveMultiMedia sessionType:(NSString *)sessionType isSkipFriendCheck:(BOOL)isSkipFriendCheck isSkipTipForStranger:(BOOL)isSkipTipForStranger {
     if (message.messageType == NIMMessageTypeLocation) {
         NIMLocationObject *object = message.messageObject;
@@ -3512,6 +3528,9 @@
     }
     
     message.localExt = @{};
+    if ([self checkMessageForwardHasTag:message.text]) {
+        message.messageSubType = 9;
+    }
     
     if ([self checkFriendBeforeSendMessage:message sessionId:session.sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];

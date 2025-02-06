@@ -35,6 +35,7 @@ export enum NIMMessageSubTypeEnum {
   MESSAGE_MULTI_MEDIA_VIDEO = 6,
   TEMPORARY_SESSION = 7,
   NOTIFICATION_BIRTHDAY = 8,
+  MESSAGE_FORWARD = 9,
 }
 
 export enum NIMSessionTypeEnum {

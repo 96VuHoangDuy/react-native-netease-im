@@ -1663,6 +1663,14 @@ public class SessionService {
         }
     }
 
+    private Boolean checkMessageForwardHasTag(String content) {
+        String pattern = "@\\[[^\\]]+\\]\\([^\\)]+\\)";
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(content);
+
+        return matcher.find();
+    }
+
     private void handleForwardMessage(IMMessage message, String sessionId, SessionTypeEnum sessionTypeEnum, String parentId, Boolean isHaveMultiMedia, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger) {
         if (message.getMsgType() == MsgTypeEnum.location) {
             LocationAttachment locationAttachment = (LocationAttachment) message.getAttachment();
@@ -1727,6 +1735,9 @@ public class SessionService {
         Map<String, Object> localExt = new HashMap<String, Object>();
         messageForward.setLocalExtension(localExt);
         messageForward.setRemoteExtension(remoteExt);
+        if (checkMessageForwardHasTag(messageForward.getContent())) {
+            messageForward.setSubtype(9);
+        }
 
 //        if ((message.getMsgType() == MsgTypeEnum.video || message.getMsgType() == MsgTypeEnum.image)) {
 //            Map<String, Object> msgLocalExt = message.getLocalExtension();
