@@ -78,6 +78,10 @@ class NimUtils {
   switchAudioOutputDevice(isExternalSpeaker: boolean){
     return RNNeteaseIm.switchAudioOutputDevice(isExternalSpeaker)
   }
+
+  getDeviceLanguage(){
+    return RNNeteaseIm.getDeviceLanguage()
+  }
 }
 
 export default new NimUtils();

@@ -1402,6 +1402,17 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
     }];
 }
 
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDeviceLanguage){
+    NSLocale *locale = [NSLocale autoupdatingCurrentLocale];
+    NSString *languageCode = locale.languageCode;
+    
+    if(!languageCode){
+        return @"zh";
+    }
+    
+    return languageCode;
+}
+
 //删除文件夹下所有文件
 - (void)deleteFilesWithPath:(NSString *)path andFiles:(NSArray *)files{
     if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {

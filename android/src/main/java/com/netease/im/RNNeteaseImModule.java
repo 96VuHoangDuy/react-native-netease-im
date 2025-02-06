@@ -117,6 +117,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -3810,6 +3811,13 @@ WritableMap _result = Arguments.createMap();
         recent.setExtension(extension);
 
         NIMSDK.getMsgService().updateRecent(recent);
+    }
+
+    @ReactMethod(isBlockingSynchronousMethod = true)
+    public String getDeviceLanguage(){
+        Log.d("Locale.getDefault() -->",Locale.getDefault().toString());
+        Log.d("Locale.getDefault().getLanguage() -->",Locale.getDefault().getLanguage());
+        return Locale.getDefault().getLanguage();
     }
 
     @Override
