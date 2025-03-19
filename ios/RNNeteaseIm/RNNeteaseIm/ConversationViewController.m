@@ -17,6 +17,7 @@
 #import "CacheUsers.h"
 #import "TeamViewController.h"
 #import "UserStrangers.h"
+#import <Reachability/Reachability.h>
 
 #define NTESNotifyID        @"id"
 #define NTESCustomContent  @"content"
@@ -126,6 +127,7 @@
 - (void)resendMessage:(NSString *)messageID success:(Success)succe err:(Errors)err{
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageID] ];
     NIMMessage *currentM = currentMessage[0];
+    //    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
     //    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
     if (currentM.messageType == (NIMMessageTypeImage || NIMMessageTypeVideo)) {
         NSMutableDictionary *newRemoteExt = currentM.remoteExt ? [currentM.remoteExt mutableCopy] : [[NSMutableDictionary alloc] init];
@@ -1805,12 +1807,34 @@
     }];
 }
 
+-(BOOL)hasNetworkConnected {
+    Reachability *reachability = [Reachability reachabilityForInternetConnection];
+    NetworkStatus status = [reachability currentReachabilityStatus];
+    if (status == ReachableViaWiFi || status == ReachableViaWWAN) {
+        return YES;
+    }
+    
+    return NO;
+}
+
+-(void)handleSendMessage:(NIMMessage *)message session:(NIMSession *)session {
+    if ([self hasNetworkConnected]) {
+        [self setTimeoutCheckMessage:message];
+    }
+
+    NSError *error;
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
+    
+    if (error != nil) {
+        NSLog(@"handleSendMessage error: %@", error);
+    }
+}
+
 -(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithText:msgContent andApnsMembers:@[] andeSession:session senderName:sessionName messageSubType:messageSubType];
     
-    [self setTimeoutCheckMessage:message];
-    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+    [self handleSendMessage:message session:session];
 }
 
 -(void) handleTimeoutCheckMessage:(NSTimer *)timer {
@@ -1853,8 +1877,7 @@
     NIMMessage *message = [NIMMessageMaker msgWithText:mess andApnsMembers:members andeSession:self._session senderName:_myUserName messageSubType:messageSubType];
     
     if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
-        [self setTimeoutCheckMessage:message];
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+        [self handleSendMessage:message session:self._session];
     }
 }
 
@@ -1989,8 +2012,7 @@
 -(void) sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithGif:url aspectRatio:aspectRatio andSession:session senderName:sessionName];
-    [self setTimeoutCheckMessage:message];
-    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+    [self handleSendMessage:message session:session];
 }
 
 //send gif message
@@ -1998,8 +2020,7 @@
     NIMMessage *message = [NIMMessageMaker msgWithGif:url aspectRatio:aspectRatio andSession:self._session senderName:_myUserName];
     
     if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
-        [self setTimeoutCheckMessage:message];
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+        [self handleSendMessage:message session:self._session];
     }
 }
 
@@ -2308,14 +2329,12 @@
     [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
     
     if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
-        [self setTimeoutCheckMessage:message];
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+        [self handleSendMessage:message session:session];
         
         if ([content length] != 0) {
             NIMMessage *_message = [[NIMMessage alloc] init];
             _message.text    = content;
-            [self setTimeoutCheckMessage:_message];
-            [[NIMSDK sharedSDK].chatManager sendMessage:_message toSession:session error:nil];
+            [self handleSendMessage:_message session:session];
         }
     }
 }
@@ -2329,15 +2348,9 @@
     
     NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:session senderName:_myUserName];
     if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
-        NSError *error;
-        [self setTimeoutCheckMessage:message];
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
+        [self handleSendMessage:message session:session];
         
-        if (error != nil) {
-            err(error);
-        } else {
-            succe(@"200");
-        }
+        succe(@"200");
     }
 }
 
@@ -2400,8 +2413,7 @@
     NIMMessage *message = [NIMMessageMaker msgWithCard:cardSessionId cardSessionType:cardSessionType cardSessionName:name avatar:strImgPath andSession:session senderName:_myUserName];
     
     if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
-        [self setTimeoutCheckMessage:message];
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+        [self handleSendMessage:message session:session];
     }
 }
 
@@ -3485,8 +3497,7 @@
             [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
             
             if ([self checkFriendBeforeSendMessage:message sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
-                [self setTimeoutCheckMessage:message];
-                [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+                [self handleSendMessage:message session:session];
             }
             
             if (content != nil && [content length] > 0) {
@@ -3495,8 +3506,7 @@
                 messageContent.text = content;
                 
                 if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
-                    [self setTimeoutCheckMessage:messageContent];
-                    [[NIMSDK sharedSDK].chatManager sendMessage:messageContent toSession:session error:nil];
+                    [self handleSendMessage:message session:session];
                 }
             }
         });

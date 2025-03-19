@@ -28,5 +28,6 @@ Pod::Spec.new do |s|
 
   s.dependency 'React-Core'
   s.dependency "NIMSDK", "9.12.1"
+  s.dependency "Reachability"
   
 end
