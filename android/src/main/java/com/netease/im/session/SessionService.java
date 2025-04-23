@@ -75,6 +75,7 @@ import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.MemberPushOption;
 import com.netease.nimlib.sdk.msg.model.MessageReceipt;
 import com.netease.nimlib.sdk.msg.model.MsgSearchOption;
+import com.netease.nimlib.sdk.msg.model.NIMAntiSpamOption;
 import com.netease.nimlib.sdk.msg.model.NIMMessage;
 import com.netease.nimlib.sdk.msg.model.QueryDirectionEnum;
 import com.netease.nimlib.sdk.msg.model.RecentContact;
@@ -119,6 +120,7 @@ public class SessionService {
 
     private static final int LOAD_MESSAGE_COUNT = 20;
 
+    private static String businessId;
 
     private SessionTypeEnum sessionTypeEnum = SessionTypeEnum.None;
     private String sessionId;
@@ -150,6 +152,9 @@ public class SessionService {
         return InstanceHolder.instance;
     }
 
+    public static void setBusinessId(String id) {
+        businessId = id;
+    }
 
     public String getSessionId() {
         return sessionId;
@@ -1555,6 +1560,14 @@ public class SessionService {
         if (!messageSubType.equals(0)) {
             message.setSubtype(messageSubType);
         }
+        if (businessId != null && !businessId.isEmpty()) {
+            NIMAntiSpamOption antiSpamOption = new NIMAntiSpamOption();
+            antiSpamOption.antiSpamConfigId = businessId;
+            antiSpamOption.enable = true;
+
+            message.setNIMAntiSpamOption(antiSpamOption);
+        }
+
         sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 

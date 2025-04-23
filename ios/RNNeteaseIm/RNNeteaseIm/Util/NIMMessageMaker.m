@@ -12,6 +12,9 @@
 #import "ConversationViewController.h"
 #import "NIMViewController.h"
 #import "TeamViewController.h"
+#import "react-native-config/RNCConfig.h"
+
+static NSString *businessId = nil;
 
 @implementation NIMMessageMaker
 
@@ -77,6 +80,7 @@
     }
     
     [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:senderName];
+    [self setupAntiSpam:message];
     return message;
 }
 
@@ -487,6 +491,27 @@
     }
     
     return result;
+}
+
++ (NSString *)getBusinessId {
+    if (businessId == nil) {
+        businessId = [RNCConfig envFor:@"IM_BUSINESS_ID"];
+    }
+    
+    return businessId;
+}
+
++ (void) setupAntiSpam:(NIMMessage *)message {
+    NSString *businessId = [self getBusinessId];
+    if (businessId == nil || [businessId isEqual:@""]) {
+        return;
+    }
+    
+    NIMAntiSpamOption *antiSpam = [NIMAntiSpamOption new];
+    antiSpam.businessId = businessId;
+    antiSpam.yidunEnabled = YES;
+    
+    message.antiSpamOption = antiSpam;
 }
 
 + (void)setupMessagePushBody:(NIMMessage *)message andSession:(NIMSession *)session senderName:(NSString *)senderName{
