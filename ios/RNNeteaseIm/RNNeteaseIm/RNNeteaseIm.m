@@ -52,8 +52,19 @@
     [self initController];
     
     self.eventSenderReceive = [[EventSender alloc] initWithIm:self];
+    self.eventSenderReceive.eventType = @"observeReceiveMessage";
+    self.eventSenderReceive.eventName = @"observeReceiveMessage";
+    self.eventSenderReceive.countLimit = 10;
+    
     self.eventSenderStatus = [[EventSender alloc] initWithIm:self];
+    self.eventSenderStatus.eventType = @"observeMsgStatus";
+    self.eventSenderStatus.eventName = @"observeMsgStatus";
+    self.eventSenderStatus.countLimit = 10;
+    
     self.eventSenderProgress = [[EventSender alloc] initWithIm:self];
+    self.eventSenderProgress.eventType = @"observeProgressSend";
+    self.eventSenderProgress.eventName = @"observeProgressSend";
+    self.eventSenderProgress.countLimit = 7;
 
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(clickObserveNotification:) name:@"ObservePushNotification" object:nil];
     return self;
@@ -125,41 +136,35 @@
     NSDictionary *message = [param firstObject];
     [self.eventSenderReceive addParam:message withIdKey:@"msgId"];
     
-    if (self.eventSenderReceive.mainArray.count >= 10) {
-        [self.eventSenderReceive sendEventToReactNativeWithType:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:10];
-    } else {
-        [self.eventSenderReceive triggerSendEventAfterDelay:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:10];
-    }
+//    if (self.eventSenderReceive.mainArray.count >= 10) {
+//        [self.eventSenderReceive sendEventToReactNativeWithType:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:10];
+//    } else {
+//        [self.eventSenderReceive triggerSendEventAfterDelay:@"observeReceiveMessage" eventName:@"observeReceiveMessage" countLimit:10];
+//    }
+    [self.eventSenderReceive triggerSendEventAfterDelay];
 }
 
 
 - (void)onSendEventMsgStatus:(NSArray *)param {
     NSDictionary *message = [param firstObject];
     NSString *msgType = message[@"msgType"];
-//    [dic2 setObject:@"image" forKey:@"msgType"];
 
     if ([msgType isEqual:@"image"] || [msgType isEqual:@"video"]) {
         [self.eventSenderStatus addParam:message withIdKey:@"msgId"];
-        
-        if (self.eventSenderStatus.mainArray.count >= 10) {
-            [self.eventSenderStatus sendEventToReactNativeWithType:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:10];
-        } else {
-            [self.eventSenderStatus triggerSendEventAfterDelay:@"observeMsgStatus" eventName:@"observeMsgStatus" countLimit:10];
-        }
+
+        // ✅ Luôn trigger theo timer, không gửi ngay lập tức
+        [self.eventSenderStatus triggerSendEventAfterDelay];
     } else {
-        [_bridge.eventDispatcher sendDeviceEventWithName:@"observeMsgStatus" body:@{@"data": param}];
+        // Các loại khác gửi ngay
+        [_bridge.eventDispatcher sendDeviceEventWithName:@"observeMsgStatus"
+                                                    body:@{@"data": param}];
     }
-    
 }
 
 - (void)onUploadQueueAttachment:(NSDictionary *)param {
     [self.eventSenderProgress addParam:param withIdKey:@"messageId"];
     
-    if (self.eventSenderProgress.mainArray.count >= 7) {
-        [self.eventSenderProgress sendEventToReactNativeWithType:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:7];
-    } else {
-        [self.eventSenderProgress triggerSendEventAfterDelay:@"observeProgressSend" eventName:@"observeProgressSend" countLimit:7];
-    }
+    [self.eventSenderProgress triggerSendEventAfterDelay];
 }
 
 - (NSDictionary *)dictChangeFromJson:(NSString *)strJson{

@@ -3,40 +3,67 @@
 
 @implementation EventSender
 
-- (instancetype)initWithIm: (RNNeteaseIm *)im {
+static NSUInteger const kProgressBatchSize = 10;
+static NSTimeInterval const kProgressSendInterval = 0.2; // 200ms
+static CGFloat const kProgressThreshold = 0.02; // 2%
+
+- (instancetype)initWithIm:(RNNeteaseIm *)im {
     self = [super init];
     if (self) {
         self.mainArray = [NSMutableArray array];
         self.backupArray = [NSMutableArray array];
+        self.lastProgressMap = [NSMutableDictionary dictionary];
         self.isSending = NO;
         self.im = im;
     }
     return self;
 }
 
+- (void)dealloc {
+    [self.sendEventTimer invalidate];
+}
 
 - (void)addParam:(NSDictionary *)param withIdKey:(NSString *)idKey {
     NSDictionary *paramObject;
 
-    // Kiểm tra nếu param là mảng
+    // Xử lý input đầu vào
     if ([param isKindOfClass:[NSArray class]] && [(NSArray *)param count] > 0) {
-       // Giả sử nếu là mảng thì chỉ lấy phần tử đầu tiên
-       paramObject = [(NSArray *)param firstObject];
+        paramObject = [(NSArray *)param firstObject];
     } else if ([param isKindOfClass:[NSDictionary class]]) {
-       // Nếu param là object (NSDictionary)
-       paramObject = (NSDictionary *)param;
+        paramObject = (NSDictionary *)param;
     } else {
-       // Trường hợp không hợp lệ, dừng lại
-       return;
+        return;
     }
-    
+
     NSString *paramId = paramObject[idKey];
+    if (!paramId) return;
 
+    // Gửi riêng nếu progress đã xong
+    NSNumber *progress = paramObject[@"progress"];
 
+    if (progress && progress.floatValue >= 1.0) {
+        NSDictionary *wrapped = @{@"data": @[paramObject]};
+        [self.im.bridge.eventDispatcher sendAppEventWithName:@"observeProgressSend" body:wrapped];
+        return;
+    }
+
+    // So sánh delta progress
+    NSNumber *lastProgress = self.lastProgressMap[paramId];
+    if (lastProgress && progress) {
+        CGFloat delta = fabs(progress.floatValue - lastProgress.floatValue);
+        if (delta < kProgressThreshold) {
+            return; // Bỏ qua nếu thay đổi quá nhỏ
+        }
+    }
+
+    self.lastProgressMap[paramId] = progress ?: @(0);
+
+    // Check nếu đã tồn tại thì replace
     BOOL paramExists = NO;
     for (NSDictionary *existingParam in self.mainArray) {
         if ([existingParam[idKey] isEqual:paramId]) {
-            [self.mainArray replaceObjectAtIndex:[self.mainArray indexOfObject:existingParam] withObject:param];
+            NSUInteger idx = [self.mainArray indexOfObject:existingParam];
+            [self.mainArray replaceObjectAtIndex:idx withObject:paramObject];
             paramExists = YES;
             break;
         }
@@ -44,11 +71,14 @@
 
     if (!paramExists) {
         if (self.isSending) {
-            [self.backupArray addObject:param];
+            [self.backupArray addObject:paramObject];
         } else {
-            [self.mainArray addObject:param];
+            [self.mainArray addObject:paramObject];
         }
     }
+
+    // Trigger gửi batch nếu đủ hoặc cần delay
+    [self triggerSendEventAfterDelay];
 }
 
 - (void)sendEventToReactNativeWithType:(NSString *)type eventName:(NSString *)eventName countLimit:(NSUInteger)countLimit {
@@ -71,26 +101,29 @@
     }
 
     self.isSending = NO;
-
-    if (self.mainArray.count > 0) {
-        [self sendEventToReactNativeWithType:type eventName:eventName countLimit:countLimit];
-    }
+    // ❌ Không gọi đệ quy gửi tiếp ở đây
 }
 
-- (void)triggerSendEventAfterDelay:(NSString *)type eventName:(NSString *)eventName countLimit:(NSUInteger)countLimit {
-    [self.sendEventTimer invalidate];
-    self.sendEventTimer = [NSTimer scheduledTimerWithTimeInterval:0.5
+- (void)triggerSendEventAfterDelay {
+    if (self.sendEventTimer) return;
+
+    self.sendEventTimer = [NSTimer scheduledTimerWithTimeInterval:kProgressSendInterval
                                                            target:self
                                                          selector:@selector(sendEventTimerFired:)
-                                                         userInfo:@{@"type": type, @"eventName": eventName, @"countLimit": @(countLimit)}
+                                                         userInfo:nil
                                                           repeats:NO];
 }
 
 - (void)sendEventTimerFired:(NSTimer *)timer {
-    NSString *type = timer.userInfo[@"type"];
-    NSString *eventName = timer.userInfo[@"eventName"];
-    NSUInteger countLimit = [timer.userInfo[@"countLimit"] unsignedIntegerValue];
-    [self sendEventToReactNativeWithType:type eventName:eventName countLimit:countLimit];
+    self.sendEventTimer = nil;
+
+    [self sendEventToReactNativeWithType:self.eventType
+                               eventName:self.eventName
+                              countLimit:self.countLimit];
+
+    if (self.mainArray.count > 0) {
+        [self triggerSendEventAfterDelay];
+    }
 }
 
 @end

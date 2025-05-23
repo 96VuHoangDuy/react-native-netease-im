@@ -1,60 +1,53 @@
 package com.netease.im;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
+import com.facebook.react.bridge.ReactContext;
 
 public class EventSender {
 
-    WritableArray mainArray;
-    private WritableArray backupArray;
-    private boolean isSending;
-    private Handler handler;
+    private WritableArray mainArray;
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable sendEventRunnable;
+    private boolean isLooping = false;
+    private final int intervalMs = 200;
 
     public EventSender() {
         this.mainArray = Arguments.createArray();
-        this.backupArray = Arguments.createArray();
-        this.isSending = false;
-        this.handler = new Handler(Looper.getMainLooper());
     }
 
-    public static WritableArray replaceIfSameId(WritableArray mainArray, ReadableMap newItem, String idKey) {
+    private WritableArray replaceIfSameId(WritableArray array, ReadableMap newItem, String idKey) {
         WritableArray updatedArray = Arguments.createArray();
         String newItemId = newItem.getString(idKey);
-        boolean isReplaced = false;
+        boolean replaced = false;
 
-        for (int i = 0; i < mainArray.size(); i++) {
-            ReadableMap existingParam = mainArray.getMap(i);
-
-            if (existingParam != null && existingParam.hasKey(idKey)) {
-                String existingParamId = existingParam.getString(idKey);
-
-                if (existingParamId.equals(newItemId)) {
-                    WritableMap newMap = Arguments.createMap();
-                    newMap.merge(newItem); // Create a clone
-                    updatedArray.pushMap(newMap);
-                    isReplaced = true;
+        for (int i = 0; i < array.size(); i++) {
+            ReadableMap existing = array.getMap(i);
+            if (existing != null && existing.hasKey(idKey)) {
+                String existingId = existing.getString(idKey);
+                if (existingId.equals(newItemId)) {
+                    WritableMap copy = Arguments.createMap();
+                    copy.merge(newItem);
+                    updatedArray.pushMap(copy);
+                    replaced = true;
                 } else {
-                    updatedArray.pushMap(existingParam);
+                    updatedArray.pushMap(existing);
                 }
-            } else {
-                updatedArray.pushMap(existingParam);
             }
         }
 
-        if (!isReplaced) {
-            WritableMap newMap = Arguments.createMap();
-            newMap.merge(newItem); // Create a clone
-            updatedArray.pushMap(newMap);
+        if (!replaced) {
+            WritableMap copy = Arguments.createMap();
+            copy.merge(newItem);
+            updatedArray.pushMap(copy);
         }
 
         return updatedArray;
@@ -70,98 +63,74 @@ public class EventSender {
             paramObject = paramArray.getMap(0);
         }
 
-        if (this.isSending) {
-            WritableMap newMap = Arguments.createMap();
-            newMap.merge(paramObject); // Create a clone
-            this.backupArray.pushMap(newMap);
-        } else {
-            this.mainArray = replaceIfSameId(this.mainArray, paramObject, idKey);
-        }
+        if (paramObject == null || !paramObject.hasKey(idKey)) return;
 
-        Log.d("mainArraymain", this.mainArray.toString());
+        this.mainArray = replaceIfSameId(this.mainArray, paramObject, idKey);
     }
 
-    public void sendEventToReactNativeWithType(String type, String eventName, int countLimit) {
-        if (this.isSending || this.mainArray.size() == 0) {
-            return;
-        }
+    public void triggerLoopSendEvent(String eventName, int countLimit) {
+        if (isLooping) return;
+        isLooping = true;
 
-        new SendEventTask(type, eventName, countLimit, this).execute();
-    }
-
-    private class SendEventTask extends AsyncTask<Void, Void, WritableMap> {
-        private String eventName;
-        private int countLimit;
-        private String type;
-        private WritableArray paramsToSend;
-
-        private EventSender eventSender;
-
-        public SendEventTask(String type, String eventName, int countLimit, EventSender eventSender) {
-            this.type = type;
-            this.eventName = eventName;
-            this.countLimit = countLimit;
-            this.eventSender = eventSender;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            this.eventSender.isSending = true;
-        }
-
-        @Override
-        protected WritableMap doInBackground(Void... voids) {
-            int countToSend = Math.min(this.countLimit, this.eventSender.mainArray.size());
-            this.paramsToSend = Arguments.createArray();
-
-            for (int i = 0; i < countToSend; i++) {
-                this.paramsToSend.pushMap(this.eventSender.mainArray.getMap(i));
-            }
-
-            WritableMap param = null;
-            if (this.paramsToSend.size() > 0) {
-                param = Arguments.createMap();
-                param.putArray("data", this.paramsToSend);
-            }
-
-            WritableArray remainingArray = Arguments.createArray();
-            for (int i = countToSend; i < this.eventSender.mainArray.size(); i++) {
-                remainingArray.pushMap(this.eventSender.mainArray.getMap(i));
-            }
-            this.eventSender.mainArray = remainingArray;
-
-            if (this.eventSender.backupArray.size() > 0) {
-                for (int i = 0; i < this.eventSender.backupArray.size(); i++) {
-                    this.eventSender.mainArray.pushMap(this.eventSender.backupArray.getMap(i));
-                }
-                this.eventSender.backupArray = Arguments.createArray();
-            }
-
-            return param;
-        }
-
-        @Override
-        protected void onPostExecute(WritableMap param) {
-            if (param != null) {
-                ReactCache.getReactContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(this.eventName, param);
-            }
-
-            this.eventSender.isSending = false;
-
-            if (this.eventSender.mainArray.size() > 0) {
-                this.eventSender.sendEventToReactNativeWithType(this.type, this.eventName, this.countLimit);
-            }
-        }
-    }
-
-    public void triggerSendEventAfterDelay(String type, String eventName, int countLimit) {
-        this.handler.removeCallbacks(this.sendEventRunnable);
-        this.sendEventRunnable = new Runnable() {
+        sendEventRunnable = new Runnable() {
             @Override
             public void run() {
-                sendEventToReactNativeWithType(type, eventName, countLimit);
+                if (mainArray.size() == 0) {
+                    isLooping = false;
+                    return;
+                }
+
+                sendEvent(eventName, countLimit);
+                handler.postDelayed(this, intervalMs);
             }
         };
-        this.handler.postDelayed(this.sendEventRunnable, 500);
+
+        handler.post(sendEventRunnable);
+    }
+
+    private void sendEvent(String eventName, int countLimit) {
+        if (mainArray.size() == 0) return;
+
+        int countToSend = Math.min(countLimit, mainArray.size());
+        WritableArray batch = Arguments.createArray();
+
+        for (int i = 0; i < countToSend; i++) {
+            batch.pushMap(mainArray.getMap(i));
+        }
+
+        // Cắt phần đã gửi khỏi mảng chính
+        WritableArray remaining = Arguments.createArray();
+        for (int i = countToSend; i < mainArray.size(); i++) {
+            remaining.pushMap(mainArray.getMap(i));
+        }
+        mainArray = remaining;
+
+        WritableMap wrapper = Arguments.createMap();
+        wrapper.putArray("data", batch);
+
+        ReactContext context = ReactCache.getReactContext();
+        if (context != null && context.hasActiveCatalystInstance()) {
+            context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(eventName, wrapper);
+            Log.d("EventSender", "✅ emit " + eventName + " | batch size = " + batch.size());
+        } else {
+            Log.w("EventSender", "⚠️ ReactContext not ready for " + eventName);
+        }
+    }
+
+    // ✅ Hàm gọi tiện lợi: add + send
+    public void addAndSend(ReadableMap param, String idKey, String eventName, int countLimit) {
+        addParam(param, idKey);
+        triggerLoopSendEvent(eventName, countLimit);
+    }
+
+    public int getMainSize() {
+        return mainArray.size();
+    }
+
+    public void clearAll() {
+        mainArray = Arguments.createArray();
+        isLooping = false;
+        handler.removeCallbacksAndMessages(null);
     }
 }

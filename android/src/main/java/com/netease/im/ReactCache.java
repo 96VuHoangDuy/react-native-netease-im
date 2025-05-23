@@ -181,46 +181,30 @@ public class ReactCache {
                     break;
 
                 case observeMsgStatus:
+                    Log.d(" observeMsgStatus =>> date ", date.toString());
+
                     if (date instanceof WritableArray) {
                         WritableArray dataMap = (WritableArray) date;
 
                         if (((WritableArray) date).size() > 0) {
-                                eventSenderMsgStatus.addParam(dataMap.getMap(0), "msgId");
-                                if ( eventSenderMsgStatus.mainArray.size() >= 15) {
-                                    eventSenderMsgStatus.sendEventToReactNativeWithType(observeMsgStatus, observeMsgStatus, 15);
-                                } else {
-                                    eventSenderMsgStatus.triggerSendEventAfterDelay(observeMsgStatus, observeMsgStatus, 15);
-                                }
+                            eventSenderMsgStatus.addAndSend(dataMap.getMap(0), "msgId", "observeMsgStatus", 15);
                         }
                     }
                     break;
 
                 case observeReceiveMessage:
+                    Log.d(" observeReceiveMessage =>> date ", date.toString());
                     if (date instanceof WritableArray) {
                         WritableArray dataMap = (WritableArray) date;
                         if (((WritableArray) date).size() > 0) {
-                            eventSenderMsgReceive.addParam(dataMap.getMap(0), "msgId");
-                            if ( eventSenderMsgReceive.mainArray.size() >= 15) {
-                                eventSenderMsgReceive.sendEventToReactNativeWithType(observeReceiveMessage, observeReceiveMessage, 15);
-                            } else {
-                                eventSenderMsgReceive.triggerSendEventAfterDelay(observeReceiveMessage, observeReceiveMessage, 15);
-                            }
+                            eventSenderMsgReceive.addAndSend(dataMap.getMap(0), "msgId", "observeReceiveMessage", 15);
                         }
                     }
                     break;
 
                 case observeProgressSend:
-                    if (date instanceof  WritableMap) {
-                        WritableMap dataMap = (WritableMap) date;
-                        if (((WritableMap) date).hasKey("messageId")) {
-                            eventSenderMsgProgress.addParam(dataMap, "messageId");
-                            Log.d(">>> eventSenderMs.", String.valueOf(eventSenderMsgProgress.mainArray.size()));
-                            if ( eventSenderMsgProgress.mainArray.size() >= 10) {
-                                eventSenderMsgProgress.sendEventToReactNativeWithType(observeProgressSend, observeProgressSend, 10);
-                            } else {
-                                eventSenderMsgProgress.triggerSendEventAfterDelay(observeProgressSend, observeProgressSend, 10);
-                            }
-                        }
+                    if (date instanceof WritableMap && ((WritableMap) date).hasKey("messageId")) {
+                        eventSenderMsgProgress.addAndSend((WritableMap) date, "messageId", "observeProgressSend", 10);
                     }
                     break;
                 default:
