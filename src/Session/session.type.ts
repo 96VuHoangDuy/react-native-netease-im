@@ -50,6 +50,7 @@ export enum NIMSessionTypeEnum {
   onlineService = 'online_service',
   systemMessage = 'system_message',
   listStranger = 'listStranger',
+  listGroupChat = 'list_group_chat',
 }
 
 export enum NIMSessionOnlineServiceType {
