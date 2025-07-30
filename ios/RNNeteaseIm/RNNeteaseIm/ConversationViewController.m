@@ -537,7 +537,7 @@
     }
     
     NIMMessage *message = messages.firstObject;
-    NSMutableDictionary *localExt = message.localExt ? [message.localExt copy] : [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
     [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isTransferUpdated"];
     
     message.localExt = localExt;
