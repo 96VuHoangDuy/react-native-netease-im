@@ -2847,10 +2847,9 @@ WritableMap _result = Arguments.createMap();
         RequestCallbackWrapper callback = new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> result, Throwable exception) {
-                if (code == ResponseCode.RES_SUCCESS) {
-                    if (result != null && result.size() > 0) {
+                if (code == ResponseCode.RES_SUCCESS && result != null && result.size() >= 0) {
                         List<IMMessage> messages = result;
-                        if (sessionService.getIsSeenMessage()) {
+                        if (sessionService.getIsSeenMessage() && result.size() > 0) {
                             if (direction == 0) {
                                 Collections.reverse(messages);
                                 getMsgService().sendMessageReceipt(sessionId, messages.get(0));
@@ -2859,7 +2858,7 @@ WritableMap _result = Arguments.createMap();
                             }
                         }
 
-                        WritableArray a = ReactCache.createMessageList(messages);
+                        WritableArray a = result.size() > 0 ? ReactCache.createMessageList(messages) : Arguments.createArray();
 
                         if (data != null && isUpdate) {
                             WritableMap map = Arguments.createMap();
@@ -2872,7 +2871,6 @@ WritableMap _result = Arguments.createMap();
 
                         promise.resolve(a);
                         return;
-                    }
                 }
                 promise.reject("" + code, "");
             }
