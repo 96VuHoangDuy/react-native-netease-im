@@ -126,6 +126,10 @@
 //重发消息
 - (void)resendMessage:(NSString *)messageID success:(Success)succe err:(Errors)err{
     NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:self._session messageIds:@[messageID] ];
+    if (currentMessage == nil || currentMessage.count != 1) {
+        err(@"message not found");
+        return;
+    }
     NIMMessage *currentM = currentMessage[0];
     //    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
     //    NSString *isFriend = [currentM.localExt objectForKey:@"isFriend"];
