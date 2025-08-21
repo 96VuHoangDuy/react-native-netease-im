@@ -344,6 +344,12 @@
 //}
 
 -(NSDictionary *)handleSessionP2p:(NIMRecentSession *)recent totalUnreadCount:(NSInteger *)totalUnreadCount isDebounceObserve:(BOOL *)isDebounceObserve {
+    if (recent.session.sessionId != nil && [recent.session.sessionId isEqual:@"list_group_chat"]) {
+        [[NIMSDK sharedSDK].conversationManager deleteRecentSession:recent];
+        
+        return nil;
+    }
+    
     NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
     BOOL isMyFriend = [[NIMSDK sharedSDK].userManager isMyFriend:recent.session.sessionId];
     NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:recent.lastMessage.session.sessionId];
@@ -892,7 +898,9 @@
         switch (recent.session.sessionType) {
             case NIMSessionTypeP2P: {
                 NSDictionary *dic = [self handleSessionP2p:recent totalUnreadCount:&allUnreadNum isDebounceObserve:nil];
-                [sessionList addObject:dic];
+                if (dic != nil) {
+                    [sessionList addObject:dic];
+                }
                 break;
             }
                 
