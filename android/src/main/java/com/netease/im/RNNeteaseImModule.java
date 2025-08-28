@@ -2534,6 +2534,11 @@ WritableMap _result = Arguments.createMap();
                         promise.resolve(a);
                         return;
                     }
+
+                    WritableMap a = Arguments.createMap();
+
+                    promise.resolve(a);
+                    return;
                 }
                 promise.reject("" + code, "");
             }
@@ -2552,20 +2557,26 @@ WritableMap _result = Arguments.createMap();
         option.setMessageTypes(messageTypes);
         option.setOrder(SearchOrderEnum.DESC);
         option.setMessageSubTypes(messageSubTypes);
+        Log.e(TAG, "searchTextMessage => option: " + option);
 
         NIMClient.getService(MsgService.class).searchAllMessage(option).setCallback(new RequestCallbackWrapper<List<IMMessage>>() {
             @Override
             public void onResult(int code, List<IMMessage> result, Throwable exception) {
+                Log.e(TAG, "searchTextMessage => code: " + code);
+                Log.e(TAG, "searchTextMessage => result: " + result);
                 if (code == ResponseCode.RES_SUCCESS) {
-                    if (result != null && result.size() > 0) {
+                    if (result != null && !result.isEmpty()) {
                         WritableMap a = ReactCache.createMessageObjectList(result);
+                        Log.e(TAG, "searchTextMessage => a: " + a);
 
                         promise.resolve(a);
                         return;
-                    } else {
-                        WritableArray a = (WritableArray) Arguments.createArray();
-                        promise.resolve(a);
                     }
+
+                    WritableArray a = (WritableArray) Arguments.createArray();
+                    promise.resolve(a);
+
+                    return;
                 }
                 promise.reject("" + code, "");
             }
