@@ -55,7 +55,7 @@ import androidx.annotation.DrawableRes;
  */
 
 public class IMApplication {
-    private  static Boolean isAgreePolicy;
+    private  static boolean isAgreePolicy;
 
     // context
     private static Context context;
@@ -92,20 +92,29 @@ public class IMApplication {
 //        }
         if (isAgreePolicy) {
             NIMClient.init(context, getLoginInfo(), getOptions(context));
+
+            NIMClient.getService(SdkLifecycleObserver.class).observeMainProcessInitCompleteResult(new Observer<Boolean>() {
+                @Override
+                public void onEvent(Boolean aBoolean) {
+                    if (aBoolean != null && aBoolean) {
+                        if (NIMUtil.isMainProcess(IMApplication.context)) {
+                            // init pinyin
+                            PinYin.init(context);
+                            PinYin.validate();
+
+                            NIMClient.getService(MixPushService.class).enable(true);
+                            // 初始化Kit模块
+                            initKit();
+
+                        }
+                    }
+                }
+            }, true);
         } else {
             NIMClient.config(context, getLoginInfo(), getOptions(context));
         }
 
-        if (NIMUtil.isMainProcess(IMApplication.context)) {
-            // init pinyin
-            PinYin.init(context);
-            PinYin.validate();
 
-            NIMClient.getService(MixPushService.class).enable(true);
-            // 初始化Kit模块
-            initKit();
-
-        }
         // crash handler
 //        AppCrashHandler.getInstance(context);
     }
