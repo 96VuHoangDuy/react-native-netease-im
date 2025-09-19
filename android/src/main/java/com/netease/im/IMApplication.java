@@ -34,6 +34,7 @@ import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.SDKOptions;
 import com.netease.nimlib.sdk.StatusBarNotificationConfig;
 import com.netease.nimlib.sdk.auth.LoginInfo;
+import com.netease.nimlib.sdk.lifecycle.SdkLifecycleObserver;
 import com.netease.nimlib.sdk.mixpush.MixPushConfig;
 import com.netease.nimlib.sdk.mixpush.MixPushService;
 import com.netease.nimlib.sdk.mixpush.NIMPushClient;
@@ -54,7 +55,7 @@ import androidx.annotation.DrawableRes;
  */
 
 public class IMApplication {
-
+    private  static Boolean isAgreePolicy;
 
     // context
     private static Context context;
@@ -89,12 +90,13 @@ public class IMApplication {
 //            mixPushConfig.xmAppKey = miPushConfig.appKey;
 //            NIMPushClient.initPush(new MixPushConfig());
 //        }
-        NIMClient.init(context, getLoginInfo(), getOptions(context));
-        // crash handler
-//        AppCrashHandler.getInstance(context);
+        if (isAgreePolicy) {
+            NIMClient.init(context, getLoginInfo(), getOptions(context));
+        } else {
+            NIMClient.config(context, getLoginInfo(), getOptions(context));
+        }
+
         if (NIMUtil.isMainProcess(IMApplication.context)) {
-
-
             // init pinyin
             PinYin.init(context);
             PinYin.validate();
@@ -104,7 +106,12 @@ public class IMApplication {
             initKit();
 
         }
+        // crash handler
+//        AppCrashHandler.getInstance(context);
+    }
 
+    public static void initSDK() {
+        isAgreePolicy = true;
     }
 
     public static void setDebugAble(boolean debugAble) {
@@ -171,6 +178,10 @@ public class IMApplication {
 
         // 定制通知栏提醒文案（可选，如果不定制将采用SDK默认文案）
         options.messageNotifierCustomization = messageNotifierCustomization;
+
+        options.disableAwake = true;
+
+        options.asyncInitSDK = true;
 
         // 在线多端同步未读数
         options.sessionReadAck = true;
