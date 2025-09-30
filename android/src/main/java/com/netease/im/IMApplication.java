@@ -204,9 +204,9 @@ public class IMApplication {
 
         ImPushConfig config = new ImPushConfig();
         // 小米证书配置，没有可不填
-        config.xmAppId = "2882303106219";
-        config.xmAppKey = "59717219";
-        config.xmCertificateName = "";
+        config.xmAppId = "2882303761520377525";
+        config.xmAppKey = "5172037759525";
+        config.xmCertificateName = "xiaomi-中越之家";
         config.hwCertificateName = "";
         config.mzAppId = "11398";
         config.fcmCertificateName= "ZYZJIM_ANDROID_FCM";
