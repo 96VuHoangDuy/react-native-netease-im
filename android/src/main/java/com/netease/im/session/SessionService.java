@@ -1677,11 +1677,15 @@ public class SessionService {
     }
 
     private Boolean checkMessageForwardHasTag(String content) {
-        String pattern = "@\\[[^\\]]+\\]\\([^\\)]+\\)";
-        Pattern regex = Pattern.compile(pattern);
-        Matcher matcher = regex.matcher(content);
+        try {
+            String pattern = "@\\[[^\\]]+\\]\\([^\\)]+\\)";
+            Pattern regex = Pattern.compile(pattern);
+            Matcher matcher = regex.matcher(content);
 
-        return matcher.find();
+            return matcher.find();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void handleForwardMessage(IMMessage message, String sessionId, SessionTypeEnum sessionTypeEnum, String parentId, Boolean isHaveMultiMedia, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger) {
