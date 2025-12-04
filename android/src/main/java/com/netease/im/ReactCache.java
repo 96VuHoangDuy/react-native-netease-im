@@ -908,6 +908,17 @@ public class ReactCache {
                 IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
                 String notifyType = "";
 
+                if(lastMessage != null && lastMessage.getDirect() == MsgDirectionEnum.Out) {
+                    Map<String, Object> extMap = lastMessage.getLocalExtension();
+                    if(extMap != null
+                            && extMap.containsKey("real_state_by_observer")
+                            && extMap.get("real_state_by_observer") instanceof Integer
+                    ) {
+                        int stateVal = ((Integer)extMap.get("real_state_by_observer")).intValue();
+                        lastMessage.setStatus(MsgStatusEnum.statusOfValue(stateVal));
+                    }
+                }
+
                 if (lastMessage != null) {
                     map.putInt("messageSubType", lastMessage.getSubtype());
                 }

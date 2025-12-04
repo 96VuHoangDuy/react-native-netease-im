@@ -46,6 +46,7 @@ import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.RevokeMsgNotification;
 import com.netease.nimlib.sdk.uinfo.UserInfoProvider;
 import com.netease.nimlib.sdk.util.NIMUtil;
+import com.nim.pushlib.MixPushConfigGenerator;
 
 import androidx.annotation.DrawableRes;
 
@@ -202,27 +203,8 @@ public class IMApplication {
         //sdkStorageRootPath 配置的外置存储缓存根目录
 
 
-        ImPushConfig config = new ImPushConfig();
-        // 小米证书配置，没有可不填
-        config.xmAppId = "2882303761520377525";
-        config.xmAppKey = "5172037759525";
-        config.xmCertificateName = "xiaomi-中越之家";
-        config.hwCertificateName = "";
-        config.mzAppId = "11398";
-        config.fcmCertificateName= "ZYZJIM_ANDROID_FCM";
-        config.mzAppKey = "b74148973e60a2af4c2f6779";
-
-
         // 推送配置
-        MixPushConfig pushConfig = new MixPushConfig();
-
-        pushConfig.xmAppId = config.xmAppId;
-        pushConfig.xmAppKey = config.xmAppKey;
-        pushConfig.xmCertificateName = config.xmCertificateName;
-        pushConfig.hwCertificateName = config.hwCertificateName;
-        pushConfig.fcmCertificateName= config.fcmCertificateName;
-
-        options.mixPushConfig = pushConfig;
+        options.mixPushConfig = MixPushConfigGenerator.loadPushConfig();
 
         return options;
     }
@@ -281,6 +263,11 @@ public class IMApplication {
         @Override
         public String makeRevokeMsgTip(String revokeAccount, IMMessage item) {
             return MessageUtil.getRevokeTipContent(item, revokeAccount);
+        }
+
+        @Override
+        public String makeCategory(IMMessage message) {
+            return null;
         }
     };
 

@@ -47,6 +47,7 @@ import com.netease.im.uikit.uinfo.UserInfoObservable;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.NIMSDK;
+import com.nim.pushlib.pushpayload.PushPayloadBuilder;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
@@ -562,6 +563,12 @@ public class SessionService {
     }
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
+        if(message.getDirect() == MsgDirectionEnum.Out) {
+            Map<String, Object> stateMap = MapBuilder.newHashMap();
+            stateMap.put("real_state_by_observer", message.getStatus().getValue());
+            setLocalExtension(message, stateMap);
+            getMsgService().updateIMMessage(message);
+        }
         Map<String, Object> localExtension = message.getLocalExtension();
         if (message.getStatus() == MsgStatusEnum.success && message.getDirect() == MsgDirectionEnum.Out) {
             List<IMMessage> list = new ArrayList<>(1);
@@ -2550,11 +2557,8 @@ public class SessionService {
     }
 
     public void appendPushConfig(IMMessage message) {
-//        CustomPushContentProvider customConfig = null;//NimUIKit.getCustomPushContentProvider();
-//        if (customConfig != null) {
-//            String content = customConfig.getPushContent(message);
-//            Map<String, Object> payload = customConfig.getPushPayload(message);
-        Map<String, Object> payload = new HashMap<>();
+        PushPayloadBuilder payloadBuilder = new PushPayloadBuilder();
+
         Map<String, Object> body = new HashMap<>();
 
         body.put("sessionType", String.valueOf(message.getSessionType().getValue()));
@@ -2603,21 +2607,25 @@ public class SessionService {
             }
         }
 
-
+        String pushTitle = "";
         if (message.getSessionType() == SessionTypeEnum.P2P) {
-            payload.put("pushTitle", message.getFromNick());
+            pushTitle = message.getFromNick();
             message.setPushContent(pushContent);
         } else {
-            payload.put("pushTitle", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
+            pushTitle = SessionUtil.getSessionName(sessionId, message.getSessionType(), true);
             message.setPushContent(message.getFromNick() + ": " + pushContent);
         }
 
-        Map<String, Object> fcmField = new HashMap<>();
-        fcmField.put("tag", message.getUuid());
+        payloadBuilder.setPushTitle(pushTitle);
 
-        payload.put("fcmField", fcmField);
+        Map<String, Object> payload = payloadBuilder.generatePayload();
+
+        // Map<String, Object> fcmField = new HashMap<>();
+        // fcmField.put("tag", message.getUuid());
+
+        // payload.put("fcmField", fcmField);
         payload.put("sessionBody", body);
-        payload.put("channel_id", "142244");
+        // payload.put("channel_id", "142244");
         message.setPushPayload(payload);
     }
 

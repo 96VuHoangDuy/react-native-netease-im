@@ -177,8 +177,13 @@ public class SessionUtil {
                 builder.setContentTitle("请求加为好友");
                 builder.setContentText(customNotification.getApnsText());
                 builder.setAutoCancel(true);
-                PendingIntent contentIntent = PendingIntent.getActivity(
-                        IMApplication.getContext(), 0, new Intent(IMApplication.getContext(), IMApplication.getMainActivityClass()), 0);
+                Intent clickIntent = new Intent(IMApplication.getContext(), NotificationClickReceiver.class);
+                int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    flags |= PendingIntent.FLAG_IMMUTABLE;
+                }
+                PendingIntent contentIntent = PendingIntent.getBroadcast(
+                        IMApplication.getContext(), 0, clickIntent, flags);
                 builder.setContentIntent(contentIntent);
                 builder.setSmallIcon(IMApplication.getNotify_msg_drawable_id());
                 manager.notify((int) System.currentTimeMillis(), builder.build());
@@ -198,39 +203,41 @@ public class SessionUtil {
 //
 ////                String timestamp = data.getString("timestamp");
 //                long t = customNotification.getTime() / 1000;
-////                try {
-////                    t = Long.parseLong(timestamp);
-////                } catch (NumberFormatException e) {
-////                    t = System.currentTimeMillis() / 1000;
-////                    e.printStackTrace();
-////                }
-////                LogUtil.w("timestamp","timestamp:"+timestamp);
-////                LogUtil.w("timestamp","t:"+t);
-////                LogUtil.w("timestamp",""+data);
+//                try {
+//                    t = Long.parseLong(timestamp);
+//                } catch (NumberFormatException e) {
+//                    t = System.currentTimeMillis() / 1000;
+//                    e.printStackTrace();
+//                }
+//                LogUtil.w("timestamp","timestamp:"+timestamp);
+//                LogUtil.w("timestamp","t:"+t);
+//                LogUtil.w("timestamp",""+data);
 //                String sessionId = data.getString("sessionId");
 //                String sessionType = data.getString("sessionType");
 //                final String id = sessionId;//getSessionType(sessionType) == SessionTypeEnum.P2P ? openId :
 //                sendRedPacketOpenLocal(id, getSessionType(sessionType), sendId, openId, hasRedPacket, serialNo, t);
 
                 Integer customNotificationType = data.getInteger("type");
-
-                switch (customNotificationType){
-                    case 1:
-                        String messageId = data.getString("messageId");
-                        SessionService.getInstance().queryMessage(messageId, new SessionService.OnMessageQueryListener() {
-                            @Override
-                            public int onResult(int code, IMMessage message) {
-
-                                if (message != null) {
-                                    SessionService.getInstance().deleteItem(message, true);
+                if(customNotificationType != null){
+                    switch (customNotificationType){
+                        case 1:
+                            String messageId = data.getString("messageId");
+                            SessionService.getInstance().queryMessage(messageId, new SessionService.OnMessageQueryListener() {
+                                @Override
+                                public int onResult(int code, IMMessage message) {
+    
+                                    if (message != null) {
+                                        SessionService.getInstance().deleteItem(message, true);
+                                    }
+                                    return 0;
                                 }
-                                return 0;
-                            }
-                        });
-                        break;
-                    case 2:
-                        break;
+                            });
+                            break;
+                        case 2:
+                            break;
+                    }
                 }
+                
                 ReactCache.emit(ReactCache.observeCustomNotification, ReactCache.createCustomSystemMsg(customNotification));
             }
         }
