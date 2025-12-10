@@ -2625,7 +2625,8 @@ public class SessionService {
 
         // payload.put("fcmField", fcmField);
         payload.put("sessionBody", body);
-        // payload.put("channel_id", "142244");
+        payload.put("channel_id", "142244");
+        payload.put("android_channel_id", "142244");
         message.setPushPayload(payload);
     }
 
