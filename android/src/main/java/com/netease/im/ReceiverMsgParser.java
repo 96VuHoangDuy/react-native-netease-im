@@ -197,29 +197,79 @@ public class ReceiverMsgParser {
                         e.printStackTrace();
                     }
                 }
-            } else if (intent.hasExtra("from_notification") && intent.hasExtra("notification_data")) {
-                // Handle notification from ConfirmActivity (Xiaomi, Oppo, Vivo, etc.)
-                String notificationData = intent.getStringExtra("notification_data");
-                if (!TextUtils.isEmpty(notificationData)) {
+            } else if (intent.hasExtra("from_notification") && intent.hasExtra("notification_all_data")) {
+                // ============================================================
+                // NEW FORMAT: Handle notification from ConfirmActivity (Universal Push Parser)
+                // ConfirmActivity sends ALL extras as JSON for JS to parse
+                // ============================================================
+                String allData = intent.getStringExtra("notification_all_data");
+                String vendor = intent.getStringExtra("notification_vendor");
+                
+                if (!TextUtils.isEmpty(allData)) {
                     try {
-                        Log.d("ReceiverMsgParser", "📱 Parsing from_notification: " + notificationData);
-                        JSONObject json = JSON.parseObject(notificationData);
+                        Log.d("ReceiverMsgParser", "📱 Parsing notification from [" + vendor + "]");
+                        Log.d("ReceiverMsgParser", "   All data: " + allData);
+                        
+                        JSONObject json = JSON.parseObject(allData);
                         
                         // Check if this has path (non-IM) or sessionId (IM)
-                        String path = json.getString("path");
+                        String path = json.containsKey("path") ? json.getString("path") : null;
+                        String sessionId = json.containsKey("sessionId") ? json.getString("sessionId") : null;
+                        String sessionType = json.containsKey("sessionType") ? json.getString("sessionType") : null;
                         
                         if (!TextUtils.isEmpty(path)) {
                             // Non-IM notification (goods_order, visa_order, etc.)
                             Log.d("ReceiverMsgParser", "🔔 Non-IM notification with path: " + path);
                             rr.putString("type", "notification");
                             rr.putString("path", path);
-                            String statusOrder = json.containsKey("statusOrder") ? json.getString("statusOrder") : "";
-                            String notificationId = json.containsKey("notificationId") ? json.getString("notificationId") : "";
-                            if (!TextUtils.isEmpty(statusOrder)) rr.putString("statusOrder", statusOrder);
-                            if (!TextUtils.isEmpty(notificationId)) rr.putString("notificationId", notificationId);
-                        } else if (json.containsKey("sessionId") && json.containsKey("sessionType")) {
+                            
+                            // Include all other fields from JSON
+                            if (json.containsKey("statusOrder")) {
+                                rr.putString("statusOrder", json.getString("statusOrder"));
+                            }
+                            if (json.containsKey("notificationId")) {
+                                rr.putString("notificationId", json.getString("notificationId"));
+                            }
+                            
+                            Log.d("ReceiverMsgParser", "✅ Non-IM notification parsed successfully");
+                        } else if (!TextUtils.isEmpty(sessionId) && !TextUtils.isEmpty(sessionType)) {
                             // IM notification
                             Log.d("ReceiverMsgParser", "💬 IM notification");
+                            WritableMap r = Arguments.createMap();
+                            rr.putString("type", "session");
+                            r.putString("sessionType", sessionType);
+                            r.putString("sessionId", sessionId);
+                            SessionTypeEnum typeEnum = SessionUtil.getSessionType(sessionType);
+                            r.putString("sessionName", SessionUtil.getSessionName(sessionId, typeEnum, false));
+                            rr.putMap("sessionBody", r);
+                            
+                            Log.d("ReceiverMsgParser", "✅ IM notification parsed successfully");
+                        } else {
+                            Log.w("ReceiverMsgParser", "⚠️ Notification has neither path nor sessionId");
+                        }
+                    } catch (Exception e) {
+                        Log.e("ReceiverMsgParser", "❌ Error parsing notification_all_data", e);
+                        e.printStackTrace();
+                    }
+                }
+            } else if (intent.hasExtra("from_notification") && intent.hasExtra("notification_data")) {
+                // ============================================================
+                // OLD FORMAT: Backward compatibility for old format
+                // ============================================================
+                String notificationData = intent.getStringExtra("notification_data");
+                if (!TextUtils.isEmpty(notificationData)) {
+                    try {
+                        Log.d("ReceiverMsgParser", "📱 Parsing old format notification_data");
+                        JSONObject json = JSON.parseObject(notificationData);
+                        
+                        String path = json.getString("path");
+                        
+                        if (!TextUtils.isEmpty(path)) {
+                            rr.putString("type", "notification");
+                            rr.putString("path", path);
+                            if (json.containsKey("statusOrder")) rr.putString("statusOrder", json.getString("statusOrder"));
+                            if (json.containsKey("notificationId")) rr.putString("notificationId", json.getString("notificationId"));
+                        } else if (json.containsKey("sessionId") && json.containsKey("sessionType")) {
                             WritableMap r = Arguments.createMap();
                             rr.putString("type", "session");
                             String sessionType = json.getString("sessionType");
@@ -231,7 +281,7 @@ public class ReceiverMsgParser {
                             rr.putMap("sessionBody", r);
                         }
                     } catch (Exception e) {
-                        Log.e("ReceiverMsgParser", "Error parsing from_notification", e);
+                        Log.e("ReceiverMsgParser", "Error parsing old format notification_data", e);
                         e.printStackTrace();
                     }
                 }
