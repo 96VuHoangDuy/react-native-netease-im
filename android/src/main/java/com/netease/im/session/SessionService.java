@@ -2620,13 +2620,15 @@ public class SessionService {
 
         Map<String, Object> payload = payloadBuilder.generatePayload();
 
-        // Map<String, Object> fcmField = new HashMap<>();
-        // fcmField.put("tag", message.getUuid());
+        // FCM-specific field configuration
+        // According to NIM docs, android_channel_id must be inside fcmField object
+        Map<String, Object> fcmField = new HashMap<>();
+        fcmField.put("android_channel_id", "142244"); // Required for FCM notifications on Android 8.0+
+        fcmField.put("tag", message.getUuid()); // Optional: for notification grouping
 
-        // payload.put("fcmField", fcmField);
+        payload.put("fcmField", fcmField);
         payload.put("sessionBody", body);
-        payload.put("channel_id", "142244");
-        payload.put("android_channel_id", "142244");
+        payload.put("channel_id", "142244"); // For other vendor push services
         message.setPushPayload(payload);
     }
 

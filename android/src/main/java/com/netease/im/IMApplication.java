@@ -204,7 +204,12 @@ public class IMApplication {
 
 
         // 推送配置
-        options.mixPushConfig = MixPushConfigGenerator.loadPushConfig();
+        // CRITICAL: MixPushConfig is automatically used by NIM SDK
+        // SDK will call NIMPushClient.initPush() internally in the correct process (:core)
+        MixPushConfig pushConfig = MixPushConfigGenerator.loadPushConfig();
+        options.mixPushConfig = pushConfig;
+        
+        // Log push certificates for debugging
 
         return options;
     }

@@ -3,6 +3,7 @@ package com.netease.im;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -30,18 +31,54 @@ public class ReceiverMsgParser {
 
     public static boolean checkOpen(Intent intent) {
         if (intent != null) {
-            // Check for standard keys
-            if (intent.hasExtra(NimIntent.EXTRA_NOTIFY_CONTENT) || intent.hasExtra(Extras.EXTRA_JUMP_P2P) || intent.hasExtra("sessionBody")) {
+            // 1. Check for standard Netease IM keys
+            if (intent.hasExtra(NimIntent.EXTRA_NOTIFY_CONTENT) || 
+                intent.hasExtra(Extras.EXTRA_JUMP_P2P) || 
+                intent.hasExtra("sessionBody")) {
+                Log.d("ReceiverMsgParser", "checkOpen: Found standard IM keys → TRUE");
                 return true;
             }
             
-            // Check for Honor/Huawei Push specific keys that might contain data
-            // Honor Push might send data in different keys
-            if (intent.hasExtra("sessionID") || intent.hasExtra("sessionId") || 
-                intent.hasExtra("sessionType") || intent.hasExtra("payload") ||
-                intent.hasExtra("data") || intent.hasExtra("customData")) {
+            // 2. Check for notification from ConfirmActivity (parsed by parseUniversalPushData)
+            // Handles: ALL vendors - Xiaomi, Oppo, Vivo, Honor, Huawei, FCM, etc.
+            if (intent.hasExtra("from_notification") && intent.hasExtra("notification_data")) {
+                Log.d("ReceiverMsgParser", "checkOpen: Found from_notification → TRUE");
                 return true;
             }
+            
+            // 3. Check for Xiaomi/Oppo/Vivo Push raw keys (if not processed by ConfirmActivity)
+            if (intent.hasExtra("key_message") || intent.hasExtra("mipush_notified")) {
+                Log.d("ReceiverMsgParser", "checkOpen: Found Xiaomi keys → TRUE");
+                return true;
+            }
+            
+            // 4. Check for Honor/Huawei Push specific keys
+            // When user clicks notification in killed state, system launches MainActivity with raw vendor keys
+            if (intent.hasExtra("sessionID") || intent.hasExtra("sessionId") || 
+                intent.hasExtra("sessionType") ||
+                intent.hasExtra("_push_msgid") || intent.hasExtra("_hw_from") || 
+                intent.hasExtra("_push_notifyid") || intent.hasExtra("_push_cmd_type")) {
+                Log.d("ReceiverMsgParser", "checkOpen: Found Honor/Huawei vendor keys → TRUE");
+                return true;
+            }
+            
+            // 5. Check for generic push payload keys
+            if (intent.hasExtra("payload") || intent.hasExtra("data") || 
+                intent.hasExtra("customData") || intent.hasExtra("pushData")) {
+                Log.d("ReceiverMsgParser", "checkOpen: Found generic payload keys → TRUE");
+                return true;
+            }
+            
+            // 6. Check for Oppo/Vivo specific keys
+            if (intent.hasExtra("messageId") || intent.hasExtra("pushId") ||
+                intent.hasExtra("notificationId")) {
+                Log.d("ReceiverMsgParser", "checkOpen: Found Oppo/Vivo keys → TRUE");
+                return true;
+            }
+            
+            Log.d("ReceiverMsgParser", "checkOpen: No notification keys found → FALSE");
+        } else {
+            Log.d("ReceiverMsgParser", "checkOpen: Intent is NULL → FALSE");
         }
         return false;
     }
@@ -101,7 +138,21 @@ public class ReceiverMsgParser {
 
     public static WritableMap getWritableMap(Intent intent) {
         WritableMap rr = Arguments.createMap();
-        if (intent != null && canAutoLogin()) {
+        
+        // Return null if no intent - JS will handle appropriately
+        if (intent == null) {
+            Log.d("ReceiverMsgParser", "getWritableMap: Intent is null → returning null");
+            return null;
+        }
+        
+        if (!canAutoLogin()) {
+            Log.d("ReceiverMsgParser", "getWritableMap: Cannot auto login → returning null");
+            return null;
+        }
+        
+        Log.d("ReceiverMsgParser", "getWritableMap: Parsing intent...");
+        
+        if (true) { // Always try to parse
 
             if (intent.hasExtra(NimIntent.EXTRA_NOTIFY_CONTENT)) {
                 ArrayList<IMMessage> messages = (ArrayList<IMMessage>) intent.getSerializableExtra(NimIntent.EXTRA_NOTIFY_CONTENT);
@@ -146,29 +197,158 @@ public class ReceiverMsgParser {
                         e.printStackTrace();
                     }
                 }
+            } else if (intent.hasExtra("from_notification") && intent.hasExtra("notification_data")) {
+                // Handle notification from ConfirmActivity (Xiaomi, Oppo, Vivo, etc.)
+                String notificationData = intent.getStringExtra("notification_data");
+                if (!TextUtils.isEmpty(notificationData)) {
+                    try {
+                        Log.d("ReceiverMsgParser", "📱 Parsing from_notification: " + notificationData);
+                        JSONObject json = JSON.parseObject(notificationData);
+                        
+                        // Check if this has path (non-IM) or sessionId (IM)
+                        String path = json.getString("path");
+                        
+                        if (!TextUtils.isEmpty(path)) {
+                            // Non-IM notification (goods_order, visa_order, etc.)
+                            Log.d("ReceiverMsgParser", "🔔 Non-IM notification with path: " + path);
+                            rr.putString("type", "notification");
+                            rr.putString("path", path);
+                            String statusOrder = json.containsKey("statusOrder") ? json.getString("statusOrder") : "";
+                            String notificationId = json.containsKey("notificationId") ? json.getString("notificationId") : "";
+                            if (!TextUtils.isEmpty(statusOrder)) rr.putString("statusOrder", statusOrder);
+                            if (!TextUtils.isEmpty(notificationId)) rr.putString("notificationId", notificationId);
+                        } else if (json.containsKey("sessionId") && json.containsKey("sessionType")) {
+                            // IM notification
+                            Log.d("ReceiverMsgParser", "💬 IM notification");
+                            WritableMap r = Arguments.createMap();
+                            rr.putString("type", "session");
+                            String sessionType = json.getString("sessionType");
+                            String sessionId = json.getString("sessionId");
+                            r.putString("sessionType", sessionType);
+                            r.putString("sessionId", sessionId);
+                            SessionTypeEnum typeEnum = SessionUtil.getSessionType(sessionType);
+                            r.putString("sessionName", SessionUtil.getSessionName(sessionId, typeEnum, false));
+                            rr.putMap("sessionBody", r);
+                        }
+                    } catch (Exception e) {
+                        Log.e("ReceiverMsgParser", "Error parsing from_notification", e);
+                        e.printStackTrace();
+                    }
+                }
             } else {
-                // Try to parse Honor/Huawei Push data from alternative keys
-                // Honor Push might send data in "data" or "payload" key as JSON string
+                // ============================================================
+                // FALLBACK: Try parsing from various vendor-specific keys
+                // Handles: Honor, Huawei, Oppo, Vivo (if not processed by ConfirmActivity), FCM
+                // ============================================================
+                Log.d("ReceiverMsgParser", "🔍 FALLBACK: Trying alternative vendor keys...");
+                
                 String dataStr = null;
-                if (intent.hasExtra("data")) {
-                    dataStr = intent.getStringExtra("data");
-                } else if (intent.hasExtra("payload")) {
+                String vendor = "Unknown";
+                
+                // Try common keys where vendors put JSON data
+                if (intent.hasExtra("payload")) {
                     dataStr = intent.getStringExtra("payload");
+                    vendor = "Honor/Huawei (payload)";
+                } else if (intent.hasExtra("data")) {
+                    dataStr = intent.getStringExtra("data");
+                    vendor = "Generic (data)";
                 } else if (intent.hasExtra("customData")) {
                     dataStr = intent.getStringExtra("customData");
+                    vendor = "Custom (customData)";
+                } else if (intent.hasExtra("key_message")) {
+                    // Raw Xiaomi/Oppo/Vivo that wasn't processed by ConfirmActivity
+                    Object keyMsgObj = intent.getExtras().get("key_message");
+                    if (keyMsgObj != null) {
+                        String keyMsg = keyMsgObj.toString();
+                        vendor = "Xiaomi/Oppo/Vivo (raw)";
+                        // Try to extract content from key_message
+                        int contentStart = keyMsg.indexOf("content={");
+                        if (contentStart != -1) {
+                            contentStart += "content={".length();
+                            int contentEnd = keyMsg.indexOf("},", contentStart);
+                            if (contentEnd == -1) contentEnd = keyMsg.indexOf("}", contentStart);
+                            if (contentEnd != -1) {
+                                try {
+                                    String encoded = keyMsg.substring(contentStart, contentEnd);
+                                    dataStr = java.net.URLDecoder.decode(encoded, "UTF-8");
+                                } catch (Exception e) {
+                                    Log.e("ReceiverMsgParser", "Failed to decode key_message", e);
+                                }
+                            }
+                        }
+                    }
                 }
                 
                 if (!TextUtils.isEmpty(dataStr)) {
+                    Log.d("ReceiverMsgParser", "📱 Found data in [" + vendor + "]: " + dataStr);
                     try {
                         JSONObject dataJson = JSON.parseObject(dataStr);
-                        // Check if it contains session info
-                        String sessionId = dataJson.getString("sessionID");
-                        if (TextUtils.isEmpty(sessionId)) {
-                            sessionId = dataJson.getString("sessionId");
+                        
+                        // Check if it's a non-IM notification (has path)
+                        String path = dataJson.getString("path");
+                        if (!TextUtils.isEmpty(path)) {
+                            Log.d("ReceiverMsgParser", "🔔 Non-IM notification from [" + vendor + "] with path: " + path);
+                            rr.putString("type", "notification");
+                            rr.putString("path", path);
+                            String statusOrder = dataJson.containsKey("statusOrder") ? dataJson.getString("statusOrder") : "";
+                            String notificationId = dataJson.containsKey("notificationId") ? dataJson.getString("notificationId") : "";
+                            if (!TextUtils.isEmpty(statusOrder)) rr.putString("statusOrder", statusOrder);
+                            if (!TextUtils.isEmpty(notificationId)) rr.putString("notificationId", notificationId);
+                        } else {
+                            // Check if it's an IM notification (has sessionId)
+                            String sessionId = dataJson.getString("sessionID");
+                            if (TextUtils.isEmpty(sessionId)) {
+                                sessionId = dataJson.getString("sessionId");
+                            }
+                            String sessionType = dataJson.getString("sessionType");
+                            
+                            if (!TextUtils.isEmpty(sessionId) && !TextUtils.isEmpty(sessionType)) {
+                                Log.d("ReceiverMsgParser", "💬 IM notification from [" + vendor + "]");
+                                WritableMap r = Arguments.createMap();
+                                rr.putString("type", "session");
+                                r.putString("sessionType", sessionType);
+                                r.putString("sessionId", sessionId);
+                                SessionTypeEnum typeEnum = SessionUtil.getSessionType(sessionType);
+                                r.putString("sessionName", SessionUtil.getSessionName(sessionId, typeEnum, false));
+                                rr.putMap("sessionBody", r);
+                            }
                         }
-                        String sessionType = dataJson.getString("sessionType");
+                    } catch (Exception e) {
+                        Log.e("ReceiverMsgParser", "Failed to parse JSON from [" + vendor + "]", e);
+                        e.printStackTrace();
+                    }
+                }
+                
+                // ============================================================
+                // FALLBACK 2: Try direct keys (for simple key-value format)
+                // ============================================================
+                if (!rr.hasKey("type")) {
+                    Log.d("ReceiverMsgParser", "🔍 FALLBACK 2: Trying direct keys...");
+                    
+                    // Check for path (non-IM)
+                    String path = intent.getStringExtra("path");
+                    if (!TextUtils.isEmpty(path)) {
+                        Log.d("ReceiverMsgParser", "🔔 Non-IM notification from direct keys");
+                        rr.putString("type", "notification");
+                        rr.putString("path", path);
+                        if (intent.hasExtra("statusOrder")) {
+                            rr.putString("statusOrder", intent.getStringExtra("statusOrder"));
+                        }
+                    } else {
+                        // Check for sessionId (IM)
+                        String sessionId = null;
+                        String sessionType = null;
+                        if (intent.hasExtra("sessionID")) {
+                            sessionId = intent.getStringExtra("sessionID");
+                        } else if (intent.hasExtra("sessionId")) {
+                            sessionId = intent.getStringExtra("sessionId");
+                        }
+                        if (intent.hasExtra("sessionType")) {
+                            sessionType = intent.getStringExtra("sessionType");
+                        }
                         
                         if (!TextUtils.isEmpty(sessionId) && !TextUtils.isEmpty(sessionType)) {
+                            Log.d("ReceiverMsgParser", "💬 IM notification from direct keys");
                             WritableMap r = Arguments.createMap();
                             rr.putString("type", "session");
                             r.putString("sessionType", sessionType);
@@ -177,35 +357,19 @@ public class ReceiverMsgParser {
                             r.putString("sessionName", SessionUtil.getSessionName(sessionId, typeEnum, false));
                             rr.putMap("sessionBody", r);
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                }
-                
-                // Also try direct keys (sessionID, sessionId, sessionType)
-                String sessionId = null;
-                String sessionType = null;
-                if (intent.hasExtra("sessionID")) {
-                    sessionId = intent.getStringExtra("sessionID");
-                } else if (intent.hasExtra("sessionId")) {
-                    sessionId = intent.getStringExtra("sessionId");
-                }
-                if (intent.hasExtra("sessionType")) {
-                    sessionType = intent.getStringExtra("sessionType");
-                }
-                
-                if (!TextUtils.isEmpty(sessionId) && !TextUtils.isEmpty(sessionType)) {
-                    WritableMap r = Arguments.createMap();
-                    rr.putString("type", "session");
-                    r.putString("sessionType", sessionType);
-                    r.putString("sessionId", sessionId);
-                    SessionTypeEnum typeEnum = SessionUtil.getSessionType(sessionType);
-                    r.putString("sessionName", SessionUtil.getSessionName(sessionId, typeEnum, false));
-                    rr.putMap("sessionBody", r);
                 }
             }
         }
-
+        
+        // If no notification data was found, return null instead of empty map
+        // This prevents JS from thinking there's a notification when there isn't
+        if (!rr.hasKey("type")) {
+            Log.d("ReceiverMsgParser", "ℹ️ No notification data found → returning null (not empty map)");
+            return null;
+        }
+        
+        Log.d("ReceiverMsgParser", "✅ Successfully parsed notification, type: " + rr.getString("type"));
         return rr;
     }
 
