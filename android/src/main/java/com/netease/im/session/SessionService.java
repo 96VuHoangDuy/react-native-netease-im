@@ -47,6 +47,8 @@ import com.netease.im.uikit.uinfo.UserInfoObservable;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.NIMSDK;
+import com.nim.pushlib.pushpayload.NotifyClickAction;
+import com.nim.pushlib.pushpayload.NotifyEffectMode;
 import com.nim.pushlib.pushpayload.PushPayloadBuilder;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -2562,10 +2564,15 @@ public class SessionService {
         Map<String, Object> body = new HashMap<>();
 
         body.put("sessionType", String.valueOf(message.getSessionType().getValue()));
+        String sessionIdValue;
         if (message.getSessionType() == SessionTypeEnum.P2P) {
-            body.put("sessionId", LoginService.getInstance().getAccount());
+            sessionIdValue = LoginService.getInstance().getAccount();
+            body.put("sessionId", sessionIdValue);
         } else if (message.getSessionType() == SessionTypeEnum.Team) {
-            body.put("sessionId", message.getSessionId());
+            sessionIdValue = message.getSessionId();
+            body.put("sessionId", sessionIdValue);
+        } else {
+            sessionIdValue = null;
         }
         body.put("sessionName", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
         String pushContent = message.getContent();
@@ -2618,6 +2625,21 @@ public class SessionService {
 
         payloadBuilder.setPushTitle(pushTitle);
 
+        // Configure NotifyClickAction to use NotificationClickActivity
+        String applicationId = IMApplication.getContext().getPackageName();
+        NotifyClickAction clickAction = new NotifyClickAction.Builder()
+                .setNotifyEffect(NotifyEffectMode.EFFECT_MODE_CONTENT)
+                .setIntentAction(applicationId + ".openNotification")
+                .addIntentCategory("android.intent.category.DEFAULT")
+                .build();
+        payloadBuilder.setClickAction(clickAction);
+
+        // Add custom data for notification click handling
+        if (sessionIdValue != null) {
+            payloadBuilder.addCustomData("sessionId", sessionIdValue);
+        }
+        payloadBuilder.addCustomData("sessionType", String.valueOf(message.getSessionType().getValue()));
+
         Map<String, Object> payload = payloadBuilder.generatePayload();
 
         // FCM-specific field configuration
@@ -2627,8 +2649,8 @@ public class SessionService {
         fcmField.put("tag", message.getUuid()); // Optional: for notification grouping
 
         payload.put("fcmField", fcmField);
-        payload.put("sessionBody", body);
-        payload.put("channel_id", "142244"); // For other vendor push services
+        payload.put("sessionBody", body); // Keep for backward compatibility
+        payload.put("channel_id", "fcm_im_message"); // For other vendor push services
         message.setPushPayload(payload);
     }
 

@@ -217,6 +217,38 @@ public class ReceiverMsgParser {
                         String sessionId = json.containsKey("sessionId") ? json.getString("sessionId") : null;
                         String sessionType = json.containsKey("sessionType") ? json.getString("sessionType") : null;
                         
+                        // FCM case: Check if payload contains sessionBody (nested JSON string)
+                        if (TextUtils.isEmpty(sessionId) && json.containsKey("payload")) {
+                            try {
+                                String payloadStr = json.getString("payload");
+                                if (!TextUtils.isEmpty(payloadStr)) {
+                                    // payload might be a JSON string, try to parse it
+                                    JSONObject payloadJson = JSON.parseObject(payloadStr);
+                                    
+                                    // Check if payload has sessionBody (which is a JSON string)
+                                    if (payloadJson.containsKey("sessionBody")) {
+                                        String sessionBodyStr = payloadJson.getString("sessionBody");
+                                        if (!TextUtils.isEmpty(sessionBodyStr)) {
+                                            // sessionBody is a JSON string, parse it
+                                            JSONObject sessionBodyJson = JSON.parseObject(sessionBodyStr);
+                                            sessionId = sessionBodyJson.containsKey("sessionId") ? sessionBodyJson.getString("sessionId") : null;
+                                            sessionType = sessionBodyJson.containsKey("sessionType") ? sessionBodyJson.getString("sessionType") : null;
+                                            Log.d("ReceiverMsgParser", "   Extracted from payload.sessionBody: sessionId=" + sessionId + ", sessionType=" + sessionType);
+                                        }
+                                    }
+                                    // Also check if payload has sessionId/sessionType directly
+                                    if (TextUtils.isEmpty(sessionId) && payloadJson.containsKey("sessionId")) {
+                                        sessionId = payloadJson.getString("sessionId");
+                                    }
+                                    if (TextUtils.isEmpty(sessionType) && payloadJson.containsKey("sessionType")) {
+                                        sessionType = payloadJson.getString("sessionType");
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log.d("ReceiverMsgParser", "   Failed to parse payload, trying as direct key: " + e.getMessage());
+                            }
+                        }
+                        
                         if (!TextUtils.isEmpty(path)) {
                             // Non-IM notification (goods_order, visa_order, etc.)
                             Log.d("ReceiverMsgParser", "🔔 Non-IM notification with path: " + path);
@@ -283,6 +315,54 @@ public class ReceiverMsgParser {
                     } catch (Exception e) {
                         Log.e("ReceiverMsgParser", "Error parsing old format notification_data", e);
                         e.printStackTrace();
+                    }
+                }
+            } else if (intent.hasExtra("from_notification") && !intent.hasExtra("notification_all_data") && !intent.hasExtra("notification_data")) {
+                // ============================================================
+                // NotificationClickActivity case: from_notification=true but no notification_all_data
+                // This happens when NotificationClickActivity forwards Intent with direct keys
+                // (sessionId, sessionType, path) from custom click action
+                // ============================================================
+                Log.d("ReceiverMsgParser", "📱 Parsing notification from NotificationClickActivity (direct keys)");
+                
+                // Check for path (non-IM)
+                String path = intent.getStringExtra("path");
+                if (!TextUtils.isEmpty(path)) {
+                    Log.d("ReceiverMsgParser", "🔔 Non-IM notification from NotificationClickActivity");
+                    rr.putString("type", "notification");
+                    rr.putString("path", path);
+                    if (intent.hasExtra("statusOrder")) {
+                        rr.putString("statusOrder", intent.getStringExtra("statusOrder"));
+                    }
+                    if (intent.hasExtra("notificationId")) {
+                        rr.putString("notificationId", intent.getStringExtra("notificationId"));
+                    }
+                } else {
+                    // Check for sessionId (IM)
+                    String sessionId = null;
+                    String sessionType = null;
+                    if (intent.hasExtra("sessionID")) {
+                        sessionId = intent.getStringExtra("sessionID");
+                    } else if (intent.hasExtra("sessionId")) {
+                        sessionId = intent.getStringExtra("sessionId");
+                    }
+                    if (intent.hasExtra("sessionType")) {
+                        sessionType = intent.getStringExtra("sessionType");
+                    }
+                    
+                    if (!TextUtils.isEmpty(sessionId) && !TextUtils.isEmpty(sessionType)) {
+                        Log.d("ReceiverMsgParser", "💬 IM notification from NotificationClickActivity");
+                        WritableMap r = Arguments.createMap();
+                        rr.putString("type", "session");
+                        r.putString("sessionType", sessionType);
+                        r.putString("sessionId", sessionId);
+                        SessionTypeEnum typeEnum = SessionUtil.getSessionType(sessionType);
+                        r.putString("sessionName", SessionUtil.getSessionName(sessionId, typeEnum, false));
+                        rr.putMap("sessionBody", r);
+                        
+                        Log.d("ReceiverMsgParser", "✅ IM notification from NotificationClickActivity parsed successfully");
+                    } else {
+                        Log.w("ReceiverMsgParser", "⚠️ NotificationClickActivity: No path, sessionId, or sessionType found");
                     }
                 }
             } else {
