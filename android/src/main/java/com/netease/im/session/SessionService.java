@@ -2640,17 +2640,17 @@ public class SessionService {
         }
         payloadBuilder.addCustomData("sessionType", String.valueOf(message.getSessionType().getValue()));
 
-        Map<String, Object> payload = payloadBuilder.generatePayload();
+        // Map<String, Object> payload = payloadBuilder.generatePayload();
 
         // FCM-specific field configuration
         // According to NIM docs, android_channel_id must be inside fcmField object
-        Map<String, Object> fcmField = new HashMap<>();
-        fcmField.put("android_channel_id", "142244"); // Required for FCM notifications on Android 8.0+
-        fcmField.put("tag", message.getUuid()); // Optional: for notification grouping
+        // Map<String, Object> fcmField = new HashMap<>();
+        // fcmField.put("android_channel_id", "142244"); // Required for FCM notifications on Android 8.0+
+        // fcmField.put("tag", message.getUuid()); // Optional: for notification grouping
 
-        payload.put("fcmField", fcmField);
-        payload.put("sessionBody", body); // Keep for backward compatibility
-        payload.put("channel_id", "fcm_im_message"); // For other vendor push services
+        // payload.put("fcmField", fcmField);
+        // payload.put("sessionBody", body); // Keep for backward compatibility
+        // payload.put("channel_id", "fcm_im_message"); // For other vendor push services
         message.setPushPayload(payload);
     }
 
