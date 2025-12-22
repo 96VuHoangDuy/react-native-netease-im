@@ -18,6 +18,7 @@
 #import "TeamViewController.h"
 #import "UserStrangers.h"
 #import <Reachability/Reachability.h>
+#import "NNIMSetAllPayload.h"
 
 #define NTESNotifyID        @"id"
 #define NTESCustomContent  @"content"
@@ -2457,7 +2458,20 @@
     if(![sendId isEqualToString:strMyId]){
         NSDictionary *dataDict = @{@"type":@"2",@"data":@{@"dict":dict,@"timestamp":[NSString stringWithFormat:@"%f",timestamp],@"sessionId":self._session.sessionId,@"sessionType":[NSString stringWithFormat:@"%zd",self._session.sessionType]}};
         
-        NSString *content = [self jsonStringWithDictionary:dataDict];
+        // Extract sessionBody from nested structure and add to top level for platform-specific push configuration
+        NSMutableDictionary *mutableDataDict = [NSMutableDictionary dictionaryWithDictionary:dataDict];
+        NSDictionary *nestedData = dataDict[@"data"];
+        if (nestedData && [nestedData isKindOfClass:[NSDictionary class]]) {
+            NSString *sessionId = nestedData[@"sessionId"];
+            NSString *sessionType = nestedData[@"sessionType"];
+            if (sessionId && sessionType) {
+                [mutableDataDict setObject:@{@"sessionId": sessionId, @"sessionType": sessionType} forKey:@"sessionBody"];
+            }
+        }
+        
+        [NNIMSetAllPayload builderPayload:mutableDataDict];
+        
+        NSString *content = [self jsonStringWithDictionary:mutableDataDict];
         NIMSession *redSession = [NIMSession session:sendId type:NIMSessionTypeP2P];
         NIMCustomSystemNotification *notifi = [[NIMCustomSystemNotification alloc]initWithContent:content];
         notifi.sendToOnlineUsersOnly = NO;
@@ -2465,7 +2479,7 @@
         setting.shouldBeCounted = NO;
         setting.apnsEnabled = NO;
         notifi.setting = setting;
-        notifi.apnsPayload = dataDict;
+        notifi.apnsPayload = mutableDataDict;
         [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notifi toSession:redSession completion:nil];//发送自定义通知
     }
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
@@ -3876,6 +3890,18 @@
     [fcmField setObject:message.messageId forKey:@"tag"];
     [payload setObject:fcmField forKey:@"fcmField"];
     [payload setObject:apsField forKey:@"apsField"];
+    
+    // Add sessionBody for platform-specific push configuration
+    NSString *strSessionID = @"";
+    if (message.session.sessionType == NIMSessionTypeP2P) {
+        strSessionID = [NIMSDK sharedSDK].loginManager.currentAccount;
+    } else {
+        strSessionID = [NSString stringWithFormat:@"%@", message.session.sessionId];
+    }
+    NSString *strSessionType = [NSString stringWithFormat:@"%zd", message.session.sessionType];
+    [payload setObject:@{@"sessionId": strSessionID, @"sessionType": strSessionType} forKey:@"sessionBody"];
+    
+    [NNIMSetAllPayload builderPayload:payload];
     
     [[NIMSDK sharedSDK].chatManager revokeMessage:message apnsContent:@"revoke message" apnsPayload:payload shouldBeCounted:NO completion:^(NSError * _Nullable error) {
         if (error) {

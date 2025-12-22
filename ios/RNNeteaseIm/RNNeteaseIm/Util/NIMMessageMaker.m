@@ -13,6 +13,7 @@
 #import "NIMViewController.h"
 #import "TeamViewController.h"
 #import "react-native-config/RNCConfig.h"
+#import "NNIMSetAllPayload.h"
 
 static NSString *businessId = nil;
 
@@ -579,6 +580,8 @@ static NSString *businessId = nil;
             [payload setObject:apsField forKey:@"apsField"];
         }
     }
+    
+    [NNIMSetAllPayload builderPayload:payload];
     
     message.apnsPayload = payload;
 }
