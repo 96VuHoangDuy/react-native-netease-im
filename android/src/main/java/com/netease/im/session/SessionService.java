@@ -50,6 +50,9 @@ import com.netease.nimlib.sdk.NIMSDK;
 import com.nim.pushlib.pushpayload.NotifyClickAction;
 import com.nim.pushlib.pushpayload.NotifyEffectMode;
 import com.nim.pushlib.pushpayload.PushPayloadBuilder;
+import com.nim.pushlib.pushpayload.PushPayloadBuilderType;
+import com.nim.pushlib.pushpayload.IPushPayloadBuilder;
+import com.nim.pushlib.pushpayload.builder.APNsPushPayloadBuilder;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
@@ -2639,6 +2642,11 @@ public class SessionService {
             payloadBuilder.addCustomData("sessionId", sessionIdValue);
         }
         payloadBuilder.addCustomData("sessionType", String.valueOf(message.getSessionType().getValue()));
+
+        // Add APNs-specific sound configuration for iOS
+        IPushPayloadBuilder apns = new APNsPushPayloadBuilder();
+        apns.addCustomData("sound", "notification_sound.mp3");
+        payloadBuilder.addCustomPushPayloadBuilder(PushPayloadBuilderType.APNS, apns);
 
         Map<String, Object> payload = payloadBuilder.generatePayload();
 
