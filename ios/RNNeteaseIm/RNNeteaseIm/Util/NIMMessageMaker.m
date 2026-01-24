@@ -557,6 +557,8 @@ static NSString *businessId = nil;
             [alert setObject:senderName forKey:@"title"];
             [alert setObject:body forKey:@"body"];
             [apsField setObject:alert forKey:@"alert"];
+            // Set custom notification sound for iOS
+            [apsField setObject:@"msg.wav" forKey:@"sound"];
             
             [payload setObject:apsField forKey:@"apsField"];
         } else {
@@ -576,6 +578,8 @@ static NSString *businessId = nil;
             [alert setObject:teamName forKey:@"title"];
             [alert setObject:[NSString stringWithFormat:@"%@: %@", senderName, body] forKey:@"body"];
             [apsField setObject:alert forKey:@"alert"];
+            // Set custom notification sound for iOS
+            [apsField setObject:@"msg.wav" forKey:@"sound"];
             
             [payload setObject:apsField forKey:@"apsField"];
         }

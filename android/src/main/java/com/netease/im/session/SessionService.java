@@ -2645,7 +2645,7 @@ public class SessionService {
 
         // Add APNs-specific sound configuration for iOS
         IPushPayloadBuilder apns = new APNsPushPayloadBuilder();
-        apns.addCustomData("sound", "notification_sound.mp3");
+        apns.addCustomData("sound", "msg.wav");
         payloadBuilder.addCustomPushPayloadBuilder(PushPayloadBuilderType.APNS, apns);
 
         Map<String, Object> payload = payloadBuilder.generatePayload();
