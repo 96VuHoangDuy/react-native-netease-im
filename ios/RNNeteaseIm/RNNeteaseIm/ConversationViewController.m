@@ -1784,6 +1784,10 @@
     
     NIMMessage *lastMessage = recent.lastMessage;
     NIMMessage *message = [NIMMessageMaker msgWithNotificationBirthday:lastMessage memberContactId:memberContactId memberName:name];
+
+    // Set timestamp trừ đi 5 phút (300 seconds) để đảm bảo thứ tự hiển thị đúng
+    NSDate *date = [NSDate dateWithTimeIntervalSinceNow:-330]; // -5 minutes
+    message.timestamp = [date timeIntervalSince1970];
     
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:^(NSError * _Nullable error) {
         if (error != nil) {
