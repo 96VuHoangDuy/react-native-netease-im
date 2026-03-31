@@ -200,4 +200,5 @@ export type ITemporarySessionRef = {
   sessionId: string;
   sessionName: string;
   sessionType: NIMSessionTypeEnum;
+  source?: string;
 };

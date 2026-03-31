@@ -123,6 +123,7 @@ import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
 public class SessionService {
 
     final static String TAG = "SessionService";
+    final static String FLOW_CHECK_SEND_FIRST_MESSAGE = "[FLOW_CHECK_SEND_FIRST_MESSAGE]";
 
     private static final int LOAD_MESSAGE_COUNT = 20;
 
@@ -338,6 +339,9 @@ public class SessionService {
     public void deleteItem(IMMessage messageItem, boolean isRelocateTime) {
         if (messageItem == null) {
             return;
+        }
+        if ("AGREE_FRIEND_REQUEST".equals(messageItem.getContent())) {
+            LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " deleteItem uuid=" + messageItem.getUuid() + " sessionId=" + messageItem.getSessionId() + " status=" + messageItem.getStatus() + " localExt=" + messageItem.getLocalExtension());
         }
         getMsgService().deleteChattingHistory(messageItem, true);
     }
@@ -568,6 +572,9 @@ public class SessionService {
     }
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
+        if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
+            LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " onMessageStatusChange uuid=" + message.getUuid() + " sessionId=" + message.getSessionId() + " status=" + message.getStatus() + " direct=" + message.getDirect() + " isSend=" + isSend + " localExt=" + message.getLocalExtension());
+        }
         if(message.getDirect() == MsgDirectionEnum.Out) {
             Map<String, Object> stateMap = MapBuilder.newHashMap();
             stateMap.put("real_state_by_observer", message.getStatus().getValue());
@@ -579,6 +586,9 @@ public class SessionService {
             List<IMMessage> list = new ArrayList<>(1);
             list.add(message);
             Object a = ReactCache.createMessageList(list);
+            if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
+                LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " emit observeMsgStatus success uuid=" + message.getUuid() + " payload=" + a);
+            }
             ReactCache.emit(ReactCache.observeMsgStatus, a);
         } else {
             if (localExtension != null && localExtension.containsKey("downloadStatus") && localExtension.get("downloadStatus").equals("downloading")) {
@@ -588,6 +598,9 @@ public class SessionService {
                 List<IMMessage> list = new ArrayList<>(1);
                 list.add(message);
                 Object a = ReactCache.createMessageList(list);
+                if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
+                    LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " emit observeMsgStatus nonSuccess uuid=" + message.getUuid() + " payload=" + a);
+                }
                 ReactCache.emit(ReactCache.observeMsgStatus, a);
             }
         }
@@ -2502,25 +2515,26 @@ public class SessionService {
 
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
             LogUtil.w(TAG, "isFriend:" + isFriend);
-            if (!isFriend && !isSkipFriendCheck) {
-                Map<String, Object> localExt = new HashMap<String, Object>();
-
-                if (!isFriend) {
-                    localExt.put("isCancelResend", true);
-                }
-
-                message.setStatus(MsgStatusEnum.fail);
-                message.setLocalExtension(localExt);
-                CustomMessageConfig config = new CustomMessageConfig();
-                config.enablePush = false;
-                config.enableUnreadCount = false;
-                message.setConfig(config);
-                getMsgService().saveMessageToLocal(message, true);
-                if (!isSkipTipForStranger) {
-                    sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
-                }
-                return;
-            }
+            // [DEBUG] Temporarily disabled friend check to debug error 20000
+            // if (!isFriend && !isSkipFriendCheck) {
+            //     Map<String, Object> localExt = new HashMap<String, Object>();
+            //
+            //     if (!isFriend) {
+            //         localExt.put("isCancelResend", true);
+            //     }
+            //
+            //     message.setStatus(MsgStatusEnum.fail);
+            //     message.setLocalExtension(localExt);
+            //     CustomMessageConfig config = new CustomMessageConfig();
+            //     config.enablePush = false;
+            //     config.enableUnreadCount = false;
+            //     message.setConfig(config);
+            //     getMsgService().saveMessageToLocal(message, true);
+            //     if (!isSkipTipForStranger) {
+            //         sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
+            //     }
+            //     return;
+            // }
         }
         getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
             @Override

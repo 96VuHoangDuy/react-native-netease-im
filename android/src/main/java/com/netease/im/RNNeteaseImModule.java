@@ -122,7 +122,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -140,6 +139,13 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     final static int BASIC_PERMISSION_REQUEST_CODE = 100;
     private final static String TAG = "RNNeteaseIm";
     private final static String NAME = "RNNeteaseIm";
+    private final static int FRIEND_SYNC_MAX_RETRIES = 10;
+    private final static long FRIEND_SYNC_RETRY_DELAY_MS = 1000L;
+    private final static long FRIEND_ACK_RETRY_DELAY_MS = 2000L;
+    private final static int FRIEND_ACK_CUSTOM_CALLBACK_ERROR_MIN = 20000;
+    private final static int FRIEND_ACK_CUSTOM_CALLBACK_ERROR_MAX = 20099;
+    private final static int FRIEND_ACK_AUTO_MESSAGE_RETRY_LIMIT = 1;
+    private final static String FLOW_CHECK_SEND_FIRST_MESSAGE = "[FLOW_CHECK_SEND_FIRST_MESSAGE]";
     private final ReactApplicationContext reactContext;
     private AudioMessageService audioMessageService;
     private AudioPlayService audioPlayService;
@@ -3315,6 +3321,7 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void ackAddFriendRequest(String messageId, final String contactId, String pass, String timestamp, final Promise promise) {
         LogUtil.w(TAG, "ackAddFriendRequest" + contactId);
+        LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " ackAddFriendRequest start messageId=" + messageId + " contactId=" + contactId + " pass=" + pass + " timestamp=" + timestamp);
         long messageIdLong = 0L;
         try {
             messageIdLong = Long.parseLong(messageId);
@@ -3326,22 +3333,78 @@ WritableMap _result = Arguments.createMap();
             sysMessageObserver.ackAddFriendRequest(messageIdLong, contactId, string2Boolean(pass), timestamp, new RequestCallbackWrapper<Void>() {
                 @Override
                 public void onResult(int code, Void aVoid, Throwable throwable) {
+                    LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " ackAddFriendRequest result code=" + code + " contactId=" + contactId + " isFriend=" + NIMClient.getService(FriendService.class).isMyFriend(contactId) + " throwable=" + throwable);
                     if (code == ResponseCode.RES_SUCCESS) {
-                        if (toPass) {
-                            try {
-                                IMMessage message = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "AGREE_FRIEND_REQUEST");
-                                TimeUnit.MILLISECONDS.sleep(1500);
-                                NIMClient.getService(MsgService.class).sendMessage(message, false);
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
                         promise.resolve("" + code);
+                        // [DEBUG] Disabled auto AGREE_FRIEND_REQUEST to debug error 20000
+                        // if (toPass) {
+                        //     LogUtil.w(TAG, "[DEBUG_20000] ackAddFriendRequest success, sending AGREE_FRIEND_REQUEST directly (no retry) contactId=" + contactId);
+                        //     IMMessage agreeFriendMsg = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "AGREE_FRIEND_REQUEST");
+                        //     NIMClient.getService(MsgService.class).sendMessage(agreeFriendMsg, false);
+                        // }
                     } else {
                         promise.reject("" + code, "");
                     }
                 }
             });
+    }
+
+    private void waitForFriendshipSyncAndRun(final String contactId, final int attempt, final Runnable onReady) {
+        boolean isFriend = NIMClient.getService(FriendService.class).isMyFriend(contactId);
+        LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " retry attempt=" + (attempt + 1) + "/" + FRIEND_SYNC_MAX_RETRIES + " contactId=" + contactId + " isFriend=" + isFriend);
+        if (isFriend) {
+            onReady.run();
+            return;
+        }
+
+        if (attempt >= FRIEND_SYNC_MAX_RETRIES - 1) {
+            LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " friend sync did not complete after " + FRIEND_SYNC_MAX_RETRIES + " attempts for " + contactId + ", skip AGREE_FRIEND_REQUEST");
+            return;
+        }
+
+        LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " waiting for friend sync " + (attempt + 1) + "/" + FRIEND_SYNC_MAX_RETRIES + " for " + contactId);
+        new Handler(Looper.getMainLooper()).postDelayed(
+                () -> waitForFriendshipSyncAndRun(contactId, attempt + 1, onReady),
+                FRIEND_SYNC_RETRY_DELAY_MS
+        );
+    }
+
+    private boolean isRetriableFriendAckSendCode(int code) {
+        return code >= FRIEND_ACK_CUSTOM_CALLBACK_ERROR_MIN && code <= FRIEND_ACK_CUSTOM_CALLBACK_ERROR_MAX;
+    }
+
+    private void sendAgreeFriendRequest(final String contactId, final int attempt) {
+        IMMessage message = MessageBuilder.createTextMessage(contactId, SessionTypeEnum.P2P, "AGREE_FRIEND_REQUEST");
+        LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " sending AGREE_FRIEND_REQUEST contactId=" + contactId + " uuid=" + message.getUuid() + " attempt=" + attempt + " isFriend=" + NIMClient.getService(FriendService.class).isMyFriend(contactId));
+        NIMClient.getService(MsgService.class).sendMessage(message, false).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " agree message sent contactId=" + contactId + " uuid=" + message.getUuid());
+            }
+
+            @Override
+            public void onFailed(int sendCode) {
+                LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " agree message failed code=" + sendCode + " contactId=" + contactId + " uuid=" + message.getUuid() + " attempt=" + attempt);
+                if (isRetriableFriendAckSendCode(sendCode)) {
+                    LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " delete failed AGREE_FRIEND_REQUEST before retry uuid=" + message.getUuid() + " contactId=" + contactId);
+                    SessionService.getInstance().deleteItem(message, true);
+                    if (attempt < FRIEND_ACK_AUTO_MESSAGE_RETRY_LIMIT) {
+                        LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " retry AGREE_FRIEND_REQUEST after 2s code=" + sendCode + " contactId=" + contactId + " nextAttempt=" + (attempt + 1));
+                        new Handler(Looper.getMainLooper()).postDelayed(
+                                () -> sendAgreeFriendRequest(contactId, attempt + 1),
+                                FRIEND_ACK_RETRY_DELAY_MS
+                            );
+                    } else {
+                        LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " drop AGREE_FRIEND_REQUEST after retry limit code=" + sendCode + " contactId=" + contactId);
+                    }
+                }
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " agree message exception contactId=" + contactId + " uuid=" + message.getUuid() + " attempt=" + attempt + " exception=" + exception);
+            }
+        });
     }
 
     /**
