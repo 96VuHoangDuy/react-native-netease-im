@@ -11,6 +11,7 @@
 #import "NTESContactDataMember.h"
 //#import "NIMContactSelectViewController.h"
 #import "NTESBundleSetting.h"
+#import "NNIMSetAllPayload.h"
 
 @interface ContactViewController ()<NIMLoginManagerDelegate,NIMSystemNotificationManagerDelegate,NIMUserManagerDelegate>
 {
@@ -316,12 +317,23 @@
 //发送自定义通知
 - (void)sendCustomNotificationContent:(NSString *)content andSessionID:(NSString *)sessionID andApnsContent:(NSString *)strApns AndData:(NSDictionary *)dict shouldBeCounted:(BOOL)isCounted{
     NIMSession *session = [NIMSession session:sessionID type:NIMSessionTypeP2P];
+    
+    // Ensure sessionBody exists for platform-specific push configuration
+    NSMutableDictionary *mutableDict = [NSMutableDictionary dictionaryWithDictionary:dict];
+    if (!mutableDict[@"sessionBody"] || [mutableDict[@"sessionBody"] isEqual:[NSNull null]]) {
+        // Create sessionBody from sessionID (P2P session type is 0)
+        NSString *strSessionType = @"0"; // NIMSessionTypeP2P
+        [mutableDict setObject:@{@"sessionId": sessionID, @"sessionType": strSessionType} forKey:@"sessionBody"];
+    }
+    
+    [NNIMSetAllPayload builderPayload:mutableDict];
+    
     NIMCustomSystemNotification *notifi = [[NIMCustomSystemNotification alloc]initWithContent:content];
     NIMCustomSystemNotificationSetting *setting = [[NIMCustomSystemNotificationSetting alloc]init];
     setting.shouldBeCounted = isCounted;
     setting.apnsEnabled = YES;
     notifi.apnsContent = strApns;
-    notifi.apnsPayload = dict;
+    notifi.apnsPayload = mutableDict;
     notifi.sendToOnlineUsersOnly = NO;
     notifi.setting = setting;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notifi toSession:session completion:nil];//发送自定义通知

@@ -30,7 +30,7 @@ android {
     }
     sourceSets{
         main{
-            jniLibs.srcDir(['libs'])
+            // jniLibs.srcDir(['libs'])
         }
     }
     lintOptions {
@@ -43,19 +43,31 @@ android {
 
 repositories {
     mavenCentral()
+    // flatDir {
+    //     dirs 'libs'
+    // }
 }
 
 dependencies {
-    implementation fileTree(include: '*.jar', dir: 'libs')
+    // implementation fileTree(include: '*.jar', dir: 'libs')
     implementation 'com.facebook.react:react-native:+'
     // 基础功能 (必需)
-    implementation 'com.netease.nimlib:basesdk:9.12.2'
-    implementation 'com.netease.nimlib:push:9.12.2'
-    implementation "com.netease.nimlib:lucene:9.12.2"
+    def nim_version = "9.16.3"
+    implementation "com.netease.nimlib:basesdk:${nim_version}"
+    implementation "com.netease.nimlib:push:${nim_version}"
+    implementation "com.netease.nimlib:lucene:${nim_version}"
     implementation "net.zetetic:android-database-sqlcipher:4.5.3"
     implementation "androidx.sqlite:sqlite:2.1.0"
     implementation 'com.alibaba:fastjson:1.2.57'
-    // implementation 'com.huawei.hms:push:3.0.3.301'
+    
+    // Push SDKs
+    // implementation 'com.huawei.hms:push:6.12.0.300'
+    // implementation 'com.hihonor.mcs:push:7.0.61.303'
+    // implementation 'vivo:vpush:4.1.0.0'
+    // compileOnly(name: 'MiPush_SDK_Client_6_0_1-C_3rd', ext: 'aar')
+    // compileOnly(name: 'com.heytap.msp_V3.7.1', ext: 'aar')
+    implementation project(':pushlib')
+
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
 
 }

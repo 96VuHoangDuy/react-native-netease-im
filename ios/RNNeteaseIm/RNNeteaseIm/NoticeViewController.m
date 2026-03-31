@@ -21,6 +21,10 @@
 
 @implementation NoticeViewController
 
+static const NSInteger DWFriendSyncMaxRetries = 10;
+static const NSTimeInterval DWFriendSyncRetryDelay = 1.0;
+static const NSTimeInterval DWFriendAckRetryDelay = 2.0;
+
 
 +(instancetype)initWithNoticeViewController{
     static NoticeViewController *notVC = nil;
@@ -277,13 +281,10 @@
         if (!error) {
             if ([isAccept isEqualToString:@"1"]) {
                 success(@"success");
-                
-                double delayInSeconds = 1.5;
-                dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-                dispatch_after(popTime, dispatch_get_main_queue(), ^{
-                    [self sendMakeFriendSucessMessgae:request.userId];
-                    [self refrash];
-                });
+
+                // [DEBUG] Disabled auto AGREE_FRIEND_REQUEST to debug error 20000
+                // NSLog(@"[DEBUG_20000] ackAddFriendRequest success, sending AGREE_FRIEND_REQUEST directly (no retry) userId=%@", request.userId);
+                // [self sendMakeFriendSucessMessgae:request.userId];
             } else {
                 success(@"remove done");
             }
@@ -293,6 +294,18 @@
     }];
 }
 
+//发送成为好友消息（带重试，等待friendship同步）
+- (void)sendMakeFriendMessageWithRetry:(NSString *)userId attempt:(int)attempt {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DWFriendSyncRetryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        BOOL isFriend = [[NIMSDK sharedSDK].userManager isMyFriend:userId];
+        if (isFriend) {
+            [self sendMakeFriendSucessMessgae:userId];
+            [self refrash];
+        } else if (attempt < DWFriendSyncMaxRetries - 1) {
+            [self sendMakeFriendMessageWithRetry:userId attempt:attempt + 1];
+        }
+    });
+}
 
 //同意
 -(void)onAccept:(NSString *)targetID timestamp:(NSString *)timestamp sucess:(Success)success error:(Errors)err{
@@ -386,15 +399,35 @@
 
 
 //发送成为好友提醒
+- (void)retryAgreeFriendAckMessageToUser:(NSString *)userId attempt:(NSInteger)attempt {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DWFriendAckRetryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self sendMakeFriendSucessMessgae:userId attempt:attempt];
+    });
+}
+
 - (void)sendMakeFriendSucessMessgae:(NSString *)strUserId{
+    [self sendMakeFriendSucessMessgae:strUserId attempt:0];
+}
+
+- (void)sendMakeFriendSucessMessgae:(NSString *)strUserId attempt:(NSInteger)attempt{
+    NSLog(@"[DEBUG_20000] sendMakeFriendSucessMessgae userId=%@ attempt=%ld isFriend=%d", strUserId, (long)attempt, [[NIMSDK sharedSDK].userManager isMyFriend:strUserId]);
+
     NIMMessage *message = [[NIMMessage alloc] init];
     message.text    = @"AGREE_FRIEND_REQUEST";
+    message.localExt = @{
+        @"friendAckAutoMessage": @YES,
+        @"friendAckRetryAttempt": @(attempt)
+    };
+
     NIMMessageSetting *setting = [[NIMMessageSetting alloc]init];
     setting.apnsEnabled = NO;
     message.setting = setting;
+    
     NIMSession *session = [NIMSession session:strUserId type:NIMSessionTypeP2P];
-    //发送消息
-    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+
+    NSLog(@"[DEBUG_20000] sending AGREE_FRIEND_REQUEST to session=%@ messageId=%@", strUserId, message.messageId);
+
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session completion:nil];
 }
 
 

@@ -102,6 +102,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import okhttp3.Cache;
+import okhttp3.Interceptor;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -685,7 +687,24 @@ public class ReactCache {
 //                        map.putString(MessageConstant.Message.MSG_TYPE, getMessageType(contact.getMsgType(), null));
 //                    }
         }
-        map.putString("msgStatus", Integer.toString(contact.getMsgStatus().getValue()));
+
+        int msgStatus;
+        switch (contact.getMsgStatus()) {
+            case fail:
+                msgStatus = 0;
+                break;
+
+            case success:
+            case unread:
+            case read:
+                msgStatus = 2;
+                break;
+
+            default:
+                msgStatus = 1;
+        }
+
+        map.putString("msgStatus", Integer.toString(msgStatus));
         map.putString("messageId", contact.getRecentMessageId());
 
         map.putString("fromAccount", fromAccount);
@@ -888,6 +907,17 @@ public class ReactCache {
                 }
                 IMMessage lastMessage = NIMClient.getService(MsgService.class).queryLastMessage(contact.getContactId(), contact.getSessionType());
                 String notifyType = "";
+
+                if(lastMessage != null && lastMessage.getDirect() == MsgDirectionEnum.Out) {
+                    Map<String, Object> extMap = lastMessage.getLocalExtension();
+                    if(extMap != null
+                            && extMap.containsKey("real_state_by_observer")
+                            && extMap.get("real_state_by_observer") instanceof Integer
+                    ) {
+                        int stateVal = ((Integer)extMap.get("real_state_by_observer")).intValue();
+                        lastMessage.setStatus(MsgStatusEnum.statusOfValue(stateVal));
+                    }
+                }
 
                 if (lastMessage != null) {
                     map.putInt("messageSubType", lastMessage.getSubtype());

@@ -144,3 +144,31 @@
 ### 清理缓存
 -dontwarn android.content.pm.**
 -keep class android.content.pm.** { *; }
+
+-dontwarn com.vivo.push.**
+-keep class com.vivo.push.**{*; }
+-keep class com.vivo.vms.**{*; }
+
+-ignorewarnings
+-keepattributes *Annotation*
+-keepattributes Exceptions
+-keepattributes InnerClasses
+-keepattributes Signature
+-keepattributes SourceFile,LineNumberTable
+-dontwarn com.hihonor.push.**
+-keep class com.hihonor.push.** {*;}
+
+-ignorewarnings
+-keepattributes *Annotation*
+-keepattributes Exceptions
+-keepattributes InnerClasses
+-keepattributes Signature
+-keepattributes SourceFile,LineNumberTable
+-keep class com.huawei.hianalytics.**{*;}
+-keep class com.huawei.updatesdk.**{*;}
+-keep class com.huawei.hms.**{*;}
+
+-keep public class * extends android.app.Service
+-keep class com.heytap.msp.** { *;}
+
+-keep class com.xiaomi.** {*;}

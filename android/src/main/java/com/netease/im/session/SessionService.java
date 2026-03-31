@@ -47,6 +47,12 @@ import com.netease.im.uikit.uinfo.UserInfoObservable;
 import com.netease.nimlib.sdk.AbortableFuture;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.NIMSDK;
+import com.nim.pushlib.pushpayload.NotifyClickAction;
+import com.nim.pushlib.pushpayload.NotifyEffectMode;
+import com.nim.pushlib.pushpayload.PushPayloadBuilder;
+import com.nim.pushlib.pushpayload.PushPayloadBuilderType;
+import com.nim.pushlib.pushpayload.IPushPayloadBuilder;
+import com.nim.pushlib.pushpayload.builder.APNsPushPayloadBuilder;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
@@ -117,6 +123,7 @@ import static com.netease.nimlib.sdk.NIMSDK.getMsgService;
 public class SessionService {
 
     final static String TAG = "SessionService";
+    final static String FLOW_CHECK_SEND_FIRST_MESSAGE = "[FLOW_CHECK_SEND_FIRST_MESSAGE]";
 
     private static final int LOAD_MESSAGE_COUNT = 20;
 
@@ -332,6 +339,9 @@ public class SessionService {
     public void deleteItem(IMMessage messageItem, boolean isRelocateTime) {
         if (messageItem == null) {
             return;
+        }
+        if ("AGREE_FRIEND_REQUEST".equals(messageItem.getContent())) {
+            LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " deleteItem uuid=" + messageItem.getUuid() + " sessionId=" + messageItem.getSessionId() + " status=" + messageItem.getStatus() + " localExt=" + messageItem.getLocalExtension());
         }
         getMsgService().deleteChattingHistory(messageItem, true);
     }
@@ -562,11 +572,23 @@ public class SessionService {
     }
 
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
+        if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
+            LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " onMessageStatusChange uuid=" + message.getUuid() + " sessionId=" + message.getSessionId() + " status=" + message.getStatus() + " direct=" + message.getDirect() + " isSend=" + isSend + " localExt=" + message.getLocalExtension());
+        }
+        if(message.getDirect() == MsgDirectionEnum.Out) {
+            Map<String, Object> stateMap = MapBuilder.newHashMap();
+            stateMap.put("real_state_by_observer", message.getStatus().getValue());
+            setLocalExtension(message, stateMap);
+            getMsgService().updateIMMessage(message);
+        }
         Map<String, Object> localExtension = message.getLocalExtension();
         if (message.getStatus() == MsgStatusEnum.success && message.getDirect() == MsgDirectionEnum.Out) {
             List<IMMessage> list = new ArrayList<>(1);
             list.add(message);
             Object a = ReactCache.createMessageList(list);
+            if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
+                LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " emit observeMsgStatus success uuid=" + message.getUuid() + " payload=" + a);
+            }
             ReactCache.emit(ReactCache.observeMsgStatus, a);
         } else {
             if (localExtension != null && localExtension.containsKey("downloadStatus") && localExtension.get("downloadStatus").equals("downloading")) {
@@ -576,6 +598,9 @@ public class SessionService {
                 List<IMMessage> list = new ArrayList<>(1);
                 list.add(message);
                 Object a = ReactCache.createMessageList(list);
+                if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
+                    LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " emit observeMsgStatus nonSuccess uuid=" + message.getUuid() + " payload=" + a);
+                }
                 ReactCache.emit(ReactCache.observeMsgStatus, a);
             }
         }
@@ -2490,25 +2515,26 @@ public class SessionService {
 
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
             LogUtil.w(TAG, "isFriend:" + isFriend);
-            if (!isFriend && !isSkipFriendCheck) {
-                Map<String, Object> localExt = new HashMap<String, Object>();
-
-                if (!isFriend) {
-                    localExt.put("isCancelResend", true);
-                }
-
-                message.setStatus(MsgStatusEnum.fail);
-                message.setLocalExtension(localExt);
-                CustomMessageConfig config = new CustomMessageConfig();
-                config.enablePush = false;
-                config.enableUnreadCount = false;
-                message.setConfig(config);
-                getMsgService().saveMessageToLocal(message, true);
-                if (!isSkipTipForStranger) {
-                    sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
-                }
-                return;
-            }
+            // [DEBUG] Temporarily disabled friend check to debug error 20000
+            // if (!isFriend && !isSkipFriendCheck) {
+            //     Map<String, Object> localExt = new HashMap<String, Object>();
+            //
+            //     if (!isFriend) {
+            //         localExt.put("isCancelResend", true);
+            //     }
+            //
+            //     message.setStatus(MsgStatusEnum.fail);
+            //     message.setLocalExtension(localExt);
+            //     CustomMessageConfig config = new CustomMessageConfig();
+            //     config.enablePush = false;
+            //     config.enableUnreadCount = false;
+            //     message.setConfig(config);
+            //     getMsgService().saveMessageToLocal(message, true);
+            //     if (!isSkipTipForStranger) {
+            //         sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
+            //     }
+            //     return;
+            // }
         }
         getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
             @Override
@@ -2550,18 +2576,20 @@ public class SessionService {
     }
 
     public void appendPushConfig(IMMessage message) {
-//        CustomPushContentProvider customConfig = null;//NimUIKit.getCustomPushContentProvider();
-//        if (customConfig != null) {
-//            String content = customConfig.getPushContent(message);
-//            Map<String, Object> payload = customConfig.getPushPayload(message);
-        Map<String, Object> payload = new HashMap<>();
+        PushPayloadBuilder payloadBuilder = new PushPayloadBuilder();
+
         Map<String, Object> body = new HashMap<>();
 
         body.put("sessionType", String.valueOf(message.getSessionType().getValue()));
+        String sessionIdValue;
         if (message.getSessionType() == SessionTypeEnum.P2P) {
-            body.put("sessionId", LoginService.getInstance().getAccount());
+            sessionIdValue = LoginService.getInstance().getAccount();
+            body.put("sessionId", sessionIdValue);
         } else if (message.getSessionType() == SessionTypeEnum.Team) {
-            body.put("sessionId", message.getSessionId());
+            sessionIdValue = message.getSessionId();
+            body.put("sessionId", sessionIdValue);
+        } else {
+            sessionIdValue = null;
         }
         body.put("sessionName", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
         String pushContent = message.getContent();
@@ -2603,20 +2631,48 @@ public class SessionService {
             }
         }
 
-
+        String pushTitle = "";
         if (message.getSessionType() == SessionTypeEnum.P2P) {
-            payload.put("pushTitle", message.getFromNick());
+            pushTitle = message.getFromNick();
             message.setPushContent(pushContent);
         } else {
-            payload.put("pushTitle", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
+            pushTitle = SessionUtil.getSessionName(sessionId, message.getSessionType(), true);
             message.setPushContent(message.getFromNick() + ": " + pushContent);
         }
 
-        Map<String, Object> fcmField = new HashMap<>();
-        fcmField.put("tag", message.getUuid());
+        payloadBuilder.setPushTitle(pushTitle);
 
-        payload.put("fcmField", fcmField);
-        payload.put("sessionBody", body);
+        // Configure NotifyClickAction to use NotificationClickActivity
+        String applicationId = IMApplication.getContext().getPackageName();
+        NotifyClickAction clickAction = new NotifyClickAction.Builder()
+                .setNotifyEffect(NotifyEffectMode.EFFECT_MODE_CONTENT)
+                .setIntentAction(applicationId + ".openNotification")
+                .addIntentCategory("android.intent.category.DEFAULT")
+                .build();
+        payloadBuilder.setClickAction(clickAction);
+
+        // Add custom data for notification click handling
+        if (sessionIdValue != null) {
+            payloadBuilder.addCustomData("sessionId", sessionIdValue);
+        }
+        payloadBuilder.addCustomData("sessionType", String.valueOf(message.getSessionType().getValue()));
+
+        // Add APNs-specific sound configuration for iOS
+        IPushPayloadBuilder apns = new APNsPushPayloadBuilder();
+        apns.addCustomData("sound", "msg.wav");
+        payloadBuilder.addCustomPushPayloadBuilder(PushPayloadBuilderType.APNS, apns);
+
+        Map<String, Object> payload = payloadBuilder.generatePayload();
+
+        // FCM-specific field configuration
+        // According to NIM docs, android_channel_id must be inside fcmField object
+        // Map<String, Object> fcmField = new HashMap<>();
+        // fcmField.put("android_channel_id", "142244"); // Required for FCM notifications on Android 8.0+
+        // fcmField.put("tag", message.getUuid()); // Optional: for notification grouping
+
+        // payload.put("fcmField", fcmField);
+        payload.put("sessionBody", body); // Keep for backward compatibility
+        // payload.put("channel_id", "fcm_im_message"); // For other vendor push services
         message.setPushPayload(payload);
     }
 

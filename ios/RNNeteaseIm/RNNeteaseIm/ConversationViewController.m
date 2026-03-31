@@ -17,7 +17,9 @@
 #import "CacheUsers.h"
 #import "TeamViewController.h"
 #import "UserStrangers.h"
+#import "NoticeViewController.h"
 #import <Reachability/Reachability.h>
+#import "NNIMSetAllPayload.h"
 
 #define NTESNotifyID        @"id"
 #define NTESCustomContent  @"content"
@@ -44,6 +46,48 @@
 @end
 
 @implementation ConversationViewController
+
+static const NSInteger DWFriendAckCustomCallbackErrorMin = 20000;
+static const NSInteger DWFriendAckCustomCallbackErrorMax = 20099;
+static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
+
+- (BOOL)isFriendAckProbeMessage:(NIMMessage *)message {
+    return [message.text isKindOfClass:[NSString class]] && [message.text isEqualToString:@"AGREE_FRIEND_REQUEST"];
+}
+
+- (BOOL)isRetriableFriendAckAutoMessageError:(NSError *)error message:(NIMMessage *)message {
+    if (![self isFriendAckProbeMessage:message] || error == nil) {
+        return NO;
+    }
+
+    if (![error.domain isEqualToString:NIMRemoteErrorDomain]) {
+        return NO;
+    }
+
+    return error.code >= DWFriendAckCustomCallbackErrorMin && error.code <= DWFriendAckCustomCallbackErrorMax;
+}
+
+- (void)removeFriendAckProbeMessageFromUI:(NIMMessage *)message {
+    if (message.messageId.length == 0 || message.session.sessionId.length == 0) {
+        return;
+    }
+
+    NSDictionary *deleteDict = @{
+        @"msgId": message.messageId,
+        @"sessionId": message.session.sessionId,
+        @"isObserveReceiveRevokeMessage": @(YES)
+    };
+    [NIMModel initShareMD].deleteMessDict = deleteDict;
+    [[NIMViewController initWithController] getResouces];
+}
+
+- (NSInteger)friendAckRetryAttemptForMessage:(NIMMessage *)message {
+    id attempt = [message.localExt objectForKey:@"friendAckRetryAttempt"];
+    if ([attempt respondsToSelector:@selector(integerValue)]) {
+        return [attempt integerValue];
+    }
+    return 0;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -1783,6 +1827,10 @@
     
     NIMMessage *lastMessage = recent.lastMessage;
     NIMMessage *message = [NIMMessageMaker msgWithNotificationBirthday:lastMessage memberContactId:memberContactId memberName:name];
+
+    // Set timestamp trừ đi 5 phút (300 seconds) để đảm bảo thứ tự hiển thị đúng
+    NSDate *date = [NSDate dateWithTimeIntervalSinceNow:-330]; // -5 minutes
+    message.timestamp = [date timeIntervalSince1970];
     
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:^(NSError * _Nullable error) {
         if (error != nil) {
@@ -2457,7 +2505,20 @@
     if(![sendId isEqualToString:strMyId]){
         NSDictionary *dataDict = @{@"type":@"2",@"data":@{@"dict":dict,@"timestamp":[NSString stringWithFormat:@"%f",timestamp],@"sessionId":self._session.sessionId,@"sessionType":[NSString stringWithFormat:@"%zd",self._session.sessionType]}};
         
-        NSString *content = [self jsonStringWithDictionary:dataDict];
+        // Extract sessionBody from nested structure and add to top level for platform-specific push configuration
+        NSMutableDictionary *mutableDataDict = [NSMutableDictionary dictionaryWithDictionary:dataDict];
+        NSDictionary *nestedData = dataDict[@"data"];
+        if (nestedData && [nestedData isKindOfClass:[NSDictionary class]]) {
+            NSString *sessionId = nestedData[@"sessionId"];
+            NSString *sessionType = nestedData[@"sessionType"];
+            if (sessionId && sessionType) {
+                [mutableDataDict setObject:@{@"sessionId": sessionId, @"sessionType": sessionType} forKey:@"sessionBody"];
+            }
+        }
+        
+        [NNIMSetAllPayload builderPayload:mutableDataDict];
+        
+        NSString *content = [self jsonStringWithDictionary:mutableDataDict];
         NIMSession *redSession = [NIMSession session:sendId type:NIMSessionTypeP2P];
         NIMCustomSystemNotification *notifi = [[NIMCustomSystemNotification alloc]initWithContent:content];
         notifi.sendToOnlineUsersOnly = NO;
@@ -2465,7 +2526,7 @@
         setting.shouldBeCounted = NO;
         setting.apnsEnabled = NO;
         notifi.setting = setting;
-        notifi.apnsPayload = dataDict;
+        notifi.apnsPayload = mutableDataDict;
         [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notifi toSession:redSession completion:nil];//发送自定义通知
     }
     [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
@@ -2587,6 +2648,12 @@
         
         [[NSUserDefaults standardUserDefaults]setObject: [NSString stringWithFormat:@"%f", message.timestamp] forKey:@"timestamp"];
     }else{
+        // [DEBUG] Log error 20000 instead of retrying
+        if ([self isFriendAckProbeMessage:message]) {
+            NSLog(@"[DEBUG_20000] AGREE_FRIEND_REQUEST failed error=%@ code=%ld domain=%@ sessionId=%@ isFriend=%d", error, (long)error.code, error.domain, message.session.sessionId, [[NIMSDK sharedSDK].userManager isMyFriend:message.session.sessionId]);
+            // Do NOT retry, do NOT delete — let the error surface
+        }
+
         NSDictionary *userInfo = error.userInfo;
         NSString *strEnum = [userInfo objectForKey:@"enum"];
         if ([strEnum isEqualToString:@"NIMRemoteErrorCodeInBlackList"]) {
@@ -3877,6 +3944,18 @@
     [payload setObject:fcmField forKey:@"fcmField"];
     [payload setObject:apsField forKey:@"apsField"];
     
+    // Add sessionBody for platform-specific push configuration
+    NSString *strSessionID = @"";
+    if (message.session.sessionType == NIMSessionTypeP2P) {
+        strSessionID = [NIMSDK sharedSDK].loginManager.currentAccount;
+    } else {
+        strSessionID = [NSString stringWithFormat:@"%@", message.session.sessionId];
+    }
+    NSString *strSessionType = [NSString stringWithFormat:@"%zd", message.session.sessionType];
+    [payload setObject:@{@"sessionId": strSessionID, @"sessionType": strSessionType} forKey:@"sessionBody"];
+    
+    [NNIMSetAllPayload builderPayload:payload];
+    
     [[NIMSDK sharedSDK].chatManager revokeMessage:message apnsContent:@"revoke message" apnsPayload:payload shouldBeCounted:NO completion:^(NSError * _Nullable error) {
         if (error) {
             if (error.code == NIMRemoteErrorCodeDomainExpireOld) {
@@ -4223,36 +4302,38 @@
 
 //判断是不是好友
 - (BOOL)isFriendToSendMessage:(NIMMessage *)message isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
-    if (isSkipFriendCheck || self._session.sessionType != NIMSessionTypeP2P) return YES;
-    NSString *sessionId = self._session.sessionId;
-    if ([[NIMSDK sharedSDK].userManager isMyFriend:sessionId]) {
-        return YES;
-    }
-    
-    NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-    [localExt setObject:@"NO" forKey:@"isFriend"];
-    [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isCancelResend"];
-    
-    message.localExt = localExt;
-    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
-    
-    if (!isSkipTipForStranger) {
-        NSString *strSessionName = @"";
-        NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
-        if ([user.alias length]) {
-            strSessionName = user.alias;
-        }else{
-            NIMUserInfo *userInfo = user.userInfo;
-            strSessionName = userInfo.nickName;
-        }
-        
-        NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
-        NIMMessage *tipMessage = [self msgWithTip:tip];
-        tipMessage.timestamp = message.timestamp+1;
-        [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
-    }
-    
-    return NO;
+    // [DEBUG] Temporarily disabled friend check to debug error 20000 - always return YES
+    // if (isSkipFriendCheck || self._session.sessionType != NIMSessionTypeP2P) return YES;
+    // NSString *sessionId = self._session.sessionId;
+    // if ([[NIMSDK sharedSDK].userManager isMyFriend:sessionId]) {
+    //     return YES;
+    // }
+    //
+    // NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    // [localExt setObject:@"NO" forKey:@"isFriend"];
+    // [localExt setObject:[NSNumber numberWithBool:YES] forKey:@"isCancelResend"];
+    //
+    // message.localExt = localExt;
+    // [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
+    //
+    // if (!isSkipTipForStranger) {
+    //     NSString *strSessionName = @"";
+    //     NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:sessionId];
+    //     if ([user.alias length]) {
+    //         strSessionName = user.alias;
+    //     }else{
+    //         NIMUserInfo *userInfo = user.userInfo;
+    //         strSessionName = userInfo.nickName;
+    //     }
+    //
+    //     NSString * tip = @"SEND_MESSAGE_FAILED_WIDTH_STRANGER";
+    //     NIMMessage *tipMessage = [self msgWithTip:tip];
+    //     tipMessage.timestamp = message.timestamp+1;
+    //     [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
+    // }
+    //
+    // return NO;
+    return YES;
 }
 
 @end

@@ -34,6 +34,7 @@ import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.SDKOptions;
 import com.netease.nimlib.sdk.StatusBarNotificationConfig;
 import com.netease.nimlib.sdk.auth.LoginInfo;
+import com.netease.nimlib.sdk.lifecycle.SdkLifecycleObserver;
 import com.netease.nimlib.sdk.mixpush.MixPushConfig;
 import com.netease.nimlib.sdk.mixpush.MixPushService;
 import com.netease.nimlib.sdk.mixpush.NIMPushClient;
@@ -45,6 +46,7 @@ import com.netease.nimlib.sdk.msg.model.IMMessage;
 import com.netease.nimlib.sdk.msg.model.RevokeMsgNotification;
 import com.netease.nimlib.sdk.uinfo.UserInfoProvider;
 import com.netease.nimlib.sdk.util.NIMUtil;
+import com.nim.pushlib.MixPushConfigGenerator;
 
 import androidx.annotation.DrawableRes;
 
@@ -54,7 +56,7 @@ import androidx.annotation.DrawableRes;
  */
 
 public class IMApplication {
-
+    private  static boolean isAgreePolicy;
 
     // context
     private static Context context;
@@ -89,22 +91,37 @@ public class IMApplication {
 //            mixPushConfig.xmAppKey = miPushConfig.appKey;
 //            NIMPushClient.initPush(new MixPushConfig());
 //        }
-        NIMClient.init(context, getLoginInfo(), getOptions(context));
-        // crash handler
-//        AppCrashHandler.getInstance(context);
-        if (NIMUtil.isMainProcess(IMApplication.context)) {
+        if (isAgreePolicy) {
+            NIMClient.init(context, getLoginInfo(), getOptions(context));
 
+            NIMClient.getService(SdkLifecycleObserver.class).observeMainProcessInitCompleteResult(new Observer<Boolean>() {
+                @Override
+                public void onEvent(Boolean aBoolean) {
+                    if (aBoolean != null && aBoolean) {
+                        if (NIMUtil.isMainProcess(IMApplication.context)) {
+                            // init pinyin
+                            PinYin.init(context);
+                            PinYin.validate();
 
-            // init pinyin
-            PinYin.init(context);
-            PinYin.validate();
+                            NIMClient.getService(MixPushService.class).enable(true);
+                            // 初始化Kit模块
+                            initKit();
 
-            NIMClient.getService(MixPushService.class).enable(true);
-            // 初始化Kit模块
-            initKit();
-
+                        }
+                    }
+                }
+            }, true);
+        } else {
+            NIMClient.config(context, getLoginInfo(), getOptions(context));
         }
 
+
+        // crash handler
+//        AppCrashHandler.getInstance(context);
+    }
+
+    public static void initSDK() {
+        isAgreePolicy = true;
     }
 
     public static void setDebugAble(boolean debugAble) {
@@ -172,6 +189,10 @@ public class IMApplication {
         // 定制通知栏提醒文案（可选，如果不定制将采用SDK默认文案）
         options.messageNotifierCustomization = messageNotifierCustomization;
 
+        options.disableAwake = true;
+
+        options.asyncInitSDK = true;
+
         // 在线多端同步未读数
         options.sessionReadAck = true;
         //自动检查 SDK 配置是否完全
@@ -182,27 +203,13 @@ public class IMApplication {
         //sdkStorageRootPath 配置的外置存储缓存根目录
 
 
-        ImPushConfig config = new ImPushConfig();
-        // 小米证书配置，没有可不填
-        config.xmAppId = "2882303106219";
-        config.xmAppKey = "59717219";
-        config.xmCertificateName = "";
-        config.hwCertificateName = "";
-        config.mzAppId = "11398";
-        config.fcmCertificateName= "ZYZJIM_ANDROID_FCM";
-        config.mzAppKey = "b74148973e60a2af4c2f6779";
-
-
         // 推送配置
-        MixPushConfig pushConfig = new MixPushConfig();
-
-        pushConfig.xmAppId = config.xmAppId;
-        pushConfig.xmAppKey = config.xmAppKey;
-        pushConfig.xmCertificateName = config.xmCertificateName;
-        pushConfig.hwCertificateName = config.hwCertificateName;
-        pushConfig.fcmCertificateName= config.fcmCertificateName;
-
+        // CRITICAL: MixPushConfig is automatically used by NIM SDK
+        // SDK will call NIMPushClient.initPush() internally in the correct process (:core)
+        MixPushConfig pushConfig = MixPushConfigGenerator.loadPushConfig();
         options.mixPushConfig = pushConfig;
+        
+        // Log push certificates for debugging
 
         return options;
     }
@@ -261,6 +268,11 @@ public class IMApplication {
         @Override
         public String makeRevokeMsgTip(String revokeAccount, IMMessage item) {
             return MessageUtil.getRevokeTipContent(item, revokeAccount);
+        }
+
+        @Override
+        public String makeCategory(IMMessage message) {
+            return null;
         }
     };
 
