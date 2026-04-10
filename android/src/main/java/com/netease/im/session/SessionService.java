@@ -1843,7 +1843,8 @@ public class SessionService {
                 }
 
                 if (content != null && !content.isEmpty()) {
-                    IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
+                    // [FIX Bug #0000072 Android] Was: sessionTypeEnum (class field = None). Now: sessionType (method param)
+                    IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, content);
                     sendMessageSelf(message, null, false, isSkipFriendCheck, isSkipTipForStranger);
                 }
             }
