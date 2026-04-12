@@ -2956,17 +2956,86 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 #pragma mark - NIMSystemNotificationManagerDelegate
 - (void)onReceiveCustomSystemNotification:(NIMCustomSystemNotification *)notification
 {
-    if (!notification.sendToOnlineUsersOnly) {
-        return;
-    }
     NSData *data = [[notification content] dataUsingEncoding:NSUTF8StringEncoding];
     if (data) {
-        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data
-                                                             options:0
-                                                               error:nil];
-        if ([dict jsonInteger:NTESNotifyID] == NTESCommandTyping && self._session.sessionType == NIMSessionTypeP2P && [notification.sender isEqualToString:self._session.sessionId])
-        {
-            NSLog(@"正在输入...");
+        NSDictionary *outerDict = [NSJSONSerialization JSONObjectWithData:data
+                                                                  options:0
+                                                                    error:nil];
+        if (!outerDict) {
+            return;
+        }
+
+        // Handle typing indicator (legacy behavior — only for active P2P session)
+        if (!notification.sendToOnlineUsersOnly) {
+            // offline-capable notification: emit to JS via NIMModel
+            NSDictionary *dataDict = [outerDict objectForKey:@"data"];
+            if (!dataDict || ![dataDict isKindOfClass:[NSDictionary class]]) {
+                return;
+            }
+
+            NSMutableDictionary *payload = [NSMutableDictionary dictionary];
+
+            // sessionId: prefer field inside data, fallback to notification sender
+            id sessionIdVal = [dataDict objectForKey:@"sessionId"];
+            if (sessionIdVal && ![sessionIdVal isEqual:[NSNull null]]) {
+                [payload setObject:sessionIdVal forKey:@"sessionId"];
+            } else if (notification.sender) {
+                [payload setObject:notification.sender forKey:@"sessionId"];
+            }
+
+            id typeVal = [dataDict objectForKey:@"type"];
+            if (typeVal && ![typeVal isEqual:[NSNull null]]) {
+                [payload setObject:typeVal forKey:@"type"];
+            }
+
+            id messageIdVal = [dataDict objectForKey:@"messageId"];
+            if (messageIdVal && ![messageIdVal isEqual:[NSNull null]]) {
+                [payload setObject:messageIdVal forKey:@"messageId"];
+            }
+
+            id isObserveReceiveRevokeMessage = [dataDict objectForKey:@"isObserveReceiveRevokeMessage"];
+            if (isObserveReceiveRevokeMessage && ![isObserveReceiveRevokeMessage isEqual:[NSNull null]]) {
+                [payload setObject:isObserveReceiveRevokeMessage forKey:@"isObserveReceiveRevokeMessage"];
+            }
+
+            id isObserveFriendRemovedMe = [dataDict objectForKey:@"isObserveFriendRemovedMe"];
+            if (isObserveFriendRemovedMe && ![isObserveFriendRemovedMe isEqual:[NSNull null]]) {
+                [payload setObject:isObserveFriendRemovedMe forKey:@"isObserveFriendRemovedMe"];
+            }
+
+            id isObserveFriendRevokedFriendRequest = [dataDict objectForKey:@"isObserveFriendRevokedFriendRequest"];
+            if (isObserveFriendRevokedFriendRequest && ![isObserveFriendRevokedFriendRequest isEqual:[NSNull null]]) {
+                [payload setObject:isObserveFriendRevokedFriendRequest forKey:@"isObserveFriendRevokedFriendRequest"];
+            }
+
+            id isObserveFriendAcceptMyFriendRequest = [dataDict objectForKey:@"isObserveFriendAcceptMyFriendRequest"];
+            if (isObserveFriendAcceptMyFriendRequest && ![isObserveFriendAcceptMyFriendRequest isEqual:[NSNull null]]) {
+                [payload setObject:isObserveFriendAcceptMyFriendRequest forKey:@"isObserveFriendAcceptMyFriendRequest"];
+            }
+
+            id isTyping = [dataDict objectForKey:@"isTyping"];
+            if (isTyping && ![isTyping isEqual:[NSNull null]]) {
+                [payload setObject:isTyping forKey:@"isTyping"];
+            }
+
+            id timeVal = [dataDict objectForKey:@"time"];
+            if (timeVal && ![timeVal isEqual:[NSNull null]]) {
+                [payload setObject:timeVal forKey:@"time"];
+            }
+
+            id temporarySession = [dataDict objectForKey:@"temporarySession"];
+            if (temporarySession && ![temporarySession isEqual:[NSNull null]] && [temporarySession isKindOfClass:[NSDictionary class]]) {
+                [payload setObject:temporarySession forKey:@"temporarySession"];
+            }
+
+            NIMModel *model = [NIMModel initShareMD];
+            model.customNotification = [payload copy];
+        } else {
+            // online-only notification: typing indicator (original behavior)
+            if ([outerDict jsonInteger:NTESNotifyID] == NTESCommandTyping && self._session.sessionType == NIMSessionTypeP2P && [notification.sender isEqualToString:self._session.sessionId])
+            {
+                NSLog(@"正在输入...");
+            }
         }
     }
 }
@@ -3639,7 +3708,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 messageContent.text = content;
                 
                 if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
-                    [self handleSendMessage:message session:session];
+                    // [FIX Bug #0000072] Was: message (multi-text forward copy). Should be: messageContent (user's text comment)
+                    [self handleSendMessage:messageContent session:session];
                 }
             }
         });
@@ -3789,8 +3859,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
-            
-            NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:self._session messageIds:messageIds];
+
+            NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:messageIds];
             NSString *multiMediaType;
             for(NIMMessage *message in messages) {
                 if (multiMediaType == nil && (message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo)) {
@@ -4279,7 +4349,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     
     message.localExt = @{@"isFriend":@"NO", @"isCancelResend":[NSNumber numberWithBool:YES]};
-    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:self._session completion:nil];
+    [[NIMSDK sharedSDK].conversationManager saveMessage:message forSession:session completion:nil];
 
     if (!isSkipTipForStranger) {
         NSString *sessionName = @"";
