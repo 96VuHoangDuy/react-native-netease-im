@@ -1866,9 +1866,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 -(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType {
+    NSLog(@"[FRIEND_CHECK][ENTRY][sendTextMessageWithSession] sessionId=%@ sessionType=%@ messageSubType=%ld contentLength=%lu isFriendNow=%d", sessionId, sessionType, (long)messageSubType, (unsigned long)(msgContent ? msgContent.length : 0), [[NIMSDK sharedSDK].userManager isMyFriend:sessionId]);
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithText:msgContent andApnsMembers:@[] andeSession:session senderName:sessionName messageSubType:messageSubType];
-    
+
     [self handleSendMessage:message session:session];
 }
 
@@ -2635,6 +2636,20 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NIMModel *model = [NIMModel initShareMD];
     model.startSend = @{@"start":@"true"};
 }
+- (BOOL)shouldMarkNonFriendFailureForMessage:(NIMMessage *)message error:(NSError *)error {
+    if (!error) return NO;
+    if (!message.isOutgoingMsg) return NO;
+    if (message.session.sessionType != NIMSessionTypeP2P) return NO;
+    return ![[NIMSDK sharedSDK].userManager isMyFriend:message.session.sessionId];
+}
+
+- (void)markNonFriendFailureForMessage:(NIMMessage *)message {
+    NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    [localExt setObject:@(YES) forKey:@"isCancelResend"];
+    [localExt setObject:@(YES) forKey:@"isNonFriendServerRejection"];
+    message.localExt = localExt;
+}
+
 //发送结果
 - (void)sendMessage:(NIMMessage *)message didCompleteWithError:(NSError *)error
 {
@@ -2663,8 +2678,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
         }
         
-        message.localExt = @{@"isFriend":@"NO"};
-        
+        if ([self shouldMarkNonFriendFailureForMessage:message error:error]) {
+            [self markNonFriendFailureForMessage:message];
+        }
+
         [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:self._session completion:nil];
         [self refrashMessage:message From:@"send"];
     }

@@ -1557,16 +1557,27 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendTextMessage(String content, ReadableArray atUserIds, Integer messageSubType,boolean isSkipFriendCheck, Boolean isSkipTipForStranger, final Promise promise) {
        try {
-           LogUtil.w(TAG, "sendTextMessage" + content);
+           LogUtil.d(TAG, "[FRIEND_CHECK][ENTRY][RNNeteaseImModule.sendTextMessage]"
+                   + " contentLength=" + (content == null ? 0 : content.length())
+                   + " messageSubType=" + messageSubType
+                   + " isSkipFriendCheck=" + isSkipFriendCheck
+                   + " isSkipTipForStranger=" + isSkipTipForStranger
+                   + " atUserIdsSize=" + (atUserIds == null ? 0 : atUserIds.size()));
 
            List<String> atUserIdList = array2ListString(atUserIds);
            sessionService.sendTextMessage(content, atUserIdList, messageSubType, isSkipFriendCheck,isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                @Override
                public int onResult(int code, IMMessage message) {
+                   LogUtil.d(TAG, "[FRIEND_CHECK][ENTRY][RNNeteaseImModule.sendTextMessage][CALLBACK]"
+                           + " code=" + code
+                           + " messageNull=" + (message == null)
+                           + " msgUuid=" + (message == null ? null : message.getUuid())
+                           + " status=" + (message == null ? null : message.getStatus()));
 //                promise.resolve(ReactCache.createMessage(message,null));
                    return 0;
                }
            });
+           LogUtil.d(TAG, "[FRIEND_CHECK][ENTRY][RNNeteaseImModule.sendTextMessage][PROMISE_RESOLVE] success");
            promise.resolve("success");
        } catch (Exception e) {
            promise.reject("SEND_ERROR", "Failed to send text message: " + e.getMessage());

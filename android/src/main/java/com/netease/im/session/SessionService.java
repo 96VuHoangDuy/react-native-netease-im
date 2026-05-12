@@ -571,9 +571,33 @@ public class SessionService {
         sendMessageSelf(message, null, false, true, true);
     }
 
+    private boolean shouldMarkNonFriendFailure(IMMessage message) {
+        if (message == null) return false;
+        if (message.getSessionType() != SessionTypeEnum.P2P) return false;
+        if (message.getDirect() != MsgDirectionEnum.Out) return false;
+        if (message.getStatus() != MsgStatusEnum.fail) return false;
+        return !NIMClient.getService(FriendService.class).isMyFriend(message.getSessionId());
+    }
+
+    private void markNonFriendFailure(IMMessage message) {
+        Map<String, Object> localExt = message.getLocalExtension();
+        if (localExt == null) {
+            localExt = new HashMap<>();
+        } else {
+            localExt = new HashMap<>(localExt);
+        }
+        localExt.put("isCancelResend", true);
+        localExt.put("isNonFriendServerRejection", true);
+        message.setLocalExtension(localExt);
+        getMsgService().updateIMMessage(message);
+    }
+
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
         if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
             LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " onMessageStatusChange uuid=" + message.getUuid() + " sessionId=" + message.getSessionId() + " status=" + message.getStatus() + " direct=" + message.getDirect() + " isSend=" + isSend + " localExt=" + message.getLocalExtension());
+        }
+        if (shouldMarkNonFriendFailure(message)) {
+            markNonFriendFailure(message);
         }
         if(message.getDirect() == MsgDirectionEnum.Out) {
             Map<String, Object> stateMap = MapBuilder.newHashMap();
@@ -1601,7 +1625,22 @@ public class SessionService {
      */
     public void sendTextMessage(String content, List<String> selectedMembers, Integer messageSubType, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger,OnSendMessageListener onSendMessageListener) {
 
+        LogUtil.d(TAG, "[FRIEND_CHECK][ENTRY][sendTextMessage]"
+                + " sessionId=" + sessionId
+                + " sessionType=" + sessionTypeEnum
+                + " isSkipFriendCheck=" + isSkipFriendCheck
+                + " isSkipTipForStranger=" + isSkipTipForStranger
+                + " messageSubType=" + messageSubType
+                + " selectedMembersSize=" + (selectedMembers == null ? 0 : selectedMembers.size())
+                + " contentLength=" + (content == null ? 0 : content.length())
+                + " isFriendNow=" + (sessionTypeEnum == SessionTypeEnum.P2P ? NIMClient.getService(FriendService.class).isMyFriend(sessionId) : null));
+
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
+        LogUtil.d(TAG, "[FRIEND_CHECK][ENTRY][sendTextMessage][MESSAGE_BUILT]"
+                + " msgUuid=" + message.getUuid()
+                + " status=" + message.getStatus()
+                + " sessionId=" + message.getSessionId()
+                + " sessionType=" + message.getSessionType());
         if (!messageSubType.equals(0)) {
             message.setSubtype(messageSubType);
         } else {
@@ -2515,7 +2554,6 @@ public class SessionService {
             sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
 
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
-            LogUtil.w(TAG, "isFriend:" + isFriend);
             // [DEBUG] Temporarily disabled friend check to debug error 20000
             // if (!isFriend && !isSkipFriendCheck) {
             //     Map<String, Object> localExt = new HashMap<String, Object>();
