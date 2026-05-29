@@ -2449,6 +2449,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         if ([content length] != 0) {
             NIMMessage *_message = [[NIMMessage alloc] init];
             _message.text    = content;
+            _message.apnsContent = content;
+            [NIMMessageMaker setupMessagePushBody:_message andSession:session senderName:_myUserName];
             [self handleSendMessage:_message session:session];
         }
     }
@@ -3736,6 +3738,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 -(BOOL) checkMessageForwardHasTag:(NSString *)content {
+    NSLog(@"[FWD-DEBUG] checkMessageForwardHasTag content=%@", content);
+    if (content == nil) return NO;
     NSString *pattern = @"@\\[[^\\]]+\\]\\([^\\)]+\\)";
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:&error];
@@ -3752,6 +3756,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 -(void) handleMessageFoward:(NIMMessage *)message session:(NIMSession *)session parentId:(NSString *)parentId isHaveMultiMedia:(BOOL)isHaveMultiMedia sessionType:(NSString *)sessionType isSkipFriendCheck:(BOOL)isSkipFriendCheck isSkipTipForStranger:(BOOL)isSkipTipForStranger {
+    NSLog(@"[FWD-DEBUG] handleMessageFoward msgType=%ld msgId=%@ text=%@ remoteExt=%@",
+          (long)message.messageType, message.messageId, message.text, message.remoteExt);
     if (message.messageType == NIMMessageTypeLocation) {
         NIMLocationObject *object = message.messageObject;
         NSError *jsonErr;
@@ -3806,6 +3812,21 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         message.messageSubType = 9;
     }
     
+    NSString *pushContent = @"[消息]";
+    if (message.messageType == NIMMessageTypeImage) {
+        pushContent = @"[图片]";
+    } else if (message.messageType == NIMMessageTypeVideo) {
+        pushContent = @"[视频]";
+    } else if (message.messageType == NIMMessageTypeAudio) {
+        pushContent = @"[语音]";
+    } else if (message.messageType == NIMMessageTypeText) {
+        pushContent = @"[文字]";
+    } else if (message.messageType == NIMMessageTypeFile) {
+        pushContent = @"[文件]";
+    }
+    message.apnsContent = pushContent;
+    [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
+
     if ([self checkFriendBeforeSendMessage:message sessionId:session.sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
     }
@@ -3856,7 +3877,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSString *parentId = [params objectForKey:@"parentId"];
     NSNumber *haveMultiMedia = [params objectForKey:@"isHaveMultiMedia"];
     BOOL isHaveMultiMedia = [haveMultiMedia boolValue];
-    
+    NSLog(@"[FWD-DEBUG] forwardMessagesToMultipleRecipients messageIds=%@ content=%@ parentId=%@ isHaveMultiMedia=%d", messageIds, content, parentId, isHaveMultiMedia);
+
     if (recipients == nil) {
         err(@"recipients is required!");
         return;
@@ -3878,6 +3900,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
 
             NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:messageIds];
+            NSLog(@"[FWD-DEBUG] fetched messages count=%lu from sessionId=%@ (source session=%@)", (unsigned long)messages.count, sessionId, self._session.sessionId);
+            for (NIMMessage *m in messages) {
+                NSLog(@"[FWD-DEBUG] fetched msg => msgId=%@ type=%ld text=%@", m.messageId, (long)m.messageType, m.text);
+            }
             NSString *multiMediaType;
             for(NIMMessage *message in messages) {
                 if (multiMediaType == nil && (message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo)) {
@@ -3914,7 +3940,9 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             if (content != nil && [content length] > 0) {
                 NIMMessage *messageContent = [[NIMMessage alloc] init];
                 messageContent.text = content;
-                
+                messageContent.apnsContent = content;
+                [NIMMessageMaker setupMessagePushBody:messageContent andSession:session senderName:_myUserName];
+
                 if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]){
                     [[NIMSDK sharedSDK].chatManager sendMessage:messageContent toSession:session error:nil];
                 }
@@ -3965,15 +3993,26 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         }
         
         message.localExt = @{};
-        
+
+        NSString *fwdPushContent = @"[消息]";
+        if (message.messageType == NIMMessageTypeImage) { fwdPushContent = @"[图片]"; }
+        else if (message.messageType == NIMMessageTypeVideo) { fwdPushContent = @"[视频]"; }
+        else if (message.messageType == NIMMessageTypeAudio) { fwdPushContent = @"[语音]"; }
+        else if (message.messageType == NIMMessageTypeText) { fwdPushContent = @"[文字]"; }
+        else if (message.messageType == NIMMessageTypeFile) { fwdPushContent = @"[文件]"; }
+        message.apnsContent = fwdPushContent;
+        [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
+
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
     }
-    
+
     //发送消息
     if([content length] != 0){
         NIMMessage *messages = [[NIMMessage alloc] init];
         messages.text    = content;
-        
+        messages.apnsContent = content;
+        [NIMMessageMaker setupMessagePushBody:messages andSession:session senderName:_myUserName];
+
         [[NIMSDK sharedSDK].chatManager sendMessage:messages toSession:session error:nil];
     }
     succe(@"已发送");
