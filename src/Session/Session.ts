@@ -752,6 +752,7 @@ class NimSession {
   sendFileMessageWithSession(
     path: string,
     fileName: string,
+    fileType: string,
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
     sessionName: string
@@ -759,6 +760,7 @@ class NimSession {
     return RNNeteaseIm.sendFileMessageWithSession(
       path,
       fileName,
+      fileType,
       sessionId,
       sessionType,
       sessionName
@@ -783,14 +785,14 @@ class NimSession {
 
   sendImageMessageWithSession(
     path: string,
-    isHighQuality: boolean,
+    fileName: string,
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
     sessionName: string
   ) {
     return RNNeteaseIm.sendImageMessageWithSession(
       path,
-      isHighQuality,
+      fileName,
       sessionId,
       sessionType,
       sessionName

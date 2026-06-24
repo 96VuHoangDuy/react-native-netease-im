@@ -2558,7 +2558,9 @@ public class ReactCache {
                 if (fileAttachment.getPath() != null
                         && !fileAttachment.getPath().contains(item.getSessionId())
                         && item.getStatus() == MsgStatusEnum.success) {
-                    String fileType = (String) remoteExtension.get("fileType");
+                    String fileType = remoteExtension != null && remoteExtension.get("fileType") != null
+                            ? (String) remoteExtension.get("fileType")
+                            : fileAttachment.getExtension();
                     File newFile = replaceVideoPath(fileAttachment.getPath(), item.getSessionId(), "file", "." + fileAttachment.getExtension());
                     if (newFile != null) {
                         fileAttachment.setPath(newFile.getPath());
@@ -2566,7 +2568,7 @@ public class ReactCache {
                         getMsgService().updateIMMessageStatus(item);
                         fileObj.putString("filePath", fileAttachment.getPath());
                         fileObj.putString("fileUrl", fileAttachment.getUrl());
-                        fileObj.putString("fileName", item.getContent());
+                        fileObj.putString("fileName", !TextUtils.isEmpty(item.getContent()) ? item.getContent() : fileAttachment.getDisplayName());
                         fileObj.putString("fileMd5", fileAttachment.getMd5());
                         fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
                         fileObj.putString("fileType", fileType);
@@ -2590,13 +2592,15 @@ public class ReactCache {
                     }
                     fileObj.putString("filePath", fileAttachment.getPath());
                     fileObj.putString("fileUrl", fileAttachment.getUrl());
-                    fileObj.putString("fileName", item.getContent());
+                    fileObj.putString("fileName", !TextUtils.isEmpty(item.getContent()) ? item.getContent() : fileAttachment.getDisplayName());
                     fileObj.putString("fileMd5", fileAttachment.getMd5());
                     fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
 
                     if(remoteExtension != null && remoteExtension.get("fileType") != null){
                         String fileType = (String) remoteExtension.get("fileType");
                         fileObj.putString("fileType", fileType);
+                    } else {
+                        fileObj.putString("fileType", fileAttachment.getExtension());
                     }
                 }
 

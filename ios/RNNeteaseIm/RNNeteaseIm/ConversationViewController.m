@@ -1015,8 +1015,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 -(NSDictionary *) makeExtendImage:(NIMMessage *)message isDisableDownloadMedia:(BOOL *)isDisableDownloadMedia {
     NIMImageObject *object = message.messageObject;
     NSMutableDictionary *imgObj = [NSMutableDictionary dictionary];
-    [imgObj setObject:[NSString stringWithFormat:@"%@",[object url] ] forKey:@"url"];
-    [imgObj setObject:[NSString stringWithFormat:@"%@",[object displayName] ] forKey:@"displayName"];
+    [imgObj setObject:([object url] ?: @"") forKey:@"url"];
+    [imgObj setObject:([object displayName] ?: @"") forKey:@"displayName"];
     [imgObj setObject:[NSString stringWithFormat:@"%f",[object size].height] forKey:@"imageHeight"];
     [imgObj setObject:[NSString stringWithFormat:@"%f",[object size].width] forKey:@"imageWidth"];
     
@@ -1068,12 +1068,20 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:object.fileLength countStyle:NSByteCountFormatterCountStyleFile];
     
     NSMutableDictionary *fileObj = [NSMutableDictionary dictionary];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", object.path ] forKey:@"filePath"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", message.text ] forKey:@"fileName"];
+    // [FIX #0000138] File từ CSR: message.text/remoteExt[fileType] nil → trước đây ra "(null)".
+    // fileName: ưu tiên message.text (user gửi), fallback NIMFileObject.displayName.
+    // fileType: ưu tiên remoteExt[fileType], fallback suy từ đuôi tên/đường dẫn/url.
+    NSString *fileName = message.text.length ? message.text : (object.displayName ?: @"");
+    NSString *fileType = [message.remoteExt objectForKey:@"fileType"];
+    if (fileType == nil) {
+        fileType = [(object.displayName ?: (object.path ?: object.url)) pathExtension];
+    }
+    [fileObj setObject:(object.path ?: @"") forKey:@"filePath"];
+    [fileObj setObject:fileName forKey:@"fileName"];
     [fileObj setObject:[NSString stringWithFormat:@"%@", displayFileSize ] forKey:@"fileSize"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", object.md5 ] forKey:@"fileMd5"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", object.url ] forKey:@"fileUrl"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", [message.remoteExt objectForKey:@"fileType"]] forKey:@"fileType"];
+    [fileObj setObject:(object.md5 ?: @"") forKey:@"fileMd5"];
+    [fileObj setObject:(object.url ?: @"") forKey:@"fileUrl"];
+    [fileObj setObject:(fileType ?: @"") forKey:@"fileType"];
     
     NSString *mediaPath = [self moveFiletoSessionDir:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
@@ -1166,7 +1174,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 -(NSDictionary *) makeExtendRecord:(NIMMessage *)message {
     NIMAudioObject *object = message.messageObject;
     NSMutableDictionary *voiceObj = [NSMutableDictionary dictionary];
-    [voiceObj setObject:[NSString stringWithFormat:@"%@", [object url]] forKey:@"url"];
+    [voiceObj setObject:([object url] ?: @"") forKey:@"url"];
     [voiceObj setObject:[NSString stringWithFormat:@"%zd",(object.duration/1000)] forKey:@"duration"];
     [voiceObj setObject:[NSNumber  numberWithBool:message.isPlayed] forKey:@"isPlayed"];
     
@@ -1559,7 +1567,15 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 [fromUser setObject:@"" forKey:tem];
             }
         }
-        [dic setObject:[NSString stringWithFormat:@"%@", message.text] forKey:@"text"];
+        // [CSR_DEBUG #0000138] Log raw text + cờ CSR. message.text == nil sẽ bị
+        // stringWithFormat hóa thành chuỗi "(null)" (khác Android). XÓA trước production.
+        if (isCsr || isChatBot) {
+            NSLog(@"[CSR_DEBUG][native:text] text=%@ isNil=%d type=%ld isCsr=%d isChatBot=%d onlineServiceType=%@ from=%@ isOutgoing=%d",
+                  message.text, (message.text == nil), (long)message.messageType, isCsr, isChatBot, onlineServiceType, message.from, message.isOutgoingMsg);
+        }
+        // [FIX #0000138] message.text == nil → stringWithFormat ra chuỗi "(null)" (iOS-only).
+        // Trả "" để message rỗng tự bị filter ở màn CSKH (filter !!item.text), không hiện "(null)".
+        [dic setObject:(message.text ? message.text : @"") forKey:@"text"];
         [dic setObject:[NSString stringWithFormat:@"%@", message.session.sessionId] forKey:@"sessionId"];
         [dic setObject:[NSString stringWithFormat:@"%ld", message.session.sessionType] forKey:@"sessionType"];
         if(message.messageSubType) {
@@ -1728,12 +1744,21 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                     {
                         if (obj.dataDict != nil) {
                             [dic setObject:obj.dataDict  forKey:@"extend"];
-                            
-                            if(isCsr && [obj.dataDict objectForKey:@"account"]  != nil && [obj.dataDict objectForKey:@"accid"] != nil) {
+
+                            // [FIX #0000138] Message chuyển phiên CSR mang {account, accid} nhưng là
+                            // outgoing (from = user) nên isCsr=false → trước đây rơi "unknown" → "(null)".
+                            // Bỏ ràng buộc isCsr: custom message có account+accid là notification điều khiển.
+                            if([obj.dataDict objectForKey:@"account"]  != nil && [obj.dataDict objectForKey:@"accid"] != nil) {
                                 [dic setObject:@"notification" forKey:@"msgType"];
                                 break;
                             }
                         }
+                        // [CSR_DEBUG #0000138] Custom message rơi vào nhánh unknown khi chuyển
+                        // phiên CSR (thiếu account/accid). Log custType + dataDict. XÓA trước production.
+                        NSLog(@"[CSR_DEBUG][native:custom-unknown] custType=%ld isCsr=%d hasAccount=%d hasAccid=%d dataDict=%@",
+                              (long)obj.custType, isCsr,
+                              ([obj.dataDict objectForKey:@"account"] != nil),
+                              ([obj.dataDict objectForKey:@"accid"] != nil), obj.dataDict);
                         [dic setObject:@"unknown" forKey:@"msgType"];
                     }
                         break;
@@ -2347,9 +2372,12 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }
     
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+
     NIMMessage *message = [NIMMessageMaker msgWithVideo:path andeSession:session senderName:sessionName duration:nil];
-    
-    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+
+    NSError *_sendErrWS = nil;
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&_sendErrWS];
+    NSLog(@"[VID178][iOS] WithSession dispatched msgId=%@ enqueueError=%@", message.messageId, _sendErrWS); // DEBUG #178 - remove after test
 }
 
 //发送视频
@@ -2374,7 +2402,11 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSLog(@"test =>>> %@, %@", [NSNumber numberWithBool:isSkipFriendCheck], [NSNumber numberWithBool:isSkipTipForStranger]);
     if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         NSLog(@"sendMessage");
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+        NSError *_sendErr = nil;
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&_sendErr];
+        NSLog(@"[VID178][iOS] sendVideoMessage dispatched msgId=%@ enqueueError=%@", message.messageId, _sendErr); // DEBUG #178 - remove after test
+    } else {
+        NSLog(@"[VID178][iOS] sendVideoMessage BLOCKED by isFriendToSendMessage (friend/stranger check)"); // DEBUG #178 - remove after test
     }
 }
 
@@ -2387,7 +2419,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 //    [self sendCustomMessage:CustomMessgeTypeCustom data:dataDict];
 //}
 
--(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName fileType:(NSString *)fileType success:(Success)success err:(Errors)err {
+-(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithFile:path fileName:fileName fileType:(NSString *)fileType andeSession:session senderName:sessionName];
     
@@ -2700,9 +2732,13 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 {
     NSLog(@"sendMessage:(NIMMessage *)message progress:(float)progress");
     //    [self refrashMessage:message From:@"send" ];
-    if ([message.session.sessionId isEqual:self._session.sessionId]) {
+    BOOL _sessionMatch = [message.session.sessionId isEqual:self._session.sessionId]; // DEBUG #178
+    NSLog(@"[VID178][iOS][delegate] progress=%.4f msgId=%@ msgSession=%@ openSession=%@ match=%d", progress, message.messageId, message.session.sessionId, self._session.sessionId, _sessionMatch); // DEBUG #178 - remove after test
+    if (_sessionMatch) {
         NIMModel *model = [NIMModel initShareMD];
         model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
+    } else {
+        NSLog(@"[VID178][iOS][delegate] progress DROPPED (session mismatch) — JS will NOT receive observeProgressSend"); // DEBUG #178 - remove after test
     }
 }
 

@@ -2630,7 +2630,10 @@ public class SessionService {
         } else {
             sessionIdValue = null;
         }
-        body.put("sessionName", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
+        // [FIX #0000138] Dùng sessionId của chính message thay vì instance field this.sessionId
+        // (null khi gửi qua share/WithSession không mở session) → tránh NPE getSessionName/getTeamName
+        // khi recipient là Team. Chat thường: this.sessionId == message.getSessionId() nên không đổi.
+        body.put("sessionName", SessionUtil.getSessionName(message.getSessionId(), message.getSessionType(), true));
         String pushContent = message.getContent();
 
         switch (message.getMsgType()) {
@@ -2675,7 +2678,8 @@ public class SessionService {
             pushTitle = message.getFromNick();
             message.setPushContent(pushContent);
         } else {
-            pushTitle = SessionUtil.getSessionName(sessionId, message.getSessionType(), true);
+            // [FIX #0000138] dùng message.getSessionId() (xem chú thích ở body.put sessionName).
+            pushTitle = SessionUtil.getSessionName(message.getSessionId(), message.getSessionType(), true);
             message.setPushContent(message.getFromNick() + ": " + pushContent);
         }
 
