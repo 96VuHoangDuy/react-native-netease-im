@@ -10,6 +10,7 @@ export enum NIMEventListenerEnum {
   observeMsgStatus = "observeMsgStatus",
   observeAudioRecord = "observeAudioRecord",
   observeDeleteMessage = "observeDeleteMessage",
+  /** @deprecated Không native nào emit event này. Dùng `observeProgressSend` cho tiến độ tải/gửi attachment. */
   observeAttachmentProgress = "observeAttachmentProgress",
   observeOnKick = "observeOnKick",
   observeCustomNotification = "observeCustomNotification",

@@ -26,6 +26,7 @@ Bộ docs này dùng để:
 ## Features
 
 - `features/session/README.md`
+- `features/session/media-attachment.md` — gửi/nhận/download media, field mapping native→JS, event progress, bất đối xứng Android/iOS
 - `features/friend/README.md`
 - `features/team/README.md`
 - `features/system-msg/README.md`

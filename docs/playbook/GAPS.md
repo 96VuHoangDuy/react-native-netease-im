@@ -95,6 +95,34 @@
 - Impact:
   - consumer app hoặc maintainer có thể bỏ sót event contract quan trọng
 
+### `observeAttachmentProgress` là dead event trong JS enum
+
+- Evidence:
+  - `src/utils/eventListener.type.ts:13` khai báo `observeAttachmentProgress`
+  - không Android (`ReactCache`) hay iOS (`ConversationViewController`/`RNNeteaseIm`) nào emit tên event này; event thật cho progress là `observeProgressSend`
+- Impact:
+  - `addListener("observeAttachmentProgress", ...)` không bao giờ được gọi; nếu FE dựa vào đây để show progress/refetch thì logic chết
+
+## Media / Attachment Drift
+
+### Android mất `url`/`fileUrl` khi `isFilePathDeleted` (image/file/audio), video thì không
+
+- Evidence:
+  - `generateImageExtend` (`ReactCache.java:2495-2530`), `generateFileExtend`, `generateRecordExtend` chỉ set `url`/`fileUrl`/`displayName`/kích thước bên trong `if (!isFilePathDeleted)`
+  - `generateVideoExtend` (`ReactCache.java:2343`) set `url` vô điều kiện
+  - iOS `makeExtend*` set `url`/`coverUrl` vô điều kiện đầu hàm
+- Impact:
+  - khi cache local bị dọn mà `isReplacePathSuccess=true`, dict image/file/audio trên Android không còn URL để FE tải lại → ảnh hiển thị đen/vỡ; bất đối xứng với iOS và với video
+  - chưa reproduce runtime kịch bản "xoá cache → mở lại conversation có media cũ"
+
+### iOS custom download không set trạng thái failed rõ ràng
+
+- Evidence:
+  - `moveFiletoSessionDir:` (`ConversationViewController.m:1269-1380`) tự HTTP download, không qua SDK queue; nhánh lỗi network không set `downloadAttStatus=failed`
+  - label `type` của progress event gán `"upload"` cho cả nhánh download (`:1365-1375`)
+- Impact:
+  - media có thể kẹt trạng thái "downloading"; consumer không phân biệt được upload vs download qua `type`
+
 ## Configuration Risk
 
 ### Android push config có giá trị hard-coded trong source

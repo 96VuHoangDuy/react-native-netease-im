@@ -2488,6 +2488,14 @@ public class ReactCache {
 
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
+            // Luôn export url/displayName/kích thước remote (kể cả khi isFilePathDeleted) để FE có
+            // thể fallback hiển thị/tải lại ảnh. Trước đây các field này chỉ set trong nhánh
+            // !isFilePathDeleted nên khi cache local bị dọn, dict mất url -> ảnh hiển thị đen.
+            imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
+            imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
+            imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
+            imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
+
 //            Log.d(">>>> videoAttachment.getPath()", imageAttachment.getPath());
 //            Log.d(">>>> videoDic", imageObj.toString());
 //            Log.d(">>>> localExtension", localExtension.toString());
@@ -2563,6 +2571,15 @@ public class ReactCache {
             }
 
             fileObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            // Luôn export field remote (kể cả khi isFilePathDeleted) để FE có thể tải lại file.
+            fileObj.putString("fileUrl", fileAttachment.getUrl());
+            fileObj.putString("fileName", !TextUtils.isEmpty(item.getContent()) ? item.getContent() : fileAttachment.getDisplayName());
+            fileObj.putString("fileMd5", fileAttachment.getMd5());
+            fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
+            fileObj.putString("fileType", remoteExtension != null && remoteExtension.get("fileType") != null
+                    ? (String) remoteExtension.get("fileType")
+                    : fileAttachment.getExtension());
 
             if (!isFilePathDeleted) {
                 if (fileAttachment.getPath() != null
@@ -2646,6 +2663,10 @@ public class ReactCache {
             }
 
             audioObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            // Luôn export url/duration remote (kể cả khi isFilePathDeleted) để FE tải lại voice.
+            audioObj.putString(MessageConstant.MediaFile.URL, audioAttachment.getUrl());
+            audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
 
             if (!isFilePathDeleted) {
                 if (audioAttachment.getPath() != null

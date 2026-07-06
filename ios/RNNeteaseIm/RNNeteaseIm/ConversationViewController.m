@@ -1334,6 +1334,9 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         NSError *copyError = nil;
         if (![[NSFileManager defaultManager] copyItemAtPath:originPath toPath:cacheMediaPath error:&copyError]) {
             NSLog(@"[copyError] %@", copyError.localizedDescription);
+            // Báo trạng thái failed để FE thoát khỏi "downloading" limbo và có thể retry.
+            [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"failed"}];
+            [self refrashMessage:message From:@"receive"];
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5), dispatch_get_main_queue(), ^{
                 if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
                     NSError *removeErr = nil;
@@ -1361,6 +1364,12 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                     [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
                     [self refrashMessage:message From:@"receive"];
                 });
+            } else {
+                // Báo trạng thái failed để FE thoát khỏi "downloading" limbo và có thể retry.
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 2), dispatch_get_main_queue(), ^{
+                    [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"failed"}];
+                    [self refrashMessage:message From:@"receive"];
+                });
             }
         } progress:^(float progress) {
             if ([message.session.sessionId isEqualToString:self._session.sessionId]) {
@@ -1368,7 +1377,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 model.processSend = @{
                     @"progress": [NSString stringWithFormat:@"%f", progress],
                     @"messageId": message.messageId,
-                    @"type": @"upload",
+                    @"type": @"download",
                     @"sessionId": message.session.sessionId
                 };
                 NSLog(@"📦 Video download progress: %f", progress);
