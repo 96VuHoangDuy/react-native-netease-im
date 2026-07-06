@@ -170,6 +170,9 @@ export interface NimSessionType {
     temporarySessionRef?: ITemporarySessionRef;
     isMessageChatBotUpdated?: boolean;
     isChatBotNotifyOutSessionOfCurrentCsr?: boolean;
+    // CSKH opcode của lastMessage (decode bitmask `code` ở native recent path)
+    chatBotOpcode?: number;
+    chatBotOpcodeType?: number;
     onlineServiceMessage?: NIMMessage;
     reactedUsers?: NIMReactedUserType[];
     messageReacted?: NIMMessage;

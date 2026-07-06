@@ -208,7 +208,13 @@
     //    }
     
     //    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
-    
+    // [CSR_DEBUG] Ingress recent-session (add) cho CSR/chatbot. XÓA trước production.
+    {
+        NSString *csrType = [[CacheUsers initWithCacheUsers] getCustomerServiceOrChatbot:recentSession.session.sessionId];
+        if (csrType.length) {
+            NSLog(@"[CSR_DEBUG][native:ingress:recent:add] type=%@ sessionId=%@ %@", csrType, recentSession.session.sessionId, [ConversationViewController csrIngressDump:recentSession.lastMessage]);
+        }
+    }
     [self getResouces];
 }
 
@@ -229,7 +235,13 @@
     // [self setLastMessageId:recentSession.lastMessage.messageId];
     
     //    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
-    
+    // [CSR_DEBUG] Ingress recent-session (update) cho CSR/chatbot. XÓA trước production.
+    {
+        NSString *csrType = [[CacheUsers initWithCacheUsers] getCustomerServiceOrChatbot:recentSession.session.sessionId];
+        if (csrType.length) {
+            NSLog(@"[CSR_DEBUG][native:ingress:recent:update] type=%@ sessionId=%@ %@", csrType, recentSession.session.sessionId, [ConversationViewController csrIngressDump:recentSession.lastMessage]);
+        }
+    }
     [self getResouces];
 }
 //删除所有会话回调
@@ -444,6 +456,10 @@
                 NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:dataRawAttchContent options:0 error:&error];
                 if (error == nil && [dict isKindOfClass:[NSDictionary class]] && [dict objectForKey:@"code"] != nil) {
                     [localExt setObject:@(YES) forKey:@"isChatBotNotifyOutSessionOfCurrentCsr"];
+                    // [FIX mất thông báo CSKH] Decode opcode để recent path cũng định tuyến đúng type.
+                    NSInteger code32 = [[dict objectForKey:@"code"] integerValue];
+                    [localExt setObject:@(code32 & 0xFFFF) forKey:@"chatBotOpcode"];
+                    [localExt setObject:@((code32 >> 16) & 0xFF) forKey:@"chatBotOpcodeType"];
                 }
             }
         }

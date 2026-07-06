@@ -54,10 +54,20 @@ public class CustomMessageChatBotAttachment extends CustomAttachment {
         return object;
     }
 
+    public Integer getCode() {
+        return code;
+    }
+
     @Override
     protected WritableMap toReactNative() {
         WritableMap map = Arguments.createMap();
         map.putString(MessageConstant.CustomMessageChatBot.CUSTOM_SERVICE_TYPE, customServiceType);
+        // [FIX mất thông báo CSKH] Decode opcode bitmask đẩy lên JS (extend.opcode) để parity với iOS.
+        if (code != null) {
+            map.putInt("code", code);
+            map.putInt("opcode", code & 0xFFFF);
+            map.putInt("opcodeType", (code >> 16) & 0xFF);
+        }
         return map;
     }
 }

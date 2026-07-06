@@ -803,6 +803,20 @@ public class SessionService {
     }
 
     boolean hasRegister;
+    // [FIX transfer-CSR pending mãi] messageStatusObserver báo ACK gửi tin (success/failed),
+    // không được toggle theo session như các observer khác: nếu stopSession() (đổi/rời
+    // session) chạy đúng lúc 1 tin đang in-flight, ACK trả về sau khi observer đã unregister
+    // sẽ bị rơi vĩnh viễn -> tin kẹt SEND_SENDING mãi trên UI. Đăng ký 1 lần, không gỡ theo
+    // session; chỉ gỡ khi thật sự cần (không có, vì observer này không lộ resource leak đáng kể).
+    private boolean isMsgStatusObserverRegistered;
+
+    private void ensureMessageStatusObserverRegistered() {
+        if (isMsgStatusObserverRegistered) {
+            return;
+        }
+        isMsgStatusObserverRegistered = true;
+        getService(MsgServiceObserve.class).observeMsgStatus(messageStatusObserver, true);
+    }
 
     private void registerObservers(boolean register) {
         if (hasRegister && register) {
@@ -813,7 +827,6 @@ public class SessionService {
         service.observeReceiveMessage(incomingMessageObserver, register);
         service.observeMessageReceipt(messageReceiptObserver, register);
 
-        service.observeMsgStatus(messageStatusObserver, register);
         service.observeRevokeMessage(revokeMessageObserver, register);
         observerAttachProgress(register);
         if (register) {
@@ -845,6 +858,7 @@ public class SessionService {
     /****************************** 消息处理 ***********************************/
 
     public void startSession(Handler handler, String sessionId, String type) {
+        ensureMessageStatusObserverRegistered();
         clear();
         this.handler = handler;
         this.sessionId = sessionId;
@@ -2550,10 +2564,14 @@ public class SessionService {
 
     public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isSkipFriendCheck, boolean isSkipTipForStranger) {
         appendPushConfig(message);
-        if (sessionTypeEnum == SessionTypeEnum.P2P) {
-            sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
+        // [FIX #0000138 - phần còn sót] Dùng sessionId/sessionType của chính message thay vì
+        // field instance sessionId/sessionTypeEnum: field instance có thể đã bị đổi bởi một
+        // startSession()/stopSession() khác chạy song song (vd. transfer CSR) trước khi
+        // callback gửi tin này chạy tới, gây tính sai sessionName/isFriend cho message đang gửi.
+        if (message.getSessionType() == SessionTypeEnum.P2P) {
+            sessionName = NimUserInfoCache.getInstance().getUserName(message.getSessionId());
 
-            isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
+            isFriend = NIMClient.getService(FriendService.class).isMyFriend(message.getSessionId());
             // [DEBUG] Temporarily disabled friend check to debug error 20000
             // if (!isFriend && !isSkipFriendCheck) {
             //     Map<String, Object> localExt = new HashMap<String, Object>();

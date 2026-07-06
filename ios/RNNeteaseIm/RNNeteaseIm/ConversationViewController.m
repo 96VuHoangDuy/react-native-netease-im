@@ -1472,6 +1472,26 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }];
 }
 
+// [CSR_DEBUG] Helper dump 1 message ở ingress (from/type/outgoing/rawAttach + decode code/opcode).
+// Dùng cho log trace 0x00200001. XÓA trước production.
++(NSString *)csrIngressDump:(NIMMessage *)message {
+    NSInteger code = -1;
+    NSString *raw = message.rawAttachContent;
+    if (raw.length) {
+        NSData *d = [raw dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary *dict = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:nil] : nil;
+        if ([dict isKindOfClass:[NSDictionary class]] && [dict objectForKey:@"code"] != nil) {
+            code = [[dict objectForKey:@"code"] integerValue];
+        }
+    }
+    return [NSString stringWithFormat:@"from=%@ msgType=%ld out=%d code=%ld opcode=0x%lX opType=0x%lX raw=%@",
+            message.from, (long)message.messageType, message.isOutgoingMsg,
+            (long)code,
+            (long)(code >= 0 ? (code & 0xFFFF) : 0),
+            (long)(code >= 0 ? ((code >> 16) & 0xFF) : 0),
+            raw ?: @"(nil)"];
+}
+
 -(NSMutableArray *)setTimeArr:(NSArray *)messageArr {
     return [self setTimeArr:messageArr isDisableDownloadMedia:NO];
 }
@@ -1500,13 +1520,11 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         }
         
         NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-        
-        if (isChatBot && !message.isOutgoingMsg && [localExt objectForKey:@"chatBotType"] == nil) {
-            [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
-            
-            continue;
-        }
-        
+
+        // [PARITY ANDROID] Bỏ delete guard chatbot incoming: để message chatbot (kể cả custom
+        // {code} opcode chưa enrich chatBotType) chảy vào serialize như Android → JS
+        // isRawChatbotNotification xử lý (sinh RECONNECT). Android không có guard này.
+
         if (isCsr) {
             [fromUser setObject:[NSNumber numberWithBool:isCsr] forKey:@"isCsr"];
         }
@@ -1736,15 +1754,60 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                         //                        break;
                     case CustomMessgeTypeCustom://自定义
                     {
-                        [dic setObject:obj.dataDict  forKey:@"extend"];
+                        // [FIX + CSR_DEBUG] Custom message (msgtype="custom") có thể là 0x00200001.
+                        // Decode opcode từ TOP-LEVEL rawAttachContent (code KHÔNG nằm trong obj.dataDict)
+                        // để JS nhận extend.opcode giống nhánh default. XÓA log trước production.
+                        NSMutableDictionary *ext = [NSMutableDictionary dictionaryWithDictionary:(obj.dataDict ?: @{})];
+                        NSInteger opcode = -1;
+                        NSData *rawDataCustom = [message.rawAttachContent dataUsingEncoding:NSUTF8StringEncoding];
+                        if (rawDataCustom != nil) {
+                            NSDictionary *rawDictCustom = [NSJSONSerialization JSONObjectWithData:rawDataCustom options:0 error:nil];
+                            if ([rawDictCustom isKindOfClass:[NSDictionary class]]) {
+                                NSNumber *codeNum = [rawDictCustom objectForKey:@"code"];
+                                if (codeNum != nil) {
+                                    NSInteger code32 = [codeNum integerValue];
+                                    opcode = code32 & 0xFFFF;
+                                    [ext setObject:codeNum forKey:@"code"];
+                                    [ext setObject:@(opcode) forKey:@"opcode"];
+                                    [ext setObject:@((code32 >> 16) & 0xFF) forKey:@"opcodeType"];
+                                }
+                            }
+                        }
+                        NSLog(@"[CSR_DEBUG][native:custom-type] custType=custom isChatBot=%d opcode=0x%lX from=%@ raw=%@",
+                              isChatBot, (long)(opcode >= 0 ? opcode : 0), message.from, message.rawAttachContent ?: @"(nil)");
+                        [dic setObject:ext forKey:@"extend"];
                         [dic setObject:@"custom" forKey:@"msgType"];
                     }
                         break;
                     default:
                     {
+                        // [FIX mất thông báo CSKH] Decode opcode bitmask từ top-level rawAttachContent
+                        // (code KHÔNG nằm trong obj.dataDict = inner "data"). Đẩy lên JS qua extend.opcode
+                        // để app định tuyến thông báo chuyển/đổi CSR theo ngữ nghĩa, không phụ thuộc API.
+                        NSMutableDictionary *ext = [NSMutableDictionary dictionary];
                         if (obj.dataDict != nil) {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
+                            [ext addEntriesFromDictionary:obj.dataDict];
+                        }
+                        NSInteger opcode = -1;
+                        NSData *rawData = [message.rawAttachContent dataUsingEncoding:NSUTF8StringEncoding];
+                        if (rawData != nil) {
+                            NSDictionary *rawDict = [NSJSONSerialization JSONObjectWithData:rawData options:0 error:nil];
+                            if ([rawDict isKindOfClass:[NSDictionary class]]) {
+                                NSNumber *codeNum = [rawDict objectForKey:@"code"];
+                                if (codeNum != nil) {
+                                    NSInteger code32 = [codeNum integerValue];
+                                    opcode = code32 & 0xFFFF;
+                                    [ext setObject:codeNum forKey:@"code"];
+                                    [ext setObject:@(opcode) forKey:@"opcode"];
+                                    [ext setObject:@((code32 >> 16) & 0xFF) forKey:@"opcodeType"];
+                                }
+                            }
+                        }
+                        if (ext.count > 0) {
+                            [dic setObject:ext forKey:@"extend"];
+                        }
 
+                        if (obj.dataDict != nil) {
                             // [FIX #0000138] Message chuyển phiên CSR mang {account, accid} nhưng là
                             // outgoing (from = user) nên isCsr=false → trước đây rơi "unknown" → "(null)".
                             // Bỏ ràng buộc isCsr: custom message có account+accid là notification điều khiển.
@@ -1754,9 +1817,9 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                             }
                         }
                         // [CSR_DEBUG #0000138] Custom message rơi vào nhánh unknown khi chuyển
-                        // phiên CSR (thiếu account/accid). Log custType + dataDict. XÓA trước production.
-                        NSLog(@"[CSR_DEBUG][native:custom-unknown] custType=%ld isCsr=%d hasAccount=%d hasAccid=%d dataDict=%@",
-                              (long)obj.custType, isCsr,
+                        // phiên CSR (thiếu account/accid). Log custType + opcode + dataDict. XÓA trước production.
+                        NSLog(@"[CSR_DEBUG][native:custom-unknown] custType=%ld isCsr=%d opcode=%ld hasAccount=%d hasAccid=%d dataDict=%@",
+                              (long)obj.custType, isCsr, (long)opcode,
                               ([obj.dataDict objectForKey:@"account"] != nil),
                               ([obj.dataDict objectForKey:@"accid"] != nil), obj.dataDict);
                         [dic setObject:@"unknown" forKey:@"msgType"];
@@ -1771,9 +1834,9 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             [dic setObject:unknowObj  forKey:@"extend"];
         }
         
-        if (isChatBot) {
-            [dic setObject:@"unknown" forKey:@"msgType"];
-        }
+        // [PARITY ANDROID] Bỏ override ép msgType=unknown cho mọi chatbot message.
+        // Chatbot text giữ msgType=text (render đúng); chatbot custom {code} vẫn là unknown
+        // + extend.opcode (từ nhánh default) → JS gating bắt qua extend.opcode != null.
         [dic setObject:fromUser forKey:@"fromUser"];
         [sourcesArr addObject:dic];
     }
@@ -2747,6 +2810,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 - (void)onRecvMessages:(NSArray *)messages
 {
     for(NIMMessage *message in messages) {
+        // [CSR_DEBUG] Ingress thô: log MỌI message nhận được (trước mọi filter/xoá). XÓA trước production.
+        NSLog(@"[CSR_DEBUG][native:ingress:onRecv] %@", [ConversationViewController csrIngressDump:message]);
         if (message.messageType == NIMMessageTypeNotification) {
             NSLog(@"message notification: %@", message);
         }
@@ -3011,6 +3076,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 #pragma mark - NIMSystemNotificationManagerDelegate
 - (void)onReceiveCustomSystemNotification:(NIMCustomSystemNotification *)notification
 {
+    // [CSR_DEBUG] Ingress custom notification (non-stored). Bắt trường hợp 0x00200001 gửi dạng
+    // custom notification thay vì stored message. XÓA trước production.
+    NSLog(@"[CSR_DEBUG][native:ingress:customNoti] sender=%@ onlineOnly=%d content=%@",
+          notification.sender, notification.sendToOnlineUsersOnly, notification.content);
     NSData *data = [[notification content] dataUsingEncoding:NSUTF8StringEncoding];
     if (data) {
         NSDictionary *outerDict = [NSJSONSerialization JSONObjectWithData:data

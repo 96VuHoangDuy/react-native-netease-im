@@ -26,6 +26,7 @@ import com.netease.im.session.extension.AccountNoticeAttachment;
 import com.netease.im.session.extension.BankTransferAttachment;
 import com.netease.im.session.extension.CustomAttachment;
 import com.netease.im.session.extension.CustomAttachmentType;
+import com.netease.im.session.extension.CustomMessageChatBotAttachment;
 import com.netease.im.session.extension.DefaultCustomAttachment;
 import com.netease.im.session.extension.LinkUrlAttachment;
 import com.netease.im.session.extension.RedPacketAttachement;
@@ -408,6 +409,15 @@ public class ReactCache {
                     isMessageChatBotUpdated = (Boolean) messageLocalExt.get("isMessageChatBotUpdated");
 
                     localExt.putBoolean("isMessageChatBotUpdated", isMessageChatBotUpdated);
+                }
+                // [FIX mất thông báo CSKH] Decode opcode từ lastMessage chatbot → recent path định
+                // tuyến đúng type (parity với iOS NIMViewController chatBotOpcode).
+                if (lastMessage.getAttachment() instanceof CustomMessageChatBotAttachment) {
+                    Integer code = ((CustomMessageChatBotAttachment) lastMessage.getAttachment()).getCode();
+                    if (code != null) {
+                        localExt.putInt("chatBotOpcode", code & 0xFFFF);
+                        localExt.putInt("chatBotOpcodeType", (code >> 16) & 0xFF);
+                    }
                 }
             }
         }
@@ -2813,6 +2823,11 @@ public class ReactCache {
 
         if (item.getMsgType() == MsgTypeEnum.custom) {
             itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(), (CustomAttachment) item.getAttachment()));
+            // [FIX mất thông báo CSKH] Đẩy extend.opcode cho message chatbot (parity iOS):
+            // trước đây Android không set "extend" cho CHATBOT → JS không có opcode.
+            if (item.getAttachment() instanceof CustomMessageChatBotAttachment) {
+                itemMap.putMap(MESSAGE_EXTEND, ((CustomMessageChatBotAttachment) item.getAttachment()).getWritableMap());
+            }
         } else {
             Map<String, Object> extensionMsg = item.getRemoteExtension();
 

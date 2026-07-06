@@ -184,6 +184,12 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   // Notification Customer Service
   account: string;
   accid: string;
+
+  // CSKH custom message opcode (decode từ bitmask `code` ở native).
+  // code 32-bit: opcode = code & 0xFFFF, opcodeType = (code >> 16) & 0xFF.
+  code?: number;
+  opcode?: number;
+  opcodeType?: number;
 }
 
 export interface NIMMessage {

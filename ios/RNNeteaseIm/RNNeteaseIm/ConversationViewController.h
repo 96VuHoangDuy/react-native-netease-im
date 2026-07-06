@@ -111,6 +111,9 @@ typedef void(^Errors)(id erro);
 
 -(NSMutableArray *)setTimeArr:(NSArray *)messageArr isDisableDownloadMedia:(BOOL *) isDisableDownloadMedia;
 
+// [CSR_DEBUG] Dump 1 message ở ingress (from/type/rawAttach + decode code). XÓA trước production.
++(NSString *)csrIngressDump:(NIMMessage *)message;
+
 -(void) reactionMessage:(NSString *)sessionId sessionType:(NSString *)sessionType messageId:(NSString *)messageId reaction:(NSDictionary *)reaction success:(Success)success err:(Errors)err;
 
 - (void) setCancelResendMessage:(NSString *)messageId sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType;

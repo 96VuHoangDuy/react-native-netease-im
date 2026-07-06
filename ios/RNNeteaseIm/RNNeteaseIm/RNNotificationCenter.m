@@ -12,6 +12,7 @@
 #import "NIMMessageMaker.h"
 #import "NIMModel.h"
 #import "ConversationViewController.h"
+#import "CacheUsers.h"
 #import "ImConfig.h"
 
 @interface RNNotificationCenter () <NIMSystemNotificationManagerDelegate,NIMChatManagerDelegate>
@@ -53,7 +54,10 @@
 #pragma mark - NIMChatManagerDelegate
 - (void)onRecvMessages:(NSArray *)messages//接收到新消息
 {
-    
+    // [CSR_DEBUG] Ingress GLOBAL (persistent, luôn sống). Log từng message + decode code. XÓA trước production.
+    for (NIMMessage *m in messages) {
+        NSLog(@"[CSR_DEBUG][native:ingress:onRecv-global] %@", [ConversationViewController csrIngressDump:m]);
+    }
     NSLog(@"onRecvMessages messages: %@", messages);
     static BOOL isPlaying = NO;
     if (isPlaying) {
@@ -65,8 +69,22 @@
         isPlaying = NO;
     });
     [self checkTranferMessage:messages];
-    
-    
+
+    // [PARITY ANDROID] Emit chatbot message real-time từ observer GLOBAL này (không session-gate).
+    // ConversationViewController.onRecvMessages: gate theo _sessionID; màn CSKH mở session
+    // "online_service" (pseudo) còn chatbot message từ "chatbotXXXXX" → không khớp → refrashMessage
+    // không chạy → real-time chết. Serialize bằng setTimeArr (đã decode extend.opcode) rồi đẩy JS
+    // qua ResorcesArr → observeReceiveMessage (dedup theo msgId ở eventSender + processedChatbotMsgIds JS).
+    for (NIMMessage *message in messages) {
+        if (message.isOutgoingMsg) continue;
+        NSString *serviceType = [[CacheUsers initWithCacheUsers] getCustomerServiceOrChatbot:message.from];
+        if (![serviceType isEqualToString:@"chatbot"]) continue;
+        NSMutableArray *serialized = [[ConversationViewController initWithConversationViewController] setTimeArr:@[message]];
+        if (serialized.count == 0) continue;
+        // [CSR_DEBUG] Emit chatbot real-time (parity). XÓA trước production.
+        NSLog(@"[CSR_DEBUG][native:ingress:chatbot-emit-global] %@", [ConversationViewController csrIngressDump:message]);
+        [NIMModel initShareMD].ResorcesArr = serialized;
+    }
 }
 
 - (void)playMessageAudioTip
@@ -125,7 +143,17 @@
 //                                             completion:nil];
 }
 #pragma mark - NIMSystemNotificationManagerDelegate
+// [CSR_DEBUG] Ingress system notification BUILT-IN (GLOBAL, persistent). Rule-out kênh này cho
+// 0x00200001 (built-in dùng cho friend/team, nhưng log để chắc chắn). XÓA trước production.
+- (void)onReceiveSystemNotification:(NIMSystemNotification *)notification{
+    NSLog(@"[CSR_DEBUG][native:ingress:sysNoti-global] type=%ld from=%@ to=%@ attach=%@",
+          (long)notification.type, notification.sourceID, notification.targetID, notification.attachment);
+}
 - (void)onReceiveCustomSystemNotification:(NIMCustomSystemNotification *)notification{//接收自定义通知
+    // [CSR_DEBUG] Ingress custom notification GLOBAL (persistent). Bắt 0x00200001 nếu gửi dạng
+    // custom notification lúc không mở màn CSKH. XÓA trước production.
+    NSLog(@"[CSR_DEBUG][native:ingress:customNoti-global] sender=%@ onlineOnly=%d content=%@",
+          notification.sender, notification.sendToOnlineUsersOnly, notification.content);
     NSDictionary *notiDict = [self jsonDictWithString:notification.content];
     NSDictionary *dataDict = [notiDict objectForKey:@"data"];
     
