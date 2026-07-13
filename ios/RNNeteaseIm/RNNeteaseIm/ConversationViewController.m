@@ -635,12 +635,14 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     
     if (currentMessageID.length != 0) {
         NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[currentMessageID] ];
-        NIMMessage *currentM = currentMessage[0];
-        
-        param.anchorClientId = currentMessageID;
-        
-        param.startTime = direction == 1 ? currentM.timestamp : 0;
-        param.endTime = direction == 0 ? currentM.timestamp : 0;
+        NIMMessage *currentM = currentMessage.firstObject;
+
+        if (currentM) {
+            param.anchorClientId = currentMessageID;
+
+            param.startTime = direction == 1 ? currentM.timestamp : 0;
+            param.endTime = direction == 0 ? currentM.timestamp : 0;
+        }
     }
     param.order = direction == 1 ? NIMMessageSearchOrderAsc : NIMMessageSearchOrderDesc;
     
