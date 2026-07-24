@@ -112,14 +112,10 @@
     return [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_auto_rotate_remote_video"] boolValue];
 }
 
-- (NIMNetCallVideoQuality)preferredVideoQuality
+- (NSInteger)preferredVideoQuality
 {
-    NSInteger videoQualitySetting = [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_preferred_video_quality"] integerValue];
-    if ((videoQualitySetting >= NIMNetCallVideoQualityDefault) &&
-        (videoQualitySetting <= NIMNetCallVideoQuality720pLevel)) {
-        return (NIMNetCallVideoQuality)videoQualitySetting;
-    }
-    return NIMNetCallVideoQualityDefault;
+    // Legacy net-call video quality — NIMAVChat đã gỡ, trả raw setting (NSInteger).
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_preferred_video_quality"] integerValue];
 }
 
 
@@ -128,27 +124,16 @@
     return [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_start_with_back_camera"] boolValue];
 }
 
-- (NIMNetCallVideoCodec)perferredVideoEncoder
+- (NSInteger)perferredVideoEncoder
 {
-    NSInteger videoEncoderSetting = [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_preferred_video_encoder"] integerValue];
-
-    if ((videoEncoderSetting >= NIMNetCallVideoCodecDefault) &&
-        (videoEncoderSetting <= NIMNetCallVideoCodecHardware)) {
-        return (NIMNetCallVideoCodec)videoEncoderSetting;
-    }
-    return NIMNetCallVideoCodecDefault;
+    // Legacy — NIMAVChat đã gỡ.
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_preferred_video_encoder"] integerValue];
 }
 
-- (NIMNetCallVideoCodec)perferredVideoDecoder
+- (NSInteger)perferredVideoDecoder
 {
-    NSInteger videoDecoderSetting = [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_preferred_video_decoder"] integerValue];
-    
-    if ((videoDecoderSetting >= NIMNetCallVideoCodecDefault) &&
-        (videoDecoderSetting <= NIMNetCallVideoCodecHardware)) {
-        return (NIMNetCallVideoCodec)videoDecoderSetting;
-    }
-    return NIMNetCallVideoCodecDefault;
-
+    // Legacy — NIMAVChat đã gỡ.
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:@"videochat_preferred_video_decoder"] integerValue];
 }
 - (NSUInteger)videoMaxEncodeKbps
 {

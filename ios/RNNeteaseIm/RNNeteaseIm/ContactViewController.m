@@ -7,6 +7,7 @@
 //
 
 #import "ContactViewController.h"
+#import "NIMSDK+ZYZJ.h"
 #import "NTESGroupedContacts.h"
 #import "NTESContactDataMember.h"
 //#import "NIMContactSelectViewController.h"
@@ -62,7 +63,7 @@
         [contacts addObject:_contacts];
     }
     NSMutableDictionary *tmp = [NSMutableDictionary dictionary];
-    NSString *me = [[NIMSDK sharedSDK].loginManager currentAccount];
+    NSString *me = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     for (id<NTESGroupMemberProtocol>member in contacts) {
         if ([[member memberId] isEqualToString:me]) {
             continue;
@@ -146,7 +147,7 @@
 }
 //设置用户信息
 - (NSMutableDictionary *)setupUserDict:(NIMUser *)user andUserId:(NSString *)userId{
-    BOOL isMe          = [userId isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount];
+    BOOL isMe          = [userId isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]];
     BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:userId];
     BOOL isInBlackList = [[NIMSDK sharedSDK].userManager isUserInBlackList:userId];
     BOOL needNotify    = [[NIMSDK sharedSDK].userManager notifyForNewMsg:userId];
@@ -226,7 +227,7 @@
 //    //使用内置的好友选择器
 //    NIMContactFriendSelectConfig *config = [[NIMContactFriendSelectConfig alloc] init];
 //    //获取自己id
-//    NSString *currentUserId = [[NIMSDK sharedSDK].loginManager currentAccount];
+//    NSString *currentUserId = [[NIMSDK sharedSDK] zyzjCurrentAccount];
 //    [users addObject:currentUserId];
 //    //将自己的id过滤
 //    config.filterIds = users;
@@ -243,7 +244,7 @@
 - (void)setMembers:(NSArray *)members
 {
     NSMutableDictionary *tmp = [NSMutableDictionary dictionary];
-    NSString *me = [[NIMSDK sharedSDK].loginManager currentAccount];
+    NSString *me = [[NIMSDK sharedSDK] zyzjCurrentAccount];
  
     for (id<NTESGroupMemberProtocol>member in members) {
         if ([[member memberId] isEqualToString:me]) {
@@ -300,7 +301,7 @@
     NSString *apnsText = (type == 1)?@"添加你为好友":@"请求加为好友";
     NSString *successText = request.operation == NIMUserOperationAdd ? @"添加成功" : @"请求成功";
     NSString *failedText =  request.operation == NIMUserOperationAdd ? @"添加失败" : @"请求失败";
-    NSString *myID = [NIMSDK sharedSDK].loginManager.currentAccount;
+    NSString *myID = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:myID];
     NSString *apnsContent = [NSString stringWithFormat:@"%@ %@",user.userInfo.nickName,apnsText];
     NSDictionary *dataDict = @{@"type":@"1",@"data":@{@"content":[NSString stringWithFormat:@"%@",msg]}};

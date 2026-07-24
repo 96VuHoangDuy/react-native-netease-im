@@ -59,6 +59,7 @@ import com.netease.nimlib.sdk.msg.attachment.FileAttachment;
 import com.netease.nimlib.sdk.msg.attachment.ImageAttachment;
 import com.netease.nimlib.sdk.msg.attachment.LocationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
+import com.netease.nimlib.sdk.msg.attachment.NetCallAttachment;
 import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.VideoAttachment;
 import com.netease.nimlib.sdk.msg.constant.AttachStatusEnum;
@@ -139,6 +140,7 @@ public class ReactCache {
     public final static String observeAccountNotice = "observeAccountNotice";//'账户变动通知'
     public final static String observeLaunchPushEvent = "observeLaunchPushEvent";//''
     public final static String observeBackgroundPushEvent = "observeBackgroundPushEvent";//''
+    public final static String observeCallState = "observeCallState";//'语音通话状态' (Phase 3, emit qua default case)
 
     final static String TAG = "ReactCache";
     private static ReactContext reactContext;
@@ -2114,6 +2116,9 @@ public class ReactCache {
             case robot:
                 type = MessageConstant.MsgType.ROBOT;
                 break;
+            case nrtc_netcall:
+                type = MessageConstant.MsgType.CALL;
+                break;
             case custom:
                 if (attachment != null) {
                     switch (attachment.getType()) {
@@ -2842,7 +2847,28 @@ public class ReactCache {
 
         itemMap.putMap("localExt", localExt);
 
-        if (item.getMsgType() == MsgTypeEnum.custom) {
+        if (item.getMsgType() == MsgTypeEnum.nrtc_netcall
+                && item.getAttachment() instanceof NetCallAttachment) {
+            // Call record (话单): map type/status/duration cho JS render bubble cuộc gọi.
+            NetCallAttachment netCall = (NetCallAttachment) item.getAttachment();
+            WritableMap callExtend = Arguments.createMap();
+            callExtend.putInt("callType", netCall.getType());     // 1=audio, 2=video
+            callExtend.putInt("callStatus", netCall.getStatus()); // 1=complete,2=canceled,3=rejected,4=timeout,5=busy
+            int callDuration = 0;
+            if (netCall.getDurations() != null) {
+                for (NetCallAttachment.Duration d : netCall.getDurations()) {
+                    if (d.getDuration() > callDuration) {
+                        callDuration = d.getDuration(); // giây; 1-1 call: lấy max = độ dài cuộc gọi
+                    }
+                }
+            }
+            callExtend.putInt("callDuration", callDuration);
+            if (netCall.getChannelId() != null) {
+                callExtend.putString("channelId", netCall.getChannelId());
+            }
+            itemMap.putMap(MESSAGE_EXTEND, callExtend);
+            itemMap.putString(MessageConstant.Message.MSG_TYPE, MessageConstant.MsgType.CALL);
+        } else if (item.getMsgType() == MsgTypeEnum.custom) {
             itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(), (CustomAttachment) item.getAttachment()));
             // [FIX mất thông báo CSKH] Đẩy extend.opcode cho message chatbot (parity iOS):
             // trước đây Android không set "extend" cho CHATBOT → JS không có opcode.

@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <NIMSDK/NIMGlobalDefs.h>
-#import <NIMAVChat/NIMAVChatDefs.h>
+// NIMAVChatDefs.h đã gỡ (NIMSDK_LITE không có NIMAVChat). Các API net-call video legacy chuyển kiểu NSInteger.
 
 //部分API提供了额外的选项，如删除消息会有是否删除会话的选项,为了测试方便提供配置参数
 //上层开发只需要按照策划需求选择一种适合自己项目的选项即可，这个设置只是为了方便测试不同的case下API的正确性
@@ -49,13 +49,13 @@
 
 - (BOOL)videochatAutoRotateRemoteVideo;             //自动旋转视频聊天远端画面
 
-- (NIMNetCallVideoQuality)preferredVideoQuality;    //期望的视频发送清晰度
+- (NSInteger)preferredVideoQuality;    //期望的视频发送清晰度 (legacy, NSInteger sau khi gỡ NIMAVChat)
 
 - (BOOL)startWithBackCamera;                        //使用后置摄像头开始视频通话
 
-- (NIMNetCallVideoCodec)perferredVideoEncoder;      //期望的视频编码器
+- (NSInteger)perferredVideoEncoder;      //期望的视频编码器 (legacy)
 
-- (NIMNetCallVideoCodec)perferredVideoDecoder;      //期望的视频解码器
+- (NSInteger)perferredVideoDecoder;      //期望的视频解码器 (legacy)
 
 - (NSUInteger)videoMaxEncodeKbps;                   //最大发送视频编码码率
 

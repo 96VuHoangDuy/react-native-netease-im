@@ -7,6 +7,7 @@
 //
 
 #import "ChatroomViewController.h"
+#import "NIMSDK+ZYZJ.h"
 #import "ImConfig.h"
 #import "NIMViewController.h"
 
@@ -149,7 +150,7 @@
     
     NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
     
-    BOOL isMe          = [accId isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount];
+    BOOL isMe          = [accId isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]];
     BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:accId];
     BOOL isInBlackList = [[NIMSDK sharedSDK].userManager isUserInBlackList:accId];
     BOOL needNotify    = [[NIMSDK sharedSDK].userManager notifyForNewMsg:accId];

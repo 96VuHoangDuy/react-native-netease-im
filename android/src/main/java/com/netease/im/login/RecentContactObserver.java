@@ -72,7 +72,7 @@ public class RecentContactObserver {
 
             @Override
             public void onResult(int code, List<RecentContact> recentContacts, Throwable throwable) {
-
+                Log.e("IMTRACE", "queryRecentContacts onResult code=" + code + " size=" + (recentContacts == null ? -1 : recentContacts.size()));
                 items.clear();
                 if (recentContacts != null) {
                     for (RecentContact c : recentContacts) {
@@ -248,6 +248,7 @@ public class RecentContactObserver {
 //            }
             }
         }
+        Log.e("IMTRACE", "refreshMessages emit items=" + items.size() + " unread=" + unreadNum);
         ReactCache.emit(ReactCache.observeRecentContact, ReactCache.createRecentList(items, unreadNum));
     }
 
@@ -298,6 +299,7 @@ public class RecentContactObserver {
 
         @Override
         public void onEvent(List<IMMessage> imMessages) {
+            Log.e("IMTRACE", "[V9] observeReceiveMessage FIRED n=" + (imMessages == null ? -1 : imMessages.size()));
             Log.d("imMessages", imMessages.toString());
             if (imMessages == null || imMessages.isEmpty()) {
                 return;
@@ -392,6 +394,7 @@ public class RecentContactObserver {
 
         @Override
         public void onEvent(LoginSyncStatus loginSyncStatus) {
+            Log.e("IMTRACE", "[V9] loginSyncDataStatus FIRED=" + loginSyncStatus);
             if (loginSyncStatus == LoginSyncStatus.SYNC_COMPLETED) {
                 refreshMessages(true);
             }
@@ -404,6 +407,7 @@ public class RecentContactObserver {
 
         @Override
         public void onEvent(StatusCode code) {
+            Log.e("IMTRACE", "[V9] userStatusObserver FIRED=" + code);
             if (code != PWD_ERROR && code.wontAutoLogin()) {
                 WritableMap r = Arguments.createMap();
                 String status = "";

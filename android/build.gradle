@@ -1,9 +1,10 @@
 apply plugin: 'com.android.library'
 
-def DEFAULT_COMPILE_SDK_VERSION   = 27
+// NIM SDK 10.x + NERTC Call Kit require compileSdk >= 31 (call-ui changelog); minSdk 24 khớp RN 0.77 host.
+def DEFAULT_COMPILE_SDK_VERSION   = 34
 def DEFAULT_BUILD_TOOLS_VERSION   = "27.0.3"
-def DEFAULT_TARGET_SDK_VERSION    = 27
-def DEFAULT_MIN_SDK_VERSION       = 16
+def DEFAULT_TARGET_SDK_VERSION    = 34
+def DEFAULT_MIN_SDK_VERSION       = 24
 def DEFAULT_SUPPOR_LIBVERSION = "27.0.3"
 
 android {
@@ -18,6 +19,8 @@ android {
         targetSdkVersion rootProject.hasProperty('targetSdkVersion') ? rootProject.targetSdkVersion : DEFAULT_TARGET_SDK_VERSION
         versionCode 1
         versionName "1.0"
+        // Rule bảo vệ class call-ui bị R8 strip; merge sang app tiêu thụ.
+        consumerProguardFiles "consumer-rules.pro"
         ndk {
             //设置支持的SO库架构
             abiFilters "armeabi-v7a", "x86","arm64-v8a","x86_64"
@@ -52,10 +55,26 @@ dependencies {
     // implementation fileTree(include: '*.jar', dir: 'libs')
     implementation 'com.facebook.react:react-native:+'
     // 基础功能 (必需)
-    def nim_version = "9.16.3"
+    def nim_version = "10.9.52"
     implementation "com.netease.nimlib:basesdk:${nim_version}"
     implementation "com.netease.nimlib:push:${nim_version}"
     implementation "com.netease.nimlib:lucene:${nim_version}"
+    // avsignalling: V2 signalling (V2NIMSignalling*) mà NERTC Call Kit dùng để mời/nhận cuộc gọi.
+    // Bị loại theo `exclude com.netease.nimlib` ở call-ui → phải khai lại, nếu không:
+    // NoClassDefFoundError V2NIMSignallingChannelType khi startVoiceCall.
+    implementation "com.netease.nimlib:avsignalling:${nim_version}"
+
+    // NERTC Call Kit (voice call, Phase 3) — call-ui 4.3.0 ↔ NIM 10.9.52 ↔ NERTC 5.9.10.
+    // 4.3.0 (không phải 4.1.0): bản thấp nhất có CallKitUI.enableIncomingBanner (来电横幅). Dep matrix
+    // trùng khít 4.1.0 (NIM 10.9.52 / nertc-base 5.9.10 / corekit-im2 1.10.1) → drop-in, không drift.
+    // Option B: exclude NIM/NERTC bundled trong call-ui để pin đúng version project (NIM 10.9.52 ở trên).
+    implementation("com.netease.yunxin.kit.call:call-ui:4.3.0") {
+        exclude group: 'com.netease.nimlib'
+        // Exclude nertc-base (call-ui kéo transitively) — nó trùng class com.netease.lava.* với
+        // full 'nertc' khai bên dưới → duplicate class. Giữ full nertc (superset).
+        exclude group: 'com.netease.yunxin', module: 'nertc-base'
+    }
+    implementation "com.netease.yunxin:nertc:5.9.10"
     implementation "net.zetetic:android-database-sqlcipher:4.5.3"
     implementation "androidx.sqlite:sqlite:2.1.0"
     implementation 'com.alibaba:fastjson:1.2.57'

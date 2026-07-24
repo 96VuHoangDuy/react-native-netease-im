@@ -15,7 +15,7 @@
 #import "NIMKitUtil.h"
 #import "NIMKitInfoFetchOption.h"
 //#import <CocoaLumberjack/CocoaLumberjack.h>
-#import <NIMAVChat/NIMAVChat.h>
+// NIMAVChat đã gỡ (NIMSDK_LITE không có; legacy net-call thay bằng NERTC CallKit).
 
 #import "NIMKit.h"
 #import "NIMObject.h"

@@ -11,7 +11,8 @@ Làm việc trong repo này như một maintainer của thư viện React Native
 3. `docs/common/ARCHITECTURE.md`
 4. `docs/playbook/NATIVE_INTEGRATION.md`
 5. feature doc liên quan
-6. source file bị tác động ở JS, Android và iOS
+6. `docs/reference/netease-im/INDEX.md` — docs chính chủ NetEase Yunxin IM (source of truth để đối ứng API/behavior)
+7. source file bị tác động ở JS, Android và iOS
 
 ## Operating Rules
 

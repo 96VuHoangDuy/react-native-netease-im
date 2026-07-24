@@ -7,6 +7,7 @@
 //
 
 #import "ConversationViewController.h"
+#import "NIMSDK+ZYZJ.h"
 #import <Photos/PhotosTypes.h>
 #import "NIMMessageMaker.h"
 #import "ContactViewController.h"
@@ -330,7 +331,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     if (type == nil || accId == nil || reactedUserId == nil) {
         return;
     }
-    if ([reactedUserId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]] && ![accId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+    if ([reactedUserId isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]] && ![accId isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
         NSMutableDictionary *recentLocalExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
         NSMutableArray *reactedUsers = [recentLocalExt objectForKey:@"reactedUsers"] != nil ? [[recentLocalExt objectForKey:@"reactedUsers"] mutableCopy] : [[NSMutableArray alloc] init];
         NSMutableDictionary *reactedUser = [[NSMutableDictionary alloc] init];
@@ -886,7 +887,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 - (NSDictionary *)teamNotificationSourceName:(NIMMessage *)message{
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    //    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+    //    NSString *currentAccount = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     //    if ([content.sourceID isEqualToString:currentAccount]) {
     //        source = @"你";
     //    }else{
@@ -901,7 +902,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSMutableArray *targets = [[NSMutableArray alloc] init];
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    //    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+    //    NSString *currentAccount = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     for (NSString *item in content.targetIDs) {
         //        if ([item isEqualToString:currentAccount]) {
         //            [targets addObject:@"你"];
@@ -1000,10 +1001,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             
             break;
         }
-        case NIMNotificationTypeNetCall:{
-            [notiObj setObject:[NIMKitUtil messageTipContent:message] forKey:@"tipMsg"];
-            break;
-        }
+        // NIMNotificationTypeNetCall (legacy NIMAVChat) đã gỡ.
         default:
             break;
     }
@@ -1839,12 +1837,37 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                         
                 }
             }
+        }else if (message.messageType == NIMMessageTypeRtcCallRecord) {
+            // Call record (话单): map type/status/duration cho JS render bubble cuộc gọi.
+            // Parity Android (ReactCache.getMessageType: case nrtc_netcall -> "call").
+            // LƯU Ý: phải giữ đồng bộ với nhánh tương ứng trong refrashMessage:From:.
+            NIMRtcCallRecordObject *record = message.messageObject;
+            [dic setObject:@"call" forKey:@"msgType"];
+            NSMutableDictionary *callExtend = [NSMutableDictionary dictionary];
+            [callExtend setObject:@(record.callType) forKey:@"callType"];     // 1=audio, 2=video
+            [callExtend setObject:@(record.callStatus) forKey:@"callStatus"]; // 1=complete,2=canceled,3=rejected,4=timeout,5=busy
+            // durations là dict {accid: giây}; 1-1 call lấy max = độ dài cuộc gọi (parity Android).
+            NSInteger callDuration = 0;
+            for (NSNumber *d in [record.durations allValues]) {
+                if ([d integerValue] > callDuration) {
+                    callDuration = [d integerValue];
+                }
+            }
+            [callExtend setObject:@(callDuration) forKey:@"callDuration"];
+            if (record.channelID) {
+                [callExtend setObject:record.channelID forKey:@"channelId"];
+            }
+            [dic setObject:callExtend forKey:@"extend"];
         }else{
+            // [CALLREC-DEBUG] tạm: message rơi vào else = type nào? XÓA sau khi verify.
+            NSLog(@"[CALLREC-DEBUG] setTimeArr-ELSE msgId=%@ messageType=%ld objClass=%@",
+                  message.messageId, (long)message.messageType,
+                  NSStringFromClass([message.messageObject class]));
             [dic setObject:@"unknown" forKey:@"msgType"];
             NSMutableDictionary *unknowObj = [NSMutableDictionary dictionary];
             [dic setObject:unknowObj  forKey:@"extend"];
         }
-        
+
         // [PARITY ANDROID] Bỏ override ép msgType=unknown cho mọi chatbot message.
         // Chatbot text giữ msgType=text (render đúng); chatbot custom {code} vẫn là unknown
         // + extend.opcode (từ nhánh default) → JS gating bắt qua extend.opcode != null.
@@ -2023,7 +2046,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             NSMutableArray *arr = [[NSMutableArray alloc] init];
             NSInteger ownedGroupCount = 0;
             for(NIMTeam *team in teams) {
-                if ([team.owner isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+                if ([team.owner isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
                     ownedGroupCount++;
                 }
             }
@@ -2061,7 +2084,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
-                BOOL isOwner = [team.owner isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]];
+                BOOL isOwner = [team.owner isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]];
                 [teamDic setObject:[NSNumber numberWithBool:isOwner] forKey:@"isOwner"];
                 if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
                     [teamDic setObject:@"" forKey:@"introduce"];
@@ -2602,7 +2625,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 
 //发送拆红包消息
 -(void)sendRedPacketOpenMessage:(NSString *)sendId hasRedPacket:(NSString *)hasRedPacket serialNo:(NSString *)serialNo{
-    NSString *strMyId = [NIMSDK sharedSDK].loginManager.currentAccount;
+    NSString *strMyId = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     NSDictionary *dict = @{@"sendId":sendId,@"openId":strMyId,@"hasRedPacket":hasRedPacket,@"serialNo":serialNo};
     NIMMessage *message;
     DWCustomAttachment *obj = [[DWCustomAttachment alloc]init];
@@ -2858,7 +2881,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
         
         
-        if (![message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
+        if (![message.from isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
             [self playTipsMusicWithMessage:message];
         }
     }
@@ -3403,7 +3426,37 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                     break;
             }
         }
+    }else if (message.messageType == NIMMessageTypeRtcCallRecord) {
+        // [CALLREC-DEBUG] tạm: xác nhận nhánh này có chạy không. XÓA sau khi verify.
+        NSLog(@"[CALLREC-DEBUG] HIT RtcCallRecord msgId=%@ objClass=%@", message.messageId, NSStringFromClass([message.messageObject class]));
+        // Call record (话单): map type/status/duration cho JS render bubble cuộc gọi.
+        // Parity Android (ReactCache.getMessageType: case nrtc_netcall -> "call").
+        NIMRtcCallRecordObject *record = message.messageObject;
+        [dic2 setObject:@"call" forKey:@"msgType"];
+        NSMutableDictionary *callExtend = [NSMutableDictionary dictionary];
+        [callExtend setObject:@(record.callType) forKey:@"callType"];     // 1=audio, 2=video
+        [callExtend setObject:@(record.callStatus) forKey:@"callStatus"]; // 1=complete,2=canceled,3=rejected,4=timeout,5=busy
+        // durations là dict {accid: giây}; 1-1 call lấy max = độ dài cuộc gọi (parity Android).
+        NSInteger callDuration = 0;
+        for (NSNumber *d in [record.durations allValues]) {
+            if ([d integerValue] > callDuration) {
+                callDuration = [d integerValue];
+            }
+        }
+        [callExtend setObject:@(callDuration) forKey:@"callDuration"];
+        if (record.channelID) {
+            [callExtend setObject:record.channelID forKey:@"channelId"];
+        }
+        [dic2 setObject:callExtend forKey:@"extend"];
     }else{
+        // [CALLREC-DEBUG] tạm: message rơi vào else = type nào? XÓA sau khi verify.
+        NSLog(@"[CALLREC-DEBUG] ELSE msgId=%@ messageType=%ld objClass=%@ subType=%ld text=%@ remoteExt=%@",
+              message.messageId,
+              (long)message.messageType,
+              NSStringFromClass([message.messageObject class]),
+              (long)message.messageSubType,
+              message.text,
+              message.remoteExt);
         [dic2 setObject:@"unknown" forKey:@"msgType"];
         NSMutableDictionary *unknowObj = [NSMutableDictionary dictionary];
         [dic2 setObject:unknowObj  forKey:@"extend"];
@@ -3424,7 +3477,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSString *strOpenId = [self stringFromKey:@"openId" andDict:dict];
     NSString *strSendId = [self stringFromKey:@"sendId" andDict:dict];
     NSString *strNo = [self stringFromKey:@"serialNo" andDict:dict];
-    NSString *strMyId = [NIMSDK sharedSDK].loginManager.currentAccount;
+    NSString *strMyId = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     NSString *strContent;
     NSString *lastString = @"";
     NSInteger hasRedPacket = [[dict objectForKey:@"hasRedPacket"] integerValue];
@@ -4189,7 +4242,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     // Add sessionBody for platform-specific push configuration
     NSString *strSessionID = @"";
     if (message.session.sessionType == NIMSessionTypeP2P) {
-        strSessionID = [NIMSDK sharedSDK].loginManager.currentAccount;
+        strSessionID = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     } else {
         strSessionID = [NSString stringWithFormat:@"%@", message.session.sessionId];
     }

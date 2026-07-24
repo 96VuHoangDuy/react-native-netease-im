@@ -7,6 +7,7 @@
 //
 
 #import "NIMKitUtil.h"
+#import "NIMSDK+ZYZJ.h"
 #import "NIMKitInfoFetchOption.h"
 #import "UserStrangers.h"
 #import "CacheUsers.h"
@@ -181,9 +182,7 @@
         case NIMNotificationTypeTeam:{
             return [NIMKitUtil teamNotificationFormatedMessage:message];
         }
-        case NIMNotificationTypeNetCall:{
-            return [NIMKitUtil netcallNotificationFormatedMessage:message];
-        }
+        // NIMNotificationTypeNetCall (legacy NIMAVChat) đã gỡ — rơi vào default.
         case NIMNotificationTypeChatroom:{
             return [NIMKitUtil chatroomNotificationFormatedMessage:message];
         }
@@ -324,44 +323,14 @@
 }
 
 
-+ (NSString *)netcallNotificationFormatedMessage:(NIMMessage *)message{
-    NIMNotificationObject *object = message.messageObject;
-    NIMNetCallNotificationContent *content = (NIMNetCallNotificationContent *)object.content;
-    NSString *text = @"";
-    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
-    switch (content.eventType) {
-        case NIMNetCallEventTypeMiss:{
-            text = @"未接听";
-            break;
-        }
-        case NIMNetCallEventTypeBill:{
-            text =  ([object.message.from isEqualToString:currentAccount])? @"通话拨打时长 " : @"通话接听时长 ";
-            NSTimeInterval duration = content.duration;
-            NSString *durationDesc = [NSString stringWithFormat:@"%02d:%02d",(int)duration/60,(int)duration%60];
-            text = [text stringByAppendingString:durationDesc];
-            break;
-        }
-        case NIMNetCallEventTypeReject:{
-            text = ([object.message.from isEqualToString:currentAccount])? @"对方正忙" : @"已拒绝";
-            break;
-        }
-        case NIMNetCallEventTypeNoResponse:{
-            text = @"未接通，已取消";
-            break;
-        }
-        default:
-            break;
-    }
-    return text;
-}
-
+// netcallNotificationFormatedMessage (legacy NIMAVChat) đã gỡ — NERTC CallKit dùng call-list (话单) thay thế.
 
 + (NSString *)chatroomNotificationFormatedMessage:(NIMMessage *)message{
     NIMNotificationObject *object = message.messageObject;
     NIMChatroomNotificationContent *content = (NIMChatroomNotificationContent *)object.content;
     NSMutableArray *targetNicks = [[NSMutableArray alloc] init];
     for (NIMChatroomNotificationMember *memebr in content.targets) {
-        if ([memebr.userId isEqualToString:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+        if ([memebr.userId isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
            [targetNicks addObject:@"你"];
         }else{
            [targetNicks addObject:memebr.nick];
@@ -384,7 +353,7 @@
         }
         case NIMChatroomEventTypeAddMute:
         {
-            if (content.targets.count == 1 && [[content.targets.firstObject userId] isEqualToString:[[NIMSDK sharedSDK].loginManager currentAccount]])
+            if (content.targets.count == 1 && [[content.targets.firstObject userId] isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]])
             {
                 return @"你已被禁言";
             }
@@ -431,7 +400,7 @@
         }
         case NIMChatroomEventTypeAddMuteTemporarily:
         {
-            if (content.targets.count == 1 && [[content.targets.firstObject userId] isEqualToString:[[NIMSDK sharedSDK].loginManager currentAccount]])
+            if (content.targets.count == 1 && [[content.targets.firstObject userId] isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]])
             {
                 return @"你已被临时禁言";
             }
@@ -468,7 +437,7 @@
     NSString *source;
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+    NSString *currentAccount = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     if ([content.sourceID isEqualToString:currentAccount]) {
         source = @"你";
     }else{
@@ -481,7 +450,7 @@
     NSMutableArray *targets = [[NSMutableArray alloc] init];
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+    NSString *currentAccount = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     for (NSString *item in content.targetIDs) {
         if ([item isEqualToString:currentAccount]) {
             [targets addObject:@"你"];

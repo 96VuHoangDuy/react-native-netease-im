@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.WindowManager;
@@ -171,6 +172,78 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         LogUtil.w(TAG, "initialize");
     }
 
+    // ===== NERTC Call Kit (voice call, Phase 3) — audio-only, prebuilt UI =====
+    @ReactMethod
+    public void startVoiceCall(String accid, String pushTitle, String pushContent, Promise promise) {
+        try {
+            if (accid == null || accid.isEmpty()) {
+                promise.reject("invalid_accid", "accid rỗng");
+                return;
+            }
+            final Activity activity = getCurrentActivity();
+            if (activity == null) {
+                promise.reject("no_activity", "Không có current activity để mở màn gọi");
+                return;
+            }
+            activity.runOnUiThread(() -> CallService.startVoiceCall(activity, accid, pushTitle, pushContent));
+            promise.resolve(true);
+        } catch (Exception e) {
+            promise.reject("start_call_error", e.getMessage(), e);
+        }
+    }
+
+    // Tên hiển thị cố định cho CSKH (đã localize từ JS). Native dùng khi accid prefix "csr".
+    @ReactMethod
+    public void setCustomerServiceCallName(String name) {
+        CallService.setCustomerServiceCallName(name);
+    }
+
+    @ReactMethod
+    public void hangupCall(Promise promise) {
+        try {
+            CallService.hangup();
+            promise.resolve(true);
+        } catch (Exception e) {
+            promise.reject("hangup_error", e.getMessage(), e);
+        }
+    }
+
+    /** Quyền vẽ đè (SYSTEM_ALERT_WINDOW) — cần để hiện 来电横幅. Dưới API 23 mặc định có. */
+    @ReactMethod
+    public void hasOverlayPermission(Promise promise) {
+        try {
+            promise.resolve(Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                    || Settings.canDrawOverlays(getReactApplicationContext()));
+        } catch (Exception e) {
+            promise.reject("overlay_check_error", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Mở Settings xin quyền vẽ đè. Android không trả kết quả về qua callback nào
+     * → JS phải tự gọi lại hasOverlayPermission() khi app quay lại foreground.
+     */
+    @ReactMethod
+    public void requestOverlayPermission(Promise promise) {
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                    || Settings.canDrawOverlays(getReactApplicationContext())) {
+                promise.resolve(true);
+                return;
+            }
+            Activity activity = getCurrentActivity();
+            if (activity == null) {
+                promise.reject("no_activity", "Không có current activity để mở Settings");
+                return;
+            }
+            activity.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + activity.getPackageName())));
+            promise.resolve(true);
+        } catch (Exception e) {
+            promise.reject("overlay_request_error", e.getMessage(), e);
+        }
+    }
+
     @Override
     public void onCatalystInstanceDestroy() {
         LogUtil.w(TAG, "onCatalystInstanceDestroy");
@@ -301,6 +374,20 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         sessionService.updateIsSeenMessage(isSeenMessage);
     }
 
+    /** Đồng bộ appKey runtime với SDK (initV2 khóa appKey ở manifest; V9 truyền per-login). No-op nếu trùng. */
+    private void syncAppKey(String appKey) {
+        try {
+            if (appKey != null && !appKey.isEmpty() && !appKey.equals(NIMClient.getAppKey())) {
+                com.netease.nimlib.sdk.v2.V2NIMError e = NIMClient.updateAppKey(appKey);
+                android.util.Log.e("IMTRACE", "updateAppKey(" + appKey + ") result=" + (e == null ? "OK" : ("err " + e.getCode() + " " + e.getDesc())));
+            } else {
+                android.util.Log.e("IMTRACE", "syncAppKey: appKey khớp SDK (" + NIMClient.getAppKey() + "), skip");
+            }
+        } catch (Throwable t) {
+            android.util.Log.e("IMTRACE", "syncAppKey lỗi: " + t.getMessage());
+        }
+    }
+
     /**
      * 登陆
      *
@@ -310,6 +397,10 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
      */
     @ReactMethod
     public void login(String contactId, String token, String appKey, final Promise promise) {
+        android.util.Log.e("IMTRACE", "login() appKey=" + appKey + " contactId=" + contactId + " tokenLen=" + (token == null ? 0 : token.length()) + " (manifest appKey=2761e5922c9e63c49ef6f33d0a367ec6)");
+        // Fix V10: V9 truyền appKey per-login, còn initV2 khóa appKey ở manifest. Nếu backend cấp appKey khác
+        // manifest → V2 login báo "account not exist". Đồng bộ appKey runtime trước login (no-op nếu trùng).
+        syncAppKey(appKey);
         LogUtil.w(TAG, "_id:" + contactId);
         LogUtil.w(TAG, "t:" + token);
 //        LogUtil.w(TAG, "md5:" + MD5.getStringMD5(token));
@@ -344,6 +435,8 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
 
     @ReactMethod
     public void autoLogin(String contactId, String token, String appKey, final Promise promise) {
+        android.util.Log.e("IMTRACE", "autoLogin() appKey=" + appKey + " contactId=" + contactId + " tokenLen=" + (token == null ? 0 : token.length()) + " (manifest appKey=2761e5922c9e63c49ef6f33d0a367ec6)");
+        syncAppKey(appKey);
         LogUtil.w(TAG, "_id:" + contactId);
         LogUtil.w(TAG, "t:" + token);
 //        LogUtil.w(TAG, "md5:" + MD5.getStringMD5(token));

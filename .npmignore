@@ -1,0 +1,7 @@
+docs/
+.playwright-mcp/
+android/build/
+android/.gradle/
+node_modules/
+.idea/
+*.iml

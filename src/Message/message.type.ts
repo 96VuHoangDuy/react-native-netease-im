@@ -77,8 +77,23 @@ export enum NIMMessageTypeEnum {
   CUSTOM = "custom",
   MULTIPLE_TEXT = "forwardMultipleText",
   GIF = "gif",
+  CALL = "call",
   UNKNOWN = "unknown",
   EMPTY_SESSION = "EMPTY_SESSION",
+}
+
+// Call record (话单) — trạng thái cuộc gọi ghi trong hội thoại.
+export enum NIMCallRecordStatusEnum {
+  COMPLETE = 1, // hai bên đã vào cuộc gọi rồi cúp máy
+  CANCELED = 2, // người gọi hủy trước khi bên kia nghe
+  REJECTED = 3, // người nhận từ chối
+  TIMEOUT = 4, // người nhận không thao tác → quá thời gian
+  BUSY = 5, // người nhận đang bận → tự động từ chối
+}
+
+export enum NIMCallRecordTypeEnum {
+  AUDIO = 1,
+  VIDEO = 2,
 }
 
 export enum NIMMessageStatusEnum {
@@ -190,6 +205,12 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
   code?: number;
   opcode?: number;
   opcodeType?: number;
+
+  // Call record (话单) — có khi msgType === "call".
+  callType?: number; // NIMCallRecordTypeEnum: 1=audio, 2=video
+  callStatus?: number; // NIMCallRecordStatusEnum: 1..5
+  callDuration?: number; // giây (0 nếu chưa kết nối)
+  channelId?: string;
 }
 
 export interface NIMMessage {

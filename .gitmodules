@@ -1,0 +1,3 @@
+[submodule "docs/reference/netease-im/yunxin-im-skills"]
+	path = docs/reference/netease-im/yunxin-im-skills
+	url = https://github.com/netease-kit/yunxin-im-skills

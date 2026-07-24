@@ -24,16 +24,16 @@
 
 - Gradle plugin: `com.android.library`
 - `android/build.gradle`
-  - default `compileSdkVersion 27`
-  - default `targetSdkVersion 27`
-  - default `minSdkVersion 16`
+  - default `compileSdkVersion 34`
+  - default `targetSdkVersion 34`
+  - default `minSdkVersion 24`
   - `aidl true`
 - Native React dependency:
   - `com.facebook.react:react-native:+`
-- NIM dependencies:
-  - `com.netease.nimlib:basesdk:9.12.2`
-  - `com.netease.nimlib:push:9.12.2`
-  - `com.netease.nimlib:lucene:9.12.2`
+- NIM dependencies (Phase 2 — bumped to V10 `10.9.52`):
+  - `com.netease.nimlib:basesdk:10.9.52`
+  - `com.netease.nimlib:push:10.9.52`
+  - `com.netease.nimlib:lucene:10.9.52`
 - Other Android deps:
   - `net.zetetic:android-database-sqlcipher:4.5.3`
   - `androidx.sqlite:sqlite:2.1.0`
@@ -48,11 +48,11 @@
 - Podspec: `RNNeteaseIm.podspec`
   - `platform :ios, "12.0"`
   - dependency `React-Core`
-  - dependency `NIMSDK`, version `9.12.1`
+  - dependency `NIMSDK`, version `10.9.53` (Phase 2 — bumped to V10; pod vẫn ship `NIMAVChat.xcframework`)
   - dependency `Reachability`
 - ObjC source lives under `ios/RNNeteaseIm/RNNeteaseIm`
 - Xcode project exists in `ios/RNNeteaseIm/RNNeteaseIm.xcodeproj`
-- Xcode project file hiện vẫn chứa `IPHONEOS_DEPLOYMENT_TARGET = 8.0`
+- Xcode project `IPHONEOS_DEPLOYMENT_TARGET = 12.0` (đã align với podspec ở Phase 2)
 
 ## Extra Runtime Dependencies Observed In Source
 

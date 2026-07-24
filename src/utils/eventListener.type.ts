@@ -15,7 +15,9 @@ export enum NIMEventListenerEnum {
   observeOnKick = "observeOnKick",
   observeCustomNotification = "observeCustomNotification",
   observeProgressSend = "observeProgressSend",
-  observeUserStranger = "observeUserStranger"
+  observeUserStranger = "observeUserStranger",
+  /** Trạng thái vòng đời cuộc gọi thoại (NERTC Call Kit). @see NIMCallStateEnum */
+  observeCallState = "observeCallState"
 }
 
 export enum NIMAudioMsgStatusType {

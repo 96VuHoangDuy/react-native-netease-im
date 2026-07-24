@@ -7,6 +7,7 @@
 //
 
 #import "TeamViewController.h"
+#import "NIMSDK+ZYZJ.h"
 #import "ImConfig.h"
 #import "UserStrangers.h"
 #import "CacheUsers.h"
@@ -424,7 +425,7 @@
                 [memb setObject:[NSString stringWithFormat:@"%f", member.createTime]  forKey:@"createTime"];
                 [memb setObject:[NSString stringWithFormat:@"%@", member.customInfo]  forKey:@"customInfo"];
                 NIMUser   *user = [[NIMSDK sharedSDK].userManager userInfo:member.userId];
-                BOOL isMe          = [member.userId isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount];
+                BOOL isMe          = [member.userId isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]];
                 BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:member.userId];
                 BOOL isInBlackList = [[NIMSDK sharedSDK].userManager isUserInBlackList:member.userId];
                 BOOL needNotify    = [[NIMSDK sharedSDK].userManager notifyForNewMsg:member.userId];
@@ -500,7 +501,7 @@
     [memb setObject:[NSString stringWithFormat:@"%f", member.createTime]  forKey:@"createTime"];
     [memb setObject:[NSString stringWithFormat:@"%@", member.customInfo]  forKey:@"customInfo"];
     NIMUser   *user = [[NIMSDK sharedSDK].userManager userInfo:member.userId];
-    BOOL isMe          = [member.userId isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount];
+    BOOL isMe          = [member.userId isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]];
     BOOL isMyFriend    = [[NIMSDK sharedSDK].userManager isMyFriend:member.userId];
     BOOL isInBlackList = [[NIMSDK sharedSDK].userManager isUserInBlackList:member.userId];
     BOOL needNotify    = [[NIMSDK sharedSDK].userManager notifyForNewMsg:member.userId];

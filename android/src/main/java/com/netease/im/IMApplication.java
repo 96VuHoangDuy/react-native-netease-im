@@ -92,11 +92,15 @@ public class IMApplication {
 //            NIMPushClient.initPush(new MixPushConfig());
 //        }
         if (isAgreePolicy) {
-            NIMClient.init(context, getLoginInfo(), getOptions(context));
+            // NIM V10 login migration (unblock NERTC CallKit V2 signalling — lỗi 191001 misuse khi login V9).
+            // initV2(Context, SDKOptions): KHÔNG nhận LoginInfo; appKey lấy từ manifest metadata com.netease.nim.appKey.
+            // V9 (rollback): NIMClient.init(context, getLoginInfo(), getOptions(context));
+            NIMClient.initV2(context, getOptions(context));
 
             NIMClient.getService(SdkLifecycleObserver.class).observeMainProcessInitCompleteResult(new Observer<Boolean>() {
                 @Override
                 public void onEvent(Boolean aBoolean) {
+                    Log.e("IMTRACE", "initV2 complete result=" + aBoolean + " mainProcess=" + NIMUtil.isMainProcess(IMApplication.context));
                     if (aBoolean != null && aBoolean) {
                         if (NIMUtil.isMainProcess(IMApplication.context)) {
                             // init pinyin
@@ -107,6 +111,9 @@ public class IMApplication {
                             // 初始化Kit模块
                             initKit();
 
+                            // Init NERTC Call Kit (voice call, Phase 3) — additive, không ảnh hưởng chat.
+                            // Login đã chuyển V10 (initV2 + V2NIMLoginService) để V2 signalling của CallKit chạy.
+                            CallService.init(context);
                         }
                     }
                 }
@@ -197,6 +204,11 @@ public class IMApplication {
         options.sessionReadAck = true;
         //自动检查 SDK 配置是否完全
         options.checkManifestConfig = DEBUG;
+
+        // NIM SDK 10.x: dùng login V10 (V2NIMLoginService) để NERTC CallKit V2 signalling hoạt động.
+        // V9 và V10 login API loại trừ lẫn nhau; disableV2Login=false (default) = dùng login V10.
+        // V9 (rollback): options.disableV2Login = true; + đổi initV2→init + V2NIMLoginService.login→AuthService.login.
+        options.disableV2Login = false;
         //reducedIM 支持弱 IM 场景
         //asyncInitSDK 支持异步 SDK 初始化
         //teamNotificationMessageMarkUnread 登录选项添加群通知消息是否计入未读数开关

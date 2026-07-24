@@ -139,3 +139,33 @@
 - Impact:
   - chưa thể xác thực end-to-end integration
   - chưa thể mô tả workflow release/PR bằng dữ liệu chắc chắn
+
+## Build / Obfuscation Risk
+
+### Docs không nhắc cơ chế R8 phá NERTC/call-ui (reflection + JNI FindClass)
+
+- Evidence:
+  - `docs/reference/call-android-native/01-integration-android.md` §4 ProGuard **có** rule official
+    (`-keep class com.netease.lava.** {*;}`, `-keep class com.netease.yunxin.** {*;}`)
+  - nhưng không docs nào giải thích **vì sao** cần: không hề nhắc `JNI_OnLoad`, `FindClass`,
+    `RegisterNatives`, `NativeLibLoader`, `NERtcCore`, hay cơ chế "xkit startup" (`Class.forName()`
+    từ manifest `<meta-data>`)
+  - mọi aar NetEase (`nertc`, `nertc-base`, `call-ui`, `corekit`) có `proguard.txt` **rỗng** → không tự bảo vệ
+- Impact:
+  - thiếu rule ⇒ app release crash, **debug không lộ** (`minifyEnabled` chỉ bật ở release):
+    strip class ⇒ `ClassNotFoundException: CallKitUIService` lúc launch;
+    rename class ⇒ `SIGABRT` tại `libnertc_sdk.so (JNI_OnLoad+148)` lúc bấm call
+  - suy rule từ bytecode dễ ra rule thiếu: `NERtcCore`/`NativeLibLoader` **không khai method `native`**
+    nên "chỉ keep class có native method" là không đủ — phải keep cả package
+  - **Bài học**: đọc `01-integration-android.md` §4 ProGuard TRƯỚC khi tự suy rule
+
+### Lib chưa export rule NIM qua consumerProguardFiles
+
+- Evidence:
+  - `android/consumer-rules.pro` chỉ export `com.netease.lava.**` + `com.netease.yunxin.**`
+  - rule NIM (`com.netease.nim.**`, `nimlib.**`, `share.**`, `mobsec.**`) hiện chỉ nằm ở
+    `android/app/proguard-rules.pro` của app ZYZJ
+  - `android/proguard-rules.pro` của lib có `-keep class com.netease.** {*;}` nhưng khai trong
+    `proguardFiles` (chỉ áp khi tự build lib), **không** merge sang app
+- Impact:
+  - app host khác dùng lib mà không tự thêm rule NIM ⇒ có thể crash release; ZYZJ hiện không lộ vì đã có sẵn
