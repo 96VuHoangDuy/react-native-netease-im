@@ -22,6 +22,9 @@ public class CsP2PCallFragmentActivity extends P2PCallFragmentActivity {
                         P2PCallFragmentType.AUDIO_CALLER,
                         new CsAudioCallerFragment())
                 .customCallFragmentByKey(
+                        P2PCallFragmentType.AUDIO_CALLEE,
+                        new CsAudioCalleeFragment())
+                .customCallFragmentByKey(
                         P2PCallFragmentType.AUDIO_ON_THE_CALL,
                         new CsAudioOnTheCallFragment())
                 .build();

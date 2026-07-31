@@ -1,11 +1,20 @@
 package com.netease.im;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.net.Uri;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.core.app.NotificationManagerCompat;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
@@ -22,6 +31,7 @@ import com.netease.yunxin.kit.call.p2p.model.NECallPushConfig;
 import com.netease.yunxin.kit.call.p2p.model.NECallType;
 import com.netease.yunxin.kit.call.p2p.model.NEInviteInfo;
 import com.netease.yunxin.kit.call.p2p.param.NEHangupParam;
+import com.netease.yunxin.nertc.ui.CallKitNotificationConfig;
 import com.netease.yunxin.nertc.ui.CallKitUI;
 import com.netease.yunxin.nertc.ui.CallKitUIOptions;
 import com.netease.yunxin.nertc.ui.base.AVChatSoundPlayer;
@@ -32,6 +42,9 @@ import com.netease.lava.nertc.sdk.NERtcOption;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 import com.netease.im.uikit.cache.NimUserInfoCache;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -46,6 +59,28 @@ import kotlin.jvm.functions.Function2;
 public class CallService {
     private static final String TAG = "CallService";
     private static boolean initialized = false;
+
+    // App context (giữ để dọn foreground service của call-ui khi kết thúc cuộc gọi).
+    private static Context appContext = null;
+
+    // Foreground service của SDK call-ui phát notification "通话进行中...." (id 1026, ongoing).
+    // Neo theo tên class trong AAR manifest — stopService không phụ thuộc notification id nên
+    // an toàn kể cả khi id đổi ở version khác; cancel(id) chỉ là lớp phòng thủ thêm.
+    private static final String[] CALL_FOREGROUND_SERVICE_CLASSES = {
+            "com.netease.yunxin.nertc.ui.service.AudioCallForegroundService",
+            "com.netease.yunxin.nertc.ui.service.VideoCallForegroundService",
+    };
+    private static final int CALL_FOREGROUND_NOTIFICATION_ID = 1026;
+
+    // Channel chuông cho notification cuộc gọi đến do HỆ THỐNG vẽ từ offline push (app bị kill).
+    // Không có channel_id trong pushPayload thì push rơi vào channel tin nhắn (importance DEFAULT)
+    // → không chuông, không heads-up. v2: bump từ v1 vì sound của channel bất biến sau khi tạo.
+    static final String CHANNEL_INCOMING_CALL = "cskh_incoming_call_v2";
+
+    // Channel KHÔNG sound cho notification fallback của SDK khi process còn sống (thiếu overlay →
+    // banner fail → generateNotificationAndNotify). Lúc đó SoundHelper đã phát caller_ring; nếu
+    // notification cũng kêu sẽ thành 2 tiếng đè nhau.
+    static final String CHANNEL_INCOMING_CALL_ALIVE = "cskh_incoming_call_alive_v2";
 
     // CSKH fix cứng: accid prefix "csr" → tên + avatar logo app cố định (outbound + inbound).
     private static final String CSR_ACCID_PREFIX = "csr";
@@ -75,7 +110,9 @@ public class CallService {
         if (initialized) {
             return;
         }
+        appContext = context.getApplicationContext();
         try {
+            ensureIncomingCallChannel(appContext);
             String appKey = readAppKey(context);
             if (TextUtils.isEmpty(appKey)) {
                 Log.e(TAG, "appKey rỗng (metadata com.netease.nim.appKey) — bỏ qua init CallKit");
@@ -96,14 +133,24 @@ public class CallService {
                             // chỉ đọc cache NIM local → cold cache hiện accid. Lấy từ NIM profile (app đã
                             // đẩy nick/avatar lúc connect), fetch remote nếu cache miss.
                             .userInfoHelper(userInfoHelper())
+                            // Notification fallback khi thiếu overlay (banner fail): mặc định SDK in
+                            // raw accid + dùng channel có sound → đè lên chuông SoundHelper. Thay bằng
+                            // text cố định + channel không sound.
+                            .notificationConfigFetcher(invitedInfo -> new CallKitNotificationConfig(
+                                    IMApplication.getNotify_msg_drawable_id(),
+                                    CHANNEL_INCOMING_CALL_ALIVE,
+                                    "Cuộc gọi đến",
+                                    "Bạn có cuộc gọi thoại đến"))
                             .soundHelper(
                                     new SoundHelper() {
                                         @Override
                                         protected Integer soundResources(
                                                 AVChatSoundPlayer.RingerTypeEnum type) {
-                                            // CONNECTING = nhạc chờ bên gọi (KHÔNG phải RING — RING là
-                                            // chuông bên nhận). Các loại khác giữ mặc định SDK.
-                                            if (type == AVChatSoundPlayer.RingerTypeEnum.CONNECTING) {
+                                            // CONNECTING = nhạc chờ bên gọi, RING = chuông bên nhận.
+                                            // Khách yêu cầu cả hai dùng chung một bản nhạc. Các loại
+                                            // khác (reject/busy/noResponse) giữ mặc định SDK.
+                                            if (type == AVChatSoundPlayer.RingerTypeEnum.CONNECTING
+                                                    || type == AVChatSoundPlayer.RingerTypeEnum.RING) {
                                                 return R.raw.caller_ring;
                                             }
                                             return super.soundResources(type);
@@ -193,6 +240,68 @@ public class CallService {
     }
 
     /**
+     * Tạo channel chuông cho notification cuộc gọi đến (hệ thống vẽ từ offline push khi app bị kill).
+     * Sound = caller_ring.mp3 — đồng nhất với chuông SoundHelper khi app còn sống. Idempotent.
+     */
+    private static void ensureIncomingCallChannel(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+        NotificationManager nm =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) {
+            return;
+        }
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_INCOMING_CALL, "Cuộc gọi đến", NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("Thông báo khi có cuộc gọi đến");
+        // URI theo tên resource (không dùng id — id đổi theo build): cùng pattern channel tin nhắn raw/msg.
+        Uri sound = Uri.parse("android.resource://" + context.getPackageName() + "/raw/caller_ring");
+        channel.setSound(sound,
+                new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build());
+        channel.enableVibration(true);
+        channel.setVibrationPattern(new long[] {0, 1000, 1000});
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        nm.createNotificationChannel(channel);
+
+        // Channel fallback khi process sống: HIGH để heads-up nhưng sound=null (SoundHelper lo chuông).
+        NotificationChannel alive = new NotificationChannel(
+                CHANNEL_INCOMING_CALL_ALIVE, "Thông báo cuộc gọi", NotificationManager.IMPORTANCE_HIGH);
+        alive.setDescription("Thông báo khi có cuộc gọi đến lúc đang mở ứng dụng");
+        alive.setSound(null, null);
+        alive.enableVibration(true);
+        alive.setVibrationPattern(new long[] {0, 1000, 1000});
+        alive.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        nm.createNotificationChannel(alive);
+    }
+
+    /**
+     * pushPayload cho offline push: điều phối server-side (KHÔNG phải raw FCM) để notification bên
+     * callee rơi vào channel chuông. Vị trí channel_id từng vendor theo docs chính chủ
+     * (docs/reference/netease-im/PUSH_PAYLOAD_CONFIG.official-raw.md): Xiaomi ở root, còn lại theo field
+     * riêng. vivo/honor push nội địa không có field channel_id (máy vivo global đi FCM nên không ảnh hưởng).
+     */
+    private static String buildCallPushPayloadJson() {
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("channel_id", CHANNEL_INCOMING_CALL); // Xiaomi
+            payload.put("hwField", new JSONObject().put("channel_id", CHANNEL_INCOMING_CALL));
+            payload.put("oppoField", new JSONObject().put("channel_id", CHANNEL_INCOMING_CALL));
+            payload.put("fcmFieldV1", new JSONObject().put("message", new JSONObject()
+                    .put("android", new JSONObject()
+                            .put("notification", new JSONObject()
+                                    .put("channel_id", CHANNEL_INCOMING_CALL)))));
+            return payload.toString();
+        } catch (JSONException e) {
+            Log.e(TAG, "buildCallPushPayloadJson lỗi: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Phát cuộc gọi thoại 1-1 (audio-only) tới accid.
      * pushConfig: bắt buộc để máy callee bị KILL nhận offline push (không set = killed không nhận gì).
      * Chỉ có text (không avatar) — pushContent nên chứa tên người gọi để callee biết ai gọi.
@@ -200,7 +309,8 @@ public class CallService {
     public static void startVoiceCall(Activity activity, String accid, String pushTitle, String pushContent) {
         String title = TextUtils.isEmpty(pushTitle) ? "Cuộc gọi thoại đến" : pushTitle;
         String content = TextUtils.isEmpty(pushContent) ? "Cuộc gọi thoại đến" : pushContent;
-        NECallPushConfig pushConfig = new NECallPushConfig(true, title, content, null, true);
+        NECallPushConfig pushConfig =
+                new NECallPushConfig(true, title, content, buildCallPushPayloadJson(), true);
         CallParam param =
                 new CallParam.Builder()
                         .callType(NECallType.AUDIO)
@@ -213,6 +323,33 @@ public class CallService {
     /** Cúp cuộc gọi hiện tại (channelId=null → cúp cuộc đang diễn ra). */
     public static void hangup() {
         NECallEngine.sharedInstance().hangup(new NEHangupParam(null, null), null);
+        forceStopCallForegroundService();
+    }
+
+    /**
+     * Dọn cứng foreground service + notification "通话进行中...." của SDK call-ui.
+     * SDK đôi khi không stopService (race guard channelId nội bộ) → notification kẹt.
+     * Chỉ gọi khi cuộc gọi đã kết thúc (hangup/onCallEnd), KHÔNG gọi khi call còn active.
+     */
+    private static void forceStopCallForegroundService() {
+        Context ctx = appContext;
+        if (ctx == null) {
+            return;
+        }
+        for (String cls : CALL_FOREGROUND_SERVICE_CLASSES) {
+            try {
+                Intent intent = new Intent();
+                intent.setClassName(ctx.getPackageName(), cls);
+                ctx.stopService(intent);
+            } catch (Throwable t) {
+                Log.e(TAG, "stopService " + cls + " lỗi: " + t.getMessage());
+            }
+        }
+        try {
+            NotificationManagerCompat.from(ctx).cancel(CALL_FOREGROUND_NOTIFICATION_ID);
+        } catch (Throwable t) {
+            Log.e(TAG, "cancel call notification lỗi: " + t.getMessage());
+        }
     }
 
     private static final NECallEngineDelegateAbs callDelegate = new NECallEngineDelegateAbs() {
@@ -234,6 +371,9 @@ public class CallService {
         @Override
         public void onCallEnd(NECallEndInfo info) {
             emitState("ended");
+            // Cover mọi kết thúc cuộc gọi (phía CSKH ngắt / hangup từ UI native prebuilt),
+            // không chỉ hangup chủ động từ JS.
+            forceStopCallForegroundService();
         }
     };
 

@@ -18,6 +18,7 @@ The call knowledge was scattered across 4 sources (internal requirement/tracking
 | How to integrate Call Kit on Android (deps, init, 1v1 call) | [`01-integration-android.md`](./01-integration-android.md) |
 | Call ticket / call list (话单) parsing | [`02-call-list.md`](./02-call-list.md) |
 | Floating window, banner, intercept inbound, RTC attrs, init params | [`03-advanced.md`](./03-advanced.md) |
+| Intercept inbound (`incomingCallEx`) — return-value semantics, which app states it covers, who owns the offline push | [`03-advanced.md` §Intercept inbound](./03-advanced.md#intercept-inbound-requests) · raw: [`07-…official-raw.md`](./07-intercept-inbound.official-raw.md) |
 | No-UI scheme (raw engine APIs), group call, error codes | [`04-no-ui-scheme.md`](./04-no-ui-scheme.md) |
 | Call banner (来电横幅) + overlay permission — needs call-ui ≥ 4.3.0 | [`03-advanced.md` §Call banner](./03-advanced.md#call-banner) · raw: [`06-…official-raw.md`](./06-incoming-banner.official-raw.md) |
 | Original raw source + official links | [`99-reference-raw.md`](./99-reference-raw.md) |

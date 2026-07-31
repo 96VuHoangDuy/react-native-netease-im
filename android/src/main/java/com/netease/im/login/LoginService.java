@@ -28,6 +28,7 @@ import com.netease.nimlib.sdk.v2.auth.option.V2NIMLoginOption;
 import com.netease.nimlib.sdk.v2.auth.V2NIMLoginDetailListener;
 import com.netease.nimlib.sdk.v2.auth.V2NIMLoginListener;
 import com.netease.nimlib.sdk.v2.auth.enums.V2NIMConnectStatus;
+import com.netease.nimlib.sdk.v2.auth.enums.V2NIMDataSyncLevel;
 import com.netease.nimlib.sdk.v2.auth.enums.V2NIMDataSyncState;
 import com.netease.nimlib.sdk.v2.auth.enums.V2NIMDataSyncType;
 import com.netease.nimlib.sdk.v2.auth.enums.V2NIMLoginClientChange;
@@ -106,6 +107,10 @@ public class LoginService {
         option.setAuthType(V2NIMLoginAuthType.V2NIM_LOGIN_AUTH_TYPE_DYNAMIC_TOKEN);
         // V10 default false: xung đột đa端 fail 417 thay vì kick session cũ (V9 luôn kick).
         option.setForceMode(true);
+        // Default là FULL → mỗi lần login lại sync cả TEAM_MEMBER + SUPER_TEAM_MEMBER, kéo dài
+        // thời gian tới lúc conversation list sẵn sàng khi app resume từ background. BASIC chỉ sync
+        // dữ liệu chính (gồm conversation); team member vẫn được app load riêng khi cần.
+        option.setSyncLevel(V2NIMDataSyncLevel.V2NIM_DATA_SYNC_TYPE_LEVEL_BASIC);
         option.setTokenProvider(new V2NIMTokenProvider() {
             @Override
             public String getToken(String account) {
@@ -207,9 +212,13 @@ public class LoginService {
         public void onConnectFailed(V2NIMError error) { }
         @Override
         public void onDataSync(V2NIMDataSyncType type, V2NIMDataSyncState state, V2NIMError error) {
-            Log.e("IMTRACE", "V2 onDataSync type=" + type + " state=" + state);
-            if (state == V2NIMDataSyncState.V2NIM_DATA_SYNC_STATE_COMPLETED) {
-                Log.e("IMTRACE", "V2 dataSync COMPLETED → re-query recentContacts");
+            Log.e("IMTRACE", "[RESUME_TRACE] onDataSync type=" + type + " state=" + state
+                    + " t=" + System.currentTimeMillis());
+            // Chỉ nghe TYPE_MAIN: conversation nằm trong nhóm dữ liệu chính. TEAM_MEMBER/
+            // SUPER_TEAM_MEMBER xong sau và không đổi recent list → query lại ở đó là thừa.
+            if (state == V2NIMDataSyncState.V2NIM_DATA_SYNC_STATE_COMPLETED
+                    && type == V2NIMDataSyncType.V2NIM_DATA_SYNC_MAIN) {
+                Log.e("IMTRACE", "V2 dataSync MAIN COMPLETED → re-query recentContacts");
                 recentContactObserver.queryRecentContacts();
             }
         }

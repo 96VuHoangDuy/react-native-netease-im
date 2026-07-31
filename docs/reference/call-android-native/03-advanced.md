@@ -8,13 +8,34 @@
 - 🟢 **Implemented:** [Call banner](#call-banner) (enabled 2026-07-17 — required bumping call-ui `4.1.0` → `4.3.0`).
 - ⚪ **Reference-only:** [Virtual background](#virtual-background) (video feature), [Floating window](#floating-window), [Custom answer background](#custom-answer-background) — keep for completeness.
 
-> **No Android equivalent of iOS LiveCommunicationKit.** That is an Apple framework; Android handles the app-killed case with offline push (MixPush) + full-screen-intent notification. The Yunxin Android doc sidebar has no 接听系统电话 entry for this reason — it is not a missing doc. See [`../call-ios-native/05-system-call-lck.md`](../call-ios-native/05-system-call-lck.md).
+> **No Android equivalent of iOS LiveCommunicationKit.** That is an Apple framework. The Yunxin Android doc
+> sidebar has no 接听系统电话 entry for this reason — it is not a missing doc. See
+> [`../call-ios-native/05-system-call-lck.md`](../call-ios-native/05-system-call-lck.md).
+>
+> 📌 **Scope note (2026-07-30).** "Offline push + full-screen-intent notification" describes what **the
+> Android platform offers** as the counterpart to PushKit + LiveCommunicationKit. That is accurate. It does
+> **not** describe what our stack does today:
+>
+> - 🔬 CallKitUI never calls `setFullScreenIntent` (0 of 368 classes) — the SDK ships no full-screen-intent
+>   notification, so we would have to build it ourselves.
+> - To build one while the app is killed we first need the push to wake the process, i.e. a data /
+>   passthrough message rather than a notification message.
+> - Since 22 Jan 2025 `USE_FULL_SCREEN_INTENT` is no longer auto-granted to apps whose core purpose is not
+>   calling or alarms; the user must enable it in Settings → Special App Access.
+> - The ZYZJ manifest currently strips the permission (`tools:node="remove"`) as part of the store-submission
+>   plan — a working-tree change, not yet committed.
+>
+> So today the app-killed case is a plain tray notification. The platform route exists; we have not taken it.
 
 ---
 
 ## Intercept inbound requests
 
-> 🔵 Key for this project: the requirement is **outbound only**. `DefaultIncomingCallEx` is what surfaces the built-in incoming-call page/notification. Override it to intercept — either to route to a custom page, or (for this project) to suppress the unwanted CSR→user incoming UI.
+> 🔵 **Key hook for this project.** CSR→user inbound calls are now a supported flow (this section previously
+> said "outbound only" — that framing is obsolete). `DefaultIncomingCallEx` is what surfaces the built-in
+> incoming-call page/notification, and overriding it is the basis of the fix being designed for the Xiaomi
+> self-launch bug.
+> Official raw page: [`07-intercept-inbound.official-raw.md`](./07-intercept-inbound.official-raw.md).
 
 Pass `incomingCallEx` in `CallKitUIOptions`:
 
@@ -38,7 +59,53 @@ CallKitUIOptions options = new CallKitUIOptions.Builder()
 CallKitUI.init(getApplicationContext(), options);
 ```
 
-> For this project, returning `true` (consume without launching a page) is the lever to block incoming CSR calls — pending decision Q4. Custom UI guide: <https://doc.yunxin.163.com/nertccallkit/guide/zYzNzI5NDI?platform=android>.
+### Return value — read this before overriding
+
+The official comment is the only place this is defined: the return value decides **whether tapping the app
+icon later brings up the call page**.
+
+| Return | Meaning | When to use |
+|---|---|---|
+| `true` | Call is **consumed** — the call page will **not** be launched when the user opens the app | Only to genuinely drop a call (e.g. invalid params, or blocking inbound entirely) |
+| `false` | Not consumed — the page still needs launching | **Everything else**, including "I showed my own notification instead" |
+
+> 🔬 Verified in `call-ui:4.3.0` bytecode: the default implementation returns **`false` in all three
+> branches** — banner shown, fallback (`startActivity` + notification), and second-call-busy. No branch
+> returns `true`.
+
+**Consequence for our planned fix.** The fix for the Xiaomi self-launch bug overrides `onIncomingCall` to
+post a notification *without* calling `startActivity` when the overlay permission is missing and the app is
+not on screen. That override must `return false`, not `true` — otherwise the user who opens the app from
+its icon will never see the call screen. `resumeBGInvitation(true)` handles that resume, but only for a call
+that was not consumed.
+
+### Scope — which app states this hook covers
+
+`incomingCallEx` (and `notificationConfigFetcher`) run **inside our process**. They do nothing when the
+process is dead.
+
+| App state | Does this hook run? |
+|---|---|
+| App on screen | Yes |
+| App not on screen, process alive | Yes — this is the Xiaomi bug case |
+| Process killed | **No.** Nothing of ours runs; the notification is drawn by the system from the server push payload |
+
+That last row matters more than it looks, because of who owns the push payload:
+
+| Side | Controls | Set by |
+|---|---|---|
+| Caller | `NECallPushConfig` — offline push title, content, `pushPayload` | Whoever **starts** the call |
+| Callee | `incomingCallEx`, `notificationConfigFetcher`, notification channel | Our app — but only while the process is alive |
+
+For user→CSR calls we are the caller (`CallService.startVoiceCall`). For **CSR→user** calls we are not, so
+the offline-push content a customer sees when the app is killed is decided by the CSR-side client. See
+[`../../playbook/GAPS.md`](../../playbook/GAPS.md) — we have not identified which client that is.
+
+Full analysis of the three app states and the options for each lives in the `pyeon-chinese-mobile` repo:
+`docs/ai-output/call-notification-status-and-proposal-en-2026-07-30.md`.
+
+Custom UI guide (not yet captured — site blocks automated fetch):
+<https://doc.yunxin.163.com/nertccallkit/guide/zYzNzI5NDI?platform=android>.
 
 ---
 

@@ -32,11 +32,12 @@ Bộ docs này dùng để:
 - `features/system-msg/README.md`
 - `features/chatroom/README.md`
 - `features/utils/README.md`
+- `features/call/README.md` — thực trạng luồng gọi thoại CSKH (NERTC Call Kit): public API `NimCall`, flow outbound/inbound, branding, gaps
 - `features/_TEMPLATE.md`
 
 ## Call (NERTC Call Kit — voice customer service)
 
-> Knowledge base tích hợp NECallKit (V3) cho tính năng gọi thoại tới CSR. Chưa implement trong module — đây là docs "how" để triển khai. Version-of-truth: Yunxin changelog + target Phase-2 (NIM 10.9.5x + call-ui 4.1.0). ⚠️ Bỏ qua repo legacy `NERtcCallKit-iOS/-Android` (V1/V2, API khác).
+> Knowledge base tích hợp NECallKit (V3) cho tính năng gọi thoại tới CSR. Thực trạng implementation trong module: xem `features/call/README.md`; hai bộ dưới đây là docs "how" chính chủ NetEase. Version-of-truth: Yunxin changelog + target hiện tại NIM 10.9.5x + call-ui 4.3.0. ⚠️ Bỏ qua repo legacy `NERtcCallKit-iOS/-Android` (V1/V2, API khác).
 
 - `call-android-native/README.md` — Android: context, business flow, dependency, integration, call-list, advanced, no-UI, raw source
 - `call-ios-native/README.md` — iOS: cùng cấu trúc (pods, `NECallEngine`/`NERtcCallUIKit`, intercept inbound, ...)

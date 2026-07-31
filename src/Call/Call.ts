@@ -45,6 +45,27 @@ class NimCall {
   }
 
   /**
+   * Text cho call UI iOS: 3 nút to màn in-call (kiểu WeChat: 麦克风已开/挂断/扬声器已关) + màn đổ
+   * chuông callee (subtitle, Nghe/Từ chối — SDK chỉ có en/zh-Hans nên máy tiếng Việt bị English).
+   * Gọi 1 lần lúc init IM và khi đổi ngôn ngữ (truyền chuỗi đã localize, giống
+   * setCustomerServiceCallName). Android dùng fragment custom riêng — native không có method
+   * này thì no-op.
+   */
+  setCallControlLabels(labels: {
+    micOn: string;
+    micOff: string;
+    hangup: string;
+    speakerOn: string;
+    speakerOff: string;
+    incomingSubtitle: string;
+    accept: string;
+    reject: string;
+  }) {
+    if (!RNNeteaseIm?.setCallControlLabels) return;
+    return RNNeteaseIm.setCallControlLabels(labels);
+  }
+
+  /**
    * Đã có quyền vẽ đè (SYSTEM_ALERT_WINDOW) chưa — cần để hiện 来电横幅 khi có cuộc gọi đến.
    * iOS không cần quyền này (banner dựng trên UIWindow riêng) → luôn true.
    */

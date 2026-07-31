@@ -169,3 +169,28 @@
     `proguardFiles` (chỉ áp khi tự build lib), **không** merge sang app
 - Impact:
   - app host khác dùng lib mà không tự thêm rule NIM ⇒ có thể crash release; ZYZJ hiện không lộ vì đã có sẵn
+
+## Call — Inbound Ownership
+
+### Không xác định được client nào khởi tạo cuộc gọi CSR→user
+
+- Evidence:
+  - repo này chỉ khởi tạo chiều **user→CSR**: `CallService.startVoiceCall(...)`
+    (`android/src/main/java/com/netease/im/CallService.java`), gọi qua `src/Call/Call.ts` →
+    `startVoiceCall` ở app ZYZJ
+  - `pyeon-chinese-portal`: grep `nim|yunxin|netease|nertc` trong `src/` và `package.json` = **0 kết quả**
+    → portal không có tích hợp NIM/NERTC nào
+  - nhưng cuộc gọi CSR→user có thật: đã reproduce trên máy Xiaomi MIX 2S (log
+    `DefaultIncomingCallEx.onIncomingCall`), tức tồn tại một client ngoài 4 repo của workspace
+- Impact:
+  - 🔬 `NECallPushConfig` (title/content/`pushPayload` của offline push) do **bên gọi** set, không phải bên nhận
+  - ⇒ notification mà khách hàng thấy khi app **bị kill** ở luồng CSR→user nằm ngoài tầm kiểm soát của repo này
+  - ⇒ mọi thiết kế cho trạng thái app-killed (ringtone channel riêng, data message, full-screen intent)
+    đều **chặn ở đây** cho tới khi biết client đó là gì và ai sở hữu nó
+  - `incomingCallEx` / `notificationConfigFetcher` không lấp được khoảng này: chúng chỉ chạy khi process còn sống
+- Cần hỏi team TQ:
+  1. CSR dùng client nào để gọi ra (console Yunxin, app riêng, hay web tự viết)?
+  2. Client đó set `NECallPushConfig` như thế nào — có `pushPayload` không?
+  3. Ai sở hữu/deploy client đó?
+- Liên quan: `docs/reference/call-android-native/03-advanced.md` §Intercept inbound ·
+  phân tích đầy đủ ở `pyeon-chinese-mobile/docs/ai-output/call-notification-status-and-proposal-en-2026-07-30.md`

@@ -12,7 +12,9 @@ import com.netease.yunxin.nertc.ui.p2p.fragment.caller.AudioCallerFragment;
  *  - Safe-area top: đẩy nút thu nhỏ ({@code ivFloatingWindow}) xuống dưới status bar (layout SDK
  *    không xử lý insets → đè notch/đồng hồ).
  *  - Ẩn nút chuyển audio→video ({@code ivCallSwitchType} + label) vì app chỉ hỗ trợ voice call.
- * Áp cho MỌI cuộc gọi. KHÔNG đụng background/avatar ở màn này.
+ *    Hai việc trên áp cho MỌI cuộc gọi.
+ *  - Riêng cuộc gọi CSKH: nền logo blur + scrim thay avatar phóng to sắc nét (giống màn callee /
+ *    in-call, xem {@link CsCallUiUtils#applyBrandBlurBackground}).
  */
 public class CsAudioCallerFragment extends AudioCallerFragment {
 
@@ -26,6 +28,19 @@ public class CsAudioCallerFragment extends AudioCallerFragment {
     protected void renderUserInfo(String accId, P2PUIConfig config) {
         super.renderUserInfo(accId, config);
         applyUi();
+        if (CallService.isCsrAccid(accId)) {
+            applyCsStyle();
+        }
+    }
+
+    private void applyCsStyle() {
+        FragmentP2pAudioCallerBinding b = getBinding();
+        if (b == null) {
+            return;
+        }
+        // getRootView() trả android.view.View — không dùng b.clRoot (ConstraintLayout) vì module
+        // lib không có dependency androidx.constraintlayout.
+        CsCallUiUtils.applyBrandBlurBackground(getRootView(), b.ivBg);
     }
 
     private void applyUi() {

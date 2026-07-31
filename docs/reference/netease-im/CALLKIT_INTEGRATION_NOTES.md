@@ -184,6 +184,16 @@ Tương tự #17 nhưng cơ chế khác: iOS bật `enableIncomingBanner:YES` �
 
 **Fix hướng:** hoặc (a) tắt `enableIncomingBanner` cho iOS → full-screen incoming → `didCallComing` chạy → hardcode CS hiện đúng (đánh đổi UX banner); hoặc (b) đẩy NIM profile cho `csr*` (fix gốc, giữ banner).
 
+**Fix (2026-07-28, ĐÃ LÀM — hướng (a) + lưới an toàn):** owner chốt không đụng backend.
+- `enableIncomingBanner:NO` trong `setupCallKitWithAppKey:` → incoming bung full-screen callee → `didCallComing` chạy → nhánh CSR của `RNNIMFillCallUserInfo` áp đúng cho cả màn đổ chuông lẫn in-call.
+- Thêm short-circuit CSR trong `didCallComing`: accid `csr*` fill branding ngay, **không** chờ `fetchUserInfos:` (branding không phụ thuộc NIM profile).
+- Logic branding tách ra `RNNIMCsCallBranding.{h,m}` (`isCsrAccid:` / `displayName` / `setDisplayName:` / `logoFileUrl` / `logoImage`) — trước đó là static function trong `RNNeteaseIm.m`, file khác không dùng được.
+- Lưới an toàn `RNNIMCsCallControllers.{h,m}`: `RNNIMCsCalledViewController : NECalledViewController` (`kCalledState`) + `RNNIMCsAudioInCallController : NEAudioInCallController` (`kAudioInCall`), đăng ký qua `setCustomCallClass:`. Override `viewWillAppear:`/`refreshUI` → ép `centerTitleLabel`/`titleLabel`/`remoteAvatorView`/`remoteBigAvatorView`. Guard `isCsrAccid:` nên non-CSR giữ UI mặc định SDK. Cần cho path resume từ VoIP push (không qua `didCallComing`) và khi SDK `refreshUI` ghi đè label.
+
+**Phạm vi tắt banner** — chỉ đổi UI khi app foreground (banner nhỏ → full-screen). Background/killed đi đường offline push NIM (#15), độc lập `enableIncomingBanner`, **không đổi**.
+
+**Song song:** đây cũng là chỗ về sau áp style CSKH của Android (#19: nền tối, avatar nền trắng) cho iOS — **chưa làm**.
+
 ### #19 — Logo call UI thành "ĐEN-XANH" thay vì trắng-xanh (phát hiện 2026-07-23)
 `cs_call_logo.png` (`android/src/main/res/drawable/`, `ios/`) có **alpha (nền trong suốt)** — `sips` báo `hasAlpha: yes`, 531×470. Màn in-call SDK dùng avatar làm **background phóng to toàn màn** (`ivBg` trong `OthersExtendKt.loadAvatarByAccId(accId, ctx, ivInnerAvatar, ivBg, tvInitials, ...)`) trên nền view **màu đen** → phần trong suốt của logo lộ nền đen → logo trắng-xanh thành **đen-xanh**. Trong chat/app bình thường thấy trắng-xanh vì nền phía sau là trắng.
 
@@ -202,6 +212,17 @@ SDK `call-ui` mở extension chính thức: `CallKitUIOptions.Builder().p2pAudio
 - Scope màn: chỉ IN-CALL audio (`AUDIO_ON_THE_CALL`). Banner đổ chuông hiển thị OK sẵn (ô nhỏ). Rebuild Android để áp dụng.
 - **iOS: CHƯA LÀM** — cần fix banner-mode (#18) trước để iOS hiện được avatar; sau đó áp `setCustomCallClass:` + subclass `NEAudioInCallController`/`NECallUIDynamicConfig.incomingCallBackground` tương tự.
 
+**Cập nhật (2026-07-29) — ĐỔI HƯỚNG sang "logo blur + scrim" để đồng bộ iOS. Thay thế cách "ẩn ivBg + nền phẳng" ở trên.**
+Sau khi iOS chạy được (#18), so ảnh 2 platform thấy lệch hẳn: iOS nền **mờ (blur)** + logo 90dp ở giữa **không khung trắng**; Android nền xanh phẳng `#123D22` + logo trong ô vuông trắng. Thêm nữa màn ĐỔ CHUÔNG Android chưa tuỳ biến gì → `ivBg` load avatar sắc nét full màn ⇒ logo phóng to vỡ nét, chữ trong logo tràn màn hình (xấu nhất).
+- `CsCallUiUtils.applyBrandBlurBackground(View root, ImageView ivBg)` — dựng bitmap nền: logo vẽ trên nền **TRẮNG** (bắt buộc, nếu blur logo alpha trên nền đen là tái hiện đúng bug đen-xanh ở trên) 64×128 → blur 2 lần bằng downscale/upscale bilinear (**không** dùng RenderScript deprecated, cũng không cần `jp.wasabeef BlurTransformation` dù lib này có sẵn trên classpath qua call-ui) → phủ scrim `0x80000000` để chữ tên trắng đọc rõ → set làm `background` của **root view**. Bitmap **cache static** nên `renderUserInfo` chạy lại nhiều lần không cấp phát lại.
+- ⚠️ **Không set bitmap thẳng vào `ivBg`** — lần thử đầu (2026-07-29) làm vậy và **không có tác dụng gì**: `OthersExtendKt.loadAvatarByAccId` load avatar vào `ivBg` qua **Glide bất đồng bộ**, request về sau **ghi đè** bitmap mình vừa set (kể cả khi set trong `renderUserInfo` sau `super`). Triệu chứng: màn call trông y hệt bản chưa custom. Cách chắc chắn duy nhất mà không cần đụng Glide (module lib **không có** Glide trên compile classpath vì call-ui khai `implementation`): `ivBg` → `setImageDrawable(null)` + `GONE`, còn nền đặt lên root view — root SDK không đụng tới.
+- `CsAudioOnTheCallFragment.applyCsStyle()` rút gọn còn 1 dòng gọi helper trên; bỏ hằng `BG_DARK`/`AVATAR_BG_WHITE`, không còn ẩn `ivBg`, không còn set nền trắng cho `flUserAvatar`/`ivUserInnerAvatar`.
+- `CsAudioCalleeFragment extends AudioCalleeFragment` (**mới**) — đăng ký `customCallFragmentByKey(AUDIO_CALLEE=5, ...)`. Cùng style nền cho CSKH; thêm ẩn `ivSwitchType`/`tvSwitchTypeDesc` cho **mọi** cuộc gọi (app chỉ voice call).
+- `CsAudioCallerFragment` (`AUDIO_CALLER=4`) cũng áp cùng style nền cho CSKH — **cả 3 màn audio** đều dùng `ivBg` làm nền avatar phóng to nên đều dính. Ban đầu bỏ sót màn này (plan chỉ chốt callee + in-call) và bị phát hiện khi test outbound.
+- Guard `isCsrAccid` giữ nguyên → call user thường vẫn dùng nền mặc định SDK.
+- Nút thu nhỏ (PIP) Android **giữ nguyên** dù iOS không có (`enableFloatingWindow` mặc định NO) — owner quyết định giữ.
+- Tham số cần tinh chỉnh bằng mắt: `SCRIM_COLOR` (tăng lên `0x80000000` nếu chữ trắng còn chìm).
+
 ### #20 — Màn call Android thiếu safe-area top (đè status bar/notch) (fix 2026-07-24)
 Layout in-call của SDK **không xử lý window insets** → 2 view ở đỉnh đè lên status bar/notch trên cả call CSKH lẫn call 1-1:
 - `binding.ivFloatingWindow` (nút thu nhỏ, góc trên trái) — đè lên đồng hồ hệ thống;
@@ -213,7 +234,8 @@ Layout in-call của SDK **không xử lý window insets** → 2 view ở đỉn
 - Helper chung: `CsCallUiUtils.pushBelowStatusBar(View)`.
 - **Màn IN-CALL** (`CsAudioOnTheCallFragment`): đẩy `ivFloatingWindow` + `tvCountdown`.
 - **Màn CALLER** (`CsAudioCallerFragment` extends `AudioCallerFragment`, đăng ký thêm `customCallFragmentByKey(AUDIO_CALLER=4, ...)`): đẩy `ivFloatingWindow` (caller **không có** `tvCountdown`) + ẩn nút video switch `ivCallSwitchType`/`tvCallSwitchTypeDesc`.
-- **Màn CALLEE full-screen** (`AUDIO_CALLEE=5`): Android dùng banner (không hiện full-screen) → chưa xử lý; bổ sung tương tự nếu gặp.
+- **Màn CALLEE full-screen** (`AUDIO_CALLEE=5`): đã có `CsAudioCalleeFragment` từ 2026-07-29 (xem cập nhật ở #19) nhưng **không** áp safe-area — đọc `fragment_p2p_audio_callee.xml` thì layout không có view nào sát đỉnh (`flUserAvatar` marginTop 160dp, `tvSwitchTip` marginTop 80dp), khác màn in-call vốn có `ivFloatingWindow`/`tvCountdown` dính notch. Bổ sung `pushBelowStatusBar` nếu chạy thật thấy đè.
+- Màn này chỉ hiện khi **thiếu quyền overlay** (có quyền → SDK dùng banner) → muốn test phải tắt quyền overlay của app.
 
 ## Login V10 = điều kiện tiên quyết (ĐÃ GIẢI QUYẾT)
 

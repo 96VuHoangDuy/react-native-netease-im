@@ -20,4 +20,11 @@
  */
 + (void)reportSystemIncomingCallWithPayload:(NSDictionary *)payload;
 
+/**
+ * Login native ngay bằng credentials đã lưu (không chờ RN JS boot ~5s) để engine accept được
+ * khi user bấm nghe trên màn gọi OS. Gọi từ AppDelegate NGAY TRƯỚC reportSystemIncomingCall.
+ * Idempotent, an toàn gọi từ mọi trạng thái (đã login = no-op).
+ */
++ (void)ensureNativeLoginForIncomingCall;
+
 @end

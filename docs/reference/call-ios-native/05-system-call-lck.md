@@ -20,6 +20,8 @@ This is the single most common confusion. They are **not** alternatives; they co
 
 **Why Android has no counterpart:** LiveCommunicationKit is an Apple framework. The Yunxin Android doc sidebar has no 接听系统电话 entry — that is correct, not a doc gap. Android covers the app-killed case with offline push (MixPush, already configured in `IMApplication.java`) + full-screen-intent notification.
 
+> 📌 That sentence describes the **platform** counterpart, not our current Android implementation. Offline push is configured; the full-screen-intent half is not built — CallKitUI ships none (🔬 0 of 368 classes call `setFullScreenIntent`). See [`../call-android-native/03-advanced.md`](../call-android-native/03-advanced.md) for what that would take.
+
 ---
 
 ## 2. Requirements

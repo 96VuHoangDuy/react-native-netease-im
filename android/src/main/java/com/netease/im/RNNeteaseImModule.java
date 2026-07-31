@@ -3999,7 +3999,7 @@ WritableMap _result = Arguments.createMap();
     @Override
     public void onHostResume() {
 
-        LogUtil.w(TAG, "onHostResume:" + status);
+        LogUtil.w(TAG, "[RESUME_TRACE] onHostResume:" + status + " t=" + System.currentTimeMillis());
 
         if (!TextUtils.isEmpty(status) && !"onHostPause".equals(status)) {
             if (NIMClient.getStatus().wontAutoLogin()) {
@@ -4008,6 +4008,13 @@ WritableMap _result = Arguments.createMap();
                 ReactCache.emit(ReactCache.observeOnKick, r);
             }
         }
+
+        // KHÔNG gọi RecentContactObserver.queryRecentContacts() ở đây: onHostResume fire cả lúc
+        // app cold start, khi JS chưa kịp hydrate listCustomerServiceAndChatbot (HTTP call trong
+        // autoLogin/onLoginIM). Recent list emit sớm sẽ khiến session csr*/chatbot* không nhận
+        // diện được và rơi nhầm vào bucket "người lạ" (shouldIncludeSessionInStrangerList).
+        // Việc resync khi foreground đã do JS AppState listener trong IMStoreSessions lo — chạy
+        // trong JS context nên chắc chắn store đã sẵn sàng.
 //        if (NIMClient.getStatus().wontAutoLogin()) {
 //            Toast.makeText(IMApplication.getContext(), "您的帐号已在别的设备登录，请重新登陆", Toast.LENGTH_SHORT).show();
 //        }
