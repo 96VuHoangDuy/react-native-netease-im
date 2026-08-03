@@ -88,7 +88,12 @@ static void RNNIMFillCallUserInfo(NEUICallParam *param, NSString *accid) {
     NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:accid];
     NSString *name = user.alias.length ? user.alias : user.userInfo.nickName;
     param.remoteShowName = name.length ? name : accid;
-    if (user.userInfo.avatarUrl.length) param.remoteAvatar = user.userInfo.avatarUrl;
+    if (user.userInfo.avatarUrl.length) {
+        param.remoteAvatar = user.userInfo.avatarUrl;
+        // Tải sẵn ảnh nền blur ngay khi biết URL — fill chạy trước khi UI call dựng, nên ảnh
+        // thường kịp vào cache trước lúc màn đổ chuông hiện (mạng chậm hết bị nền đen chờ tải).
+        RNNIMCsPrefetchCallBackgroundAvatar(user.userInfo.avatarUrl);
+    }
     // DEBUG IMTRACE_CALL (gỡ sau khi xong): nhánh non-CSR. userNil=1 hoặc name rỗng => cache miss, remoteShowName rơi về accid.
     NSLog(@"IMTRACE_CALL fill[non-CSR] accid=%@ userNil=%d alias=[%@] nickName=[%@] remoteShowName=[%@] avatarUrl=[%@]",
           accid, (user == nil), user.alias, user.userInfo.nickName, param.remoteShowName, user.userInfo.avatarUrl);
@@ -322,6 +327,7 @@ static BOOL sCallKitSetup = NO;
         [[NERtcCallUIKit sharedInstance] setCustomCallClass:[@{
             kCalledState: RNNIMCsCalledViewController.class,
             kAudioInCall: RNNIMCsAudioInCallController.class,
+            kAudioCalling: RNNIMCsAudioCallingController.class,
         } mutableCopy]];
         // Delegate điền tên/avatar người gọi vào UI callee (SDK không tự lấy NIM info).
         if (sCallUIDelegate == nil) sCallUIDelegate = [[RNNIMCallUIDelegate alloc] init];
@@ -1892,15 +1898,10 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDeviceLanguage){
         return;
     }
 
-    // Chưa kết nối: chỉ chủ động login lại khi user KHÔNG logout chủ động và còn token cache.
-    // Ngoài các case đó, để SDK/JS tự xử lý theo luồng observeOnlineStatus như cũ.
-    if (sIntentionalLogout) return;
-
-    NSString *account = [NIMViewController initWithController].strAccount;
-    NSString *token = sTokenProvider.token;
-    if (account.length == 0 || token.length == 0) return;
-
-    [self v2LoginWithAccount:account token:token resolve:nil reject:nil];
+    // Chưa kết nối: KHÔNG tự login lại ở native. Token in-memory có thể thuộc phiên đã bị
+    // thiết bị khác kick trong lúc app suspend — relogin ở đây (forceMode=YES) sẽ đá ngược
+    // máy kia (ping-pong kick). Để JS xử lý qua observeOnlineStatus status "10" → onReconnect,
+    // nơi có device-check với backend trước khi login lại.
 }
 
 // Dưới login V2 (useV1Login=NO), delegate login V1 (NIMLoginManagerDelegate) không còn đáng tin để
@@ -1965,6 +1966,9 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDeviceLanguage){
 
 - (void)onKickedOffline:(V2NIMKickedOfflineDetail *)detail{
     NSLog(@"IMTRACE_IOS V2 onKickedOffline reason=%ld", (long)detail.reason);
+    // Phiên đã chết vì thiết bị khác login — không cho VoIP fast-path
+    // (ensureNativeLoginForIncomingCall) dùng creds cũ tự hồi sinh và đá ngược máy kia.
+    [RNNeteaseIm clearCallCredentials];
     [NIMModel initShareMD].NetStatus = @"7";
 }
 

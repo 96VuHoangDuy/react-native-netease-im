@@ -13,8 +13,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// Prefetch ảnh avatar nền blur vào cache ngay khi biết URL (lúc fill call param) — rút ngắn
+/// cửa sổ nền đen lúc đổ chuông trên mạng chậm. No-op nếu url rỗng / đã cache / đang tải.
+void RNNIMCsPrefetchCallBackgroundAvatar(NSString *_Nullable urlString);
+
 /// Màn đổ chuông phía callee (kCalledState).
 @interface RNNIMCsCalledViewController : NECalledViewController
+@end
+
+/// Màn gọi đi phía caller (kAudioCalling) — chỉ thêm nền avatar blur + branding CSKH,
+/// còn lại giữ UI mặc định SDK.
+@interface RNNIMCsAudioCallingController : NEAudioCallingController
 @end
 
 /// Màn đang trong cuộc gọi audio (kAudioInCall). Thay thanh pill nhỏ mặc định của SDK bằng

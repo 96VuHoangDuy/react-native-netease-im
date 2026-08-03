@@ -101,8 +101,13 @@ public class CallService {
         return TextUtils.isEmpty(sCsCallName) ? CS_CALL_NAME_DEFAULT : sCsCallName;
     }
 
+    /**
+     * Avatar ô nhỏ dùng bản logo NỀN TRẮNG ĐẶC (cs_call_avatar), không dùng cs_call_logo: logo kia
+     * nền trong suốt nên trên nền blur tối thì logo chìm hẳn. cs_call_logo vẫn là nguồn cho nền
+     * blur ({@link CsCallUiUtils}).
+     */
     private static String csAvatarUri(Context context) {
-        return "android.resource://" + context.getPackageName() + "/" + R.drawable.cs_call_logo;
+        return "android.resource://" + context.getPackageName() + "/" + R.drawable.cs_call_avatar;
     }
 
     /** Init CallKit UI. Gọi 1 lần, sau IM init (V10). Idempotent. */

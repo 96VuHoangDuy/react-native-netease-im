@@ -47,9 +47,3 @@ Làm việc trong repo này như một maintainer của thư viện React Native
 - Ghi rõ command đã chạy hoặc chưa chạy.
 - Ghi rõ scope ảnh hưởng theo platform.
 - Không khẳng định behavior cross-platform nếu chưa soát Android và iOS.
-
-## Docs Navigation & Staleness
-
-- `docs/README.md` là index của toàn bộ tài liệu — **đọc file này trước** khi glob hoặc search trong `docs/**`.
-- Nếu docs mâu thuẫn với source code thì **source thắng**. Làm theo source, đồng thời báo lại cho user biết docs nào đã lỗi thời — không im lặng đi theo docs.
-- `docs/ai-output/` đã được chuyển ra ngoài repo (`~/Documents/AI-Output/<project>/`). Đó là output cũ đã tiêu thụ xong, KHÔNG phải tài liệu tham chiếu — đừng tìm và đừng tạo lại thư mục này trong repo.

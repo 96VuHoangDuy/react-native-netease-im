@@ -5,53 +5,205 @@
 
 #import "RNNIMCsCallControllers.h"
 #import "RNNIMCsCallBranding.h"
+#import <CoreImage/CoreImage.h>
 
-// Tag guard cho lớp blur + scrim trên nền — refreshUI của SDK gọi lại branding nhiều lần,
-// chỉ được add đúng một lần.
-static const NSInteger kRNNIMCsBgBlurTag = 0x6373626C;  // 'csbl'
-static const NSInteger kRNNIMCsBgScrimTag = 0x63737363; // 'cssc'
+// Tag guard cho container nền + scrim — refreshUI của SDK gọi lại nhiều lần, chỉ add 1 lần.
+static const NSInteger kRNNIMCsBgContainerTag = 0x63736267; // 'csbg'
+static const NSInteger kRNNIMCsBgScrimTag = 0x63737363;     // 'cssc'
 
 /**
- * Nền = ảnh blur tối + scrim (đồng bộ Android CsCallUiUtils.applyBrandBlurBackground, kiểu WeChat).
- * Trên máy thật SDK để remoteBigAvatorView TRỐNG (nền đen trơn) → tự áp cho mọi cuộc gọi.
- * Avatar ô nhỏ (remoteAvatorView) giữ ảnh sắc nét, không đụng.
+ * Blur ảnh MỘT LẦN bằng CoreImage rồi hiển thị bản đã blur — KHÔNG dùng UIVisualEffectView:
+ * máy bật Reduce Transparency (Trợ năng) render effect view thành màu đặc gần đen che kín ảnh
+ * (đúng ca máy thật đen xì trong khi sim hiện blur). Pre-blur cho kết quả giống nhau mọi máy.
+ * Downscale trước cho rẻ (nền blur không cần độ phân giải); blur fail hiếm → trả bản downscale.
  */
-static void RNNIMApplyBlurBackground(NECallUIStateController *vc, UIImage *image) {
-    UIImageView *bg = vc.remoteBigAvatorView;
-    if (bg == nil || image == nil) return;
-    // Gọi lặp từ viewDidLayoutSubviews → chỉ set khi đổi, tránh decode lại mỗi layout pass.
-    if (bg.image != image) bg.image = image;
-    bg.contentMode = UIViewContentModeScaleAspectFill;
-    bg.clipsToBounds = YES;
-    if ([bg viewWithTag:kRNNIMCsBgBlurTag] == nil) {
-        UIVisualEffectView *blur = [[UIVisualEffectView alloc]
-            initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
-        blur.tag = kRNNIMCsBgBlurTag;
-        blur.frame = bg.bounds;
-        blur.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        blur.userInteractionEnabled = NO;
-        [bg addSubview:blur];
-    }
-    if ([bg viewWithTag:kRNNIMCsBgScrimTag] == nil) {
-        UIView *scrim = [[UIView alloc] initWithFrame:bg.bounds];
-        scrim.tag = kRNNIMCsBgScrimTag;
-        scrim.backgroundColor = [UIColor colorWithWhite:0 alpha:0.3];
-        scrim.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        scrim.userInteractionEnabled = NO;
-        [bg addSubview:scrim];
-    }
+static UIImage *RNNIMBlurredImage(UIImage *src) {
+    if (src == nil) return nil;
+    CGFloat maxDim = MAX(src.size.width, src.size.height);
+    CGFloat scale = maxDim > 240.0 ? 240.0 / maxDim : 1.0;
+    CGSize smallSize = CGSizeMake(MAX(src.size.width * scale, 1), MAX(src.size.height * scale, 1));
+    UIGraphicsBeginImageContextWithOptions(smallSize, YES, 1);
+    [src drawInRect:CGRectMake(0, 0, smallSize.width, smallSize.height)];
+    UIImage *small = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    if (small.CGImage == NULL) return src;
+    static CIContext *ciContext;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ ciContext = [CIContext context]; });
+    CIImage *input = [CIImage imageWithCGImage:small.CGImage];
+    // clampToExtent trước khi blur để mép ảnh không bị viền trong suốt, rồi crop về extent gốc.
+    CIImage *blurred = [[input imageByClampingToExtent]
+        imageByApplyingGaussianBlurWithSigma:12.0];
+    CGImageRef out = [ciContext createCGImage:blurred fromRect:input.extent];
+    if (out == NULL) return small;
+    UIImage *result = [UIImage imageWithCGImage:out];
+    CGImageRelease(out);
+    return result;
 }
 
 /**
- * Nền blur cho MỌI cuộc gọi: CSR → logo CSKH; user thường → avatar người gọi (SDK load async vào
- * remoteAvatorView qua SDWebImage — lần đầu có thể nil, nên phải gọi lặp ở refreshUI +
- * viewDidLayoutSubviews đến khi bắt được ảnh).
+ * Container nền RIÊNG chèn đáy vc.view (index 0) — KHÔNG đụng view của SDK. Bài học: add blur vào
+ * remoteBigAvatorView che luôn avatar ô nhỏ (ô nhỏ nằm trong cây view đó).
  */
+static UIImageView *RNNIMBlurContainer(NECallUIStateController *vc) {
+    if (vc.viewIfLoaded == nil) return nil;
+    UIImageView *bg = (UIImageView *)[vc.view viewWithTag:kRNNIMCsBgContainerTag];
+    if (bg != nil) return bg;
+    bg = [[UIImageView alloc] initWithFrame:vc.view.bounds];
+    bg.tag = kRNNIMCsBgContainerTag;
+    bg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    bg.contentMode = UIViewContentModeScaleAspectFill;
+    bg.clipsToBounds = YES;
+    bg.userInteractionEnabled = NO;
+    // Scrim đen 0.3 giữ lại cho chữ trắng dễ đọc trên ảnh sáng.
+    UIView *scrim = [[UIView alloc] initWithFrame:bg.bounds];
+    scrim.tag = kRNNIMCsBgScrimTag;
+    scrim.backgroundColor = [UIColor colorWithWhite:0 alpha:0.3];
+    scrim.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    scrim.userInteractionEnabled = NO;
+    [bg addSubview:scrim];
+    [vc.view insertSubview:bg atIndex:0];
+    NSLog(@"[RNNIMCsBG] container created reduceTransparency=%d",
+          UIAccessibilityIsReduceTransparencyEnabled());
+    return bg;
+}
+
+// ==== [RNNIMCsBG] LOG TẠM trace nền đen trên máy thật — XÓA toàn bộ sau khi fix xong ====
+// Dump các subview top-level của vc.view: bắt trường hợp view SDK opaque nằm ĐÈ lên container index 0.
+static void RNNIMLogBgViewStack(NECallUIStateController *vc, NSString *where) {
+    if (vc.viewIfLoaded == nil) {
+        NSLog(@"[RNNIMCsBG] stack(%@): view not loaded", where);
+        return;
+    }
+    NSArray<UIView *> *subs = vc.view.subviews;
+    NSLog(@"[RNNIMCsBG] stack(%@) vc=%@ count=%lu", where, NSStringFromClass(vc.class),
+          (unsigned long)subs.count);
+    for (NSUInteger i = 0; i < subs.count; i++) {
+        UIView *v = subs[i];
+        CGFloat white = 0, bgAlpha = 0;
+        BOOL opaqueBg = [v.backgroundColor getWhite:&white alpha:&bgAlpha] && bgAlpha >= 0.99;
+        BOOL hasImage = [v isKindOfClass:UIImageView.class] && ((UIImageView *)v).image != nil;
+        NSLog(@"[RNNIMCsBG]   [%lu] %@ tag=0x%lx hidden=%d alpha=%.2f opaqueBg=%d hasImage=%d frame=%@",
+              (unsigned long)i, NSStringFromClass(v.class), (long)v.tag, v.isHidden, v.alpha,
+              opaqueBg, hasImage, NSStringFromCGRect(v.frame));
+    }
+}
+
+static void RNNIMSetBlurBackgroundImage(NECallUIStateController *vc, UIImage *image) {
+    if (image == nil) return;
+    UIImageView *bg = RNNIMBlurContainer(vc);
+    NSLog(@"[RNNIMCsBG] set-image containerNil=%d changed=%d", bg == nil,
+          bg != nil && bg.image != image);
+    if (bg != nil && bg.image != image) bg.image = image;
+}
+
+/**
+ * Nền blur cho MỌI cuộc gọi (kiểu WeChat — máy thật SDK để nền đen trơn):
+ * CSR → logo CSKH (local, sync); user thường → avatar theo URL callParam.remoteAvatar
+ * (RNNIMFillCallUserInfo đã fill ở cả 2 chiều) — tự tải + cache, KHÔNG phụ thuộc timing load
+ * ảnh của view SDK (set image không trigger layout nên chờ view SDK là ăn race trên máy chậm).
+ */
+// Cache ảnh nền + danh sách VC đang chờ ảnh về, dùng chung cho apply-bg và prefetch.
+// Main-thread only. Key tồn tại trong sBgWaiters = download url đó đang inflight.
+static NSCache<NSString *, UIImage *> *sBgCache;
+static NSMutableDictionary<NSString *, NSHashTable<NECallUIStateController *> *> *sBgWaiters;
+
+static void RNNIMBgEnsureStores(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        sBgCache = [[NSCache alloc] init];
+        sBgWaiters = [NSMutableDictionary dictionary];
+    });
+}
+
+/**
+ * Tải ảnh nền cho url (nếu chưa có download chạy) và fan-out cho MỌI VC đang chờ khi ảnh về.
+ * Bài học từ máy thật: dedupe kiểu inflight-set nuốt mất requester thứ 2 (in-call VC xin ảnh
+ * lúc download của màn callee đang chạy → không bao giờ nhận ảnh → đen vĩnh viễn), còn completion
+ * chỉ set cho 1 weakVc thì VC đó thường đã off-screen lúc ảnh về. vcOrNil = nil khi prefetch.
+ */
+static void RNNIMBgRequestDownload(NSString *urlString, NECallUIStateController *vcOrNil) {
+    RNNIMBgEnsureStores();
+    NSHashTable<NECallUIStateController *> *table = sBgWaiters[urlString];
+    if (table != nil) {
+        if (vcOrNil != nil) [table addObject:vcOrNil];
+        NSLog(@"[RNNIMCsBG] waiting (inflight, addedWaiter=%d)", vcOrNil != nil);
+        return;
+    }
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (url == nil) {
+        NSLog(@"[RNNIMCsBG] skip: bad url");
+        return;
+    }
+    table = [NSHashTable weakObjectsHashTable];
+    if (vcOrNil != nil) [table addObject:vcOrNil];
+    sBgWaiters[urlString] = table;
+    NSLog(@"[RNNIMCsBG] download start");
+    [[[NSURLSession sharedSession] dataTaskWithURL:url
+        completionHandler:^(NSData *data, NSURLResponse *resp, NSError *error) {
+            UIImage *decoded = data.length ? [UIImage imageWithData:data] : nil;
+            // Blur ngay trên thread background của NSURLSession — không chặn main.
+            UIImage *image = RNNIMBlurredImage(decoded);
+            NSInteger httpStatus = [resp isKindOfClass:NSHTTPURLResponse.class]
+                ? ((NSHTTPURLResponse *)resp).statusCode : -1;
+            NSLog(@"[RNNIMCsBG] download done err=%@/%ld http=%ld bytes=%lu decoded=%d blurred=%d",
+                  error.domain, (long)error.code, (long)httpStatus, (unsigned long)data.length,
+                  decoded != nil, image != nil);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSHashTable<NECallUIStateController *> *doneTable = sBgWaiters[urlString];
+                [sBgWaiters removeObjectForKey:urlString];
+                if (image == nil) return; // lỗi tải → giữ nền mặc định, không retry
+                [sBgCache setObject:image forKey:urlString];
+                for (NECallUIStateController *waitingVc in doneTable) {
+                    RNNIMSetBlurBackgroundImage(waitingVc, image);
+                    RNNIMLogBgViewStack(waitingVc, @"after-download");
+                }
+            });
+        }] resume];
+}
+
+void RNNIMCsPrefetchCallBackgroundAvatar(NSString *urlString) {
+    if (urlString.length == 0) return;
+    if (!NSThread.isMainThread) {
+        // Waiters main-thread only; fill chạy trong callback SDK không đảm bảo main.
+        dispatch_async(dispatch_get_main_queue(), ^{ RNNIMCsPrefetchCallBackgroundAvatar(urlString); });
+        return;
+    }
+    RNNIMBgEnsureStores();
+    if ([sBgCache objectForKey:urlString] != nil) return;
+    NSLog(@"[RNNIMCsBG] prefetch urlLength=%lu", (unsigned long)urlString.length);
+    RNNIMBgRequestDownload(urlString, nil);
+}
+
 static void RNNIMApplyCallBackground(NECallUIStateController *vc) {
-    UIImage *image = [RNNIMCsCallBranding isCsrAccid:vc.callParam.remoteUserAccid]
-        ? [RNNIMCsCallBranding logoImage]
-        : vc.remoteAvatorView.image;
-    RNNIMApplyBlurBackground(vc, image);
+    // [RNNIMCsBG] build marker: không thấy dòng này trong console = máy đang chạy bản CŨ.
+    static dispatch_once_t markerOnce;
+    dispatch_once(&markerOnce, ^{ NSLog(@"[RNNIMCsBG] build-marker blur-v4 loaded"); });
+    BOOL isCsr = [RNNIMCsCallBranding isCsrAccid:vc.callParam.remoteUserAccid];
+    // Chỉ log LENGTH của URL avatar, không log nội dung URL (thông tin user).
+    NSLog(@"[RNNIMCsBG] apply-bg vc=%@ isCSR=%d avatarUrlLength=%lu", NSStringFromClass(vc.class),
+          isCsr, (unsigned long)vc.callParam.remoteAvatar.length);
+    if (isCsr) {
+        // Logo cố định → blur 1 lần cache static (ảnh nhỏ, chi phí không đáng kể trên main).
+        static UIImage *blurredLogo;
+        static dispatch_once_t logoOnce;
+        dispatch_once(&logoOnce, ^{ blurredLogo = RNNIMBlurredImage([RNNIMCsCallBranding logoImage]); });
+        RNNIMSetBlurBackgroundImage(vc, blurredLogo);
+        return;
+    }
+    NSString *urlString = vc.callParam.remoteAvatar;
+    if (urlString.length == 0) {
+        NSLog(@"[RNNIMCsBG] skip: empty avatar url");
+        return; // không avatar → giữ nền đen mặc định
+    }
+    RNNIMBgEnsureStores();
+    UIImage *cached = [sBgCache objectForKey:urlString];
+    if (cached != nil) {
+        NSLog(@"[RNNIMCsBG] cache hit");
+        RNNIMSetBlurBackgroundImage(vc, cached);
+        return;
+    }
+    RNNIMBgRequestDownload(urlString, vc);
 }
 
 // Ép tên + logo CSKH lên các view đã dựng sẵn của SDK. No-op với accid không phải CSR.
@@ -88,12 +240,24 @@ static void RNNIMApplyCalleeLocalizedTexts(NECallUIStateController *vc) {
     RNNIMApplyCsBranding(self);
     RNNIMApplyCallBackground(self);
     RNNIMApplyCalleeLocalizedTexts(self);
+    RNNIMLogBgViewStack(self, @"callee-refreshUI");
 }
 
-// Avatar user thường load async — chờ ảnh về rồi mới áp nền blur được.
-- (void)viewDidLayoutSubviews {
-    [super viewDidLayoutSubviews];
+@end
+
+@implementation RNNIMCsAudioCallingController
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    RNNIMApplyCsBranding(self);
     RNNIMApplyCallBackground(self);
+}
+
+- (void)refreshUI {
+    [super refreshUI];
+    RNNIMApplyCsBranding(self);
+    RNNIMApplyCallBackground(self);
+    RNNIMLogBgViewStack(self, @"calling-refreshUI");
 }
 
 @end
@@ -144,14 +308,13 @@ static NSString *RNNIMCallUIKitText(NSString *key) {
     RNNIMApplyCsBranding(self);
     RNNIMApplyCallBackground(self);
     [self syncCsOperationIcons];
+    RNNIMLogBgViewStack(self, @"incall-refreshUI");
 }
 
 // Path accept-từ-màn-OS: SDK re-show pill (hidden=NO) sau khi mình ẩn one-shot → chốt chặn ở layout
 // (mọi lần re-show đều kéo layout pass). alpha=0 là lưới thứ hai: SDK chỉ toggle hidden, không đụng alpha.
-// Nền blur cũng re-apply ở đây: avatar user thường load async, chờ ảnh về mới áp được.
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    RNNIMApplyCallBackground(self);
     if (self.csHangupButton != nil) {
         [self hideDefaultOperationBar];
     }
