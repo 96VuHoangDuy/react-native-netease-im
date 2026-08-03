@@ -89,6 +89,36 @@ static void RNNIMLogBgViewStack(NECallUIStateController *vc, NSString *where) {
     }
 }
 
+// Scrim đậm/nhạt khác nhau theo nguồn ảnh: nền CSKH dựng trên nền TRẮNG nên cần tối hơn ảnh
+// avatar thật mới ra xám trung (khớp Android). Container dựng 1 lần nên phải set lại mỗi lần áp.
+static void RNNIMSetScrimAlpha(NECallUIStateController *vc, CGFloat alpha) {
+    UIImageView *bg = RNNIMBlurContainer(vc);
+    UIView *scrim = [bg viewWithTag:kRNNIMCsBgScrimTag];
+    scrim.backgroundColor = [UIColor colorWithWhite:0 alpha:alpha];
+}
+
+/**
+ * Nền CSKH trước khi blur: logo phóng center-crop kín khung 1:2 trên nền TRẮNG đặc.
+ * KHÔNG đưa thẳng logo vào RNNIMBlurredImage: PNG nền trong suốt vẽ vào context opaque (nền đen)
+ * cho ra mảng xanh tương phản cao, không phải nền xám nhạt như thiết kế.
+ */
+static UIImage *RNNIMCsBrandBackgroundBase(void) {
+    UIImage *logo = [RNNIMCsCallBranding logoImage];
+    if (logo == nil) return nil;
+    CGSize size = CGSizeMake(120, 240);
+    UIGraphicsBeginImageContextWithOptions(size, YES, 1);
+    [UIColor.whiteColor setFill];
+    UIRectFill(CGRectMake(0, 0, size.width, size.height));
+    CGFloat scale = MAX(size.width / logo.size.width, size.height / logo.size.height);
+    CGSize drawSize = CGSizeMake(logo.size.width * scale, logo.size.height * scale);
+    [logo drawInRect:CGRectMake((size.width - drawSize.width) / 2,
+                                (size.height - drawSize.height) / 2,
+                                drawSize.width, drawSize.height)];
+    UIImage *base = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return base;
+}
+
 static void RNNIMSetBlurBackgroundImage(NECallUIStateController *vc, UIImage *image) {
     if (image == nil) return;
     UIImageView *bg = RNNIMBlurContainer(vc);
@@ -187,8 +217,9 @@ static void RNNIMApplyCallBackground(NECallUIStateController *vc) {
         // Logo cố định → blur 1 lần cache static (ảnh nhỏ, chi phí không đáng kể trên main).
         static UIImage *blurredLogo;
         static dispatch_once_t logoOnce;
-        dispatch_once(&logoOnce, ^{ blurredLogo = RNNIMBlurredImage([RNNIMCsCallBranding logoImage]); });
+        dispatch_once(&logoOnce, ^{ blurredLogo = RNNIMBlurredImage(RNNIMCsBrandBackgroundBase()); });
         RNNIMSetBlurBackgroundImage(vc, blurredLogo);
+        RNNIMSetScrimAlpha(vc, 0.45);
         return;
     }
     NSString *urlString = vc.callParam.remoteAvatar;
@@ -212,9 +243,13 @@ static void RNNIMApplyCsBranding(NECallUIStateController *vc) {
     NSString *name = [RNNIMCsCallBranding displayName];
     vc.centerTitleLabel.text = name;
     vc.titleLabel.text = name;
-    UIImage *logo = [RNNIMCsCallBranding logoImage];
-    if (logo) {
-        vc.remoteAvatorView.image = logo;
+    // Ô avatar dùng bản NỀN TRẮNG ĐẶC: logo gốc nền trong suốt nên chìm vào nền blur tối.
+    // backgroundColor trắng phòng trường hợp view rộng hơn ảnh; nền blur vẫn dùng logoImage.
+    UIImage *avatar = [RNNIMCsCallBranding avatarImage];
+    if (avatar) {
+        vc.remoteAvatorView.image = avatar;
+        vc.remoteAvatorView.backgroundColor = UIColor.whiteColor;
+        vc.remoteAvatorView.contentMode = UIViewContentModeScaleAspectFill;
     }
 }
 
@@ -402,10 +437,12 @@ static NSString *RNNIMCallUIKitText(NSString *key) {
     [self hideDefaultOperationBar];
     BOOL microphoneMuted = self.operationView.microPhone.selected;
     BOOL speakerOn = self.operationView.speakerBtn.selected;
+    // Dùng họ asset nút to (150x150, đã bake sẵn nền tròn trắng) như màn caller/callee, không dùng
+    // họ `call_voice_*` / `call_speaker_*` (48x48 glyph trần dành cho thanh pill nhỏ tự vẽ nền).
     self.csMicrophoneButton.imageView.image =
-        RNNIMCallUIKitImage(microphoneMuted ? @"call_voice_off" : @"call_voice_on");
+        RNNIMCallUIKitImage(microphoneMuted ? @"micro_phone_mute" : @"micro_phone");
     self.csSpeakerButton.imageView.image =
-        RNNIMCallUIKitImage(speakerOn ? @"call_speaker_on" : @"call_speaker_off");
+        RNNIMCallUIKitImage(speakerOn ? @"speaker_on" : @"speaker_off");
     self.csHangupButton.imageView.image = RNNIMCallUIKitImage(@"call_cancel");
     // Text trạng thái kiểu WeChat (JS set localized cn/vi; fallback tiếng Trung).
     self.csMicrophoneButton.titleLabel.text =

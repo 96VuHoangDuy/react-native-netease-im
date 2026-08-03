@@ -8,13 +8,11 @@ import com.netease.yunxin.nertc.ui.p2p.P2PUIConfig;
 import com.netease.yunxin.nertc.ui.p2p.fragment.callee.AudioCalleeFragment;
 
 /**
- * Màn ĐỔ CHUÔNG (audio callee) tuỳ biến.
+ * Màn ĐỔ CHUÔNG (audio callee) tuỳ biến: chỉ ẩn nút chuyển audio→video.
  *
- * SDK load avatar vào ivBg (match_parent) làm nền full màn KHÔNG blur. Với avatar là logo CSKH
- * thì logo bị phóng to vỡ nét, chữ trong logo tràn màn hình. Fix: nền = logo blur + scrim tối
- * (đồng bộ iOS), avatar ô nhỏ nằm trực tiếp trên nền đó, không khung trắng.
- *
- * Call user thường có avatar ảnh thật → giữ nguyên nền mặc định của SDK.
+ * Nền để SDK tự lo (load avatar vào ivBg qua Glide kèm transform BlurCenterCorp) — giống hệt call
+ * 1-1. Với CSKH, avatar là cs_call_avatar (logo xanh nền trắng) nên nền ra đúng tông thương hiệu,
+ * không cần tự vẽ nền nữa.
  */
 public class CsAudioCalleeFragment extends AudioCalleeFragment {
 
@@ -29,7 +27,7 @@ public class CsAudioCalleeFragment extends AudioCalleeFragment {
         super.renderUserInfo(accId, config);
         hideVideoSwitch();
         if (CallService.isCsrAccid(accId)) {
-            applyCsStyle();
+            CsCallUiUtils.dimBrandBackground(getBinding() != null ? getBinding().ivBg : null);
         }
     }
 
@@ -41,15 +39,5 @@ public class CsAudioCalleeFragment extends AudioCalleeFragment {
         }
         b.ivSwitchType.setVisibility(View.GONE);
         b.tvSwitchTypeDesc.setVisibility(View.GONE);
-    }
-
-    private void applyCsStyle() {
-        FragmentP2pAudioCalleeBinding b = getBinding();
-        if (b == null) {
-            return;
-        }
-        // getRootView() trả android.view.View — không dùng b.clRoot (ConstraintLayout) vì module
-        // lib không có dependency androidx.constraintlayout.
-        CsCallUiUtils.applyBrandBlurBackground(getRootView(), b.ivBg);
     }
 }

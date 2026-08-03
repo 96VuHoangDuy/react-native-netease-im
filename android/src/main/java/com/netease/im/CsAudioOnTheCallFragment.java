@@ -19,16 +19,10 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
 /**
- * Màn IN-CALL (audio) tuỳ biến cho CSKH — TÁCH background khỏi avatar.
+ * Màn IN-CALL (audio) tuỳ biến: thanh control pill nhỏ của SDK đổi thành 3 nút tròn to có label,
+ * đồng bộ với màn caller/callee. Ngoài ra đẩy nút thu nhỏ + timer xuống dưới status bar.
  *
- * SDK call-ui mặc định load avatar vào CẢ ô avatar nhỏ (ivUserInnerAvatar) LẪN background
- * phóng to full màn (ivBg), rồi vẽ tên người gọi (tvUserName) màu TRẮNG đè lên. Hệ quả với
- * avatar là logo CSKH:
- *  - logo nền trong suốt (asset gốc) trên nền đen của clRoot -> "đen-xanh" loang lổ;
- *  - logo nền trắng -> chữ tên trắng bị chìm.
- *
- * Fix: nền = logo blur + scrim tối (đồng bộ iOS) thay cho avatar phóng to sắc nét; avatar ô nhỏ
- * nằm trực tiếp trên nền đó nên không cần khung trắng. Không đổi asset gốc.
+ * Nền để SDK tự lo (avatar blur center-crop qua Glide) — CSKH đi chung đường đó nên nhìn như call 1-1.
  */
 public class CsAudioOnTheCallFragment extends AudioOnTheCallFragment {
 
@@ -70,10 +64,8 @@ public class CsAudioOnTheCallFragment extends AudioOnTheCallFragment {
         hideVideoSwitch();
         applyTopSafeArea();
         applyBigOperationBar();
-        // CHỈ áp UI tuỳ biến cho cuộc gọi CSKH. Call user thường có avatar ảnh thật —
-        // giữ nguyên hành vi mặc định (avatar phóng to làm nền) vì trông đúng/đẹp hơn.
         if (CallService.isCsrAccid(accId)) {
-            applyCsStyle();
+            CsCallUiUtils.dimBrandBackground(getBinding() != null ? getBinding().ivBg : null);
         }
     }
 
@@ -199,13 +191,4 @@ public class CsAudioOnTheCallFragment extends AudioOnTheCallFragment {
         return Math.round(context.getResources().getDisplayMetrics().density * value);
     }
 
-    private void applyCsStyle() {
-        FragmentP2pAudioOnTheCallBinding b = getBinding();
-        if (b == null) {
-            return;
-        }
-        // getRootView() trả android.view.View — không dùng b.clRoot (ConstraintLayout) vì module
-        // lib không có dependency androidx.constraintlayout.
-        CsCallUiUtils.applyBrandBlurBackground(getRootView(), b.ivBg);
-    }
 }

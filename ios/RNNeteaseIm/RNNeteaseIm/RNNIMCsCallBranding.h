@@ -25,8 +25,14 @@ NS_ASSUME_NONNULL_BEGIN
 /// file:// URL tới cs_call_logo.png trong bundle app (SDWebImage load được file URL).
 + (nullable NSString *)logoFileUrl;
 
-/// UIImage của logo, cho UIImageView của UI controller.
+/// UIImage của logo (nền TRONG SUỐT) — chỉ dùng dựng nền blur.
 + (nullable UIImage *)logoImage;
+
+/// file:// URL tới cs_call_avatar.png — bản logo nền TRẮNG ĐẶC cho ô avatar.
++ (nullable NSString *)avatarFileUrl;
+
+/// UIImage cho ô avatar. Tách khỏi logoImage vì logo nền trong suốt bị chìm vào nền blur tối.
++ (nullable UIImage *)avatarImage;
 
 /// JS setCallControlLabels gọi vào (mỗi lần login/đổi ngôn ngữ). Key: micOn, micOff, hangup,
 /// speakerOn, speakerOff. nil/thiếu key → dùng fallback tiếng Trung.

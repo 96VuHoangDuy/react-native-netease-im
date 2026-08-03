@@ -31,6 +31,16 @@ static NSString *sCsCallName = nil;
     return path.length ? [UIImage imageWithContentsOfFile:path] : nil;
 }
 
++ (NSString *)avatarFileUrl {
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"cs_call_avatar" ofType:@"png"];
+    return path.length ? [NSString stringWithFormat:@"file://%@", path] : nil;
+}
+
++ (UIImage *)avatarImage {
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"cs_call_avatar" ofType:@"png"];
+    return path.length ? [UIImage imageWithContentsOfFile:path] : nil;
+}
+
 static NSDictionary *sCallControlLabels = nil;
 
 + (void)setCallControlLabels:(NSDictionary *)labels {

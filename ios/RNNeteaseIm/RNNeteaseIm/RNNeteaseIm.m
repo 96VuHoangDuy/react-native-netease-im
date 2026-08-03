@@ -78,9 +78,11 @@ static void RNNIMFillCallUserInfo(NEUICallParam *param, NSString *accid) {
     }
     if ([RNNIMCsCallBranding isCsrAccid:accid]) {
         param.remoteShowName = [RNNIMCsCallBranding displayName];
-        NSString *logo = [RNNIMCsCallBranding logoFileUrl];
+        // Bản nền TRẮNG ĐẶC: SDK tự load URL này vào ô avatar (async) — dùng cùng ảnh với
+        // RNNIMApplyCsBranding để không có lúc nào hiện bản nền trong suốt bị chìm vào nền blur.
+        NSString *logo = [RNNIMCsCallBranding avatarFileUrl];
         if (logo.length) param.remoteAvatar = logo;
-        // DEBUG IMTRACE_CALL (gỡ sau khi xong): nhánh CSR. csLogo=(null) => thiếu asset cs_call_logo.png trong bundle app.
+        // DEBUG IMTRACE_CALL (gỡ sau khi xong): nhánh CSR. csLogo=(null) => thiếu asset cs_call_avatar.png trong bundle app.
         NSLog(@"IMTRACE_CALL fill[CSR] accid=%@ remoteShowName=[%@] csLogo=[%@]",
               accid, param.remoteShowName, logo);
         return;
@@ -109,6 +111,10 @@ static void RNNIMFillCallUserInfo(NEUICallParam *param, NSString *accid) {
                      withCompletion:(void (^)(BOOL))completion {
     NSString *accid = inviteInfo.callerAccId;
     NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:accid];
+    // DEBUG IMTRACE_RING (gỡ sau khi xác nhận chuông đôi): đường in-app ring có chạy không và
+    // calleeRingFilePath đang là gì. Rỗng => in-app ring đã tắt, chuông chỉ còn từ hệ thống.
+    NSLog(@"IMTRACE_RING didCallComing calleeRing=[%@]",
+          [NERtcCallUIKit sharedInstance].ringFile.calleeRingFilePath);
     // DEBUG IMTRACE_CALL (gỡ sau khi xong): điểm vào delegate callee. Nếu KHÔNG thấy dòng này khi có
     // cuộc gọi đến => delegate không được gọi/đăng ký (root cause "(null)" do remoteShowName không set).
     NSLog(@"IMTRACE_CALL didCallComing accid=%@ isCsr=%d cacheHit=%d (nickName=[%@] alias=[%@])",
@@ -342,7 +348,15 @@ static BOOL sCallKitSetup = NO;
         NSString *callerRing = [[NSBundle mainBundle] pathForResource:@"caller_ring" ofType:@"mp3"];
         if (callerRing.length > 0 && [NERtcCallUIKit sharedInstance].ringFile) {
             [NERtcCallUIKit sharedInstance].ringFile.callerRingFilePath = callerRing;
-            [NERtcCallUIKit sharedInstance].ringFile.calleeRingFilePath = callerRing;
+            if (@available(iOS 17.4, *)) {
+                // Chuông cuộc gọi đến do LiveCommunicationKit phát (param.ringtoneName trong
+                // reportSystemIncomingCallWithPayload). Nếu set thêm calleeRingFilePath thì lúc app
+                // foreground CallUIKit phát lần nữa ⇒ chuông đôi. Path rỗng = cấm phát (NERingFile.h).
+                [NERtcCallUIKit sharedInstance].ringFile.calleeRingFilePath = @"";
+            } else {
+                // iOS < 17.4 không có VoIP push (pkCername không set) ⇒ chuông đến chỉ có đường in-app.
+                [NERtcCallUIKit sharedInstance].ringFile.calleeRingFilePath = callerRing;
+            }
         } else {
             NSLog(@"[CallKit] caller_ring.mp3 không có trong bundle (hoặc ringFile nil) — dùng nhạc chờ mặc định");
         }
@@ -543,6 +557,13 @@ RCT_EXPORT_METHOD(setCallControlLabels:(NSDictionary *)labels){
 // Khác 来电横幅 ở trên: banner chỉ chạy khi app đang sống, cái này chạy cả khi app bị kill.
 // iOS < 17.4 KHÔNG hỗ trợ → phải guard, gọi thẳng sẽ crash.
 + (void)reportSystemIncomingCallWithPayload:(NSDictionary *)payload {
+    // DEBUG IMTRACE_RING (gỡ sau khi xác nhận chuông đôi): VoIP push có tới cả khi app foreground
+    // không. state=0 (active) => có, tức chuông hệ thống và in-app ring chạy song song.
+    // dispatch_async: callback PushKit chạy trên global queue, applicationState phải đọc ở main.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"IMTRACE_RING reportSystemIncomingCall state=%ld",
+              (long)[UIApplication sharedApplication].applicationState);
+    });
     if (@available(iOS 17.4, *)) {
         @try {
             NECallSystemIncomingCallParam *param = [[NECallSystemIncomingCallParam alloc] init];

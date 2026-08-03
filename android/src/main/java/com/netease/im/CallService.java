@@ -107,7 +107,10 @@ public class CallService {
      * blur ({@link CsCallUiUtils}).
      */
     private static String csAvatarUri(Context context) {
-        return "android.resource://" + context.getPackageName() + "/" + R.drawable.cs_call_avatar;
+        // URI theo TÊN res, KHÔNG theo id số: id được cấp lại mỗi khi thêm/bớt drawable (thêm
+        // cs_call_avatar đẩy id cũ của cs_call_logo sang ảnh mới), mà Glide lấy nguyên URI làm
+        // cache key và disk cache sống sót qua lần cài đè → ảnh cũ hiện lại. Tên thì bất biến.
+        return "android.resource://" + context.getPackageName() + "/drawable/cs_call_avatar";
     }
 
     /** Init CallKit UI. Gọi 1 lần, sau IM init (V10). Idempotent. */
