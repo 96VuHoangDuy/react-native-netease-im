@@ -11,3 +11,12 @@ node_modules
 docs/ai-output/
 
 GEMINI.md
+
+# AI spec-driven tooling (local only)
+.specify/
+openspec/
+.claude/commands/opsx/
+.claude/skills/speckit-*/
+.claude/skills/openspec-*/
+.agents/skills/openspec-*/
+.agents/skills/source-command-opsx-*/
