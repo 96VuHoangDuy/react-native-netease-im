@@ -36,6 +36,19 @@ Làm việc trong repo này như một maintainer của thư viện React Native
   - chatroom
   - utils
 
+## RULE-FLOW-01 — Trace luồng xong thì lưu lại thành `flows/`
+
+> Luật đầy đủ + format: `RULE-FLOW-01` trong `~/.claude/CLAUDE.md` (global, áp dụng mọi repo).
+> Dưới đây chỉ là phần riêng của repo này.
+
+- **Thư mục:** `docs/flows/<tên-luồng>.md` — xem `docs/flows/README.md`.
+- Task nào buộc phải trace luồng xuyên tầng (JS API → bridge → native iOS/Android → NIM SDK → event callback → JS) thì **trước khi kết thúc task**
+  phải lưu / cập nhật flow tương ứng.
+- **Không viết flow đầu cơ.** Chỉ lưu luồng vừa trace thật và đã kiểm chứng. Flow sai còn tệ hơn
+  không có, vì nó được tin.
+- Mọi chặng phải có `file:line`; chỗ chưa chắc ghi `⚠️ chưa verify`; có mục "Hay hỏng ở đâu".
+- `flows/` KHÔNG `@import` vào file này.
+
 ## What To Document
 
 - Nếu public API đổi, cập nhật feature doc tương ứng.
