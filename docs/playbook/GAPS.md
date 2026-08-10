@@ -95,6 +95,34 @@
 - Impact:
   - consumer app hoặc maintainer có thể bỏ sót event contract quan trọng
 
+### `observeAttachmentProgress` là dead event trong JS enum
+
+- Evidence:
+  - `src/utils/eventListener.type.ts:13` khai báo `observeAttachmentProgress`
+  - không Android (`ReactCache`) hay iOS (`ConversationViewController`/`RNNeteaseIm`) nào emit tên event này; event thật cho progress là `observeProgressSend`
+- Impact:
+  - `addListener("observeAttachmentProgress", ...)` không bao giờ được gọi; nếu FE dựa vào đây để show progress/refetch thì logic chết
+
+## Media / Attachment Drift
+
+### Android mất `url`/`fileUrl` khi `isFilePathDeleted` (image/file/audio), video thì không
+
+- Evidence:
+  - `generateImageExtend` (`ReactCache.java:2495-2530`), `generateFileExtend`, `generateRecordExtend` chỉ set `url`/`fileUrl`/`displayName`/kích thước bên trong `if (!isFilePathDeleted)`
+  - `generateVideoExtend` (`ReactCache.java:2343`) set `url` vô điều kiện
+  - iOS `makeExtend*` set `url`/`coverUrl` vô điều kiện đầu hàm
+- Impact:
+  - khi cache local bị dọn mà `isReplacePathSuccess=true`, dict image/file/audio trên Android không còn URL để FE tải lại → ảnh hiển thị đen/vỡ; bất đối xứng với iOS và với video
+  - chưa reproduce runtime kịch bản "xoá cache → mở lại conversation có media cũ"
+
+### iOS custom download không set trạng thái failed rõ ràng
+
+- Evidence:
+  - `moveFiletoSessionDir:` (`ConversationViewController.m:1269-1380`) tự HTTP download, không qua SDK queue; nhánh lỗi network không set `downloadAttStatus=failed`
+  - label `type` của progress event gán `"upload"` cho cả nhánh download (`:1365-1375`)
+- Impact:
+  - media có thể kẹt trạng thái "downloading"; consumer không phân biệt được upload vs download qua `type`
+
 ## Configuration Risk
 
 ### Android push config có giá trị hard-coded trong source
@@ -111,3 +139,58 @@
 - Impact:
   - chưa thể xác thực end-to-end integration
   - chưa thể mô tả workflow release/PR bằng dữ liệu chắc chắn
+
+## Build / Obfuscation Risk
+
+### Docs không nhắc cơ chế R8 phá NERTC/call-ui (reflection + JNI FindClass)
+
+- Evidence:
+  - `docs/reference/call-android-native/01-integration-android.md` §4 ProGuard **có** rule official
+    (`-keep class com.netease.lava.** {*;}`, `-keep class com.netease.yunxin.** {*;}`)
+  - nhưng không docs nào giải thích **vì sao** cần: không hề nhắc `JNI_OnLoad`, `FindClass`,
+    `RegisterNatives`, `NativeLibLoader`, `NERtcCore`, hay cơ chế "xkit startup" (`Class.forName()`
+    từ manifest `<meta-data>`)
+  - mọi aar NetEase (`nertc`, `nertc-base`, `call-ui`, `corekit`) có `proguard.txt` **rỗng** → không tự bảo vệ
+- Impact:
+  - thiếu rule ⇒ app release crash, **debug không lộ** (`minifyEnabled` chỉ bật ở release):
+    strip class ⇒ `ClassNotFoundException: CallKitUIService` lúc launch;
+    rename class ⇒ `SIGABRT` tại `libnertc_sdk.so (JNI_OnLoad+148)` lúc bấm call
+  - suy rule từ bytecode dễ ra rule thiếu: `NERtcCore`/`NativeLibLoader` **không khai method `native`**
+    nên "chỉ keep class có native method" là không đủ — phải keep cả package
+  - **Bài học**: đọc `01-integration-android.md` §4 ProGuard TRƯỚC khi tự suy rule
+
+### Lib chưa export rule NIM qua consumerProguardFiles
+
+- Evidence:
+  - `android/consumer-rules.pro` chỉ export `com.netease.lava.**` + `com.netease.yunxin.**`
+  - rule NIM (`com.netease.nim.**`, `nimlib.**`, `share.**`, `mobsec.**`) hiện chỉ nằm ở
+    `android/app/proguard-rules.pro` của app ZYZJ
+  - `android/proguard-rules.pro` của lib có `-keep class com.netease.** {*;}` nhưng khai trong
+    `proguardFiles` (chỉ áp khi tự build lib), **không** merge sang app
+- Impact:
+  - app host khác dùng lib mà không tự thêm rule NIM ⇒ có thể crash release; ZYZJ hiện không lộ vì đã có sẵn
+
+## Call — Inbound Ownership
+
+### Không xác định được client nào khởi tạo cuộc gọi CSR→user
+
+- Evidence:
+  - repo này chỉ khởi tạo chiều **user→CSR**: `CallService.startVoiceCall(...)`
+    (`android/src/main/java/com/netease/im/CallService.java`), gọi qua `src/Call/Call.ts` →
+    `startVoiceCall` ở app ZYZJ
+  - `pyeon-chinese-portal`: grep `nim|yunxin|netease|nertc` trong `src/` và `package.json` = **0 kết quả**
+    → portal không có tích hợp NIM/NERTC nào
+  - nhưng cuộc gọi CSR→user có thật: đã reproduce trên máy Xiaomi MIX 2S (log
+    `DefaultIncomingCallEx.onIncomingCall`), tức tồn tại một client ngoài 4 repo của workspace
+- Impact:
+  - 🔬 `NECallPushConfig` (title/content/`pushPayload` của offline push) do **bên gọi** set, không phải bên nhận
+  - ⇒ notification mà khách hàng thấy khi app **bị kill** ở luồng CSR→user nằm ngoài tầm kiểm soát của repo này
+  - ⇒ mọi thiết kế cho trạng thái app-killed (ringtone channel riêng, data message, full-screen intent)
+    đều **chặn ở đây** cho tới khi biết client đó là gì và ai sở hữu nó
+  - `incomingCallEx` / `notificationConfigFetcher` không lấp được khoảng này: chúng chỉ chạy khi process còn sống
+- Cần hỏi team TQ:
+  1. CSR dùng client nào để gọi ra (console Yunxin, app riêng, hay web tự viết)?
+  2. Client đó set `NECallPushConfig` như thế nào — có `pushPayload` không?
+  3. Ai sở hữu/deploy client đó?
+- Liên quan: `docs/reference/call-android-native/03-advanced.md` §Intercept inbound ·
+  phân tích đầy đủ ở `pyeon-chinese-mobile/docs/ai-output/call-notification-status-and-proposal-en-2026-07-30.md`

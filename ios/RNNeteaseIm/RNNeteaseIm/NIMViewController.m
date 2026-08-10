@@ -7,6 +7,7 @@
 //
 
 #import "NIMViewController.h"
+#import "NIMSDK+ZYZJ.h"
 #import "ContactViewController.h"
 #import "ConversationViewController.h"
 #import "TeamViewController.h"
@@ -208,7 +209,13 @@
     //    }
     
     //    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
-    
+    // [CSR_DEBUG] Ingress recent-session (add) cho CSR/chatbot. XÓA trước production.
+    {
+        NSString *csrType = [[CacheUsers initWithCacheUsers] getCustomerServiceOrChatbot:recentSession.session.sessionId];
+        if (csrType.length) {
+            NSLog(@"[CSR_DEBUG][native:ingress:recent:add] type=%@ sessionId=%@ %@", csrType, recentSession.session.sessionId, [ConversationViewController csrIngressDump:recentSession.lastMessage]);
+        }
+    }
     [self getResouces];
 }
 
@@ -229,7 +236,13 @@
     // [self setLastMessageId:recentSession.lastMessage.messageId];
     
     //    [[ConversationViewController initWithConversationViewController]handleInComeMultiMediaMessage: recentSession.lastMessage callFrom:@"NIMViewController"];
-    
+    // [CSR_DEBUG] Ingress recent-session (update) cho CSR/chatbot. XÓA trước production.
+    {
+        NSString *csrType = [[CacheUsers initWithCacheUsers] getCustomerServiceOrChatbot:recentSession.session.sessionId];
+        if (csrType.length) {
+            NSLog(@"[CSR_DEBUG][native:ingress:recent:update] type=%@ sessionId=%@ %@", csrType, recentSession.session.sessionId, [ConversationViewController csrIngressDump:recentSession.lastMessage]);
+        }
+    }
     [self getResouces];
 }
 //删除所有会话回调
@@ -265,7 +278,10 @@
             result = @"robot";
             break;
         case NIMMessageTypeRtcCallRecord:
-            result = @"callRecord";
+            // Parity Android (ReactCache.getMessageType: nrtc_netcall -> "call") và khớp
+            // NIMMessageTypeEnum.CALL phía JS. Trước đây trả "callRecord" — không tồn tại
+            // trong enum JS → switch preview không match → lòi text native "[未知消息]".
+            result = @"call";
             break;
         case NIMMessageTypeCustom:
             result = @"custom";
@@ -444,6 +460,10 @@
                 NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:dataRawAttchContent options:0 error:&error];
                 if (error == nil && [dict isKindOfClass:[NSDictionary class]] && [dict objectForKey:@"code"] != nil) {
                     [localExt setObject:@(YES) forKey:@"isChatBotNotifyOutSessionOfCurrentCsr"];
+                    // [FIX mất thông báo CSKH] Decode opcode để recent path cũng định tuyến đúng type.
+                    NSInteger code32 = [[dict objectForKey:@"code"] integerValue];
+                    [localExt setObject:@(code32 & 0xFFFF) forKey:@"chatBotOpcode"];
+                    [localExt setObject:@((code32 >> 16) & 0xFF) forKey:@"chatBotOpcodeType"];
                 }
             }
         }
@@ -451,7 +471,7 @@
         if (recent.lastMessage.messageType == NIMMessageTypeCustom) {
             NIMCustomObject *messageObject = recent.lastMessage.messageObject;
             DWCustomAttachment *attachment = messageObject.attachment;
-            
+
             if (attachment != nil) {
                 switch (attachment.custType) {
                     case CustomMessgeTypeRedpacket: {
@@ -1034,7 +1054,7 @@
 }
 
 - (NSString *)convertMessageMedia:(NIMMessage *)message contentMessage:(NSString *)contentMessage{
-    if ([message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount] || message.session.sessionType == NIMSessionTypeP2P) {
+    if ([message.from isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]] || message.session.sessionType == NIMSessionTypeP2P) {
         return contentMessage;
     }
     
@@ -1083,7 +1103,7 @@
         default:
             text = @"[未知消息]";
     }
-    if ((lastMessage.session.sessionType == NIMSessionTypeP2P) || (lastMessage.messageType == NIMMessageTypeTip)||([lastMessage.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) ) {
+    if ((lastMessage.session.sessionType == NIMSessionTypeP2P) || (lastMessage.messageType == NIMMessageTypeTip)||([lastMessage.from isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) ) {
         return text;
     }else{
         NSString *nickName = [NIMKitUtil showNick:lastMessage.from inSession:lastMessage.session];
@@ -1128,7 +1148,7 @@
                 break;
             case CustomMessgeTypeBusinessCard: //名片
             {
-                if([message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]){//如果是自己
+                if([message.from isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]]){//如果是自己
                     text = [NSString stringWithFormat:@"你推荐了%@", [obj.dataDict objectForKey:@"name"]];
                 }else{
                     text = [NSString stringWithFormat:@"向你推荐了%@", [obj.dataDict objectForKey:@"name"]];
@@ -1158,7 +1178,7 @@
 - (NSString *)dealWithData:(NSDictionary *)dict{
     NSString *strOpenId = [self stringFromKey:@"openId" andDict:dict];
     NSString *strSendId = [self stringFromKey:@"sendId" andDict:dict];
-    NSString *strMyId = [NIMSDK sharedSDK].loginManager.currentAccount;
+    NSString *strMyId = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     NSString *strContent = @"";
     
     if ([strOpenId isEqualToString:strMyId]&&[strSendId isEqualToString:strMyId]) {
@@ -1204,13 +1224,7 @@
 
 - (NSString *)notificationMessageContent:(NIMMessage *)lastMessage{
     NIMNotificationObject *object = lastMessage.messageObject;
-    if (object.notificationType == NIMNotificationTypeNetCall) {
-        NIMNetCallNotificationContent *content = (NIMNetCallNotificationContent *)object.content;
-        if (content.callType == NIMNetCallTypeAudio) {
-            return @"[网络通话]";
-        }
-        return @"[视频聊天]";
-    }
+    // NIMNotificationTypeNetCall (legacy NIMAVChat) đã gỡ.
     if (object.notificationType == NIMNotificationTypeTeam) {
         NSString *strContent = [NIMKitUtil teamNotificationFormatedMessage:lastMessage];
         return strContent;

@@ -23,6 +23,7 @@ public class MessageConstant {
         public final static String LINK = "url";
         public final static String CARD = "card";
         public final static String CUSTON = "custom";
+        public final static String CALL = "call";
 
         public final static String ForwardMultipleText = "forwardMultipleText";
     }

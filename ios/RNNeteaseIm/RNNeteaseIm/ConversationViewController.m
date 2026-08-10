@@ -7,6 +7,7 @@
 //
 
 #import "ConversationViewController.h"
+#import "NIMSDK+ZYZJ.h"
 #import <Photos/PhotosTypes.h>
 #import "NIMMessageMaker.h"
 #import "ContactViewController.h"
@@ -330,7 +331,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     if (type == nil || accId == nil || reactedUserId == nil) {
         return;
     }
-    if ([reactedUserId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]] && ![accId isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+    if ([reactedUserId isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]] && ![accId isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
         NSMutableDictionary *recentLocalExt = recent.localExt ? [recent.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
         NSMutableArray *reactedUsers = [recentLocalExt objectForKey:@"reactedUsers"] != nil ? [[recentLocalExt objectForKey:@"reactedUsers"] mutableCopy] : [[NSMutableArray alloc] init];
         NSMutableDictionary *reactedUser = [[NSMutableDictionary alloc] init];
@@ -635,12 +636,14 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     
     if (currentMessageID.length != 0) {
         NSArray *currentMessage = [[[NIMSDK sharedSDK] conversationManager] messagesInSession:session messageIds:@[currentMessageID] ];
-        NIMMessage *currentM = currentMessage[0];
-        
-        param.anchorClientId = currentMessageID;
-        
-        param.startTime = direction == 1 ? currentM.timestamp : 0;
-        param.endTime = direction == 0 ? currentM.timestamp : 0;
+        NIMMessage *currentM = currentMessage.firstObject;
+
+        if (currentM) {
+            param.anchorClientId = currentMessageID;
+
+            param.startTime = direction == 1 ? currentM.timestamp : 0;
+            param.endTime = direction == 0 ? currentM.timestamp : 0;
+        }
     }
     param.order = direction == 1 ? NIMMessageSearchOrderAsc : NIMMessageSearchOrderDesc;
     
@@ -884,7 +887,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 - (NSDictionary *)teamNotificationSourceName:(NIMMessage *)message{
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    //    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+    //    NSString *currentAccount = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     //    if ([content.sourceID isEqualToString:currentAccount]) {
     //        source = @"你";
     //    }else{
@@ -899,7 +902,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSMutableArray *targets = [[NSMutableArray alloc] init];
     NIMNotificationObject *object = message.messageObject;
     NIMTeamNotificationContent *content = (NIMTeamNotificationContent*)object.content;
-    //    NSString *currentAccount = [[NIMSDK sharedSDK].loginManager currentAccount];
+    //    NSString *currentAccount = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     for (NSString *item in content.targetIDs) {
         //        if ([item isEqualToString:currentAccount]) {
         //            [targets addObject:@"你"];
@@ -998,10 +1001,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             
             break;
         }
-        case NIMNotificationTypeNetCall:{
-            [notiObj setObject:[NIMKitUtil messageTipContent:message] forKey:@"tipMsg"];
-            break;
-        }
+        // NIMNotificationTypeNetCall (legacy NIMAVChat) đã gỡ.
         default:
             break;
     }
@@ -1015,8 +1015,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 -(NSDictionary *) makeExtendImage:(NIMMessage *)message isDisableDownloadMedia:(BOOL *)isDisableDownloadMedia {
     NIMImageObject *object = message.messageObject;
     NSMutableDictionary *imgObj = [NSMutableDictionary dictionary];
-    [imgObj setObject:[NSString stringWithFormat:@"%@",[object url] ] forKey:@"url"];
-    [imgObj setObject:[NSString stringWithFormat:@"%@",[object displayName] ] forKey:@"displayName"];
+    [imgObj setObject:([object url] ?: @"") forKey:@"url"];
+    [imgObj setObject:([object displayName] ?: @"") forKey:@"displayName"];
     [imgObj setObject:[NSString stringWithFormat:@"%f",[object size].height] forKey:@"imageHeight"];
     [imgObj setObject:[NSString stringWithFormat:@"%f",[object size].width] forKey:@"imageWidth"];
     
@@ -1068,12 +1068,20 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSString *displayFileSize = [NSByteCountFormatter stringFromByteCount:object.fileLength countStyle:NSByteCountFormatterCountStyleFile];
     
     NSMutableDictionary *fileObj = [NSMutableDictionary dictionary];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", object.path ] forKey:@"filePath"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", message.text ] forKey:@"fileName"];
+    // [FIX #0000138] File từ CSR: message.text/remoteExt[fileType] nil → trước đây ra "(null)".
+    // fileName: ưu tiên message.text (user gửi), fallback NIMFileObject.displayName.
+    // fileType: ưu tiên remoteExt[fileType], fallback suy từ đuôi tên/đường dẫn/url.
+    NSString *fileName = message.text.length ? message.text : (object.displayName ?: @"");
+    NSString *fileType = [message.remoteExt objectForKey:@"fileType"];
+    if (fileType == nil) {
+        fileType = [(object.displayName ?: (object.path ?: object.url)) pathExtension];
+    }
+    [fileObj setObject:(object.path ?: @"") forKey:@"filePath"];
+    [fileObj setObject:fileName forKey:@"fileName"];
     [fileObj setObject:[NSString stringWithFormat:@"%@", displayFileSize ] forKey:@"fileSize"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", object.md5 ] forKey:@"fileMd5"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", object.url ] forKey:@"fileUrl"];
-    [fileObj setObject:[NSString stringWithFormat:@"%@", [message.remoteExt objectForKey:@"fileType"]] forKey:@"fileType"];
+    [fileObj setObject:(object.md5 ?: @"") forKey:@"fileMd5"];
+    [fileObj setObject:(object.url ?: @"") forKey:@"fileUrl"];
+    [fileObj setObject:(fileType ?: @"") forKey:@"fileType"];
     
     NSString *mediaPath = [self moveFiletoSessionDir:message];
     NSString *isReplaceSuccess = [message.localExt objectForKey:@"isReplaceSuccess"];
@@ -1166,7 +1174,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 -(NSDictionary *) makeExtendRecord:(NIMMessage *)message {
     NIMAudioObject *object = message.messageObject;
     NSMutableDictionary *voiceObj = [NSMutableDictionary dictionary];
-    [voiceObj setObject:[NSString stringWithFormat:@"%@", [object url]] forKey:@"url"];
+    [voiceObj setObject:([object url] ?: @"") forKey:@"url"];
     [voiceObj setObject:[NSString stringWithFormat:@"%zd",(object.duration/1000)] forKey:@"duration"];
     [voiceObj setObject:[NSNumber  numberWithBool:message.isPlayed] forKey:@"isPlayed"];
     
@@ -1326,6 +1334,9 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         NSError *copyError = nil;
         if (![[NSFileManager defaultManager] copyItemAtPath:originPath toPath:cacheMediaPath error:&copyError]) {
             NSLog(@"[copyError] %@", copyError.localizedDescription);
+            // Báo trạng thái failed để FE thoát khỏi "downloading" limbo và có thể retry.
+            [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"failed"}];
+            [self refrashMessage:message From:@"receive"];
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 5), dispatch_get_main_queue(), ^{
                 if ([[NSFileManager defaultManager] fileExistsAtPath:originPath]) {
                     NSError *removeErr = nil;
@@ -1353,6 +1364,12 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                     [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"downloadSuccess", @"isReplaceSuccess": @"YES"}];
                     [self refrashMessage:message From:@"receive"];
                 });
+            } else {
+                // Báo trạng thái failed để FE thoát khỏi "downloading" limbo và có thể retry.
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC * 2), dispatch_get_main_queue(), ^{
+                    [self setLocalExtMessage:message newDict:@{@"downloadAttStatus": @"failed"}];
+                    [self refrashMessage:message From:@"receive"];
+                });
             }
         } progress:^(float progress) {
             if ([message.session.sessionId isEqualToString:self._session.sessionId]) {
@@ -1360,7 +1377,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 model.processSend = @{
                     @"progress": [NSString stringWithFormat:@"%f", progress],
                     @"messageId": message.messageId,
-                    @"type": @"upload",
+                    @"type": @"download",
                     @"sessionId": message.session.sessionId
                 };
                 NSLog(@"📦 Video download progress: %f", progress);
@@ -1464,6 +1481,26 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }];
 }
 
+// [CSR_DEBUG] Helper dump 1 message ở ingress (from/type/outgoing/rawAttach + decode code/opcode).
+// Dùng cho log trace 0x00200001. XÓA trước production.
++(NSString *)csrIngressDump:(NIMMessage *)message {
+    NSInteger code = -1;
+    NSString *raw = message.rawAttachContent;
+    if (raw.length) {
+        NSData *d = [raw dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary *dict = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:nil] : nil;
+        if ([dict isKindOfClass:[NSDictionary class]] && [dict objectForKey:@"code"] != nil) {
+            code = [[dict objectForKey:@"code"] integerValue];
+        }
+    }
+    return [NSString stringWithFormat:@"from=%@ msgType=%ld out=%d code=%ld opcode=0x%lX opType=0x%lX raw=%@",
+            message.from, (long)message.messageType, message.isOutgoingMsg,
+            (long)code,
+            (long)(code >= 0 ? (code & 0xFFFF) : 0),
+            (long)(code >= 0 ? ((code >> 16) & 0xFF) : 0),
+            raw ?: @"(nil)"];
+}
+
 -(NSMutableArray *)setTimeArr:(NSArray *)messageArr {
     return [self setTimeArr:messageArr isDisableDownloadMedia:NO];
 }
@@ -1492,13 +1529,11 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         }
         
         NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
-        
-        if (isChatBot && !message.isOutgoingMsg && [localExt objectForKey:@"chatBotType"] == nil) {
-            [[NIMSDK sharedSDK].conversationManager deleteMessage:message];
-            
-            continue;
-        }
-        
+
+        // [PARITY ANDROID] Bỏ delete guard chatbot incoming: để message chatbot (kể cả custom
+        // {code} opcode chưa enrich chatBotType) chảy vào serialize như Android → JS
+        // isRawChatbotNotification xử lý (sinh RECONNECT). Android không có guard này.
+
         if (isCsr) {
             [fromUser setObject:[NSNumber numberWithBool:isCsr] forKey:@"isCsr"];
         }
@@ -1559,7 +1594,15 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 [fromUser setObject:@"" forKey:tem];
             }
         }
-        [dic setObject:[NSString stringWithFormat:@"%@", message.text] forKey:@"text"];
+        // [CSR_DEBUG #0000138] Log raw text + cờ CSR. message.text == nil sẽ bị
+        // stringWithFormat hóa thành chuỗi "(null)" (khác Android). XÓA trước production.
+        if (isCsr || isChatBot) {
+            NSLog(@"[CSR_DEBUG][native:text] text=%@ isNil=%d type=%ld isCsr=%d isChatBot=%d onlineServiceType=%@ from=%@ isOutgoing=%d",
+                  message.text, (message.text == nil), (long)message.messageType, isCsr, isChatBot, onlineServiceType, message.from, message.isOutgoingMsg);
+        }
+        // [FIX #0000138] message.text == nil → stringWithFormat ra chuỗi "(null)" (iOS-only).
+        // Trả "" để message rỗng tự bị filter ở màn CSKH (filter !!item.text), không hiện "(null)".
+        [dic setObject:(message.text ? message.text : @"") forKey:@"text"];
         [dic setObject:[NSString stringWithFormat:@"%@", message.session.sessionId] forKey:@"sessionId"];
         [dic setObject:[NSString stringWithFormat:@"%ld", message.session.sessionType] forKey:@"sessionType"];
         if(message.messageSubType) {
@@ -1720,35 +1763,114 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                         //                        break;
                     case CustomMessgeTypeCustom://自定义
                     {
-                        [dic setObject:obj.dataDict  forKey:@"extend"];
+                        // [FIX + CSR_DEBUG] Custom message (msgtype="custom") có thể là 0x00200001.
+                        // Decode opcode từ TOP-LEVEL rawAttachContent (code KHÔNG nằm trong obj.dataDict)
+                        // để JS nhận extend.opcode giống nhánh default. XÓA log trước production.
+                        NSMutableDictionary *ext = [NSMutableDictionary dictionaryWithDictionary:(obj.dataDict ?: @{})];
+                        NSInteger opcode = -1;
+                        NSData *rawDataCustom = [message.rawAttachContent dataUsingEncoding:NSUTF8StringEncoding];
+                        if (rawDataCustom != nil) {
+                            NSDictionary *rawDictCustom = [NSJSONSerialization JSONObjectWithData:rawDataCustom options:0 error:nil];
+                            if ([rawDictCustom isKindOfClass:[NSDictionary class]]) {
+                                NSNumber *codeNum = [rawDictCustom objectForKey:@"code"];
+                                if (codeNum != nil) {
+                                    NSInteger code32 = [codeNum integerValue];
+                                    opcode = code32 & 0xFFFF;
+                                    [ext setObject:codeNum forKey:@"code"];
+                                    [ext setObject:@(opcode) forKey:@"opcode"];
+                                    [ext setObject:@((code32 >> 16) & 0xFF) forKey:@"opcodeType"];
+                                }
+                            }
+                        }
+                        NSLog(@"[CSR_DEBUG][native:custom-type] custType=custom isChatBot=%d opcode=0x%lX from=%@ raw=%@",
+                              isChatBot, (long)(opcode >= 0 ? opcode : 0), message.from, message.rawAttachContent ?: @"(nil)");
+                        [dic setObject:ext forKey:@"extend"];
                         [dic setObject:@"custom" forKey:@"msgType"];
                     }
                         break;
                     default:
                     {
+                        // [FIX mất thông báo CSKH] Decode opcode bitmask từ top-level rawAttachContent
+                        // (code KHÔNG nằm trong obj.dataDict = inner "data"). Đẩy lên JS qua extend.opcode
+                        // để app định tuyến thông báo chuyển/đổi CSR theo ngữ nghĩa, không phụ thuộc API.
+                        NSMutableDictionary *ext = [NSMutableDictionary dictionary];
                         if (obj.dataDict != nil) {
-                            [dic setObject:obj.dataDict  forKey:@"extend"];
-                            
-                            if(isCsr && [obj.dataDict objectForKey:@"account"]  != nil && [obj.dataDict objectForKey:@"accid"] != nil) {
+                            [ext addEntriesFromDictionary:obj.dataDict];
+                        }
+                        NSInteger opcode = -1;
+                        NSData *rawData = [message.rawAttachContent dataUsingEncoding:NSUTF8StringEncoding];
+                        if (rawData != nil) {
+                            NSDictionary *rawDict = [NSJSONSerialization JSONObjectWithData:rawData options:0 error:nil];
+                            if ([rawDict isKindOfClass:[NSDictionary class]]) {
+                                NSNumber *codeNum = [rawDict objectForKey:@"code"];
+                                if (codeNum != nil) {
+                                    NSInteger code32 = [codeNum integerValue];
+                                    opcode = code32 & 0xFFFF;
+                                    [ext setObject:codeNum forKey:@"code"];
+                                    [ext setObject:@(opcode) forKey:@"opcode"];
+                                    [ext setObject:@((code32 >> 16) & 0xFF) forKey:@"opcodeType"];
+                                }
+                            }
+                        }
+                        if (ext.count > 0) {
+                            [dic setObject:ext forKey:@"extend"];
+                        }
+
+                        if (obj.dataDict != nil) {
+                            // [FIX #0000138] Message chuyển phiên CSR mang {account, accid} nhưng là
+                            // outgoing (from = user) nên isCsr=false → trước đây rơi "unknown" → "(null)".
+                            // Bỏ ràng buộc isCsr: custom message có account+accid là notification điều khiển.
+                            if([obj.dataDict objectForKey:@"account"]  != nil && [obj.dataDict objectForKey:@"accid"] != nil) {
                                 [dic setObject:@"notification" forKey:@"msgType"];
                                 break;
                             }
                         }
+                        // [CSR_DEBUG #0000138] Custom message rơi vào nhánh unknown khi chuyển
+                        // phiên CSR (thiếu account/accid). Log custType + opcode + dataDict. XÓA trước production.
+                        NSLog(@"[CSR_DEBUG][native:custom-unknown] custType=%ld isCsr=%d opcode=%ld hasAccount=%d hasAccid=%d dataDict=%@",
+                              (long)obj.custType, isCsr, (long)opcode,
+                              ([obj.dataDict objectForKey:@"account"] != nil),
+                              ([obj.dataDict objectForKey:@"accid"] != nil), obj.dataDict);
                         [dic setObject:@"unknown" forKey:@"msgType"];
                     }
                         break;
                         
                 }
             }
+        }else if (message.messageType == NIMMessageTypeRtcCallRecord) {
+            // Call record (话单): map type/status/duration cho JS render bubble cuộc gọi.
+            // Parity Android (ReactCache.getMessageType: case nrtc_netcall -> "call").
+            // LƯU Ý: phải giữ đồng bộ với nhánh tương ứng trong refrashMessage:From:.
+            NIMRtcCallRecordObject *record = message.messageObject;
+            [dic setObject:@"call" forKey:@"msgType"];
+            NSMutableDictionary *callExtend = [NSMutableDictionary dictionary];
+            [callExtend setObject:@(record.callType) forKey:@"callType"];     // 1=audio, 2=video
+            [callExtend setObject:@(record.callStatus) forKey:@"callStatus"]; // 1=complete,2=canceled,3=rejected,4=timeout,5=busy
+            // durations là dict {accid: giây}; 1-1 call lấy max = độ dài cuộc gọi (parity Android).
+            NSInteger callDuration = 0;
+            for (NSNumber *d in [record.durations allValues]) {
+                if ([d integerValue] > callDuration) {
+                    callDuration = [d integerValue];
+                }
+            }
+            [callExtend setObject:@(callDuration) forKey:@"callDuration"];
+            if (record.channelID) {
+                [callExtend setObject:record.channelID forKey:@"channelId"];
+            }
+            [dic setObject:callExtend forKey:@"extend"];
         }else{
+            // [CALLREC-DEBUG] tạm: message rơi vào else = type nào? XÓA sau khi verify.
+            NSLog(@"[CALLREC-DEBUG] setTimeArr-ELSE msgId=%@ messageType=%ld objClass=%@",
+                  message.messageId, (long)message.messageType,
+                  NSStringFromClass([message.messageObject class]));
             [dic setObject:@"unknown" forKey:@"msgType"];
             NSMutableDictionary *unknowObj = [NSMutableDictionary dictionary];
             [dic setObject:unknowObj  forKey:@"extend"];
         }
-        
-        if (isChatBot) {
-            [dic setObject:@"unknown" forKey:@"msgType"];
-        }
+
+        // [PARITY ANDROID] Bỏ override ép msgType=unknown cho mọi chatbot message.
+        // Chatbot text giữ msgType=text (render đúng); chatbot custom {code} vẫn là unknown
+        // + extend.opcode (từ nhánh default) → JS gating bắt qua extend.opcode != null.
         [dic setObject:fromUser forKey:@"fromUser"];
         [sourcesArr addObject:dic];
     }
@@ -1866,9 +1988,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 -(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType {
+    NSLog(@"[FRIEND_CHECK][ENTRY][sendTextMessageWithSession] sessionId=%@ sessionType=%@ messageSubType=%ld contentLength=%lu isFriendNow=%d", sessionId, sessionType, (long)messageSubType, (unsigned long)(msgContent ? msgContent.length : 0), [[NIMSDK sharedSDK].userManager isMyFriend:sessionId]);
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithText:msgContent andApnsMembers:@[] andeSession:session senderName:sessionName messageSubType:messageSubType];
-    
+
     [self handleSendMessage:message session:session];
 }
 
@@ -1923,7 +2046,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             NSMutableArray *arr = [[NSMutableArray alloc] init];
             NSInteger ownedGroupCount = 0;
             for(NIMTeam *team in teams) {
-                if ([team.owner isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
+                if ([team.owner isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
                     ownedGroupCount++;
                 }
             }
@@ -1961,7 +2084,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.beInviteMode] forKey:@"teamBeInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.inviteMode] forKey:@"teamInviteMode"];
                 [teamDic setObject:[NSString stringWithFormat:@"%ld",team.updateInfoMode] forKey:@"teamUpdateMode"];
-                BOOL isOwner = [team.owner isEqual:[[NIMSDK sharedSDK].loginManager currentAccount]];
+                BOOL isOwner = [team.owner isEqual:[[NIMSDK sharedSDK] zyzjCurrentAccount]];
                 [teamDic setObject:[NSNumber numberWithBool:isOwner] forKey:@"isOwner"];
                 if (team.intro == nil || [team.intro isEqual:@"(null)"]) {
                     [teamDic setObject:@"" forKey:@"introduce"];
@@ -2346,9 +2469,12 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }
     
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
+
     NIMMessage *message = [NIMMessageMaker msgWithVideo:path andeSession:session senderName:sessionName duration:nil];
-    
-    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
+
+    NSError *_sendErrWS = nil;
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&_sendErrWS];
+    NSLog(@"[VID178][iOS] WithSession dispatched msgId=%@ enqueueError=%@", message.messageId, _sendErrWS); // DEBUG #178 - remove after test
 }
 
 //发送视频
@@ -2373,7 +2499,11 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSLog(@"test =>>> %@, %@", [NSNumber numberWithBool:isSkipFriendCheck], [NSNumber numberWithBool:isSkipTipForStranger]);
     if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         NSLog(@"sendMessage");
-        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:nil];
+        NSError *_sendErr = nil;
+        [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&_sendErr];
+        NSLog(@"[VID178][iOS] sendVideoMessage dispatched msgId=%@ enqueueError=%@", message.messageId, _sendErr); // DEBUG #178 - remove after test
+    } else {
+        NSLog(@"[VID178][iOS] sendVideoMessage BLOCKED by isFriendToSendMessage (friend/stranger check)"); // DEBUG #178 - remove after test
     }
 }
 
@@ -2386,7 +2516,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 //    [self sendCustomMessage:CustomMessgeTypeCustom data:dataDict];
 //}
 
--(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName fileType:(NSString *)fileType success:(Success)success err:(Errors)err {
+-(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithFile:path fileName:fileName fileType:(NSString *)fileType andeSession:session senderName:sessionName];
     
@@ -2448,6 +2578,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         if ([content length] != 0) {
             NIMMessage *_message = [[NIMMessage alloc] init];
             _message.text    = content;
+            _message.apnsContent = content;
+            [NIMMessageMaker setupMessagePushBody:_message andSession:session senderName:_myUserName];
             [self handleSendMessage:_message session:session];
         }
     }
@@ -2493,7 +2625,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 
 //发送拆红包消息
 -(void)sendRedPacketOpenMessage:(NSString *)sendId hasRedPacket:(NSString *)hasRedPacket serialNo:(NSString *)serialNo{
-    NSString *strMyId = [NIMSDK sharedSDK].loginManager.currentAccount;
+    NSString *strMyId = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     NSDictionary *dict = @{@"sendId":sendId,@"openId":strMyId,@"hasRedPacket":hasRedPacket,@"serialNo":serialNo};
     NIMMessage *message;
     DWCustomAttachment *obj = [[DWCustomAttachment alloc]init];
@@ -2635,6 +2767,20 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NIMModel *model = [NIMModel initShareMD];
     model.startSend = @{@"start":@"true"};
 }
+- (BOOL)shouldMarkNonFriendFailureForMessage:(NIMMessage *)message error:(NSError *)error {
+    if (!error) return NO;
+    if (!message.isOutgoingMsg) return NO;
+    if (message.session.sessionType != NIMSessionTypeP2P) return NO;
+    return ![[NIMSDK sharedSDK].userManager isMyFriend:message.session.sessionId];
+}
+
+- (void)markNonFriendFailureForMessage:(NIMMessage *)message {
+    NSMutableDictionary *localExt = message.localExt ? [message.localExt mutableCopy] : [[NSMutableDictionary alloc] init];
+    [localExt setObject:@(YES) forKey:@"isCancelResend"];
+    [localExt setObject:@(YES) forKey:@"isNonFriendServerRejection"];
+    message.localExt = localExt;
+}
+
 //发送结果
 - (void)sendMessage:(NIMMessage *)message didCompleteWithError:(NSError *)error
 {
@@ -2663,8 +2809,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             [[NIMSDK sharedSDK].conversationManager saveMessage:tipMessage forSession:self._session completion:nil];
         }
         
-        message.localExt = @{@"isFriend":@"NO"};
-        
+        if ([self shouldMarkNonFriendFailureForMessage:message error:error]) {
+            [self markNonFriendFailureForMessage:message];
+        }
+
         [[NIMSDK sharedSDK].conversationManager updateMessage:message forSession:self._session completion:nil];
         [self refrashMessage:message From:@"send"];
     }
@@ -2681,9 +2829,13 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 {
     NSLog(@"sendMessage:(NIMMessage *)message progress:(float)progress");
     //    [self refrashMessage:message From:@"send" ];
-    if ([message.session.sessionId isEqual:self._session.sessionId]) {
+    BOOL _sessionMatch = [message.session.sessionId isEqual:self._session.sessionId]; // DEBUG #178
+    NSLog(@"[VID178][iOS][delegate] progress=%.4f msgId=%@ msgSession=%@ openSession=%@ match=%d", progress, message.messageId, message.session.sessionId, self._session.sessionId, _sessionMatch); // DEBUG #178 - remove after test
+    if (_sessionMatch) {
         NIMModel *model = [NIMModel initShareMD];
         model.processSend = @{@"progress":[NSString stringWithFormat:@"%f",progress], @"messageId": message.messageId, @"type": @"upload", @"sessionId": message.session.sessionId};
+    } else {
+        NSLog(@"[VID178][iOS][delegate] progress DROPPED (session mismatch) — JS will NOT receive observeProgressSend"); // DEBUG #178 - remove after test
     }
 }
 
@@ -2692,6 +2844,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 - (void)onRecvMessages:(NSArray *)messages
 {
     for(NIMMessage *message in messages) {
+        // [CSR_DEBUG] Ingress thô: log MỌI message nhận được (trước mọi filter/xoá). XÓA trước production.
+        NSLog(@"[CSR_DEBUG][native:ingress:onRecv] %@", [ConversationViewController csrIngressDump:message]);
         if (message.messageType == NIMMessageTypeNotification) {
             NSLog(@"message notification: %@", message);
         }
@@ -2727,7 +2881,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         [[NIMSDK sharedSDK].conversationManager markAllMessagesReadInSession:self._session];
         
         
-        if (![message.from isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
+        if (![message.from isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
             [self playTipsMusicWithMessage:message];
         }
     }
@@ -2956,6 +3110,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 #pragma mark - NIMSystemNotificationManagerDelegate
 - (void)onReceiveCustomSystemNotification:(NIMCustomSystemNotification *)notification
 {
+    // [CSR_DEBUG] Ingress custom notification (non-stored). Bắt trường hợp 0x00200001 gửi dạng
+    // custom notification thay vì stored message. XÓA trước production.
+    NSLog(@"[CSR_DEBUG][native:ingress:customNoti] sender=%@ onlineOnly=%d content=%@",
+          notification.sender, notification.sendToOnlineUsersOnly, notification.content);
     NSData *data = [[notification content] dataUsingEncoding:NSUTF8StringEncoding];
     if (data) {
         NSDictionary *outerDict = [NSJSONSerialization JSONObjectWithData:data
@@ -3268,7 +3426,37 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                     break;
             }
         }
+    }else if (message.messageType == NIMMessageTypeRtcCallRecord) {
+        // [CALLREC-DEBUG] tạm: xác nhận nhánh này có chạy không. XÓA sau khi verify.
+        NSLog(@"[CALLREC-DEBUG] HIT RtcCallRecord msgId=%@ objClass=%@", message.messageId, NSStringFromClass([message.messageObject class]));
+        // Call record (话单): map type/status/duration cho JS render bubble cuộc gọi.
+        // Parity Android (ReactCache.getMessageType: case nrtc_netcall -> "call").
+        NIMRtcCallRecordObject *record = message.messageObject;
+        [dic2 setObject:@"call" forKey:@"msgType"];
+        NSMutableDictionary *callExtend = [NSMutableDictionary dictionary];
+        [callExtend setObject:@(record.callType) forKey:@"callType"];     // 1=audio, 2=video
+        [callExtend setObject:@(record.callStatus) forKey:@"callStatus"]; // 1=complete,2=canceled,3=rejected,4=timeout,5=busy
+        // durations là dict {accid: giây}; 1-1 call lấy max = độ dài cuộc gọi (parity Android).
+        NSInteger callDuration = 0;
+        for (NSNumber *d in [record.durations allValues]) {
+            if ([d integerValue] > callDuration) {
+                callDuration = [d integerValue];
+            }
+        }
+        [callExtend setObject:@(callDuration) forKey:@"callDuration"];
+        if (record.channelID) {
+            [callExtend setObject:record.channelID forKey:@"channelId"];
+        }
+        [dic2 setObject:callExtend forKey:@"extend"];
     }else{
+        // [CALLREC-DEBUG] tạm: message rơi vào else = type nào? XÓA sau khi verify.
+        NSLog(@"[CALLREC-DEBUG] ELSE msgId=%@ messageType=%ld objClass=%@ subType=%ld text=%@ remoteExt=%@",
+              message.messageId,
+              (long)message.messageType,
+              NSStringFromClass([message.messageObject class]),
+              (long)message.messageSubType,
+              message.text,
+              message.remoteExt);
         [dic2 setObject:@"unknown" forKey:@"msgType"];
         NSMutableDictionary *unknowObj = [NSMutableDictionary dictionary];
         [dic2 setObject:unknowObj  forKey:@"extend"];
@@ -3289,7 +3477,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSString *strOpenId = [self stringFromKey:@"openId" andDict:dict];
     NSString *strSendId = [self stringFromKey:@"sendId" andDict:dict];
     NSString *strNo = [self stringFromKey:@"serialNo" andDict:dict];
-    NSString *strMyId = [NIMSDK sharedSDK].loginManager.currentAccount;
+    NSString *strMyId = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     NSString *strContent;
     NSString *lastString = @"";
     NSInteger hasRedPacket = [[dict objectForKey:@"hasRedPacket"] integerValue];
@@ -3719,6 +3907,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 -(BOOL) checkMessageForwardHasTag:(NSString *)content {
+    NSLog(@"[FWD-DEBUG] checkMessageForwardHasTag content=%@", content);
+    if (content == nil) return NO;
     NSString *pattern = @"@\\[[^\\]]+\\]\\([^\\)]+\\)";
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:&error];
@@ -3735,6 +3925,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 -(void) handleMessageFoward:(NIMMessage *)message session:(NIMSession *)session parentId:(NSString *)parentId isHaveMultiMedia:(BOOL)isHaveMultiMedia sessionType:(NSString *)sessionType isSkipFriendCheck:(BOOL)isSkipFriendCheck isSkipTipForStranger:(BOOL)isSkipTipForStranger {
+    NSLog(@"[FWD-DEBUG] handleMessageFoward msgType=%ld msgId=%@ text=%@ remoteExt=%@",
+          (long)message.messageType, message.messageId, message.text, message.remoteExt);
     if (message.messageType == NIMMessageTypeLocation) {
         NIMLocationObject *object = message.messageObject;
         NSError *jsonErr;
@@ -3789,6 +3981,21 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         message.messageSubType = 9;
     }
     
+    NSString *pushContent = @"[消息]";
+    if (message.messageType == NIMMessageTypeImage) {
+        pushContent = @"[图片]";
+    } else if (message.messageType == NIMMessageTypeVideo) {
+        pushContent = @"[视频]";
+    } else if (message.messageType == NIMMessageTypeAudio) {
+        pushContent = @"[语音]";
+    } else if (message.messageType == NIMMessageTypeText) {
+        pushContent = @"[文字]";
+    } else if (message.messageType == NIMMessageTypeFile) {
+        pushContent = @"[文件]";
+    }
+    message.apnsContent = pushContent;
+    [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
+
     if ([self checkFriendBeforeSendMessage:message sessionId:session.sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
     }
@@ -3839,7 +4046,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     NSString *parentId = [params objectForKey:@"parentId"];
     NSNumber *haveMultiMedia = [params objectForKey:@"isHaveMultiMedia"];
     BOOL isHaveMultiMedia = [haveMultiMedia boolValue];
-    
+    NSLog(@"[FWD-DEBUG] forwardMessagesToMultipleRecipients messageIds=%@ content=%@ parentId=%@ isHaveMultiMedia=%d", messageIds, content, parentId, isHaveMultiMedia);
+
     if (recipients == nil) {
         err(@"recipients is required!");
         return;
@@ -3861,6 +4069,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
 
             NSArray *messages = [[NIMSDK sharedSDK].conversationManager messagesInSession:session messageIds:messageIds];
+            NSLog(@"[FWD-DEBUG] fetched messages count=%lu from sessionId=%@ (source session=%@)", (unsigned long)messages.count, sessionId, self._session.sessionId);
+            for (NIMMessage *m in messages) {
+                NSLog(@"[FWD-DEBUG] fetched msg => msgId=%@ type=%ld text=%@", m.messageId, (long)m.messageType, m.text);
+            }
             NSString *multiMediaType;
             for(NIMMessage *message in messages) {
                 if (multiMediaType == nil && (message.messageType == NIMMessageTypeImage || message.messageType == NIMMessageTypeVideo)) {
@@ -3897,7 +4109,9 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
             if (content != nil && [content length] > 0) {
                 NIMMessage *messageContent = [[NIMMessage alloc] init];
                 messageContent.text = content;
-                
+                messageContent.apnsContent = content;
+                [NIMMessageMaker setupMessagePushBody:messageContent andSession:session senderName:_myUserName];
+
                 if ([self checkFriendBeforeSendMessage:messageContent sessionId:sessionId sessionType:sessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]){
                     [[NIMSDK sharedSDK].chatManager sendMessage:messageContent toSession:session error:nil];
                 }
@@ -3948,15 +4162,26 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
         }
         
         message.localExt = @{};
-        
+
+        NSString *fwdPushContent = @"[消息]";
+        if (message.messageType == NIMMessageTypeImage) { fwdPushContent = @"[图片]"; }
+        else if (message.messageType == NIMMessageTypeVideo) { fwdPushContent = @"[视频]"; }
+        else if (message.messageType == NIMMessageTypeAudio) { fwdPushContent = @"[语音]"; }
+        else if (message.messageType == NIMMessageTypeText) { fwdPushContent = @"[文字]"; }
+        else if (message.messageType == NIMMessageTypeFile) { fwdPushContent = @"[文件]"; }
+        message.apnsContent = fwdPushContent;
+        [NIMMessageMaker setupMessagePushBody:message andSession:session senderName:_myUserName];
+
         [[NIMSDK sharedSDK].chatManager forwardMessage:message toSession:session error:nil];
     }
-    
+
     //发送消息
     if([content length] != 0){
         NIMMessage *messages = [[NIMMessage alloc] init];
         messages.text    = content;
-        
+        messages.apnsContent = content;
+        [NIMMessageMaker setupMessagePushBody:messages andSession:session senderName:_myUserName];
+
         [[NIMSDK sharedSDK].chatManager sendMessage:messages toSession:session error:nil];
     }
     succe(@"已发送");
@@ -4017,7 +4242,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     // Add sessionBody for platform-specific push configuration
     NSString *strSessionID = @"";
     if (message.session.sessionType == NIMSessionTypeP2P) {
-        strSessionID = [NIMSDK sharedSDK].loginManager.currentAccount;
+        strSessionID = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     } else {
         strSessionID = [NSString stringWithFormat:@"%@", message.session.sessionId];
     }

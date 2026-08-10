@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "NIMSDK+ZYZJ.h"
 #import "NIMKit.h"
 #import "NIMKitDataProviderImpl.h"
 #import "NIMKitInfoFetchOption.h"
@@ -132,7 +133,7 @@
     {
         NIMKitInfo *info = [[NIMKitInfo alloc] init];
         info.infoId = userId;
-        if ([userId isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
+        if ([userId isEqualToString:[[NIMSDK sharedSDK] zyzjCurrentAccount]]) {
             NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:userId];
             info.showName        = user.userInfo.nickName;
             info.avatarUrlString = user.userInfo.thumbAvatarUrl;

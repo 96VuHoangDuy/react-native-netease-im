@@ -1,0 +1,1155 @@
+- generic [active] [ref=f13e1]:
+  - generic [ref=f13e3]:
+    - generic [ref=f13e4]:
+      - generic [ref=f13e5]:
+        - generic [ref=f13e6]:
+          - link [ref=f13e7] [cursor=pointer]:
+            - /url: https://yunxin.163.com
+          - generic [ref=f13e9]:
+            - link "开发者中心" [ref=f13e10] [cursor=pointer]:
+              - /url: /
+            - generic [ref=f13e12] [cursor=pointer]: 音视频呼叫（呼叫组件）
+        - generic [ref=f13e15]:
+          - generic [ref=f13e16]:
+            - link "知识库" [ref=f13e17] [cursor=pointer]:
+              - /url: https://faq.yunxin.163.com/kb/main/#/
+            - link "工单" [ref=f13e18] [cursor=pointer]:
+              - /url: https://app.yunxin.163.com/global/service/ticket/create
+          - generic [ref=f13e19] [cursor=pointer]: 中文
+          - generic [ref=f13e20]:
+            - link [ref=f13e21] [cursor=pointer]:
+              - /url: https://id.grow.163.com/login?h=media&t=media&from=nim%7Chttps%3A%2F%2Fdoc.yunxin.163.com%2Fnertccallkit%2Fconcept%2FjIzNDA4Nzc&clueFrom=nim&referrer=https%3A%2F%2Fapp.yunxin.163.com
+              - button "登录控制台" [ref=f13e22]
+            - link [ref=f13e24] [cursor=pointer]:
+              - /url: https://id.grow.163.com/register?h=media&t=media&from=nim%7Chttps%3A%2F%2Fdoc.yunxin.163.com%2Fnertccallkit%2Fconcept%2FjIzNDA4Nzc&clueFrom=nim&referrer=https%3A%2F%2Fapp.yunxin.163.com
+              - button "免费试用" [ref=f13e25]
+      - generic [ref=f13e28]:
+        - generic [ref=f13e29]:
+          - generic [ref=f13e30] [cursor=pointer]: 了解产品
+          - generic [ref=f13e31] [cursor=pointer]: 新手入门
+          - generic [ref=f13e32] [cursor=pointer]: 资源下载
+          - generic [ref=f13e33] [cursor=pointer]: 集成开发
+          - generic [ref=f13e34] [cursor=pointer]: 客户端 API
+          - generic [ref=f13e35] [cursor=pointer]: 常见问题
+        - generic [ref=f13e38] [cursor=pointer]:
+          - generic [ref=f13e39]: 输入关键词搜索
+          - generic [ref=f13e42]: ⌘ + K
+    - generic [ref=f13e45]:
+      - generic [ref=f13e46]: 在线咨询
+      - generic [ref=f13e49]: 微信咨询
+      - generic [ref=f13e52]: 电话咨询
+    - generic [ref=f13e59]:
+      - generic [ref=f13e60]:
+        - generic [ref=f13e62]:
+          - generic [ref=f13e64]:
+            - img "search" [ref=f13e66]
+            - textbox "本目录下的文档标题" [ref=f13e69]
+          - generic [ref=f13e71]:
+            - link "呼叫组件概述" [ref=f13e73] [cursor=pointer]:
+              - /url: /nertccallkit/concept/jY3ODM5OTM?platform=client
+            - generic [ref=f13e74] [cursor=pointer]:
+              - generic [ref=f13e75]: 动态与公告
+              - generic [ref=f13e76]:
+                - generic [ref=f13e77]:
+                  - generic [ref=f13e78]: 更新日志
+                  - generic [ref=f13e79]:
+                    - link "Android" [ref=f13e81]:
+                      - /url: /nertccallkit/concept/DMzOTI3NTA?platform=client
+                    - link "iOS" [ref=f13e83]:
+                      - /url: /nertccallkit/concept/jIzNDA4Nzc?platform=client
+                    - link "Web-React" [ref=f13e85]:
+                      - /url: /nertccallkit/concept/zc2NjA1MjM?platform=client
+                    - link "Web-Vue3" [ref=f13e87]:
+                      - /url: /nertccallkit/concept/TA1OTU4NjA?platform=client
+                    - link "uni-app" [ref=f13e89]:
+                      - /url: /nertccallkit/concept/DU4MTM2MjU?platform=client
+                    - link "小程序" [ref=f13e91]:
+                      - /url: /nertccallkit/concept/TM5MTIzMTc?platform=client
+                    - link "Flutter" [ref=f13e93]:
+                      - /url: /nertccallkit/concept/zg5Nzg0NzI?platform=client
+                    - link "HarmonyOS" [ref=f13e95]:
+                      - /url: /nertccallkit/concept/jg2MzA3OTU?platform=client
+                    - link "Electron" [ref=f13e97]:
+                      - /url: /nertccallkit/concept/DQxMDU5NzE?platform=client
+                - generic [ref=f13e98]: 活动公告
+            - link "NIM SDK" [ref=f13e102] [cursor=pointer]:
+              - /url: https://doc.yunxin.163.com/messaging2/concept?platform=client
+            - link "NERTC SDK" [ref=f13e107] [cursor=pointer]:
+              - /url: https://doc.yunxin.163.com/nertc/concept?platform=client
+        - generic [ref=f13e112]:
+          - generic [ref=f13e113]:
+            - link "开发者中心" [ref=f13e114] [cursor=pointer]:
+              - /url: /
+            - generic [ref=f13e115] [cursor=pointer]: 音视频呼叫（呼叫组件）
+            - generic [ref=f13e116] [cursor=pointer]: 了解产品
+            - generic [ref=f13e117] [cursor=pointer]: iOS 更新日志
+          - generic [ref=f13e118]:
+            - paragraph [ref=f13e119]: iOS 更新日志
+            - generic [ref=f13e120]:
+              - paragraph [ref=f13e121]: 更新时间： 2026/07/09 14:36:24
+              - button [ref=f13e122] [cursor=pointer]:
+                - img "copy" [ref=f13e123]
+                - text: 复制页面
+          - generic [ref=f13e128]:
+            - paragraph [ref=f13e129]: 本文介绍呼叫组件（NERtcCallKit）iOS 端的更新日志和升级说明。
+            - heading "4.8.1 (2026-07-09)" [level=2] [ref=f13e130]
+            - paragraph [ref=f13e131]:
+              - strong [ref=f13e132]: 优化
+            - paragraph [ref=f13e133]: 优化 LiveCommunicationKit 系统来电接听与 CallEngine 状态衔接，提升后台、杀进程拉起、首次权限弹窗场景下的稳定性。
+            - paragraph [ref=f13e134]:
+              - strong [ref=f13e135]: 兼容版本
+            - list [ref=f13e136]:
+              - listitem [ref=f13e137]:
+                - text: 兼容
+                - code [ref=f13e138]: NIMSDK
+                - text: 10.9.76 版本。
+              - listitem [ref=f13e139]:
+                - text: 兼容
+                - code [ref=f13e140]: NERtcSDK
+                - text: 5.9.10 版本。
+            - heading "4.8.0 (2026-06-30)" [level=2] [ref=f13e141]
+            - paragraph [ref=f13e142]:
+              - strong [ref=f13e143]: 新增
+            - paragraph [ref=f13e144]:
+              - text: 支持自定义接听背景图，可在接收方来电响铃/待接听页面展示自定义背景图，具体请参考
+              - link "自定义接听背景图" [ref=f13e145] [cursor=pointer]:
+                - /url: https://doc.yunxin.163.com/nertccallkit/guide/DEwMjEyOTg?platform=iOS
+              - text: 。
+            - paragraph [ref=f13e146]:
+              - strong [ref=f13e147]: 兼容版本
+            - list [ref=f13e148]:
+              - listitem [ref=f13e149]:
+                - text: 兼容
+                - code [ref=f13e150]: NIMSDK
+                - text: 10.9.76 版本。
+              - listitem [ref=f13e151]:
+                - text: 兼容
+                - code [ref=f13e152]: NERtcSDK
+                - text: 5.9.10 版本。
+            - heading "4.7.5 (2026-06-15)" [level=2] [ref=f13e153]
+            - paragraph [ref=f13e154]:
+              - strong [ref=f13e155]: 修复
+            - paragraph [ref=f13e156]: 修复部分内部异常问题。
+            - paragraph [ref=f13e157]:
+              - strong [ref=f13e158]: 兼容版本
+            - list [ref=f13e159]:
+              - listitem [ref=f13e160]:
+                - text: 兼容
+                - code [ref=f13e161]: NIMSDK
+                - text: 10.9.76 版本。
+              - listitem [ref=f13e162]:
+                - text: 兼容
+                - code [ref=f13e163]: NERtcSDK
+                - text: 5.9.10 版本。
+            - heading "4.7.0 (2026-06-01)" [level=2] [ref=f13e164]
+            - paragraph [ref=f13e165]:
+              - strong [ref=f13e166]: 新增特性
+            - list [ref=f13e167]:
+              - listitem [ref=f13e168]: 支持单呼通话中邀请成员升级为多人通话。
+              - listitem [ref=f13e169]: 在 Call UI 层补充必要权限时新增权限引导弹窗，帮助用户开启通话所需权限。
+            - paragraph [ref=f13e170]:
+              - strong [ref=f13e171]: 兼容版本
+            - list [ref=f13e172]:
+              - listitem [ref=f13e173]:
+                - text: 兼容
+                - code [ref=f13e174]: NIMSDK
+                - text: 10.9.76 版本。
+              - listitem [ref=f13e175]:
+                - text: 兼容
+                - code [ref=f13e176]: NERtcSDK
+                - text: 5.9.10 版本。
+            - heading "4.3.0 (2026-03-18)" [level=2] [ref=f13e177]
+            - paragraph [ref=f13e178]:
+              - strong [ref=f13e179]: 新增特性
+            - paragraph [ref=f13e180]:
+              - text: 支持呼叫接听时展示小弹窗功能，具体请参考
+              - link "来电横幅" [ref=f13e181] [cursor=pointer]:
+                - /url: https://doc.yunxin.163.com/nertccallkit/guide/jY1NTU0MDE?platform=iOS
+              - text: 。
+            - paragraph [ref=f13e182]:
+              - strong [ref=f13e183]: API 更新
+            - table [ref=f13e184]:
+              - rowgroup [ref=f13e185]:
+                - row [ref=f13e186]:
+                  - columnheader "类/方法/回调/错误码" [ref=f13e187]
+                  - columnheader "说明" [ref=f13e188]
+              - rowgroup [ref=f13e189]:
+                - row [ref=f13e190]:
+                  - cell [ref=f13e191]:
+                    - code [ref=f13e192]: enableIncomingBanner
+                  - cell "新增接口，用于配置呼叫接听时展示小弹窗。" [ref=f13e193]
+            - paragraph [ref=f13e194]:
+              - strong [ref=f13e195]: 兼容版本
+            - list [ref=f13e196]:
+              - listitem [ref=f13e197]:
+                - text: 兼容
+                - code [ref=f13e198]: NIMSDK
+                - text: 10.9.53 版本。
+              - listitem [ref=f13e199]:
+                - text: 兼容
+                - code [ref=f13e200]: NERtcSDK
+                - text: 5.9.10 版本。
+            - heading "4.1.0 (2025-12-19)" [level=2] [ref=f13e201]
+            - paragraph [ref=f13e202]:
+              - strong [ref=f13e203]: 新增特性
+            - list [ref=f13e204]:
+              - listitem [ref=f13e205]:
+                - strong [ref=f13e206]: AI 字幕功能
+                - text: ：支持通话中实时 AI 字幕显示。
+              - listitem [ref=f13e207]:
+                - strong [ref=f13e208]: 用户信息查询
+                - text: ：支持根据 rtcUid 获取用户信息。
+            - paragraph [ref=f13e209]:
+              - strong [ref=f13e210]: API 变更
+            - table [ref=f13e211]:
+              - rowgroup [ref=f13e212]:
+                - row [ref=f13e213]:
+                  - columnheader "类/方法/回调/错误码" [ref=f13e214]
+                  - columnheader "说明" [ref=f13e215]
+              - rowgroup [ref=f13e216]:
+                - row [ref=f13e217]:
+                  - cell [ref=f13e218]:
+                    - code [ref=f13e219]: NECallEngine.getUserWithRtcUid
+                  - cell "新增接口，用来根据 rtcUid 获取用户信息。" [ref=f13e220]
+            - paragraph [ref=f13e221]:
+              - strong [ref=f13e222]: 兼容版本
+            - list [ref=f13e223]:
+              - listitem [ref=f13e224]:
+                - text: 兼容
+                - code [ref=f13e225]: NIMSDK
+                - text: 10.9.53 版本。
+              - listitem [ref=f13e226]:
+                - text: 兼容
+                - code [ref=f13e227]: NERtcSDK
+                - text: 5.9.10 版本。
+            - heading "3.8.0 (2025-11-6)" [level=2] [ref=f13e228]
+            - paragraph [ref=f13e229]:
+              - strong [ref=f13e230]: 新增特性
+            - list [ref=f13e231]:
+              - listitem [ref=f13e232]:
+                - strong [ref=f13e233]: 音质优化：
+                - text: 引入 AI 降噪模式，显著提升通话音质。
+              - listitem [ref=f13e234]:
+                - strong [ref=f13e235]: 群呼体验升级：
+                - list [ref=f13e236]:
+                  - listitem [ref=f13e237]: 支持自定义铃声，个性化呼叫提醒。
+                  - listitem [ref=f13e238]: 新增通话中外放切换功能，灵活调整音频输出。
+                  - listitem [ref=f13e239]: 新增自定义配置频道名称。
+              - listitem [ref=f13e240]:
+                - strong [ref=f13e241]: 界面优化：
+                - text: 优化通话时关闭视频的显示界面。
+            - paragraph [ref=f13e242]:
+              - strong [ref=f13e243]: API 变更
+            - table [ref=f13e244]:
+              - rowgroup [ref=f13e245]:
+                - row [ref=f13e246]:
+                  - columnheader "类/方法/回调/错误码" [ref=f13e247]
+                  - columnheader "说明" [ref=f13e248]
+              - rowgroup [ref=f13e249]:
+                - row [ref=f13e250]:
+                  - cell [ref=f13e251]:
+                    - code [ref=f13e252]: NECallEngine.setAINSMode
+                  - cell "新增方法，用于设置 AI 降噪模式。" [ref=f13e253]
+                - row [ref=f13e254]:
+                  - cell [ref=f13e255]:
+                    - code [ref=f13e256]: NEUIGroupCallParam
+                  - cell [ref=f13e257]:
+                    - text: 群呼入参新增
+                    - code [ref=f13e258]: callId
+                    - text: 字段，支持自定义配置
+                    - code [ref=f13e259]: rtcChannelName
+                    - text: 。
+                - row [ref=f13e260]:
+                  - cell [ref=f13e261]:
+                    - code [ref=f13e262]: NECallEngine.setupRemoteCanvas
+                  - cell "新增方法，用于设置自定义远端画布属性。" [ref=f13e263]
+                - row [ref=f13e264]:
+                  - cell [ref=f13e265]:
+                    - code [ref=f13e266]: NECallEngine.dismissIncomingCall
+                  - cell "新增方法，用于关闭系统接听 UI。" [ref=f13e267]
+                - row [ref=f13e268]:
+                  - cell [ref=f13e269]:
+                    - code [ref=f13e270]: NECallSystemIncomingCallParam
+                  - cell [ref=f13e271]:
+                    - text: 新增
+                    - code [ref=f13e272]: autoAccept
+                    - text: 参数，用于设置当用户按下接听按钮时的自定义接听逻辑，默认为 SDK 实现。
+            - paragraph [ref=f13e273]:
+              - strong [ref=f13e274]: 变更
+              - text: ：
+            - list [ref=f13e275]:
+              - listitem [ref=f13e276]: 单聊呼叫默认超时时间调整为 30 秒。
+              - listitem [ref=f13e277]: 登出 IM 时，将自动结束正在进行中的通话。
+            - paragraph [ref=f13e278]:
+              - strong [ref=f13e279]: 问题修复
+            - paragraph [ref=f13e280]: 修复连续两次点击接听按钮可能导致的通话中页面异常消失的问题。
+            - paragraph [ref=f13e281]:
+              - strong [ref=f13e282]: 兼容版本
+            - list [ref=f13e283]:
+              - listitem [ref=f13e284]: 适配 NIM SDK 10.9.53 版本。
+              - listitem [ref=f13e285]: 适配 NERtc SDK 5.9.10 版本。
+            - heading "3.7.0 (2025-09-26)" [level=2] [ref=f13e286]
+            - paragraph [ref=f13e287]:
+              - strong [ref=f13e288]: 新增特性
+            - list [ref=f13e289]:
+              - listitem [ref=f13e290]:
+                - strong [ref=f13e291]: 多人通话结束通知
+                - text: ：新增通话结束回调机制，支持获取详细的会话终止信息，便于开发者处理后续业务逻辑。
+              - listitem [ref=f13e292]:
+                - strong [ref=f13e293]: 单呼小窗功能
+                - text: ：支持通话界面小窗拖拽功能，提升多任务操作体验。
+              - listitem [ref=f13e294]:
+                - strong [ref=f13e295]: 群呼 UI 支持
+                - text: ：全新群组通话界面，优化多人通话视觉交互体验。
+            - paragraph [ref=f13e296]:
+              - strong [ref=f13e297]: API 变更
+            - table [ref=f13e298]:
+              - rowgroup [ref=f13e299]:
+                - row [ref=f13e300]:
+                  - columnheader "类/方法/回调/错误码" [ref=f13e301]
+                  - columnheader "说明" [ref=f13e302]
+              - rowgroup [ref=f13e303]:
+                - row [ref=f13e304]:
+                  - cell [ref=f13e305]:
+                    - code [ref=f13e306]: ChannelProfile
+                  - cell [ref=f13e307]:
+                    - text: 默认值修改为
+                    - code [ref=f13e308]: STANDARD_VIDEOCALL
+                    - text: 。
+                - row [ref=f13e309]:
+                  - cell [ref=f13e310]:
+                    - code [ref=f13e311]: onGroupEndCallWithReason
+                  - cell [ref=f13e312]:
+                    - text: 回调参数变更，
+                    - code [ref=f13e313]: Reason
+                    - text: 参数改为 NSInteger 类型，并新增
+                    - code [ref=f13e314]: message
+                    - text: 参数，用来获取挂断相关的信息。
+            - paragraph [ref=f13e315]:
+              - strong [ref=f13e316]: 兼容版本
+            - list [ref=f13e317]:
+              - listitem [ref=f13e318]: 适配 NIM SDK 10.9.40 版本。
+              - listitem [ref=f13e319]: 适配 NERtc SDK 5.9.10 版本。
+            - paragraph [ref=f13e320]:
+              - strong [ref=f13e321]: 升级建议
+            - list [ref=f13e322]:
+              - listitem [ref=f13e323]:
+                - text: 注意检查
+                - code [ref=f13e324]: onGroupEndCallWithReason
+                - text: 回调中
+                - code [ref=f13e325]: Reason
+                - text: 参数的使用逻辑，确保兼容类型变更。
+              - listitem [ref=f13e326]: 如有自定义通话界面，请评估新增小窗和群呼功能的集成方案。
+            - heading "3.6.0 (2025-08-26)" [level=2] [ref=f13e327]
+            - paragraph [ref=f13e328]:
+              - strong [ref=f13e329]: 新增特性
+            - list [ref=f13e330]:
+              - listitem [ref=f13e331]: 新增扬声器开关配置。
+              - listitem [ref=f13e332]: 新增麦克风开关配置。
+            - paragraph [ref=f13e333]:
+              - strong [ref=f13e334]: API 变更
+            - table [ref=f13e335]:
+              - rowgroup [ref=f13e336]:
+                - row [ref=f13e337]:
+                  - columnheader "类/方法/回调/错误码" [ref=f13e338]
+                  - columnheader "说明" [ref=f13e339]
+              - rowgroup [ref=f13e340]:
+                - row [ref=f13e341]:
+                  - cell [ref=f13e342]:
+                    - code [ref=f13e343]: NECallEngine.isSpeakerphoneOn()
+                  - cell "新增方法，用于获取是否开启扬声器。" [ref=f13e344]
+                - row [ref=f13e345]:
+                  - cell [ref=f13e346]:
+                    - code [ref=f13e347]: NECallEngine.setSpeakerphoneOn(boolean enable)
+                  - cell "新增方法，用于设置是否开启麦克风。" [ref=f13e348]
+            - paragraph [ref=f13e349]:
+              - strong [ref=f13e350]: 缺陷修复
+            - paragraph [ref=f13e351]:
+              - text: 修复
+              - strong [ref=f13e352]: LiveCommunicationKit
+              - text: 可能出现的崩溃问题。
+            - paragraph [ref=f13e353]:
+              - strong [ref=f13e354]: 兼容版本
+            - list [ref=f13e355]:
+              - listitem [ref=f13e356]: 适配 NIM SDK 10.9.10 版本。
+              - listitem [ref=f13e357]: 适配 NERtc SDK 5.9.5 版本。
+            - heading "3.5.0 (2025-02-18)" [level=2] [ref=f13e358]
+            - paragraph [ref=f13e359]:
+              - strong [ref=f13e360]: 新增特性
+            - paragraph [ref=f13e361]: 升级兼容的 NIM SDK 和 NERtc SDK 版本。
+            - paragraph [ref=f13e362]:
+              - strong [ref=f13e363]: 优化
+            - paragraph [ref=f13e364]: 系统来电弹窗显示兼容历史版本。
+            - paragraph [ref=f13e365]:
+              - strong [ref=f13e366]: 兼容版本
+            - list [ref=f13e367]:
+              - listitem [ref=f13e368]: 适配 NIM SDK 10.8.0 版本。
+              - listitem [ref=f13e369]: 适配 NERtc SDK 5.7.0 版本。
+            - heading "3.4.0 (2025-02-14)" [level=2] [ref=f13e370]
+            - paragraph [ref=f13e371]:
+              - strong [ref=f13e372]: 新增特性
+            - paragraph [ref=f13e373]:
+              - text: 支持系统电话接听（LiveCommunicationKit）功能，具体请参考
+              - link "系统电话接听" [ref=f13e374] [cursor=pointer]:
+                - /url: https://doc.yunxin.163.com/nertccallkit/guide/TAzMjg5NjE?platform=iOS
+              - text: 文档。
+            - paragraph [ref=f13e375]:
+              - strong [ref=f13e376]: API 变更
+            - table [ref=f13e377]:
+              - rowgroup [ref=f13e378]:
+                - row [ref=f13e379]:
+                  - columnheader "类/方法/回调/错误码" [ref=f13e380]
+                  - columnheader "说明" [ref=f13e381]
+              - rowgroup [ref=f13e382]:
+                - row [ref=f13e383]:
+                  - cell [ref=f13e384]:
+                    - code [ref=f13e385]: reportIncomingCallWithParam
+                  - cell "新增接口，根据传入的显示信息，进行解析并弹出系统来电提示/接听提示 UI。" [ref=f13e386]
+                - row [ref=f13e387]:
+                  - cell [ref=f13e388]:
+                    - code [ref=f13e389]: NECallSystemIncomingCallParam
+                  - cell "新增参数类，配置来电信息。" [ref=f13e390]
+                - row [ref=f13e391]:
+                  - cell [ref=f13e392]:
+                    - code [ref=f13e393]: NECallSystemIncomingCustomCallParam
+                  - cell "新增参数类，自定义来电信息。优先级更高，会覆盖 payload 显示信息，如自定义显示来电信息，来电类型等。" [ref=f13e394]
+            - paragraph [ref=f13e395]:
+              - strong [ref=f13e396]: 兼容版本
+            - list [ref=f13e397]:
+              - listitem [ref=f13e398]: 适配 NIM SDK 10.6.0 版本。
+              - listitem [ref=f13e399]: 适配 NERtc SDK 5.6.50 版本。
+            - heading "3.3.0 (2025-01-23)" [level=2] [ref=f13e400]
+            - paragraph [ref=f13e401]:
+              - strong [ref=f13e402]: 新增特性
+            - paragraph [ref=f13e403]: 支持 XCFramework 框架。
+            - paragraph [ref=f13e404]:
+              - strong [ref=f13e405]: API 变更
+            - paragraph [ref=f13e406]:
+              - text: 音视频频道信息类
+              - code [ref=f13e407]: NERtcInfo
+              - text: 新增
+              - code [ref=f13e408]: cid
+              - text: 字段，表示音视频会话 ID。
+            - paragraph [ref=f13e409]:
+              - strong [ref=f13e410]: 兼容版本
+            - list [ref=f13e411]:
+              - listitem [ref=f13e412]: 适配 NIM SDK 10.6.0 版本。
+              - listitem [ref=f13e413]: 适配 NERtc SDK 5.6.50 版本。
+            - heading "3.2.0 (2024-12-30)" [level=2] [ref=f13e414]
+            - paragraph [ref=f13e415]: 修复已知问题。
+            - heading "3.1.0 (2024-11-22)" [level=2] [ref=f13e416]
+            - paragraph [ref=f13e417]:
+              - strong [ref=f13e418]: 新增特性
+            - list [ref=f13e419]:
+              - listitem [ref=f13e420]: 单呼支持自定义 Token 传入。
+              - listitem [ref=f13e421]: 兼容 iOS 18 系统。
+            - paragraph [ref=f13e422]:
+              - strong [ref=f13e423]: API 变更
+            - paragraph [ref=f13e424]:
+              - text: 将
+              - code [ref=f13e425]: NERtcCallUIKit
+              - text: 组件下
+              - code [ref=f13e426]: NEVideoView
+              - text: 中的
+              - code [ref=f13e427]: maskView
+              - text: 属性替换为
+              - code [ref=f13e428]: coverView
+              - text: 。
+            - paragraph [ref=f13e429]:
+              - strong [ref=f13e430]: 兼容版本
+            - list [ref=f13e431]:
+              - listitem [ref=f13e432]: 适配 NIM SDK 10.5.0 版本。
+              - listitem [ref=f13e433]: 适配 NERtc SDK 5.5.40 版本。
+            - heading "3.0.0 (2024-11-12)" [level=2] [ref=f13e434]
+            - paragraph [ref=f13e435]:
+              - strong [ref=f13e436]: 新增特性
+            - list [ref=f13e437]:
+              - listitem [ref=f13e438]:
+                - text: 支持群组通话功能，具体请参见
+                - link "群组通话" [ref=f13e439] [cursor=pointer]:
+                  - /url: https://doc.yunxin.163.com/nertccallkit/guide/TcxNzQxNTY?platform=iOS
+                - text: 。
+              - listitem [ref=f13e440]: 升级底层兼容的 IM 版本至 V10。
+              - listitem [ref=f13e441]: 修复群组相关问题。
+            - paragraph [ref=f13e442]:
+              - strong [ref=f13e443]: 兼容版本
+            - list [ref=f13e444]:
+              - listitem [ref=f13e445]: 适配 NIM SDK 10.5.0 版本。
+              - listitem [ref=f13e446]: 适配 NERtc SDK 5.5.40 版本。
+            - heading "2.5.2 (2024-12-16)" [level=2] [ref=f13e447]
+            - paragraph [ref=f13e448]:
+              - strong [ref=f13e449]: 新增特性
+            - paragraph [ref=f13e450]: 兼容 iOS 18 系统。
+            - paragraph [ref=f13e451]:
+              - strong [ref=f13e452]: API 变更
+            - paragraph [ref=f13e453]:
+              - text: 将
+              - code [ref=f13e454]: NERtcCallUIKit
+              - text: 组件下
+              - code [ref=f13e455]: NEVideoView
+              - text: 中的
+              - code [ref=f13e456]: maskView
+              - text: 属性替换为
+              - code [ref=f13e457]: coverView
+              - text: 。
+            - heading "2.5.0 (2024-08-06)" [level=2] [ref=f13e458]
+            - paragraph [ref=f13e459]:
+              - strong [ref=f13e460]: 问题修复
+            - paragraph [ref=f13e461]: 修复没有麦克风权限的情况下通话状态异常的问题。
+            - heading "2.4.0 (2024-03-28)" [level=2] [ref=f13e462]
+            - paragraph [ref=f13e463]:
+              - strong [ref=f13e464]: 新增特性
+            - paragraph [ref=f13e465]: 文案、铃声支持国际化。
+            - paragraph [ref=f13e466]:
+              - strong [ref=f13e467]: 兼容版本
+            - list [ref=f13e468]:
+              - listitem [ref=f13e469]: 适配 NIM SDK 9.14.2 版本。
+              - listitem [ref=f13e470]: 适配 NERtc SDK 5.5.21 版本。
+            - heading "2.3.0 (2024-03-01)" [level=2] [ref=f13e471]
+            - paragraph [ref=f13e472]:
+              - strong [ref=f13e473]: 问题修复
+            - paragraph [ref=f13e474]: 修复部分已知问题。
+            - paragraph [ref=f13e475]:
+              - strong [ref=f13e476]: 兼容版本
+            - list [ref=f13e477]:
+              - listitem [ref=f13e478]: 适配 NIM SDK 9.14.2 版本。
+              - listitem [ref=f13e479]: 适配 NERtc SDK 5.5.21 版本。
+            - heading "2.2.5 (2024-01-23)" [level=2] [ref=f13e480]
+            - paragraph [ref=f13e481]:
+              - strong [ref=f13e482]: 兼容版本
+            - list [ref=f13e483]:
+              - listitem [ref=f13e484]: 适配 NIM SDK 9.14.2 版本。
+              - listitem [ref=f13e485]: 适配 NERtc SDK 5.5.21 版本。
+            - heading "2.2.4 (2024-01-02)" [level=2] [ref=f13e486]
+            - paragraph [ref=f13e487]:
+              - strong [ref=f13e488]: 变更
+            - paragraph [ref=f13e489]:
+              - text: 初始化时
+              - code [ref=f13e490]: NESetupConfig
+              - text: 中不需要再传入
+              - code [ref=f13e491]: currentUserAccId
+              - text: 参数，由内部自动获取。
+            - paragraph [ref=f13e492]:
+              - strong [ref=f13e493]: 兼容版本
+            - list [ref=f13e494]:
+              - listitem [ref=f13e495]: 适配 NIM SDK V9.14.0 版本。
+              - listitem [ref=f13e496]: 适配 NERTC SDK V5.5.2 版本。
+            - heading "2.2.2 (2023-12-13)" [level=2] [ref=f13e497]
+            - paragraph [ref=f13e498]:
+              - strong [ref=f13e499]: 变更
+            - paragraph [ref=f13e500]:
+              - code [ref=f13e501]: channelProfile
+              - text: 参数的默认值修改为
+              - code [ref=f13e502]: LIVE_BROADCASTING
+              - text: 。
+            - heading "2.2.0 (2023-11-03)" [level=2] [ref=f13e503]
+            - paragraph [ref=f13e504]:
+              - strong [ref=f13e505]: 新增特性
+            - list [ref=f13e506]:
+              - listitem [ref=f13e507]:
+                - paragraph [ref=f13e508]: UI 组件新增小窗功能，默认不开启，可在初始化时配置相应参数：
+                - list [ref=f13e509]:
+                  - listitem [ref=f13e510]:
+                    - text: 新增应用内小窗功能（通过 Rtc Canvas View 实现），初始化时配置
+                    - code [ref=f13e511]: enableFloatingWindow
+                    - text: 参数。
+                  - listitem [ref=f13e512]:
+                    - text: 新增应用外小窗功能（通过系统画中画实现），初始化时配置
+                    - code [ref=f13e513]: enableFloatingWindowOutOfApp
+                    - text: 参数, 同时依赖
+                    - code [ref=f13e514]: NETranscodingKit
+                    - text: 转码扩展包，只需要在主工程总引入，内部会判断此插件扩展包是否集成。
+              - listitem [ref=f13e515]:
+                - paragraph [ref=f13e516]:
+                  - text: UI 组件新增被呼叫预览功能，默认不开启，可在初始化时配置
+                  - code [ref=f13e517]: enableCalleePreview
+                  - text: 参数。
+              - listitem [ref=f13e518]:
+                - paragraph [ref=f13e519]: UI 组件支持铃声。只有带UI的呼叫组件支持自定义铃声。提前加入 RTC 的模式不支持铃声，请引入 UI 组件源码自行实现。
+              - listitem [ref=f13e520]:
+                - paragraph [ref=f13e521]:
+                  - text: UI 组件新增虚化（通话中）功能，默认不开启，可在初始化时配置
+                  - code [ref=f13e522]: enableVirtualBackground
+                  - text: 参数。
+            - paragraph [ref=f13e523]:
+              - strong [ref=f13e524]: 改进优化
+            - paragraph [ref=f13e525]:
+              - text: 被呼叫后调用
+              - code [ref=f13e526]: accept
+              - text: 接口时，如果加入 RTC 失败，此场景下除了在
+              - code [ref=f13e527]: accept
+              - text: 接口返回对应的 error 信息，也同时触发
+              - code [ref=f13e528]: onCallEnd
+              - text: 回调。
+            - paragraph [ref=f13e529]:
+              - strong [ref=f13e530]: 兼容版本
+            - list [ref=f13e531]:
+              - listitem [ref=f13e532]: 适配 NIM SDK V9.12.0 版本。
+              - listitem [ref=f13e533]: 适配 NERTC SDK V5.5.2 版本。
+            - heading "2.1.0 (2023-08-08)" [level=2] [ref=f13e534]
+            - paragraph [ref=f13e535]:
+              - strong [ref=f13e536]: API 变更
+            - paragraph [ref=f13e537]:
+              - code [ref=f13e538]: accept
+              - text: 和
+              - code [ref=f13e539]: hangup
+              - text: 接口的回调函数中增加
+              - code [ref=f13e540]: NECallInfo
+              - text: 参数。
+            - paragraph [ref=f13e541]:
+              - strong [ref=f13e542]: 改进优化
+            - list [ref=f13e543]:
+              - listitem [ref=f13e544]: UI 组件内部实现替换为呼叫组件 2.0 的 API。
+              - listitem [ref=f13e545]: UI 组件添加完全自定义的 UI 基础界面，可以通过 UI 组件控制主叫和被叫的弹出界面。
+              - listitem [ref=f13e546]:
+                - text: 修改
+                - code [ref=f13e547]: onCallEnd
+                - text: 方法，使其一次通话只回调一次。
+              - listitem [ref=f13e548]:
+                - text: 调用
+                - code [ref=f13e549]: accept
+                - text: 接口时，如果对方不在线，结束通话流程。
+            - paragraph [ref=f13e550]:
+              - strong [ref=f13e551]: 问题修复
+            - paragraph [ref=f13e552]: 修复在视频切换音频、前后摄像头切换时，未隐藏按钮的问题。
+            - paragraph [ref=f13e553]:
+              - strong [ref=f13e554]: 升级说明
+            - paragraph [ref=f13e555]: 从 V2.0.0 版本可直接升级至 V2.1.0 版本。
+            - paragraph [ref=f13e556]:
+              - strong [ref=f13e557]: 兼容版本
+            - list [ref=f13e558]:
+              - listitem [ref=f13e559]: 适配 NIM V9.12.0 版本。
+              - listitem [ref=f13e560]: 适配 NERTC SDK V5.4.3 版本。
+            - heading "2.0.0 (2023-05-29)" [level=2] [ref=f13e561]
+            - paragraph [ref=f13e562]:
+              - strong [ref=f13e563]: 改进优化
+            - paragraph [ref=f13e564]:
+              - text: Android、iOS、Web 各端接口和字段对齐，更新后的 API 接口请参见
+              - link "呼叫组件 V2.0 API参考" [ref=f13e565] [cursor=pointer]:
+                - /url: https://doc.yunxin.163.com/nertccallkit/references/iOS/doxygen/Latest/zh/html/index.html
+              - text: 。
+            - generic [ref=f13e566]:
+              - text: 说明：
+              - list [ref=f13e567]:
+                - listitem [ref=f13e568]: 集成了呼叫组件 V2.0 版本的用户能和呼叫组件 V1.x 的用户进行通话。
+                - listitem [ref=f13e569]: 请确保代码中全使用 V2.0 版本的接口或全使用 V1.x 版本的接口， V2.0 版本的接口和 V1.x 版本的接口请勿混用。
+            - paragraph [ref=f13e570]:
+              - strong [ref=f13e571]: 升级说明
+            - paragraph [ref=f13e572]:
+              - text: 从 V1.8.2 版本升级到 V2.0.0 版本，不影响您继续使用 V1.8.2 版本的接口。详细的接口变更和升级说明请参见
+              - link "升级指南（V2）" [ref=f13e573] [cursor=pointer]:
+                - /url: https://doc.yunxin.163.com/nertccallkit/guide/jAxNTE0MDc?platform=iOS
+              - text: 。
+            - paragraph [ref=f13e574]:
+              - strong [ref=f13e575]: 兼容版本
+            - list [ref=f13e576]:
+              - listitem [ref=f13e577]: 适配 NIM V9.10.0 版本。
+              - listitem [ref=f13e578]: 适配 NERTC SDK V4.6.50 版本。
+            - heading "1.8.2 (2023-03-10)" [level=2] [ref=f13e579]
+            - paragraph [ref=f13e580]:
+              - strong [ref=f13e581]: 改进优化
+            - paragraph [ref=f13e582]: 适配 IM UIKit，支持在 IM UIKit V9.4.0 及以上版本中集成呼叫组件。
+            - paragraph [ref=f13e583]:
+              - strong [ref=f13e584]: 升级说明
+            - paragraph [ref=f13e585]: V1.8.0 版本可直接升级至 V1.8.2 版本。
+            - paragraph [ref=f13e586]:
+              - strong [ref=f13e587]: 兼容版本
+            - list [ref=f13e588]:
+              - listitem [ref=f13e589]: 适配 NIM V9.8.0 版本。
+              - listitem [ref=f13e590]: 适配 NERTC SDK V4.6.29 版本。
+            - heading "1.8.0 (2022-11-01)" [level=2] [ref=f13e591]
+            - paragraph [ref=f13e592]:
+              - strong [ref=f13e593]: API 变更
+            - list [ref=f13e594]:
+              - listitem [ref=f13e595]:
+                - code [ref=f13e596]: NERtcCallOptions
+                - text: 接口中的是否同时初始化 RTC 的参数，从之前的
+                - code [ref=f13e597]: shouldInitializeRtc
+                - text: 参数，替换为新的
+                - code [ref=f13e598]: globalInit
+                - text: 参数。
+                - generic [ref=f13e599]:
+                  - generic [ref=f13e600]: objc
+                  - code [ref=f13e601]: /// 是否在初始化的时候初始化Rtc，默认为YES，设置为NO，主叫在呼叫时初始化，被叫在有呼叫到达的时候初始化 @property(nonatomic, assign) BOOL globalInit;
+              - listitem [ref=f13e602]:
+                - code [ref=f13e603]: NERtcCallOptions
+                - text: 接口中新增
+                - code [ref=f13e604]: joinRtcWhenCall
+                - text: 参数，设置主叫在呼叫时是否加入 RTC 房间。
+                - generic [ref=f13e605]:
+                  - generic [ref=f13e606]: objc
+                  - code [ref=f13e607]: /// 主叫是否在呼叫时加入rtc，默认为NO，在被叫接听时加入RTC 房间，不提前加入。如设置提前加入房间会带来通话费用的增加，同时提升首帧开画时间 @property(nonatomic, assign) BOOL joinRtcWhenCall;
+            - paragraph [ref=f13e608]:
+              - strong [ref=f13e609]: 升级说明
+            - paragraph [ref=f13e610]: 不可直接升级，从V1.6.5 版本升级至 V1.8.0 版本时，您需要在代码中对新增和变更的接口进行修改和适配，主要变更如下：
+            - list [ref=f13e611]:
+              - listitem [ref=f13e612]:
+                - text: 呼叫组件内部不再引用 NERTC，需要单独引用 NERTC。示例代码如下：
+                - code [ref=f13e614]: "#呼叫组件 pod 'NERtcCallKit','1.8.0' #NERtcSDK pod 'NERtcSDK', '4.6.22', :subspecs => ['RtcBasic']"
+              - listitem [ref=f13e615]:
+                - text: 业务应用不再需要通过
+                - code [ref=f13e616]: NERtcCallKitTokenHandler
+                - text: 回调获取 RTC Token，呼叫组件内部已实现相关获取流程。
+              - listitem [ref=f13e617]:
+                - code [ref=f13e618]: NERtcCallOptions
+                - text: 接口中的是否同时初始化 RTC 的参数，删除了
+                - code [ref=f13e619]: shouldInitializeRtc
+                - text: 参数，替换为新的
+                - code [ref=f13e620]: globalInit
+                - text: 参数。
+            - paragraph [ref=f13e621]:
+              - strong [ref=f13e622]: 兼容版本
+            - list [ref=f13e623]:
+              - listitem [ref=f13e624]: 适配 NIM V9.6.4 版本。
+              - listitem [ref=f13e625]: 适配 NERTC SDK V4.6.22 版本。
+            - heading "1.6.1 (2022-08-26)" [level=2] [ref=f13e626]
+            - paragraph [ref=f13e627]:
+              - strong [ref=f13e628]: 新增特性
+            - list [ref=f13e629]:
+              - listitem [ref=f13e630]: 支持音视频通话切换确认。
+              - listitem [ref=f13e631]:
+                - code [ref=f13e632]: NERtcCallKitTokenHandler
+                - text: 回调新增
+                - code [ref=f13e633]: channelName
+                - text: 参数。
+            - paragraph [ref=f13e634]:
+              - strong [ref=f13e635]: 新增 API
+            - list [ref=f13e636]:
+              - listitem [ref=f13e637]:
+                - paragraph [ref=f13e638]: 新增音视频切换确认，默认不开启确认。
+                - generic [ref=f13e639]:
+                  - generic [ref=f13e640]: objc
+                  - code [ref=f13e641]: /// 音视频切换是否需要确认配置 /// @param video 切换到视频是否需要确认 /// @param audio 切换到音频是否需要确认 - (void)enableSwitchCallTypeConfirmVideo:(BOOL)video audio:(BOOL)audio;
+              - listitem [ref=f13e642]:
+                - paragraph [ref=f13e643]: 新增音视频切换回调，新增回调中有音视频切换指令类型，如果未开启音视频切换确认配置，可忽略第二个字段。
+                - generic [ref=f13e644]:
+                  - generic [ref=f13e645]: objc
+                  - code [ref=f13e646]: "/// 通话类型切换的回调（仅1对1呼叫有效） /// @param callType 切换后的类型 /// @param state 切换应答类型: 邀请/同意/拒绝 - (void)onCallTypeChange:(NERtcCallType)callType withState:(NERtcSwitchState)state;"
+            - paragraph [ref=f13e647]: "** API 变更**"
+            - list [ref=f13e648]:
+              - listitem [ref=f13e649]:
+                - text: 修改音视频切换接口参数，如果未开启音视频切换确认可以忽略第二个参数。
+                - generic [ref=f13e650]:
+                  - generic [ref=f13e651]: objc
+                  - code [ref=f13e652]: "/// 在通话过程中切换通话类型。非通话过程中调用无效。仅支持1对1通话。 /// @param type 通话类型: 音频/视频 /// @param state 切换应答类型: 邀请/同意/拒绝 /// @param completion 回调 /// @discussion /// 切换完成后，组件内部会将己端和对端调用-enableLocalVideo:，此时外部不建议再调用 -enableLocalVideo:，防止状态错乱. - (void)switchCallType:(NERtcCallType)type withState:(NERtcSwitchState)state completion:(nullable void (^)(NSError *_Nullable error))completion;"
+              - listitem [ref=f13e653]:
+                - text: 获取 Token 的
+                - code [ref=f13e654]: NERtcCallKitTokenHandler
+                - text: 回调增加
+                - code [ref=f13e655]: channelName
+                - text: 参数。
+                - generic [ref=f13e656]:
+                  - generic [ref=f13e657]: objc
+                  - code [ref=f13e658]: "// 定义示例 typedef void (^NERtcCallKitTokenHandler)(uint64_t uid, NSString *channelName, void (^complete)(NSString *token, NSError *error)); // 使用示例 callkit.tokenHandler = ^(uint64_t uid, NSString *channelName, void (^complete)(NSString *token, NSError *error)){ };"
+            - paragraph [ref=f13e659]:
+              - strong [ref=f13e660]: 问题修复
+            - paragraph [ref=f13e661]: 修复当移动端作为被叫时，概率出现 Web 端用户无法看到移动端用户的摄像头画面的问题。
+            - paragraph [ref=f13e662]:
+              - strong [ref=f13e663]: 升级说明
+            - paragraph [ref=f13e664]: 不可直接升级，从V1.5.7 版本升级至 V1.6.1 版本时，您需要在代码中对新增和变更的接口进行修改和适配，具体变更请参见如下新增 API 和 API 变更。
+            - paragraph [ref=f13e665]:
+              - strong [ref=f13e666]: 兼容版本
+            - list [ref=f13e667]:
+              - listitem [ref=f13e668]: 适配 NIM V9.2.5 版本。
+              - listitem [ref=f13e669]: 适配 NERTC SDK V4.2.142 版本。
+            - heading "1.5.7 (2022-07-19)" [level=2] [ref=f13e670]
+            - paragraph [ref=f13e671]:
+              - strong [ref=f13e672]: 新增特性
+            - list [ref=f13e673]:
+              - listitem [ref=f13e674]:
+                - text: 支持自定义
+                - code [ref=f13e675]: rtcUid
+                - text: 、
+                - code [ref=f13e676]: channelName
+                - text: 。
+              - listitem [ref=f13e677]:
+                - text: 支持呼叫或接听时直接设置
+                - code [ref=f13e678]: rtcToken
+                - text: 。
+            - paragraph [ref=f13e679]:
+              - strong [ref=f13e680]: 新增 API
+            - list [ref=f13e681]:
+              - listitem [ref=f13e682]:
+                - paragraph [ref=f13e683]:
+                  - text: 支持自定义
+                  - code [ref=f13e684]: rtcUid
+                  - text: 。
+                - generic [ref=f13e685]:
+                  - generic [ref=f13e686]: objc
+                  - code [ref=f13e687]: /// 初始化，所有功能需要先初始化 /// @param appKey 云信后台注册的appKey /// @param rtcUid 用户自定义rtc uid，如果不需要自定义传入 <= 0 任意整数(或者使用- /// (void)setupAppKey:(NSString *)appKey options:(nullable NERtcCallOptions *)options /// 初始化接口)，内部自动生成，如果初始化传入会优先使用外部传入 - (void)setupAppKey:(NSString *)appKey withRtcUid:(uint64_t)rtcUid options:(nullable NERtcCallOptions *)options;
+              - listitem [ref=f13e688]:
+                - paragraph [ref=f13e689]:
+                  - text: 支持自定义
+                  - code [ref=f13e690]: channelName
+                  - text: 以及呼叫时传入
+                  - code [ref=f13e691]: rtc token
+                  - text: 。
+                - generic [ref=f13e692]:
+                  - generic [ref=f13e693]: objc
+                  - code [ref=f13e694]: /// 开始呼叫 /// @param userID 呼叫的用户ID /// @param type 通话类型 /// @param attachment 附件信息，透传到onInvited /// @param extra 全局抄送 /// @param token 安全模式token，如果用户直接传入，不需要实现 tokenHandler block回调 /// @param channelName 自定义channelName，不传会默认生成 /// @param completion 回调 - (void)call:(NSString *)userID type:(NERtcCallType)type attachment:(nullable NSString *)attachment globalExtra:(nullable NSString *)extra withToken:(nullable NSString *)token channelName:(nullable NSString *)channelName completion:(nullable void (^)(NSError *_Nullable error))completion;
+            - paragraph [ref=f13e695]:
+              - strong [ref=f13e696]: 升级说明
+            - paragraph [ref=f13e697]: V1.5.5 版本可直接升级至 V1.5.7 版本。
+            - paragraph [ref=f13e698]:
+              - strong [ref=f13e699]: 兼容版本
+            - list [ref=f13e700]:
+              - listitem [ref=f13e701]: 适配 NIM V9.2.5 版本。
+              - listitem [ref=f13e702]: 适配 NERTC SDK V4.2.142 版本。
+            - heading "1.5.5 (2022-06-15)" [level=2] [ref=f13e703]
+            - paragraph [ref=f13e704]:
+              - strong [ref=f13e705]: 新增特性
+            - list [ref=f13e706]:
+              - listitem [ref=f13e707]: 1 对 1 呼叫时，支持全局服务端抄送参数。
+              - listitem [ref=f13e708]: 支持占线挂断。
+            - paragraph [ref=f13e709]:
+              - strong [ref=f13e710]: 新增 API
+            - list [ref=f13e711]:
+              - listitem [ref=f13e712]:
+                - paragraph [ref=f13e713]:
+                  - text: 新增
+                  - code [ref=f13e714]: call
+                  - text: 接口。开始呼叫时，通过
+                  - code [ref=f13e715]: extra
+                  - text: 参数，设置呼叫时的全局抄送信息。
+                  - code [ref=f13e716]: /// 开始呼叫 /// @param userID 呼叫的用户ID /// @param type 通话类型 /// @param attachment 附件信息，透传到onInvited /// @param extra 扩展 /// @param completion 回调 - (void)call:(NSString *)userID type:(NERtcCallType)type attachment:(nullable NSString *)attachment globalExtra:(nullable NSString *)extra completion:(nullable void(^)(NSError * _Nullable error))completion;
+              - listitem [ref=f13e717]:
+                - paragraph [ref=f13e718]:
+                  - text: 新增
+                  - code [ref=f13e719]: rejectWithReason
+                  - text: 接口。通过
+                  - code [ref=f13e720]: reason
+                  - text: 参数控制挂断原因，实现占线挂断。
+                  - code [ref=f13e721]: /// 拒绝呼叫 /// @param completion 回调 /// @param reason 挂断原因 - (void)rejectWithReason:(NSInteger)reason withCompletion:(nullable void(^)(NSError * _Nullable error))completion;
+            - paragraph [ref=f13e722]:
+              - strong [ref=f13e723]: 升级说明
+            - paragraph [ref=f13e724]: V1.5.1 版本可直接升级至 V1.5.5 版本。
+            - paragraph [ref=f13e725]:
+              - strong [ref=f13e726]: 兼容版本
+            - list [ref=f13e727]:
+              - listitem [ref=f13e728]: 适配 NIM V8.5.5 版本。
+              - listitem [ref=f13e729]: 适配 NERTC SDK V4.2.142 版本。
+            - heading "1.5.1 (2022-04-02)" [level=2] [ref=f13e730]
+            - paragraph [ref=f13e731]:
+              - strong [ref=f13e732]: 功能优化
+            - list [ref=f13e733]:
+              - listitem [ref=f13e734]: 优化 App 同时使用呼叫组件和 RTC SDK 时部分 RTC 的回调无法触发的问题。
+              - listitem [ref=f13e735]: 优化多人呼叫的静音逻辑。
+            - paragraph [ref=f13e736]:
+              - strong [ref=f13e737]: 升级说明
+            - paragraph [ref=f13e738]: V1.5.0 版本可直接升级至 V1.5.1 版本。
+            - paragraph [ref=f13e739]:
+              - strong [ref=f13e740]: 兼容版本
+            - list [ref=f13e741]:
+              - listitem [ref=f13e742]: 适配 NIM V8.5.5 版本。
+              - listitem [ref=f13e743]: 适配 NERTC SDK V4.2.120 版本。
+            - heading "1.5.0 (2021-12-23)" [level=2] [ref=f13e744]
+            - paragraph [ref=f13e745]:
+              - strong [ref=f13e746]: 问题修复
+            - paragraph [ref=f13e747]: 修复与 Swift 混编的部分问题。
+            - paragraph [ref=f13e748]:
+              - strong [ref=f13e749]: 升级说明
+            - paragraph [ref=f13e750]: V1.4.2 版本可直接升级至 V1.5.0 版本。
+            - paragraph [ref=f13e751]:
+              - strong [ref=f13e752]: 兼容版本
+            - list [ref=f13e753]:
+              - listitem [ref=f13e754]: 适配 NIM V8.5.5 版本。
+              - listitem [ref=f13e755]: 适配 NERTC SDK V4.2.120 版本。
+            - heading "1.4.2 (2021-12-23)" [level=2] [ref=f13e756]
+            - paragraph [ref=f13e757]:
+              - strong [ref=f13e758]: 新增特性
+            - list [ref=f13e759]:
+              - listitem [ref=f13e760]: 支持私有化配置。
+              - listitem [ref=f13e761]: 支持呼叫前切换音视频。
+            - paragraph [ref=f13e762]:
+              - strong [ref=f13e763]: 升级说明
+            - paragraph [ref=f13e764]: V1.4.0 版本可直接升级至 V1.4.2 版本。
+            - paragraph [ref=f13e765]:
+              - strong [ref=f13e766]: 兼容版本
+            - list [ref=f13e767]:
+              - listitem [ref=f13e768]: 适配 NIM V8.5.5 版本。
+              - listitem [ref=f13e769]: 适配 NERTC SDK V4.2.120 版本。
+            - heading "1.4.0 (2021-09-28)" [level=2] [ref=f13e770]
+            - paragraph [ref=f13e771]:
+              - strong [ref=f13e772]: 新增特性
+            - list [ref=f13e773]:
+              - listitem [ref=f13e774]: 添加呼叫通话前支持切换通话类型。
+              - listitem [ref=f13e775]: 添加音频转视频功能。
+              - listitem [ref=f13e776]:
+                - text: 增加通话中根据
+                - code [ref=f13e777]: accId
+                - text: 获取
+                - code [ref=f13e778]: rtcUid
+                - text: 或根据
+                - code [ref=f13e779]: rtcUid
+                - text: 获取
+                - code [ref=f13e780]: accId
+                - text: 。
+              - listitem [ref=f13e781]: 支持自定义呼叫推送配置。
+              - listitem [ref=f13e782]:
+                - text: 支持用户通过呼叫组件的代理接收
+                - code [ref=f13e783]: NERtcSDK
+                - text: 回调。
+              - listitem [ref=f13e784]: 修改组件展示 Demo，从即时通讯 Demo 更换为 1 对 1 Demo。
+            - paragraph [ref=f13e785]: "** API 更新**"
+            - list [ref=f13e786]:
+              - listitem [ref=f13e787]:
+                - paragraph [ref=f13e788]:
+                  - text: 添加被叫是否自动加入
+                  - code [ref=f13e789]: channel
+                  - text: "控制变量:"
+                - generic [ref=f13e790]:
+                  - generic [ref=f13e791]: objc
+                  - code [ref=f13e792]:
+                    - generic [ref=f13e793]: "@interface NERtcCallOptions : NSObject"
+                    - text: /// 被叫是否自动加入channel @property (nonatomic, assign) BOOL supportAutoJoinWhenCalled; @end
+              - listitem [ref=f13e794]:
+                - paragraph [ref=f13e795]:
+                  - text: 增加通话中根据 accId 获取
+                  - code [ref=f13e796]: rtcUid
+                  - text: 或根据
+                  - code [ref=f13e797]: rtcUid
+                  - text: "获取 accId:"
+                - generic [ref=f13e798]:
+                  - generic [ref=f13e799]: objc
+                  - code [ref=f13e800]:
+                    - generic [ref=f13e801]: "@interface NERtcCallKit : NSObject"
+                    - text: /// 根据uid 获取 accid /// @param uid 用户id /// @discussion 只有在通话中才能通过uid获取accid - (void)memberOfUid:(uint64_t)uid completion:(nullable void(^)(NIMSignalingMemberInfo * _Nullable info))completion; /// 根据uid 获取 accid /// @param accid IM 用户id /// @discussion 只有在通话中才能通过accid获取获取uid - (void)memberOfAccid:(NSString *)accid completion:(nullable void(^)(NIMSignalingMemberInfo * _Nullable info))completion; @end
+              - listitem [ref=f13e802]:
+                - paragraph [ref=f13e803]: "支持自定义呼叫推送配置:"
+                - generic [ref=f13e804]:
+                  - generic [ref=f13e805]: objc
+                  - code [ref=f13e806]:
+                    - generic [ref=f13e807]: "@interface NERtcCallKit : NSObject"
+                    - text: /// 推送配置定制化，修改config.pushTitle，config.pushContent来完成。需要的上下文内容在context对象中提供。 @property (nonatomic, copy, nullable) NERtcCallKitPushConfigHandler pushConfigHandler。 @end
+              - listitem [ref=f13e808]:
+                - paragraph [ref=f13e809]:
+                  - text: 支持用户通过呼叫组件的代理接收
+                  - code [ref=f13e810]: NERtcSDK
+                  - text: "回调:"
+                - generic [ref=f13e811]:
+                  - generic [ref=f13e812]: objc
+                  - code [ref=f13e813]:
+                    - generic [ref=f13e814]: "@interface NERtcCallKit : NSObject"
+                    - text: /** NERtcEngine 的回调接口，由用户提供 */ @property (nonatomic, weak) id<NERtcEngineDelegateEx> engineDelegate; @end
+            - paragraph [ref=f13e815]:
+              - strong [ref=f13e816]: 升级说明
+            - paragraph [ref=f13e817]: V1.3.0 可直接升级至 V1.4.0。
+            - paragraph [ref=f13e818]:
+              - strong [ref=f13e819]: 兼容版本
+            - list [ref=f13e820]:
+              - listitem [ref=f13e821]: 适配 NIM V8.5.5 版本。
+              - listitem [ref=f13e822]: 适配 NERTC SDK V4.2.112 版本。
+            - heading "1.3.0 (2021-06-24)" [level=2] [ref=f13e823]
+            - paragraph [ref=f13e824]:
+              - strong [ref=f13e825]: 新增特性
+            - list [ref=f13e826]:
+              - listitem [ref=f13e827]:
+                - text: 添加
+                - code [ref=f13e828]: channelName
+                - text: ，
+                - code [ref=f13e829]: channelId
+                - text: ，
+                - code [ref=f13e830]: uid
+                - text: ，
+                - code [ref=f13e831]: accid
+                - text: 映射关系回调
+                - code [ref=f13e832]: onJoinChannel
+                - text: 。
+              - listitem [ref=f13e833]:
+                - text: 移动端添加
+                - code [ref=f13e834]: muteLocalVideo
+                - text: 接口以及
+                - code [ref=f13e835]: onVideoMute
+                - text: 回调。
+              - listitem [ref=f13e836]:
+                - text: 移动端添加
+                - code [ref=f13e837]: onAudioMute
+                - text: 回调。
+              - listitem [ref=f13e838]: 添加点对点通话类型埋点事件上报。
+              - listitem [ref=f13e839]:
+                - code [ref=f13e840]: call
+                - text: 、
+                - code [ref=f13e841]: groupCall
+                - text: 、
+                - code [ref=f13e842]: groupInvite
+                - text: 接口支持自定义扩展参数，被叫方在
+                - code [ref=f13e843]: onInvited
+                - text: 回调中解析对应参数。
+            - paragraph [ref=f13e844]:
+              - strong [ref=f13e845]: 升级说明
+            - paragraph [ref=f13e846]: 由 V1.2.1 升级至 V1.3.0 时，请注意以下变更：
+            - list [ref=f13e847]:
+              - listitem [ref=f13e848]:
+                - paragraph [ref=f13e849]: 添加视频采集控制接口：
+                - generic [ref=f13e850]:
+                  - generic [ref=f13e851]: objc
+                  - code [ref=f13e852]:
+                    - generic [ref=f13e853]: "@interface NERtcCallKit : NSObject"
+                    - text: /// 开启或关闭视频采集 /// @param muted YES：关闭，NO：开启 /// @return 操作返回值，成功则返回 0 - (int)muteLocalVideo:(BOOL)muted; @end
+                - paragraph [ref=f13e854]:
+                  - text: 接口调用会触发
+                  - code [ref=f13e855]: NERTCCallingDelegate.onVideoMuted()
+                  - text: 回调；
+              - listitem [ref=f13e856]:
+                - paragraph [ref=f13e857]: 添加音频采集控制回调接口
+                - generic [ref=f13e858]:
+                  - generic [ref=f13e859]: objc
+                  - code [ref=f13e860]:
+                    - generic [ref=f13e861]: "@protocol NERtcCallKitDelegate <NSObject>"
+                    - text: /// 音频采集变更回调 /// @param muted 是否关闭采集 /// @param userID 用户ID - (void)onAudioMuted:(BOOL)muted userID:(NSString *)userID; @end
+              - listitem [ref=f13e862]:
+                - paragraph [ref=f13e863]:
+                  - text: 添加
+                  - code [ref=f13e864]: onJoinChannel
+                  - text: 回调，此接口当用户加入音视频房间时触发此回调，用户可通过此回调获取用户 IM 的账号 Id 在此次通话中的 uid 以及音视频房间的房间 Id 以及名称。
+                - generic [ref=f13e865]:
+                  - generic [ref=f13e866]: objc
+                  - code [ref=f13e867]:
+                    - generic [ref=f13e868]: "@protocol NERtcCallKitDelegate <NSObject>"
+                    - text: /// 自己加入成功的回调，通常用来上报、统计等 /// @param event 回调参数 - (void)onJoinChannel:(NERtcCallKitJoinChannelEvent *)event; @end
+                    - generic [ref=f13e869]: "@interface NERtcCallKitJoinChannelEvent : NSObject"
+                    - text: /// IM userID @property (nonatomic, copy) NSString *accid; /// 音视频用户id @property (nonatomic, assign) uint64_t uid; /// 音视频channelId @property (nonatomic, assign) uint64_t cid; /// 音视频channelName @property (nonatomic, copy) NSString *cname; @end
+              - listitem [ref=f13e870]:
+                - paragraph [ref=f13e871]:
+                  - text: 呼叫接口变更
+                  - code [ref=f13e872]: "-[NERtcCallKit call]"
+                  - text: 、
+                  - code [ref=f13e873]: "-[NERtcCallKit groupCall]"
+                  - text: 、
+                  - code [ref=f13e874]: "-[NERtcCallKit groupInvite]"
+                  - text: 均增加
+                  - code [ref=f13e875]: attachment
+                  - text: 参数，此参数用户传递自定义参数，在被叫方收到邀请通知时可解析出。
+                - generic [ref=f13e876]:
+                  - generic [ref=f13e877]: objc
+                  - code [ref=f13e878]: /// 收到邀请的回调 /// @param invitor 邀请方 /// @param userIDs 房间中的被邀请的所有人（不包含邀请者） /// @param isFromGroup 是否是群组 /// @param groupID 群组ID /// @param type 通话类型 - (void)onInvited:(NSString *)invitor userIDs:(NSArray<NSString *> *)userIDs isFromGroup:(BOOL)isFromGroup groupID:(nullable NSString *)groupID type:(NERtcCallType)type attachment:(nullable NSString *)attachment; // 增加的attachment，建议用JSON字符串
+            - paragraph [ref=f13e879]:
+              - strong [ref=f13e880]: 兼容版本
+            - list [ref=f13e881]:
+              - listitem [ref=f13e882]: 适配 NIM V8.4.6 版本。
+              - listitem [ref=f13e883]: 适配 NERTC SDK V4.0.7 版本。
+            - heading "1.2.1 (2021-06-08)" [level=2] [ref=f13e884]
+            - paragraph [ref=f13e885]:
+              - strong [ref=f13e886]: 问题修复
+            - list [ref=f13e887]:
+              - listitem [ref=f13e888]: 修复服务端删除房间后，呼叫没有结束的问题。
+              - listitem [ref=f13e889]: 修复服务端踢出某个成员后，该成员没有退出呼叫的问题。
+              - listitem [ref=f13e890]: 修复主叫挂断与被叫接听同时进行时，产生的状态混乱。
+            - paragraph [ref=f13e891]:
+              - strong [ref=f13e892]: 兼容版本
+            - list [ref=f13e893]:
+              - listitem [ref=f13e894]: 适配 NIM V8.4.4 版本。
+              - listitem [ref=f13e895]: 适配 NERTC SDK V4.0.7 版本。
+            - heading "1.2.0 (2021-05-14)" [level=2] [ref=f13e896]
+            - paragraph [ref=f13e897]:
+              - strong [ref=f13e898]: 新增特性
+            - list [ref=f13e899]:
+              - listitem [ref=f13e900]: 添加多人通话，呼叫发起方可以在通话中途邀请其他用户。
+              - listitem [ref=f13e901]: 增加日志，提供闭源 framework。
+              - listitem [ref=f13e902]: 增加 groupInvite 功能。
+              - listitem [ref=f13e903]: 状态机调整，允许接通后再拒绝。
+            - paragraph [ref=f13e904]:
+              - strong [ref=f13e905]: 兼容版本
+            - list [ref=f13e906]:
+              - listitem [ref=f13e907]: 适配 NIM V8.3.1 版本。
+              - listitem [ref=f13e908]: 适配 NERTC SDK V4.0.3 版本。
+            - heading "1.1.0 (2021-04-25)" [level=2] [ref=f13e909]
+            - paragraph [ref=f13e910]:
+              - strong [ref=f13e911]: 新增特性
+            - paragraph [ref=f13e912]: 首屏接通流程优化，提升接通速度；
+            - paragraph [ref=f13e913]:
+              - strong [ref=f13e914]: 兼容版本
+            - list [ref=f13e915]:
+              - listitem [ref=f13e916]: 适配 NIM V8.3.1 版本。
+              - listitem [ref=f13e917]: 适配 NERTC SDK V4.0.3 版本。
+            - paragraph [ref=f13e918]:
+              - strong [ref=f13e919]: 问题修复
+            - list [ref=f13e920]:
+              - listitem [ref=f13e921]: 修复呼叫状态下，主叫突然断网，被叫方接受，主叫方网络恢复后没有收到对方 “接受” 的问题。
+              - listitem [ref=f13e922]: 修复 IM 被踢后音视频房间未退出问题。
+            - heading "1.0.1" [level=2] [ref=f13e923]
+            - paragraph [ref=f13e924]:
+              - strong [ref=f13e925]: 兼容版本
+            - list [ref=f13e926]:
+              - listitem [ref=f13e927]: 适配 NIM V8.1.5 版本。
+              - listitem [ref=f13e928]: 适配 NERTC SDK V3.7.3.1 版本。
+            - paragraph [ref=f13e929]:
+              - strong [ref=f13e930]: 问题修复
+            - list [ref=f13e931]:
+              - listitem [ref=f13e932]: RTC SDK 升级 3731，修复一直 "操作频繁问题"。
+              - listitem [ref=f13e933]: 自己断网离开后，重置房间状态，修复自己断网后不能再次呼叫问题。
+          - contentinfo [ref=f13e934]:
+            - generic [ref=f13e936]:
+              - text: 如果遇到相关问题，您可
+              - link "提交工单" [ref=f13e937] [cursor=pointer]:
+                - /url: https://app.yunxin.163.com/global/service/ticket/create
+              - text: 或找 在线客服 寻求帮助
+        - generic [ref=f13e938]:
+          - button "收起" [expanded] [ref=f13e940] [cursor=pointer]:
+            - img "double-right" [ref=f13e941]
+          - generic [ref=f13e944]:
+            - generic [ref=f13e945]:
+              - generic [ref=f13e946]: 此文档是否对你有帮助？
+              - generic [ref=f13e947]:
+                - generic [ref=f13e948] [cursor=pointer]: 有帮助
+                - generic [ref=f13e968] [cursor=pointer]: 去反馈
+            - list [ref=f13e989]:
+              - listitem [ref=f13e990] [cursor=pointer]: 4.8.1 (2026-07-09)
+              - listitem [ref=f13e991] [cursor=pointer]: 4.8.0 (2026-06-30)
+              - listitem [ref=f13e992] [cursor=pointer]: 4.7.5 (2026-06-15)
+              - listitem [ref=f13e993] [cursor=pointer]: 4.7.0 (2026-06-01)
+              - listitem [ref=f13e994] [cursor=pointer]: 4.3.0 (2026-03-18)
+              - listitem [ref=f13e995] [cursor=pointer]: 4.1.0 (2025-12-19)
+              - listitem [ref=f13e996] [cursor=pointer]: 3.8.0 (2025-11-6)
+              - listitem [ref=f13e997] [cursor=pointer]: 3.7.0 (2025-09-26)
+              - listitem [ref=f13e998] [cursor=pointer]: 3.6.0 (2025-08-26)
+              - listitem [ref=f13e999] [cursor=pointer]: 3.5.0 (2025-02-18)
+              - listitem [ref=f13e1000] [cursor=pointer]: 3.4.0 (2025-02-14)
+              - listitem [ref=f13e1001] [cursor=pointer]: 3.3.0 (2025-01-23)
+              - listitem [ref=f13e1002] [cursor=pointer]: 3.2.0 (2024-12-30)
+              - listitem [ref=f13e1003] [cursor=pointer]: 3.1.0 (2024-11-22)
+              - listitem [ref=f13e1004] [cursor=pointer]: 3.0.0 (2024-11-12)
+              - listitem [ref=f13e1005] [cursor=pointer]: 2.5.2 (2024-12-16)
+              - listitem [ref=f13e1006] [cursor=pointer]: 2.5.0 (2024-08-06)
+              - listitem [ref=f13e1007] [cursor=pointer]: 2.4.0 (2024-03-28)
+              - listitem [ref=f13e1008] [cursor=pointer]: 2.3.0 (2024-03-01)
+              - listitem [ref=f13e1009] [cursor=pointer]: 2.2.5 (2024-01-23)
+              - listitem [ref=f13e1010] [cursor=pointer]: 2.2.4 (2024-01-02)
+              - listitem [ref=f13e1011] [cursor=pointer]: 2.2.2 (2023-12-13)
+              - listitem [ref=f13e1012] [cursor=pointer]: 2.2.0 (2023-11-03)
+              - listitem [ref=f13e1013] [cursor=pointer]: 2.1.0 (2023-08-08)
+              - listitem [ref=f13e1014] [cursor=pointer]: 2.0.0 (2023-05-29)
+              - listitem [ref=f13e1015] [cursor=pointer]: 1.8.2 (2023-03-10)
+              - listitem [ref=f13e1016] [cursor=pointer]: 1.8.0 (2022-11-01)
+              - listitem [ref=f13e1017] [cursor=pointer]: 1.6.1 (2022-08-26)
+              - listitem [ref=f13e1018] [cursor=pointer]: 1.5.7 (2022-07-19)
+              - listitem [ref=f13e1019] [cursor=pointer]: 1.5.5 (2022-06-15)
+              - listitem [ref=f13e1020] [cursor=pointer]: 1.5.1 (2022-04-02)
+              - listitem [ref=f13e1021] [cursor=pointer]: 1.5.0 (2021-12-23)
+              - listitem [ref=f13e1022] [cursor=pointer]: 1.4.2 (2021-12-23)
+              - listitem [ref=f13e1023] [cursor=pointer]: 1.4.0 (2021-09-28)
+              - listitem [ref=f13e1024] [cursor=pointer]: 1.3.0 (2021-06-24)
+              - listitem [ref=f13e1025] [cursor=pointer]: 1.2.1 (2021-06-08)
+              - listitem [ref=f13e1026] [cursor=pointer]: 1.2.0 (2021-05-14)
+              - listitem [ref=f13e1027] [cursor=pointer]: 1.1.0 (2021-04-25)
+              - listitem [ref=f13e1028] [cursor=pointer]: 1.0.1
+      - generic [ref=f13e1030]:
+        - generic [ref=f13e1031] [cursor=pointer]: 在线咨询
+        - generic [ref=f13e1034] [cursor=pointer]: 微信咨询
+        - generic [ref=f13e1037] [cursor=pointer]: 电话咨询
+    - generic [ref=f13e1042]:
+      - generic [ref=f13e1043]: © 1997-2024 网易公司
+      - generic [ref=f13e1044]: 增值电信业务许可证B1-20180288
+      - generic [ref=f13e1045]: 浙B1.B2-20090185
+      - img "浙公网安备" [ref=f13e1046]
+      - link "浙公网安备 33010802002218号" [ref=f13e1047] [cursor=pointer]:
+        - /url: http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33010802002218
+      - link "浙ICP备17006647号-3" [ref=f13e1048] [cursor=pointer]:
+        - /url: http://beian.miit.gov.cn/
+      - link "工业和信息化部备案管理系统网站" [ref=f13e1049] [cursor=pointer]:
+        - /url: http://beian.miit.gov.cn/publish/query/indexFirst.action
+      - link "隐私政策" [ref=f13e1050] [cursor=pointer]:
+        - /url: https://yunxin.163.com/clauses?serviceType=3
+  - alert [ref=f13e1051]
+  - iframe [ref=f13e1052]:
+    

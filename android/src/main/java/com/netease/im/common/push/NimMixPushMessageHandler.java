@@ -28,7 +28,7 @@ public class NimMixPushMessageHandler implements MixPushMessageHandler {
 
         LogUtil.w(NimMixPushMessageHandler.class.getSimpleName(), "rev miPushMessage payload " + payload);
 
-        String sessionId = payload.get("sessionID");
+        String sessionId = payload.get("sessionId");
         String type = payload.get("sessionType");
         //
         if (sessionId != null && type != null) {

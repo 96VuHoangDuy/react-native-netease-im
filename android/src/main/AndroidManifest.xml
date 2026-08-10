@@ -57,6 +57,9 @@
             android:name="com.netease.nimlib.service.NimService"
             android:process=":core" />
 
+        <!-- NIM SDK V10 接口必需声明 (nim_version 10.9.52) -->
+        <service android:name="com.netease.nimlib.service.NimServiceV2" />
+
         <!-- 运行后台辅助服务 -->
         <service
             android:name="com.netease.nimlib.service.NimService$Aux"
@@ -118,9 +121,16 @@
          <!-- <provider
             android:name="com.netease.nimlib.ipc.cp.provider.PreferenceContentProvider"
             android:authorities="com.netease.nim.demo.ipc.provider.preference"
-            android:exported="false" 
+            android:exported="false"
             tools:replace="android:authorities"
             /> -->
+
+        <!-- Call UI tuỳ biến: màn IN-CALL tách background khỏi avatar (CSKH). -->
+        <activity
+            android:name="com.netease.im.CsP2PCallFragmentActivity"
+            android:screenOrientation="portrait"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 </manifest>
   

@@ -136,7 +136,9 @@ JS modules (index.ts, src/*, Utils.ts)
 ### iOS State Flow
 
 1. `RNNeteaseIm` khởi tạo controller và event router.
-2. `login` hoặc `autoLogin` gọi `registerWithAppID:cerName:` rồi login qua `NIMSDK`.
+2. **(login V10, 2026-07-16)** `AppDelegate` register V2 (`registerWithOptionV2` useV1Login=NO) lúc launch; `login`/`autoLogin`
+   `updateAppKey(appKey)` runtime rồi login qua **`v2LoginService`** (cũ V9: `registerWithAppID:cerName:`+`loginManager`).
+   Xem `docs/reference/netease-im/LOGIN_V9_TO_V10_MIGRATION.md`.
 3. Controller singleton giữ delegate tới NIM SDK manager.
 4. `NIMModel.myBlock` route event số sang tên event JS trong `RNNeteaseIm.m`.
 

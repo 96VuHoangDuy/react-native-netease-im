@@ -7,6 +7,7 @@
 //
 
 #import "NTESGroupedDataCollection.h"
+#import "NIMSDK+ZYZJ.h"
 #import "ImConfig.h"
 
 @interface Pair : NSObject
@@ -60,7 +61,7 @@
 - (void)setMembers:(NSArray *)members
 {
     NSMutableDictionary *tmp = [NSMutableDictionary dictionary];
-    NSString *me = [[NIMSDK sharedSDK].loginManager currentAccount];
+    NSString *me = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     for (id<NTESGroupMemberProtocol>member in members) {
         if ([[member memberId] isEqualToString:me]) {
             continue;

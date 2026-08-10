@@ -202,7 +202,11 @@ public final class AudioPlayerM {
             this.audioManager.setSpeakerphoneOn(false);
         }
 
-        this.audioManager.requestAudioFocus(this.onAudioFocusChangeListener, this.audioStreamType, 2);
+        // [#12/#157] GAIN_TRANSIENT (2) khiến app khác bị PAUSE và chỉ phục hồi
+        // khi ta abandonAudioFocus; ROM TQ kill process trước khi abandon →
+        // không trả focus → "chiếm kênh". Dùng GAIN_TRANSIENT_MAY_DUCK để app
+        // khác chỉ giảm âm (duck) rồi tự phục hồi, không phụ thuộc abandon.
+        this.audioManager.requestAudioFocus(this.onAudioFocusChangeListener, this.audioStreamType, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
         this.mPlayer.setOnPreparedListener(new OnPreparedListener() {
             public void onPrepared(MediaPlayer var1) {
                 LogUtil.w("AudioPlayerM", "player:onPrepared");

@@ -12,4 +12,7 @@
     <string name="team_need_authentication">需要身份验证</string>
     <string name="team_allow_anyone_join">允许任何人加入</string>
     <string name="team_not_allow_anyone_join">不允许任何人申请加入</string>
+    <!-- Override string của call-ui SDK: DefaultIncomingCallEx tạo lại channel với tên này mỗi lần
+         notify (rename đè lên tên mình đặt) → override để tên channel giữ ổn định. -->
+    <string name="tip_notification_channel_name">Thông báo cuộc gọi</string>
 </resources>

@@ -26,6 +26,7 @@ import com.netease.im.session.extension.AccountNoticeAttachment;
 import com.netease.im.session.extension.BankTransferAttachment;
 import com.netease.im.session.extension.CustomAttachment;
 import com.netease.im.session.extension.CustomAttachmentType;
+import com.netease.im.session.extension.CustomMessageChatBotAttachment;
 import com.netease.im.session.extension.DefaultCustomAttachment;
 import com.netease.im.session.extension.LinkUrlAttachment;
 import com.netease.im.session.extension.RedPacketAttachement;
@@ -58,6 +59,7 @@ import com.netease.nimlib.sdk.msg.attachment.FileAttachment;
 import com.netease.nimlib.sdk.msg.attachment.ImageAttachment;
 import com.netease.nimlib.sdk.msg.attachment.LocationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
+import com.netease.nimlib.sdk.msg.attachment.NetCallAttachment;
 import com.netease.nimlib.sdk.msg.attachment.NotificationAttachment;
 import com.netease.nimlib.sdk.msg.attachment.VideoAttachment;
 import com.netease.nimlib.sdk.msg.constant.AttachStatusEnum;
@@ -138,6 +140,7 @@ public class ReactCache {
     public final static String observeAccountNotice = "observeAccountNotice";//'账户变动通知'
     public final static String observeLaunchPushEvent = "observeLaunchPushEvent";//''
     public final static String observeBackgroundPushEvent = "observeBackgroundPushEvent";//''
+    public final static String observeCallState = "observeCallState";//'语音通话状态' (Phase 3, emit qua default case)
 
     final static String TAG = "ReactCache";
     private static ReactContext reactContext;
@@ -408,6 +411,15 @@ public class ReactCache {
                     isMessageChatBotUpdated = (Boolean) messageLocalExt.get("isMessageChatBotUpdated");
 
                     localExt.putBoolean("isMessageChatBotUpdated", isMessageChatBotUpdated);
+                }
+                // [FIX mất thông báo CSKH] Decode opcode từ lastMessage chatbot → recent path định
+                // tuyến đúng type (parity với iOS NIMViewController chatBotOpcode).
+                if (lastMessage.getAttachment() instanceof CustomMessageChatBotAttachment) {
+                    Integer code = ((CustomMessageChatBotAttachment) lastMessage.getAttachment()).getCode();
+                    if (code != null) {
+                        localExt.putInt("chatBotOpcode", code & 0xFFFF);
+                        localExt.putInt("chatBotOpcodeType", (code >> 16) & 0xFF);
+                    }
                 }
             }
         }
@@ -2104,6 +2116,9 @@ public class ReactCache {
             case robot:
                 type = MessageConstant.MsgType.ROBOT;
                 break;
+            case nrtc_netcall:
+                type = MessageConstant.MsgType.CALL;
+                break;
             case custom:
                 if (attachment != null) {
                     switch (attachment.getType()) {
@@ -2478,6 +2493,14 @@ public class ReactCache {
 
             imageObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
+            // Luôn export url/displayName/kích thước remote (kể cả khi isFilePathDeleted) để FE có
+            // thể fallback hiển thị/tải lại ảnh. Trước đây các field này chỉ set trong nhánh
+            // !isFilePathDeleted nên khi cache local bị dọn, dict mất url -> ảnh hiển thị đen.
+            imageObj.putString(MessageConstant.MediaFile.URL, imageAttachment.getUrl());
+            imageObj.putString(MessageConstant.MediaFile.DISPLAY_NAME, imageAttachment.getDisplayName());
+            imageObj.putString(MessageConstant.MediaFile.HEIGHT, Integer.toString(imageAttachment.getHeight()));
+            imageObj.putString(MessageConstant.MediaFile.WIDTH, Integer.toString(imageAttachment.getWidth()));
+
 //            Log.d(">>>> videoAttachment.getPath()", imageAttachment.getPath());
 //            Log.d(">>>> videoDic", imageObj.toString());
 //            Log.d(">>>> localExtension", localExtension.toString());
@@ -2554,11 +2577,22 @@ public class ReactCache {
 
             fileObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
 
+            // Luôn export field remote (kể cả khi isFilePathDeleted) để FE có thể tải lại file.
+            fileObj.putString("fileUrl", fileAttachment.getUrl());
+            fileObj.putString("fileName", !TextUtils.isEmpty(item.getContent()) ? item.getContent() : fileAttachment.getDisplayName());
+            fileObj.putString("fileMd5", fileAttachment.getMd5());
+            fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
+            fileObj.putString("fileType", remoteExtension != null && remoteExtension.get("fileType") != null
+                    ? (String) remoteExtension.get("fileType")
+                    : fileAttachment.getExtension());
+
             if (!isFilePathDeleted) {
                 if (fileAttachment.getPath() != null
                         && !fileAttachment.getPath().contains(item.getSessionId())
                         && item.getStatus() == MsgStatusEnum.success) {
-                    String fileType = (String) remoteExtension.get("fileType");
+                    String fileType = remoteExtension != null && remoteExtension.get("fileType") != null
+                            ? (String) remoteExtension.get("fileType")
+                            : fileAttachment.getExtension();
                     File newFile = replaceVideoPath(fileAttachment.getPath(), item.getSessionId(), "file", "." + fileAttachment.getExtension());
                     if (newFile != null) {
                         fileAttachment.setPath(newFile.getPath());
@@ -2566,7 +2600,7 @@ public class ReactCache {
                         getMsgService().updateIMMessageStatus(item);
                         fileObj.putString("filePath", fileAttachment.getPath());
                         fileObj.putString("fileUrl", fileAttachment.getUrl());
-                        fileObj.putString("fileName", item.getContent());
+                        fileObj.putString("fileName", !TextUtils.isEmpty(item.getContent()) ? item.getContent() : fileAttachment.getDisplayName());
                         fileObj.putString("fileMd5", fileAttachment.getMd5());
                         fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
                         fileObj.putString("fileType", fileType);
@@ -2590,13 +2624,15 @@ public class ReactCache {
                     }
                     fileObj.putString("filePath", fileAttachment.getPath());
                     fileObj.putString("fileUrl", fileAttachment.getUrl());
-                    fileObj.putString("fileName", item.getContent());
+                    fileObj.putString("fileName", !TextUtils.isEmpty(item.getContent()) ? item.getContent() : fileAttachment.getDisplayName());
                     fileObj.putString("fileMd5", fileAttachment.getMd5());
                     fileObj.putString("fileSize", FileUtil.formatFileSize(fileAttachment.getSize()));
 
                     if(remoteExtension != null && remoteExtension.get("fileType") != null){
                         String fileType = (String) remoteExtension.get("fileType");
                         fileObj.putString("fileType", fileType);
+                    } else {
+                        fileObj.putString("fileType", fileAttachment.getExtension());
                     }
                 }
 
@@ -2632,6 +2668,10 @@ public class ReactCache {
             }
 
             audioObj.putBoolean("isFilePathDeleted", isFilePathDeleted);
+
+            // Luôn export url/duration remote (kể cả khi isFilePathDeleted) để FE tải lại voice.
+            audioObj.putString(MessageConstant.MediaFile.URL, audioAttachment.getUrl());
+            audioObj.putString(MessageConstant.MediaFile.DURATION, Long.toString(audioAttachment.getDuration()));
 
             if (!isFilePathDeleted) {
                 if (audioAttachment.getPath() != null
@@ -2807,8 +2847,34 @@ public class ReactCache {
 
         itemMap.putMap("localExt", localExt);
 
-        if (item.getMsgType() == MsgTypeEnum.custom) {
+        if (item.getMsgType() == MsgTypeEnum.nrtc_netcall
+                && item.getAttachment() instanceof NetCallAttachment) {
+            // Call record (话单): map type/status/duration cho JS render bubble cuộc gọi.
+            NetCallAttachment netCall = (NetCallAttachment) item.getAttachment();
+            WritableMap callExtend = Arguments.createMap();
+            callExtend.putInt("callType", netCall.getType());     // 1=audio, 2=video
+            callExtend.putInt("callStatus", netCall.getStatus()); // 1=complete,2=canceled,3=rejected,4=timeout,5=busy
+            int callDuration = 0;
+            if (netCall.getDurations() != null) {
+                for (NetCallAttachment.Duration d : netCall.getDurations()) {
+                    if (d.getDuration() > callDuration) {
+                        callDuration = d.getDuration(); // giây; 1-1 call: lấy max = độ dài cuộc gọi
+                    }
+                }
+            }
+            callExtend.putInt("callDuration", callDuration);
+            if (netCall.getChannelId() != null) {
+                callExtend.putString("channelId", netCall.getChannelId());
+            }
+            itemMap.putMap(MESSAGE_EXTEND, callExtend);
+            itemMap.putString(MessageConstant.Message.MSG_TYPE, MessageConstant.MsgType.CALL);
+        } else if (item.getMsgType() == MsgTypeEnum.custom) {
             itemMap.putString(MessageConstant.Message.MSG_TYPE, getMessageType(item.getMsgType(), (CustomAttachment) item.getAttachment()));
+            // [FIX mất thông báo CSKH] Đẩy extend.opcode cho message chatbot (parity iOS):
+            // trước đây Android không set "extend" cho CHATBOT → JS không có opcode.
+            if (item.getAttachment() instanceof CustomMessageChatBotAttachment) {
+                itemMap.putMap(MESSAGE_EXTEND, ((CustomMessageChatBotAttachment) item.getAttachment()).getWritableMap());
+            }
         } else {
             Map<String, Object> extensionMsg = item.getRemoteExtension();
 

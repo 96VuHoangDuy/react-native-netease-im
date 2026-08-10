@@ -100,13 +100,21 @@ Source iOS còn import `react-native-config/RNCConfig.h`, vì vậy app host ho�
 
 ### 2. SDK registration
 
-`RNNeteaseIm.m` gọi:
+> ⚠️ **ĐÃ ĐỔI (login V9→V10, 2026-07-16).** Xem `docs/reference/netease-im/LOGIN_V9_TO_V10_MIGRATION.md`.
+
+Register V2 (login V10) đặt ở `AppDelegate.swift` (app) lúc launch + đổi appKey runtime lúc login:
 
 ```objc
-[[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
+// AppDelegate: register 1 lần, V2 mode (bắt buộc cho V2 signalling của CallKit)
+[[NIMSDK sharedSDK] registerWithOptionV2:option v2Option:v2Option];  // v2Option.useV1Login = NO
+// RNNeteaseIm.m (login/autoLogin): đổi appKey backend runtime (first-register-wins nên không re-register)
+[[NIMSDK sharedSDK] updateAppKey:appKey];
+[[NIMSDK sharedSDK].v2LoginService login:account token:token option:option success:... failure:...];
 ```
 
-ở cả `login(...)` và `autoLogin(...)`.
+*(Cũ V9 — rollback: `[[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName]` + `loginManager login:`, giữ dạng comment trong code.)*
+
+`cerName`/appKey vẫn dùng ở cả `login(...)` và `autoLogin(...)`.
 
 `cerName` được lấy từ:
 

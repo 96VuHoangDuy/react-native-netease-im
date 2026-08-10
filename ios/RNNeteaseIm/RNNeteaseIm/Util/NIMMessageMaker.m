@@ -7,6 +7,10 @@
 //
 
 #import "NIMMessageMaker.h"
+#import "NIMSDK+ZYZJ.h"
+// AVFoundation (AVAudioPlayer/AVURLAsset) + CoreMedia (CMTime) — trước kia lấy transitively qua NIMAVChat
+// (đã gỡ khi chuyển NIMSDK_LITE). AVFoundation import sẵn CoreMedia.
+#import <AVFoundation/AVFoundation.h>
 #import "NSString+NIMKit.h"
 #import "NIMKitLocationPoint.h"
 #import "ConversationViewController.h"
@@ -544,9 +548,14 @@ static NSString *businessId = nil;
 //    NSMutableDictionary *apsField = [NSMutableDictionary dictionary];
     NSString *strSessionID = @"";
     if (session.sessionType == NIMSessionTypeP2P) {//点对点
-        strSessionID = [NIMSDK sharedSDK].loginManager.currentAccount;
+        strSessionID = [[NIMSDK sharedSDK] zyzjCurrentAccount];
     }else{
         strSessionID = [NSString stringWithFormat:@"%@",session.sessionId];
+    }
+    // Guard: khi phiên login V2 rớt âm thầm, zyzjCurrentAccount (getLoginUser) trả nil →
+    // @{@"sessionId":nil} sẽ crash "insert nil object from objects[0]". Fallback @"" để không crash.
+    if (strSessionID == nil) {
+        strSessionID = @"";
     }
     NSString *strSessionType = [NSString stringWithFormat:@"%zd",session.sessionType];
     [payload setObject:@{@"sessionId":strSessionID,@"sessionType":strSessionType} forKey:@"sessionBody"];

@@ -17,7 +17,9 @@ public class CustomAttachParser implements MsgAttachmentParser {
     private static final String KEY_DATA = "data";
 
     private CustomAttachment getAttachmentWithData(JSONObject data) {
-        Log.d("TEST DATA", data.toJSONString());
+        if (data == null) {
+            return null;
+        }
         String dataLoginType = data.getString(MessageConstant.WarningLogin.WARINING_TYPE);
         if (dataLoginType != null) {
             return new WarningLoginAttachment();
@@ -48,6 +50,10 @@ public class CustomAttachParser implements MsgAttachmentParser {
                 attachmentData.fromJson(data);
 
                 return attachmentData;
+            }
+
+            if (type == null) {
+                type = "";
             }
 
             switch (type) {
@@ -82,6 +88,8 @@ public class CustomAttachParser implements MsgAttachmentParser {
 
             attachment.fromJson(data);
         } catch (Exception e) {
+            // TODO(debug): xoá trước khi merge — dùng để xác định payload shape của message CSKH
+            Log.e("CustomAttachParser", "parse failed, raw json = " + json, e);
             e.printStackTrace();
         }
 

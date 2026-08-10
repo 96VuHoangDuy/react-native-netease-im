@@ -4,6 +4,7 @@ import NimTeam from "./src/Team/Team";
 import NimSystemMsg from "./src/SystemMsg/SystemMsg";
 import NimFriend from "./src/Friend/Friend";
 import NimChatroom from './src/Chatroom/chatroom'
+import NimCall from './src/Call/Call'
 
 /**
  *Event Listener
@@ -22,4 +23,4 @@ import NimChatroom from './src/Chatroom/chatroom'
  *observeOnKick was kicked offline
  */
 
-export { NimSession, NimFriend, NimSystemMsg, NimTeam, NimUtils, NimChatroom };
+export { NimSession, NimFriend, NimSystemMsg, NimTeam, NimUtils, NimChatroom, NimCall };

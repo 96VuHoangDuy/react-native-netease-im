@@ -571,9 +571,33 @@ public class SessionService {
         sendMessageSelf(message, null, false, true, true);
     }
 
+    private boolean shouldMarkNonFriendFailure(IMMessage message) {
+        if (message == null) return false;
+        if (message.getSessionType() != SessionTypeEnum.P2P) return false;
+        if (message.getDirect() != MsgDirectionEnum.Out) return false;
+        if (message.getStatus() != MsgStatusEnum.fail) return false;
+        return !NIMClient.getService(FriendService.class).isMyFriend(message.getSessionId());
+    }
+
+    private void markNonFriendFailure(IMMessage message) {
+        Map<String, Object> localExt = message.getLocalExtension();
+        if (localExt == null) {
+            localExt = new HashMap<>();
+        } else {
+            localExt = new HashMap<>(localExt);
+        }
+        localExt.put("isCancelResend", true);
+        localExt.put("isNonFriendServerRejection", true);
+        message.setLocalExtension(localExt);
+        getMsgService().updateIMMessage(message);
+    }
+
     private void onMessageStatusChange(IMMessage message, boolean isSend) {
         if ("AGREE_FRIEND_REQUEST".equals(message.getContent())) {
             LogUtil.w(TAG, FLOW_CHECK_SEND_FIRST_MESSAGE + " onMessageStatusChange uuid=" + message.getUuid() + " sessionId=" + message.getSessionId() + " status=" + message.getStatus() + " direct=" + message.getDirect() + " isSend=" + isSend + " localExt=" + message.getLocalExtension());
+        }
+        if (shouldMarkNonFriendFailure(message)) {
+            markNonFriendFailure(message);
         }
         if(message.getDirect() == MsgDirectionEnum.Out) {
             Map<String, Object> stateMap = MapBuilder.newHashMap();
@@ -779,6 +803,20 @@ public class SessionService {
     }
 
     boolean hasRegister;
+    // [FIX transfer-CSR pending mãi] messageStatusObserver báo ACK gửi tin (success/failed),
+    // không được toggle theo session như các observer khác: nếu stopSession() (đổi/rời
+    // session) chạy đúng lúc 1 tin đang in-flight, ACK trả về sau khi observer đã unregister
+    // sẽ bị rơi vĩnh viễn -> tin kẹt SEND_SENDING mãi trên UI. Đăng ký 1 lần, không gỡ theo
+    // session; chỉ gỡ khi thật sự cần (không có, vì observer này không lộ resource leak đáng kể).
+    private boolean isMsgStatusObserverRegistered;
+
+    private void ensureMessageStatusObserverRegistered() {
+        if (isMsgStatusObserverRegistered) {
+            return;
+        }
+        isMsgStatusObserverRegistered = true;
+        getService(MsgServiceObserve.class).observeMsgStatus(messageStatusObserver, true);
+    }
 
     private void registerObservers(boolean register) {
         if (hasRegister && register) {
@@ -789,7 +827,6 @@ public class SessionService {
         service.observeReceiveMessage(incomingMessageObserver, register);
         service.observeMessageReceipt(messageReceiptObserver, register);
 
-        service.observeMsgStatus(messageStatusObserver, register);
         service.observeRevokeMessage(revokeMessageObserver, register);
         observerAttachProgress(register);
         if (register) {
@@ -821,6 +858,7 @@ public class SessionService {
     /****************************** 消息处理 ***********************************/
 
     public void startSession(Handler handler, String sessionId, String type) {
+        ensureMessageStatusObserverRegistered();
         clear();
         this.handler = handler;
         this.sessionId = sessionId;
@@ -1601,7 +1639,22 @@ public class SessionService {
      */
     public void sendTextMessage(String content, List<String> selectedMembers, Integer messageSubType, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger,OnSendMessageListener onSendMessageListener) {
 
+        LogUtil.d(TAG, "[FRIEND_CHECK][ENTRY][sendTextMessage]"
+                + " sessionId=" + sessionId
+                + " sessionType=" + sessionTypeEnum
+                + " isSkipFriendCheck=" + isSkipFriendCheck
+                + " isSkipTipForStranger=" + isSkipTipForStranger
+                + " messageSubType=" + messageSubType
+                + " selectedMembersSize=" + (selectedMembers == null ? 0 : selectedMembers.size())
+                + " contentLength=" + (content == null ? 0 : content.length())
+                + " isFriendNow=" + (sessionTypeEnum == SessionTypeEnum.P2P ? NIMClient.getService(FriendService.class).isMyFriend(sessionId) : null));
+
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionTypeEnum, content);
+        LogUtil.d(TAG, "[FRIEND_CHECK][ENTRY][sendTextMessage][MESSAGE_BUILT]"
+                + " msgUuid=" + message.getUuid()
+                + " status=" + message.getStatus()
+                + " sessionId=" + message.getSessionId()
+                + " sessionType=" + message.getSessionType());
         if (!messageSubType.equals(0)) {
             message.setSubtype(messageSubType);
         } else {
@@ -2511,11 +2564,14 @@ public class SessionService {
 
     public void sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isSkipFriendCheck, boolean isSkipTipForStranger) {
         appendPushConfig(message);
-        if (sessionTypeEnum == SessionTypeEnum.P2P) {
-            sessionName = NimUserInfoCache.getInstance().getUserName(sessionId);
+        // [FIX #0000138 - phần còn sót] Dùng sessionId/sessionType của chính message thay vì
+        // field instance sessionId/sessionTypeEnum: field instance có thể đã bị đổi bởi một
+        // startSession()/stopSession() khác chạy song song (vd. transfer CSR) trước khi
+        // callback gửi tin này chạy tới, gây tính sai sessionName/isFriend cho message đang gửi.
+        if (message.getSessionType() == SessionTypeEnum.P2P) {
+            sessionName = NimUserInfoCache.getInstance().getUserName(message.getSessionId());
 
-            isFriend = NIMClient.getService(FriendService.class).isMyFriend(sessionId);
-            LogUtil.w(TAG, "isFriend:" + isFriend);
+            isFriend = NIMClient.getService(FriendService.class).isMyFriend(message.getSessionId());
             // [DEBUG] Temporarily disabled friend check to debug error 20000
             // if (!isFriend && !isSkipFriendCheck) {
             //     Map<String, Object> localExt = new HashMap<String, Object>();
@@ -2592,7 +2648,10 @@ public class SessionService {
         } else {
             sessionIdValue = null;
         }
-        body.put("sessionName", SessionUtil.getSessionName(sessionId, message.getSessionType(), true));
+        // [FIX #0000138] Dùng sessionId của chính message thay vì instance field this.sessionId
+        // (null khi gửi qua share/WithSession không mở session) → tránh NPE getSessionName/getTeamName
+        // khi recipient là Team. Chat thường: this.sessionId == message.getSessionId() nên không đổi.
+        body.put("sessionName", SessionUtil.getSessionName(message.getSessionId(), message.getSessionType(), true));
         String pushContent = message.getContent();
 
         switch (message.getMsgType()) {
@@ -2637,7 +2696,8 @@ public class SessionService {
             pushTitle = message.getFromNick();
             message.setPushContent(pushContent);
         } else {
-            pushTitle = SessionUtil.getSessionName(sessionId, message.getSessionType(), true);
+            // [FIX #0000138] dùng message.getSessionId() (xem chú thích ở body.put sessionName).
+            pushTitle = SessionUtil.getSessionName(message.getSessionId(), message.getSessionType(), true);
             message.setPushContent(message.getFromNick() + ": " + pushContent);
         }
 

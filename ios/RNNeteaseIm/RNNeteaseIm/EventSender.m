@@ -43,6 +43,7 @@ static CGFloat const kProgressThreshold = 0.02; // 2%
 
     if (progress && progress.floatValue >= 1.0) {
         NSDictionary *wrapped = @{@"data": @[paramObject]};
+        NSLog(@"[VID178][iOS][EventSender] EMIT (done) id=%@ progress=%@", paramId, progress); // DEBUG #178 - remove after test
         [self.im.bridge.eventDispatcher sendAppEventWithName:@"observeProgressSend" body:wrapped];
         return;
     }
@@ -52,9 +53,11 @@ static CGFloat const kProgressThreshold = 0.02; // 2%
     if (lastProgress && progress) {
         CGFloat delta = fabs(progress.floatValue - lastProgress.floatValue);
         if (delta < kProgressThreshold) {
+            NSLog(@"[VID178][iOS][EventSender] SKIP (delta %.4f < 2%%) id=%@ progress=%@", delta, paramId, progress); // DEBUG #178 - remove after test
             return; // Bỏ qua nếu thay đổi quá nhỏ
         }
     }
+    NSLog(@"[VID178][iOS][EventSender] QUEUE id=%@ progress=%@", paramId, progress); // DEBUG #178 - remove after test
 
     self.lastProgressMap[paramId] = progress ?: @(0);
 

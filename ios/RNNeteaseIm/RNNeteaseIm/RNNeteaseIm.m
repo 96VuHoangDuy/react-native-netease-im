@@ -7,6 +7,7 @@
 //
 
 #import "RNNeteaseIm.h"
+#import <NIMSDK/NIMSDK.h>
 #import <React/RCTUtils.h>
 #import "RNNotificationCenter.h"
 #import "NIMModel.h"
@@ -25,10 +26,121 @@
 #import "UserStrangers.h"
 #import "EventSender.h"
 #import "react-native-config/RNCConfig.h"
+// NERTC Call Kit (voice call, Phase 3). ⚠️ VERIFY khi pod install: header path/API names
+// (NESetupConfig/NECallEngine/NECallUIKitConfig/NERtcCallUIKit/NEUICallParam/NECallTypeAudio)
+// theo docs/call-ios-native/01-integration-ios.md.
+#import <NERtcCallKit/NERtcCallKit.h>
+#import <NERtcCallUIKit/NERtcCallUIKit.h>
+#import "RNNIMCsCallBranding.h"
+#import "RNNIMCsCallControllers.h"
 
 #define kDevice_Is_iPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
 
-@interface RNNeteaseIm(){
+// V2 dynamic-token provider (login V10). Bọc token string từ JS để V2NIMLoginService gọi lại
+// getToken: khi cần (kể cả reconnect). Giữ static để sống suốt phiên (option.tokenProvider là strong).
+@interface RNNIMTokenProvider : NSObject <V2NIMTokenProvider>
+@property (nonatomic, copy) NSString *token;
+@end
+@implementation RNNIMTokenProvider
+- (NSString *)getToken:(NSString *)accountId { return self.token; }
+@end
+
+// CSKH fix cứng: accid người gọi/nhận có prefix "csr" → tên + avatar logo app cố định
+// (áp dụng cả outbound lẫn inbound). Tên do JS set qua setCustomerServiceCallName (đã localize).
+// Logic nằm ở RNNIMCsCallBranding để subclass UI controller dùng chung.
+
+// Quét đệ quy payload VoIP push để tìm accid có prefix "csr" (format 云信 không cố định key).
+// Trả accid đầu tiên tìm được, hoặc nil. Dùng cho system incoming call khi app bị kill.
+static NSString *RNNIMFindCsrAccidInPayload(id obj) {
+    if ([obj isKindOfClass:[NSString class]]) {
+        return [RNNIMCsCallBranding isCsrAccid:(NSString *)obj] ? (NSString *)obj : nil;
+    }
+    if ([obj isKindOfClass:[NSDictionary class]]) {
+        for (id value in [(NSDictionary *)obj allValues]) {
+            NSString *found = RNNIMFindCsrAccidInPayload(value);
+            if (found.length) return found;
+        }
+    } else if ([obj isKindOfClass:[NSArray class]]) {
+        for (id value in (NSArray *)obj) {
+            NSString *found = RNNIMFindCsrAccidInPayload(value);
+            if (found.length) return found;
+        }
+    }
+    return nil;
+}
+
+// Điền tên + avatar cho param call UI từ NIM profile (app đã đẩy nick/avatar lúc connect).
+// iOS không tự lấy NIM info cho call UI → không set thì hiện accid.
+static void RNNIMFillCallUserInfo(NEUICallParam *param, NSString *accid) {
+    if (accid.length == 0) {
+        NSLog(@"IMTRACE_CALL fill: accid RỖNG -> bỏ qua fill (remoteShowName/Avatar giữ nil)");
+        return;
+    }
+    if ([RNNIMCsCallBranding isCsrAccid:accid]) {
+        param.remoteShowName = [RNNIMCsCallBranding displayName];
+        // Bản nền TRẮNG ĐẶC: SDK tự load URL này vào ô avatar (async) — dùng cùng ảnh với
+        // RNNIMApplyCsBranding để không có lúc nào hiện bản nền trong suốt bị chìm vào nền blur.
+        NSString *logo = [RNNIMCsCallBranding avatarFileUrl];
+        if (logo.length) param.remoteAvatar = logo;
+        // DEBUG IMTRACE_CALL (gỡ sau khi xong): nhánh CSR. csLogo=(null) => thiếu asset cs_call_avatar.png trong bundle app.
+        NSLog(@"IMTRACE_CALL fill[CSR] accid=%@ remoteShowName=[%@] csLogo=[%@]",
+              accid, param.remoteShowName, logo);
+        return;
+    }
+    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:accid];
+    NSString *name = user.alias.length ? user.alias : user.userInfo.nickName;
+    param.remoteShowName = name.length ? name : accid;
+    if (user.userInfo.avatarUrl.length) {
+        param.remoteAvatar = user.userInfo.avatarUrl;
+        // Tải sẵn ảnh nền blur ngay khi biết URL — fill chạy trước khi UI call dựng, nên ảnh
+        // thường kịp vào cache trước lúc màn đổ chuông hiện (mạng chậm hết bị nền đen chờ tải).
+        RNNIMCsPrefetchCallBackgroundAvatar(user.userInfo.avatarUrl);
+    }
+    // DEBUG IMTRACE_CALL (gỡ sau khi xong): nhánh non-CSR. userNil=1 hoặc name rỗng => cache miss, remoteShowName rơi về accid.
+    NSLog(@"IMTRACE_CALL fill[non-CSR] accid=%@ userNil=%d alias=[%@] nickName=[%@] remoteShowName=[%@] avatarUrl=[%@]",
+          accid, (user == nil), user.alias, user.userInfo.nickName, param.remoteShowName, user.userInfo.avatarUrl);
+}
+
+// Delegate phía callee: khi có cuộc gọi đến, điền tên/avatar người gọi vào param rồi cho SDK bung UI.
+// Cache miss (cold cache) → fetch remote rồi mới completion. Giữ static để sống suốt phiên.
+@interface RNNIMCallUIDelegate : NSObject <NECallUIKitDelegate>
+@end
+@implementation RNNIMCallUIDelegate
+- (void)didCallComingWithInviteInfo:(NEInviteInfo *)inviteInfo
+                      withCallParam:(NEUICallParam *)callParam
+                     withCompletion:(void (^)(BOOL))completion {
+    NSString *accid = inviteInfo.callerAccId;
+    NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:accid];
+    // DEBUG IMTRACE_RING (gỡ sau khi xác nhận chuông đôi): đường in-app ring có chạy không và
+    // calleeRingFilePath đang là gì. Rỗng => in-app ring đã tắt, chuông chỉ còn từ hệ thống.
+    NSLog(@"IMTRACE_RING didCallComing calleeRing=[%@]",
+          [NERtcCallUIKit sharedInstance].ringFile.calleeRingFilePath);
+    // DEBUG IMTRACE_CALL (gỡ sau khi xong): điểm vào delegate callee. Nếu KHÔNG thấy dòng này khi có
+    // cuộc gọi đến => delegate không được gọi/đăng ký (root cause "(null)" do remoteShowName không set).
+    NSLog(@"IMTRACE_CALL didCallComing accid=%@ isCsr=%d cacheHit=%d (nickName=[%@] alias=[%@])",
+          accid, [RNNIMCsCallBranding isCsrAccid:accid], (user.userInfo.nickName.length || user.alias.length) ? 1 : 0,
+          user.userInfo.nickName, user.alias);
+    // CSKH: branding cố định, không phụ thuộc NIM profile → khỏi chờ fetch.
+    if ([RNNIMCsCallBranding isCsrAccid:accid] || user.userInfo.nickName.length || user.alias.length) {
+        RNNIMFillCallUserInfo(callParam, accid);
+        if (completion) completion(YES);
+        return;
+    }
+    // Cold cache: chưa có profile người gọi → fetch remote rồi bung UI.
+    [[NIMSDK sharedSDK].userManager fetchUserInfos:@[accid] completion:^(NSArray<NIMUser *> *users, NSError *error) {
+        // DEBUG IMTRACE_CALL (gỡ sau khi xong): kết quả remote fetch trước khi bung UI.
+        NSLog(@"IMTRACE_CALL didCallComing remoteFetch accid=%@ usersCount=%lu error=%@",
+              accid, (unsigned long)users.count, error);
+        RNNIMFillCallUserInfo(callParam, accid);
+        NSLog(@"IMTRACE_CALL didCallComing afterFill accid=%@ remoteShowName=[%@] remoteAvatar=[%@]",
+              accid, callParam.remoteShowName, callParam.remoteAvatar);
+        if (completion) completion(YES);
+    }];
+}
+@end
+static RNNIMCallUIDelegate *sCallUIDelegate = nil;
+
+@interface RNNeteaseIm() <V2NIMLoginListener, V2NIMLoginDetailListener>{
     NSString *strUserAgent;
 }
 
@@ -111,6 +223,7 @@
     NSNumber *debounceObserve = [param objectForKey:@"isDebounceObserve"];
     BOOL isDebounceObserve = [debounceObserve boolValue];
     if (!isDebounceObserve) {
+        NSLog(@"MSG_TRACE_NATIVE observeRecentContact emit(immediate) sessionId=%@", [param objectForKey:@"sessionId"]);
         [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:param];
         return;
     }
@@ -129,6 +242,7 @@
 // This is the function that actually sends the event
 - (void)fireDebouncedEvent:(NSTimer *)timer {
     NSDictionary *param = (NSDictionary *)timer.userInfo;
+    NSLog(@"MSG_TRACE_NATIVE observeRecentContact emit(debounced) sessionId=%@", [param objectForKey:@"sessionId"]);
     [_bridge.eventDispatcher sendDeviceEventWithName:@"observeRecentContact" body:param];
 }
 
@@ -193,6 +307,305 @@
 
 RCT_EXPORT_MODULE()
 
+#pragma mark - NERTC Call Kit (voice call, Phase 3) — audio-only, prebuilt UI
+
+// Init NECallEngine + NERtcCallUIKit. Idempotent (guard). Gọi sau register trong login/autoLogin.
+// Login đã chuyển V10 (registerWithOptionV2 useV1Login=NO) để V2 signalling của CallKit hoạt động.
+static BOOL sCallKitSetup = NO;
+- (void)setupCallKitWithAppKey:(NSString *)appKey {
+    if (sCallKitSetup || appKey.length == 0) return;
+    @try {
+        NESetupConfig *setupConfig = [[NESetupConfig alloc] initWithAppkey:appKey];
+        [[NECallEngine sharedInstance] setup:setupConfig];
+        NECallUIKitConfig *config = [[NECallUIKitConfig alloc] init];
+        // Disable video: ẩn nút chuyển audio↔video trong màn gọi (outbound đã audio-only cố định).
+        config.uiConfig = [[NECallUIConfig alloc] init];
+        config.uiConfig.enableAudioToVideo = NO;
+        config.uiConfig.enableVideoToAudio = NO;
+        [[NERtcCallUIKit sharedInstance] setupWithConfig:config];
+        // 来电横幅: giữ TẮT (mặc định SDK). Banner mode KHÔNG gọi delegate didCallComing (note #18)
+        // → caller-info lấy thẳng NIM profile, cuộc gọi CSKH hiện tên/avatar cá nhân của nhân viên
+        // thay vì branding cố định. Tắt banner ⇒ cuộc gọi đến bung full-screen ⇒ delegate chạy.
+        // Chỉ ảnh hưởng lúc app foreground; background/killed vẫn đi đường offline push (note #15).
+        [[NERtcCallUIKit sharedInstance] enableIncomingBanner:NO];
+        // Ép tên + logo CSKH lúc render, cho các path không qua didCallComing (resume từ VoIP push)
+        // và khi SDK refreshUI ghi đè label. Non-CSR giữ UI mặc định.
+        [[NERtcCallUIKit sharedInstance] setCustomCallClass:[@{
+            kCalledState: RNNIMCsCalledViewController.class,
+            kAudioInCall: RNNIMCsAudioInCallController.class,
+            kAudioCalling: RNNIMCsAudioCallingController.class,
+        } mutableCopy]];
+        // Delegate điền tên/avatar người gọi vào UI callee (SDK không tự lấy NIM info).
+        if (sCallUIDelegate == nil) sCallUIDelegate = [[RNNIMCallUIDelegate alloc] init];
+        [NERtcCallUIKit sharedInstance].delegate = sCallUIDelegate;
+        // DEBUG IMTRACE_CALL (gỡ sau khi xong): xác nhận delegate callee đã set. Nếu setupCallKit không
+        // chạy (không thấy dòng này) => didCallComing không bao giờ được gọi.
+        NSLog(@"IMTRACE_CALL setupCallKit: delegate SET (%@), incomingBanner enabled", sCallUIDelegate);
+        // Nhạc chờ bên gọi (主叫呼叫提示音) + chuông bên nhận: khách yêu cầu dùng chung một bản
+        // nhạc. File nằm trong bundle app (ios/caller_ring.mp3). 3 slot còn lại
+        // (reject/busy/noResponse) giữ mặc định SDK. Lưu ý: chuông khi app background/killed do
+        // hệ thống phát qua CallKit, không đi qua ringFile (xem reportIncomingCallWithParam).
+        NSString *callerRing = [[NSBundle mainBundle] pathForResource:@"caller_ring" ofType:@"mp3"];
+        if (callerRing.length > 0 && [NERtcCallUIKit sharedInstance].ringFile) {
+            [NERtcCallUIKit sharedInstance].ringFile.callerRingFilePath = callerRing;
+            if (@available(iOS 17.4, *)) {
+                // Chuông cuộc gọi đến do LiveCommunicationKit phát (param.ringtoneName trong
+                // reportSystemIncomingCallWithPayload). Nếu set thêm calleeRingFilePath thì lúc app
+                // foreground CallUIKit phát lần nữa ⇒ chuông đôi. Path rỗng = cấm phát (NERingFile.h).
+                [NERtcCallUIKit sharedInstance].ringFile.calleeRingFilePath = @"";
+            } else {
+                // iOS < 17.4 không có VoIP push (pkCername không set) ⇒ chuông đến chỉ có đường in-app.
+                [NERtcCallUIKit sharedInstance].ringFile.calleeRingFilePath = callerRing;
+            }
+        } else {
+            NSLog(@"[CallKit] caller_ring.mp3 không có trong bundle (hoặc ringFile nil) — dùng nhạc chờ mặc định");
+        }
+        sCallKitSetup = YES;
+    } @catch (NSException *e) {
+        // Không để lỗi CallKit làm hỏng login/chat.
+        NSLog(@"[CallKit] setup lỗi: %@", e);
+    }
+}
+
+// V10: SDK đã register V2 ở AppDelegate (useV1Login=NO) lúc launch với appKey placeholder.
+// Register lần 2 ở đây bị SDK bỏ qua (first-register-wins) → dùng updateAppKey để đổi sang appKey
+// backend (runtime). updateAppKey chỉ chạy khi CHƯA login → gọi trước v2LoginService.login. code 200 = OK.
+static RNNIMTokenProvider *sTokenProvider = nil;
+// Phân biệt logout chủ động (user bấm) vs phiên rớt (token hết hạn / lỗi) để KHÔNG re-login nhầm
+// sau khi user logout. Set YES trong -logout, reset NO khi bắt đầu login.
+static BOOL sIntentionalLogout = NO;
+// Credentials persist cho native fast-path login khi VoIP push đánh thức app từ killed
+// (không chờ RN JS boot ~5s — cửa sổ đó làm accept từ màn gọi OS fail). Ghi ở login/autoLogin,
+// xoá ở logout. KHÔNG log giá trị.
+static NSString *const kRNNIMCredAccountKey = @"RNNIM_call_account";
+static NSString *const kRNNIMCredTokenKey = @"RNNIM_call_token";
+static NSString *const kRNNIMCredAppKeyKey = @"RNNIM_call_appkey";
+// User bấm nghe trên màn gọi OS khi engine chưa login xong → accept fail. Giữ cờ để retry
+// đúng 1 lần khi onLoginStatus=LOGINED.
+static BOOL sPendingSystemAccept = NO;
+// Guard đăng ký V2 login listener đúng 1 lần.
+static BOOL sV2LoginListenerRegistered = NO;
+// Guard đăng ký observer foreground đúng 1 lần.
+static BOOL sForegroundObserverRegistered = NO;
+- (void)ensureRegisterV2WithAppKey:(NSString *)appKey cerName:(NSString *)cerName {
+    NSString *current = [[NIMSDK sharedSDK] appKey];
+    if (appKey.length > 0 && ![appKey isEqualToString:current]) {
+        V2NIMError *e = [[NIMSDK sharedSDK] updateAppKey:appKey];
+        NSLog(@"IMTRACE_IOS updateAppKey(%@) prev=%@ -> %@", appKey, current,
+              e ? [NSString stringWithFormat:@"code %d %@", e.code, e.desc] : @"nil(OK)");
+    } else {
+        NSLog(@"IMTRACE_IOS appKey khớp SDK (%@), skip updateAppKey", current);
+    }
+    [self setupCallKitWithAppKey:appKey];
+    // V9 (rollback): [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
+}
+
+// V10: login qua V2NIMLoginService, giữ dynamic-token (bọc token vào tokenProvider). Thay loginManager V9.
+- (void)v2LoginWithAccount:(NSString *)account token:(NSString *)token
+                   resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
+    sIntentionalLogout = NO; // bắt đầu login → mọi LOGOUT sau đây coi là phiên rớt cần recover
+    V2NIMLoginOption *option = [[V2NIMLoginOption alloc] init];
+    option.authType = V2NIM_LOGIN_AUTH_TYPE_DYNAMIC_TOKEN;
+    // V10 default NO: xung đột đa端 fail 417 thay vì kick session cũ (V9 luôn kick).
+    option.forceMode = YES;
+    // Default là FULL (=0) → mỗi lần login lại sync cả TEAM_MEMBER + SUPER_TEAM_MEMBER, kéo dài
+    // thời gian tới lúc conversation list sẵn sàng khi app resume từ background. BASIC chỉ sync
+    // dữ liệu chính (gồm conversation); team member vẫn được app load riêng qua queryAllTeams()
+    // và getTeamMembers() khi cần.
+    option.syncLevel = V2NIM_DATA_SYNC_TYPE_LEVEL_BASIC;
+    if (sTokenProvider == nil) sTokenProvider = [[RNNIMTokenProvider alloc] init];
+    sTokenProvider.token = token;
+    option.tokenProvider = sTokenProvider;
+    [[NIMSDK sharedSDK].v2LoginService login:account token:token option:option
+        success:^{
+            NSLog(@"IMTRACE_IOS after login: V9 currentAccount=%@ | V2 getLoginUser=%@",
+                  [NIMSDK sharedSDK].loginManager.currentAccount,
+                  [[NIMSDK sharedSDK].v2LoginService getLoginUser]);
+            if (resolve) resolve(account);
+        }
+        failure:^(V2NIMError *error) {
+            NSLog(@"[V2 login] failed code=%d desc=%@", error.code, error.desc);
+            if (reject) reject([NSString stringWithFormat:@"%d", error.code], @"登录失败", nil);
+        }];
+}
+
+// Phát cuộc gọi thoại 1-1 (audio-only) tới accid.
+RCT_EXPORT_METHOD(startVoiceCall:(nonnull NSString *)accid
+                  pushTitle:(NSString *)pushTitle
+                  pushContent:(NSString *)pushContent
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject){
+    if (accid.length == 0) {
+        reject(@"invalid_accid", @"accid rỗng", nil);
+        return;
+    }
+    NEUICallParam *callParam = [[NEUICallParam alloc] init];
+    callParam.remoteUserAccid = accid;    // caller accid do SDK tự lấy từ session đăng nhập
+    callParam.callType = NECallTypeAudio;  // audio-only (callType set trên param, không có withCallType:)
+    // Tên + avatar callee cho màn "Calling…" (không set thì hiện accid).
+    RNNIMFillCallUserInfo(callParam, accid);
+    // pushConfig: bắt buộc để máy callee bị KILL nhận offline push (APNs / VoIP-nếu-có-cert).
+    // Không set = server không gửi push = killed không nhận gì, và LiveCommunicationKit không fire.
+    NECallPushConfig *pushConfig = [[NECallPushConfig alloc] init];
+    pushConfig.needPush = YES;
+    pushConfig.pushTitle = pushTitle.length ? pushTitle : @"Cuộc gọi thoại đến";
+    pushConfig.pushContent = pushContent.length ? pushContent : @"Cuộc gọi thoại đến";
+    pushConfig.needBadge = YES;
+    // pushPayload: điều phối server-side (không phải raw FCM) để notification bên callee Android rơi vào
+    // channel chuông cskh_incoming_call_v2 (tạo ở CallService.ensureIncomingCallChannel phía Android).
+    // Vị trí channel_id từng vendor theo docs/reference/netease-im/PUSH_PAYLOAD_CONFIG.official-raw.md:
+    // Xiaomi ở root, còn lại field riêng; vivo/honor push nội địa không có field channel_id.
+    // ⚠️ pushPayload khai báo NSMutableDictionary — SDK gọi addEntriesFromDictionary: lên chính object
+    // này để merge field riêng. Gán literal immutable sẽ crash unrecognized selector khi bấm gọi.
+    NSString *callChannelId = @"cskh_incoming_call_v2";
+    pushConfig.pushPayload = [@{
+        @"channel_id": callChannelId,
+        @"hwField": @{@"channel_id": callChannelId},
+        @"oppoField": @{@"channel_id": callChannelId},
+        @"fcmFieldV1": @{@"message": @{@"android": @{@"notification": @{@"channel_id": callChannelId}}}},
+    } mutableCopy];
+    callParam.pushConfig = pushConfig;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            [[NERtcCallUIKit sharedInstance] callWithParam:callParam];
+            resolve(@YES);
+        } @catch (NSException *e) {
+            reject(@"start_call_error", e.reason, nil);
+        }
+    });
+}
+
+// Cúp cuộc gọi hiện tại. ⚠️ VERIFY API hangup của NECallEngine (signature có thể khác) khi build.
+RCT_EXPORT_METHOD(hangupCall:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject){
+    @try {
+        NEHangupParam *param = [[NEHangupParam alloc] init];
+        [[NECallEngine sharedInstance] hangup:param completion:^(NSError * _Nullable error) {}];
+        resolve(@YES);
+    } @catch (NSException *e) {
+        reject(@"hangup_error", e.reason, nil);
+    }
+}
+
+// Tên hiển thị cố định cho CSKH (đã localize từ JS). Native dùng khi accid prefix "csr".
+RCT_EXPORT_METHOD(setCustomerServiceCallName:(NSString *)name){
+    [RNNIMCsCallBranding setDisplayName:name];
+}
+
+// Text trạng thái cho 3 nút to màn in-call (đã localize từ JS, mỗi lần login/đổi ngôn ngữ).
+// Key: micOn, micOff, hangup, speakerOn, speakerOff. Thiếu key → fallback tiếng Trung ở native.
+RCT_EXPORT_METHOD(setCallControlLabels:(NSDictionary *)labels){
+    [RNNIMCsCallBranding setCallControlLabels:labels];
+}
+
+#pragma mark - Native fast-path login (VoIP wake từ killed)
+
++ (void)persistCallCredentialsAccount:(NSString *)account token:(NSString *)token appKey:(NSString *)appKey {
+    if (account.length == 0 || token.length == 0) return;
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    [d setObject:account forKey:kRNNIMCredAccountKey];
+    [d setObject:token forKey:kRNNIMCredTokenKey];
+    if (appKey.length > 0) [d setObject:appKey forKey:kRNNIMCredAppKeyKey];
+}
+
++ (void)clearCallCredentials {
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    [d removeObjectForKey:kRNNIMCredAccountKey];
+    [d removeObjectForKey:kRNNIMCredTokenKey];
+    [d removeObjectForKey:kRNNIMCredAppKeyKey];
+}
+
+// Instance dùng riêng cho luồng native (app killed → RN chưa boot, chưa có module instance nào).
+// Giữ static để listener/tokenProvider đăng ký trên nó sống suốt đời process.
++ (instancetype)nativeCallHelper {
+    static RNNeteaseIm *helper = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ helper = [[RNNeteaseIm alloc] init]; });
+    return helper;
+}
+
+/**
+ * Login native ngay khi VoIP push đánh thức app — KHÔNG chờ RN JS boot (~5s), vì user bấm nghe
+ * trên màn gọi OS trong cửa sổ đó sẽ fail (engine chưa login). Idempotent: đã login thì no-op;
+ * JS login chạy sau cũng vô hại (v2LoginService login lại cùng account là hợp lệ).
+ */
++ (void)ensureNativeLoginForIncomingCall {
+    @try {
+        if ([[NIMSDK sharedSDK].v2LoginService getLoginUser].length > 0) {
+            return; // phiên còn sống (app background chưa bị kill) — engine accept được ngay.
+        }
+        NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+        NSString *account = [d stringForKey:kRNNIMCredAccountKey];
+        NSString *token = [d stringForKey:kRNNIMCredTokenKey];
+        NSString *appKey = [d stringForKey:kRNNIMCredAppKeyKey];
+        if (account.length == 0 || token.length == 0 || appKey.length == 0) {
+            NSLog(@"[CallKit] fastLogin: thiếu credentials đã lưu — chờ JS login");
+            return;
+        }
+        NSLog(@"[CallKit] fastLogin: bắt đầu native login (không chờ JS boot)");
+        NSString *cerName = [RNCConfig envFor:@"IM_CER_NAME"];
+        if (cerName == nil) cerName = @"ZYZJIM";
+        RNNeteaseIm *helper = [RNNeteaseIm nativeCallHelper];
+        [helper ensureRegisterV2WithAppKey:appKey cerName:cerName];
+        [helper v2LoginWithAccount:account token:token resolve:nil reject:nil];
+    } @catch (NSException *e) {
+        NSLog(@"[CallKit] fastLogin lỗi: %@", e.name); // không in reason — có thể chứa dữ liệu nhạy cảm
+    }
+}
+
+// 接听系统电话 (LiveCommunicationKit): bung UI nghe máy cấp hệ thống từ VoIP push.
+// Khác 来电横幅 ở trên: banner chỉ chạy khi app đang sống, cái này chạy cả khi app bị kill.
+// iOS < 17.4 KHÔNG hỗ trợ → phải guard, gọi thẳng sẽ crash.
++ (void)reportSystemIncomingCallWithPayload:(NSDictionary *)payload {
+    // DEBUG IMTRACE_RING (gỡ sau khi xác nhận chuông đôi): VoIP push có tới cả khi app foreground
+    // không. state=0 (active) => có, tức chuông hệ thống và in-app ring chạy song song.
+    // dispatch_async: callback PushKit chạy trên global queue, applicationState phải đọc ở main.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"IMTRACE_RING reportSystemIncomingCall state=%ld",
+              (long)[UIApplication sharedApplication].applicationState);
+    });
+    if (@available(iOS 17.4, *)) {
+        @try {
+            NECallSystemIncomingCallParam *param = [[NECallSystemIncomingCallParam alloc] init];
+            // payload raw: SDK tự parse theo rule mặc định của云信.
+            param.payload = payload;
+            // CSKH fix cứng: nếu caller accid (quét trong payload) có prefix "csr" → override TÊN
+            // hiển thị trên màn gọi hệ thống. Avatar không set được ở LiveCommunicationKit (SDK
+            // không có field) → hiện app icon.
+            NSString *csrAccid = RNNIMFindCsrAccidInPayload(payload);
+            if (csrAccid.length) {
+                NECallSystemIncomingCustomCallParam *custom = [[NECallSystemIncomingCustomCallParam alloc] init];
+                custom.remoteAccid = csrAccid;
+                custom.displayContent = [RNNIMCsCallBranding displayName];
+                param.customPayload = custom;
+            }
+            // Chuông custom đồng bộ với in-app ring (SDK yêu cầu file nằm trong app bundle, hỗ trợ mp3).
+            param.ringtoneName = @"caller_ring.mp3";
+            [[NECallEngine sharedInstance] reportIncomingCallWithParam:param
+                acceptCompletion:^(NSError * _Nullable error, NECallInfo * _Nullable callInfo) {
+                    if (error) {
+                        NSLog(@"[CallKit] system accept lỗi: %@ — giữ pendingAccept, retry sau login", error);
+                        // User bấm nghe khi engine chưa login xong (cửa sổ ~1-2s sau fastLogin).
+                        // Retry đúng 1 lần khi onLoginStatus=LOGINED.
+                        sPendingSystemAccept = YES;
+                    } else {
+                        sPendingSystemAccept = NO;
+                    }
+                }
+                hangupCompletion:^(NSError * _Nullable error) {
+                    if (error) NSLog(@"[CallKit] system hangup lỗi: %@", error);
+                }
+                muteCompletion:^(NSError * _Nullable error, BOOL mute) {
+                    if (error) NSLog(@"[CallKit] system mute lỗi: %@", error);
+                }];
+        } @catch (NSException *e) {
+            NSLog(@"[CallKit] reportIncomingCall lỗi: %@", e);
+        }
+    } else {
+        NSLog(@"[CallKit] bỏ qua system incoming call — iOS < 17.4 không hỗ trợ LiveCommunicationKit");
+    }
+}
+
 //手动登录
 RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)token appKey:(NSString *)appKey
                   resolve:(RCTPromiseResolveBlock)resolve
@@ -202,19 +615,18 @@ RCT_EXPORT_METHOD(login:(nonnull NSString *)account token:(nonnull NSString *)to
     if (cerName == nil) {
         cerName = @"ZYZJIM";
     }
-    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
-    
-    [[[NIMSDK sharedSDK] loginManager] login:account token:token authType:NIMSDKAuthTypeDynamicToken loginExt:@"" completion:^(NSError *error)
-     {
-        if (!error) {
-            resolve(account);
-        }else{
-            NSString *strEorr = @"登录失败";
-            reject(@"-1",strEorr, nil);
-            NSLog(@"%@:%@",strEorr,error);
-        }
-    }];
-    
+    // V10 login (V2NIMLoginService) — thay register V9 + loginManager V9.
+    [self ensureRegisterV2WithAppKey:appKey cerName:cerName];
+    [self v2LoginWithAccount:account token:token resolve:resolve reject:reject];
+    [RNNeteaseIm persistCallCredentialsAccount:account token:token appKey:appKey];
+
+    // V9 (rollback):
+    // [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
+    // [self setupCallKitWithAppKey:appKey];
+    // [[[NIMSDK sharedSDK] loginManager] login:account token:token authType:NIMSDKAuthTypeDynamicToken loginExt:@"" completion:^(NSError *error){
+    //     if (!error) { resolve(account); } else { reject(@"-1", @"登录失败", nil); NSLog(@"登录失败:%@", error); }
+    // }];
+
     [NIMViewController initWithController].strToken = token;
     [NIMViewController initWithController].strAccount = account;
 }
@@ -238,25 +650,28 @@ RCT_EXPORT_METHOD(autoLogin:(nonnull NSString *)account token:(nonnull NSString 
     if (cerName == nil) {
         cerName = @"ZYZJIM";
     }
-    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
-    
-    NIMAutoLoginData *loginData = [[NIMAutoLoginData alloc] init];
-    loginData.account = account;
-    loginData.token = token;
-    loginData.authType = NIMSDKAuthTypeDynamicToken;
-    loginData.loginExtension = @"";
-    [[[NIMSDK sharedSDK] loginManager] autoLogin:loginData];
-    
+    // V10: V2NIMLoginService không có autoLogin riêng → dùng login (SDK tự xử lý offline/cache).
+    [self ensureRegisterV2WithAppKey:appKey cerName:cerName];
+
     [NIMViewController initWithController].strToken = token;
     [NIMViewController initWithController].strAccount = account;
-    
+
     if ([account length] && [token length]) {
-        resolve(account);
-    }else{
+        [self v2LoginWithAccount:account token:token resolve:resolve reject:reject];
+        [RNNeteaseIm persistCallCredentialsAccount:account token:token appKey:appKey];
+    } else {
         NSString *strEorr = @"登录失败";
-        reject(@"-1",strEorr, nil);
-        NSLog(@"%@:%@",strEorr,@"''");
+        reject(@"-1", strEorr, nil);
+        NSLog(@"%@:%@", strEorr, @"''");
     }
+
+    // V9 (rollback):
+    // [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:cerName];
+    // [self setupCallKitWithAppKey:appKey];
+    // NIMAutoLoginData *loginData = [[NIMAutoLoginData alloc] init];
+    // loginData.account = account; loginData.token = token;
+    // loginData.authType = NIMSDKAuthTypeDynamicToken; loginData.loginExtension = @"";
+    // [[[NIMSDK sharedSDK] loginManager] autoLogin:loginData];
 }
 
 RCT_EXPORT_METHOD(replyMessage:(nonnull NSDictionary *)params
@@ -294,8 +709,13 @@ RCT_EXPORT_METHOD(replyMessage:(nonnull NSDictionary *)params
 
 //注销用户
 RCT_EXPORT_METHOD(logout){
-    [[[NIMSDK sharedSDK] loginManager] logout:^(NSError *error){
+    // V10 logout
+    sIntentionalLogout = YES; // logout chủ động → onLoginStatus(LOGOUT) KHÔNG trigger re-login
+    [RNNeteaseIm clearCallCredentials]; // hết phiên → native fast-path login không được dùng creds cũ
+    [[NIMSDK sharedSDK].v2LoginService logout:^{} failure:^(V2NIMError *error){
+        NSLog(@"[V2 logout] failed: %@", error.desc);
     }];
+    // V9 (rollback): [[[NIMSDK sharedSDK] loginManager] logout:^(NSError *error){}];
 }
 //手动删除最近聊天列表
 RCT_EXPORT_METHOD(deleteRecentContact:(nonnull NSString * )recentContactId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
@@ -320,8 +740,11 @@ RCT_EXPORT_METHOD(removeSession:(nonnull NSString *)sessionId sessionType:(nonnu
 RCT_EXPORT_METHOD(getRecentContactList:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     [[NIMViewController initWithController]getRecentContactListsuccess:^(id param) {
+        NSLog(@"MSG_TRACE_NATIVE getRecentContactList count=%@",
+              [param respondsToSelector:@selector(count)] ? @([param count]) : @(-1));
         resolve(param);
     } andError:^(NSString *error) {
+        NSLog(@"MSG_TRACE_NATIVE getRecentContactList ERROR=%@", error);
         reject(@"-1",error,nil);
     }];
     
@@ -1469,6 +1892,125 @@ RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDeviceLanguage){
     [[NoticeViewController initWithNoticeViewController]initWithDelegate];
     [RNNotificationCenter sharedCenter];
     [[UserStrangers initWithUserStrangers] setIm:self];
+    [self registerV2LoginListener];
+    [self registerForegroundObserver];
+}
+
+// App resume từ background: socket NIM có thể đã chết trong lúc bị suspend. Bắt đầu recovery ngay ở
+// tầng native thay vì chờ JS AppState (chậm hơn một nhịp vì phải qua bridge). JS AppState listener
+// trong IMStoreSessions vẫn giữ nguyên làm safety-net — getResouces/syncLocalSession đều idempotent.
+- (void)registerForegroundObserver{
+    if (sForegroundObserverRegistered) return;
+    sForegroundObserverRegistered = YES;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onAppWillEnterForeground)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+}
+
+- (void)onAppWillEnterForeground{
+    V2NIMConnectStatus status = [[NIMSDK sharedSDK].v2LoginService getConnectStatus];
+    NSLog(@"[RESUME_TRACE] iOS willEnterForeground connectStatus=%ld t=%.0f",
+          (long)status, [[NSDate date] timeIntervalSince1970] * 1000);
+
+    if (status == V2NIM_CONNECT_STATUS_CONNECTED) {
+        // Còn kết nối → local DB đã fresh, chỉ cần đẩy recent list lên JS.
+        [[NIMViewController initWithController] getResouces];
+        return;
+    }
+
+    // Chưa kết nối: KHÔNG tự login lại ở native. Token in-memory có thể thuộc phiên đã bị
+    // thiết bị khác kick trong lúc app suspend — relogin ở đây (forceMode=YES) sẽ đá ngược
+    // máy kia (ping-pong kick). Để JS xử lý qua observeOnlineStatus status "10" → onReconnect,
+    // nơi có device-check với backend trước khi login lại.
+}
+
+// Dưới login V2 (useV1Login=NO), delegate login V1 (NIMLoginManagerDelegate) không còn đáng tin để
+// phát hiện phiên rớt. Đăng ký V2 login listener để bắt LOGOUT/kick/dataSync và drive recovery qua JS.
+- (void)registerV2LoginListener{
+    if (sV2LoginListenerRegistered) return;
+    sV2LoginListenerRegistered = YES;
+    [[NIMSDK sharedSDK].v2LoginService addLoginListener:self];
+    [[NIMSDK sharedSDK].v2LoginService addLoginDetailListener:self];
+}
+
+#pragma mark - V2NIMLoginListener / V2NIMLoginDetailListener
+// Emit qua NIMModel.NetStatus → myBlock(0) → event observeOnlineStatus (JS ConnectStatusIMStore map:
+// "14"=connected→resync, "3"=connecting, "10"=reconnect→fetch imToken mới + login lại, "7"=kick).
+- (void)onLoginStatus:(V2NIMLoginStatus)status{
+    NSLog(@"IMTRACE_IOS V2 onLoginStatus=%ld getLoginUser=%@ intentionalLogout=%d",
+          (long)status, [[NIMSDK sharedSDK].v2LoginService getLoginUser], sIntentionalLogout);
+    switch (status) {
+        case V2NIM_LOGIN_STATUS_LOGINED:
+            [NIMModel initShareMD].NetStatus = @"14";
+            // User đã bấm nghe trên màn gọi OS trước khi login xong → accept lại ngay khi engine
+            // sẵn sàng. Cuộc gọi đã kết thúc thì accept fail vô hại.
+            if (sPendingSystemAccept) {
+                sPendingSystemAccept = NO;
+                NSLog(@"[CallKit] retry accept sau login");
+                @try {
+                    [[NECallEngine sharedInstance] accept:^(NSError * _Nullable error,
+                                                            NECallInfo * _Nullable callInfo) {
+                        if (error) NSLog(@"[CallKit] retry accept lỗi: %@", error);
+                    }];
+                } @catch (NSException *e) {
+                    NSLog(@"[CallKit] retry accept exception: %@", e.name);
+                }
+            }
+            break;
+        case V2NIM_LOGIN_STATUS_LOGINING:
+            [NIMModel initShareMD].NetStatus = @"3";
+            break;
+        case V2NIM_LOGIN_STATUS_UNLOGIN:
+            // SDK đang tự retry (token còn hạn) — không can thiệp, chỉ báo connecting.
+            [NIMModel initShareMD].NetStatus = @"3";
+            break;
+        case V2NIM_LOGIN_STATUS_LOGOUT:
+            // Phiên terminated. Nếu KHÔNG phải logout chủ động: tokenProvider cache token cũ nên
+            // SDK không tự re-login được → nhờ JS fetch token mới + login lại.
+            if (!sIntentionalLogout) {
+                [NIMModel initShareMD].NetStatus = @"10";
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+- (void)onLoginFailed:(V2NIMError *)error{
+    NSLog(@"IMTRACE_IOS V2 onLoginFailed code=%d desc=%@", error.code, error.desc);
+    // Auto-login thất bại (thường do token hết hạn) → nhờ JS re-login token mới.
+    if (!sIntentionalLogout) {
+        [NIMModel initShareMD].NetStatus = @"10";
+    }
+}
+
+- (void)onKickedOffline:(V2NIMKickedOfflineDetail *)detail{
+    NSLog(@"IMTRACE_IOS V2 onKickedOffline reason=%ld", (long)detail.reason);
+    // Phiên đã chết vì thiết bị khác login — không cho VoIP fast-path
+    // (ensureNativeLoginForIncomingCall) dùng creds cũ tự hồi sinh và đá ngược máy kia.
+    [RNNeteaseIm clearCallCredentials];
+    [NIMModel initShareMD].NetStatus = @"7";
+}
+
+- (void)onConnectStatus:(V2NIMConnectStatus)status{
+    // Chỉ log chẩn đoán; login-status ở trên là nguồn chính điều khiển recovery.
+    NSLog(@"IMTRACE_IOS V2 onConnectStatus=%ld", (long)status);
+}
+
+- (void)onDataSync:(V2NIMDataSyncType)type
+             state:(V2NIMDataSyncState)state
+             error:(V2NIMError *)error{
+    NSLog(@"[RESUME_TRACE] iOS onDataSync type=%ld state=%ld t=%.0f",
+          (long)type, (long)state, [[NSDate date] timeIntervalSince1970] * 1000);
+    // Sau reconnect, khi SDK sync remote→local xong → refresh recent list (bù observeRecentContact
+    // không tự fire). getResouces (V1) vẫn đọc được recent sessions từ SDK.
+    // Chỉ nghe TYPE_MAIN: conversation nằm trong nhóm dữ liệu chính. TEAM_MEMBER/SUPER_TEAM_MEMBER
+    // xong sau và không đổi recent list → getResouces ở đó chỉ duyệt lại toàn bộ allRecentSessions
+    // rồi emit thừa lên JS.
+    if (state == V2NIM_DATA_SYNC_STATE_COMPLETED && type == V2NIM_DATA_SYNC_TYPE_MAIN) {
+        [[NIMViewController initWithController] getResouces];
+    }
 }
 
 -(void)setSendState{

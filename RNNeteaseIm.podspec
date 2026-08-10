@@ -27,7 +27,21 @@ Pod::Spec.new do |s|
   s.source_files        = "**/*.{h,m}"
 
   s.dependency 'React-Core'
-  s.dependency "NIMSDK", "9.12.1"
+  # NIMSDK_LITE (không phải NIMSDK full) — vì NERtcCallKit bắt buộc NIMSDK_LITE; full NIMSDK
+  # trùng framework (nimsdk/nimsocketrocket/nimquic.xcframework) với LITE → pod install fail.
+  # LITE vẫn cung cấp module NIMSDK (#import <NIMSDK/NIMSDK.h> vẫn chạy). MẤT NIMAVChat (đã gỡ code legacy).
+  # /FTS: full-text-search local (tương đương lucene bên Android).
+  s.dependency "NIMSDK_LITE", "10.9.53"
+  s.dependency "NIMSDK_LITE/FTS", "10.9.53"
   s.dependency "Reachability"
-  
+
+  # NERTC Call Kit (voice call, Phase 3) — call-ui 4.1.0 ↔ NIM 10.9.53 ↔ NERTC 5.9.10.
+  # Dùng subspec NOS_Special (khớp NIMSDK default subspec = NOS ở trên; KHÔNG kéo IM SDK riêng).
+  # ⚠️ VERIFY khi `pod install`: nếu lỗi trùng/thiếu IM SDK (NIMSDK vs NIMSDK_LITE), xem
+  #    docs/call-ios-native/01-integration-ios.md §2 (Option B) — có thể phải điều chỉnh subspec/LITE.
+  #    Giữ "NIMSDK" (full) vì code legacy NIMAVChat (ImConfig.h/NTESBundleSetting) cần nó.
+  s.dependency "NERtcCallKit/NOS_Special"
+  s.dependency "NERtcCallUIKit/NOS_Special"
+  s.dependency "NERtcSDK/RtcBasic", "5.9.10"
+
 end

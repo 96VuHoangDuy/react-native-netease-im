@@ -16,6 +16,10 @@
 
 Repo hiện không có session UI ở JS; mọi logic chat thực thi ở native.
 
+## Sub-docs
+
+- [media-attachment.md](media-attachment.md): chi tiết gửi/nhận/download media (ảnh/video/file/voice), bảng field mapping native→JS trong `extend`, event progress lifecycle, và bất đối xứng Android/iOS (mất `url` khi `isFilePathDeleted`, custom download iOS).
+
 ## Entry Points
 
 ### JS

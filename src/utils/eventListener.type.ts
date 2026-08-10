@@ -10,11 +10,14 @@ export enum NIMEventListenerEnum {
   observeMsgStatus = "observeMsgStatus",
   observeAudioRecord = "observeAudioRecord",
   observeDeleteMessage = "observeDeleteMessage",
+  /** @deprecated Không native nào emit event này. Dùng `observeProgressSend` cho tiến độ tải/gửi attachment. */
   observeAttachmentProgress = "observeAttachmentProgress",
   observeOnKick = "observeOnKick",
   observeCustomNotification = "observeCustomNotification",
   observeProgressSend = "observeProgressSend",
-  observeUserStranger = "observeUserStranger"
+  observeUserStranger = "observeUserStranger",
+  /** Trạng thái vòng đời cuộc gọi thoại (NERTC Call Kit). @see NIMCallStateEnum */
+  observeCallState = "observeCallState"
 }
 
 export enum NIMAudioMsgStatusType {
