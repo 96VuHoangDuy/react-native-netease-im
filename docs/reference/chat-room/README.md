@@ -31,4 +31,4 @@ Docs chính thức NetEase NIM **V2 chatroom** (`V2NIMChatroomClient` — [D-015
 ## Liên quan
 
 - Phân tích + quyết định feature: `pyeon-chinese-mobile/docs/features/chat-room/` (nhánh `feat/chat-room`)
-- ⚠️ `docs/features/chatroom/README.md` (repo này) phần Android đang SAI (ghi bridge đã có — thực tế chưa) — sửa khi code bridge V2
+- `docs/features/chatroom/README.md` (repo này) đã cập nhật theo bridge V2: Android dùng `ChatroomV2Service.java` + artifact `com.netease.nimlib:chatroom`; iOS còn old-gen, chờ viết lại.

@@ -59,6 +59,9 @@ dependencies {
     implementation "com.netease.nimlib:basesdk:${nim_version}"
     implementation "com.netease.nimlib:push:${nim_version}"
     implementation "com.netease.nimlib:lucene:${nim_version}"
+    // chatroom: V2NIMChatroomClient/Service/Listener KHÔNG nằm trong basesdk (đã kiểm bằng javap trên
+    // aar 10.9.52) — thiếu artifact này thì NoClassDefFoundError ngay lần enter phòng đầu tiên.
+    implementation "com.netease.nimlib:chatroom:${nim_version}"
     // avsignalling: V2 signalling (V2NIMSignalling*) mà NERTC Call Kit dùng để mời/nhận cuộc gọi.
     // Bị loại theo `exclude com.netease.nimlib` ở call-ui → phải khai lại, nếu không:
     // NoClassDefFoundError V2NIMSignallingChannelType khi startVoiceCall.

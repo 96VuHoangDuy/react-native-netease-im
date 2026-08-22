@@ -37,6 +37,7 @@ import com.facebook.react.common.MapBuilder;
 import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.common.ResourceUtil;
 import com.netease.im.contact.BlackListObserver;
+import com.netease.im.chatroom.ChatroomV2Service;
 import com.netease.im.contact.FriendListService;
 import com.netease.im.contact.FriendObserver;
 import com.netease.im.login.LoginService;
@@ -196,6 +197,51 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void setCustomerServiceCallName(String name) {
         CallService.setCustomerServiceCallName(name);
+    }
+
+    // ---- Chatroom V2 (NIM chatroom vùng miền) ----
+    // Tên method giữ trùng khít bridge iOS (RNNeteaseIm.m) để JS không phải rẽ nhánh platform.
+
+    @ReactMethod
+    public void loginChatroom(ReadableMap params, Promise promise) {
+        ChatroomV2Service.enter(params, promise);
+    }
+
+    @ReactMethod
+    public void logoutChatroom(String roomId, Promise promise) {
+        ChatroomV2Service.exit(roomId, promise);
+    }
+
+    @ReactMethod
+    public void fetchChatroomInfo(String roomId, Promise promise) {
+        ChatroomV2Service.getChatroomInfo(roomId, promise);
+    }
+
+    @ReactMethod
+    public void fetchChatroomMember(String roomId, ReadableArray accountIds, Promise promise) {
+        ChatroomV2Service.getMemberByIds(roomId, accountIds, promise);
+    }
+
+    @ReactMethod
+    public void fetchChatroomMembers(String roomId, int limit, String pageToken, boolean onlyOnline,
+                                     Promise promise) {
+        ChatroomV2Service.getMemberList(roomId, limit, pageToken, onlyOnline, promise);
+    }
+
+    @ReactMethod
+    public void fetchMessageHistory(String roomId, int limit, double beginTime, String orderBy,
+                                    Promise promise) {
+        ChatroomV2Service.getMessageList(roomId, limit, beginTime, orderBy, promise);
+    }
+
+    @ReactMethod
+    public void getNimSdkAppKey(Promise promise) {
+        ChatroomV2Service.getSdkAppKey(promise);
+    }
+
+    @ReactMethod
+    public void sendChatroomTextMessage(String roomId, String text, Promise promise) {
+        ChatroomV2Service.sendTextMessage(roomId, text, promise);
     }
 
     @ReactMethod
@@ -374,8 +420,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         sessionService.updateIsSeenMessage(isSeenMessage);
     }
 
-    /** Đồng bộ appKey runtime với SDK (initV2 khóa appKey ở manifest; V9 truyền per-login). No-op nếu trùng. */
-    private void syncAppKey(String appKey) {
+    /**
+     * Đồng bộ appKey runtime với SDK (initV2 khóa appKey ở manifest; V9 truyền per-login). No-op nếu trùng.
+     * static: chatroom bridge (ChatroomV2Service) cũng phải gọi trước khi enter phòng, nếu không
+     * token của backend bị xác thực dưới appKey manifest -> 102302 invalid token.
+     */
+    public static void syncAppKey(String appKey) {
         try {
             if (appKey != null && !appKey.isEmpty() && !appKey.equals(NIMClient.getAppKey())) {
                 com.netease.nimlib.sdk.v2.V2NIMError e = NIMClient.updateAppKey(appKey);
