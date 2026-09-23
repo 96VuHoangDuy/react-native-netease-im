@@ -39,6 +39,13 @@ static NSString *RNNIMStr(NSString *value) {
     return value == nil ? @"" : value;
 }
 
+/// Chuỗi rỗng -> nil trước khi đưa xuống SDK. JS để default `''` cho các field optional, mà `@""`
+/// nghĩa là "gửi extension RỖNG", khác hẳn nil = "không gửi extension". Android có `emptyToNull()`
+/// cùng mục đích — bỏ bước này là hai platform hành xử khác nhau trên cùng một lệnh gọi từ JS.
+static NSString *RNNIMEmptyToNil(NSString *value) {
+    return value.length == 0 ? nil : value;
+}
+
 /// Gói V2NIMError thành NSError để wrapper bên RNNeteaseIm reject đúng mã lỗi NIM (113404, 102302,
 /// 102404...) thay vì "-1" chung chung — ma trận test đọc thẳng mã này.
 static NSError *RNNIMErrorToNSError(V2NIMError *error) {
@@ -127,6 +134,34 @@ static NSString *RNNIMRoleName(V2NIMChatroomMemberRole role) {
     return @"";
 }
 
+/// Rút gọn: bỏ tiền tố `V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_`, giống cách `RNNIMRoleName` làm.
+/// Khớp enum `ChatroomNotificationType` phía JS và bản Android đã ship. Enum hai SDK trùng tên và
+/// trùng thứ tự 0–18 (đối chiếu javap) nên chỉ khác ở bước cắt tiền tố này.
+static NSString *RNNIMNotificationTypeName(V2NIMChatroomMessageNotificationType type) {
+    switch (type) {
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_ENTER:                    return @"MEMBER_ENTER";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_EXIT:                     return @"MEMBER_EXIT";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_BLOCK_ADDED:              return @"MEMBER_BLOCK_ADDED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_BLOCK_REMOVED:            return @"MEMBER_BLOCK_REMOVED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_CHAT_BANNED_ADDED:        return @"MEMBER_CHAT_BANNED_ADDED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_CHAT_BANNED_REMOVED:      return @"MEMBER_CHAT_BANNED_REMOVED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_ROOM_INFO_UPDATED:               return @"ROOM_INFO_UPDATED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_KICKED:                   return @"MEMBER_KICKED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_TEMP_CHAT_BANNED_ADDED:   return @"MEMBER_TEMP_CHAT_BANNED_ADDED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_TEMP_CHAT_BANNED_REMOVED: return @"MEMBER_TEMP_CHAT_BANNED_REMOVED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MEMBER_INFO_UPDATED:             return @"MEMBER_INFO_UPDATED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_QUEUE_CHANGE:                    return @"QUEUE_CHANGE";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_CHAT_BANNED:                     return @"CHAT_BANNED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_CHAT_BANNED_REMOVED:             return @"CHAT_BANNED_REMOVED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_TAG_TEMP_CHAT_BANNED_ADDED:      return @"TAG_TEMP_CHAT_BANNED_ADDED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_TAG_TEMP_CHAT_BANNED_REMOVED:    return @"TAG_TEMP_CHAT_BANNED_REMOVED";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_MESSAGE_REVOKE:                  return @"MESSAGE_REVOKE";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_TAGS_UPDATE:                     return @"TAGS_UPDATE";
+        case V2NIM_CHATROOM_MESSAGE_NOTIFICATION_TYPE_ROLE_UPDATE:                     return @"ROLE_UPDATE";
+    }
+    return @"";
+}
+
 /// info nil -> dict RỖNG (không có cả roomId), khớp Android fromInfo.
 static NSMutableDictionary *RNNIMFromInfo(V2NIMChatroomInfo *info) {
     NSMutableDictionary *map = [NSMutableDictionary dictionary];
@@ -180,7 +215,7 @@ static NSDictionary *RNNIMFromMessage(V2NIMChatroomMessage *message) {
     if (message == nil) {
         return @{};
     }
-    return @{
+    NSMutableDictionary *map = [@{
         @"msgId":           RNNIMStr(message.messageClientId),
         @"roomId":          RNNIMStr(message.roomId),
         @"fromAccount":     RNNIMStr(message.senderId),
@@ -191,7 +226,61 @@ static NSDictionary *RNNIMFromMessage(V2NIMChatroomMessage *message) {
         @"subType":         @(message.subType),
         @"timestamp":       @(RNNIMToMillis(message.createTime)),
         @"isSelf":          @(message.isSelf),
-    };
+    } mutableCopy];
+
+    // Tên/avatar người gửi đi kèm ngay trong message [GAP-22]. Không có hai field này thì store phải
+    // tra member list, mà member list KHÔNG có người đã rời phòng và CREATOR trả nickname rỗng
+    // -> tin cũ mất tên người gửi. Nguồn giống hệt Android: `userInfoConfig.senderNick/senderAvatar`.
+    // Optional thật: absent khi SDK không có, KHÔNG đẩy chuỗi rỗng (JS phân biệt "chưa có" vs "rỗng").
+    V2NIMUserInfoConfig *senderInfo = message.userInfoConfig;
+    NSString *senderNickname = RNNIMEmptyToNil(senderInfo.senderNick);
+    NSString *senderAvatar = RNNIMEmptyToNil(senderInfo.senderAvatar);
+    if (senderNickname != nil) {
+        map[@"senderNickname"] = senderNickname;
+    }
+    if (senderAvatar != nil) {
+        map[@"senderAvatar"] = senderAvatar;
+    }
+
+    // Tin NOTIFICATION là đường DUY NHẤT báo member vào/ra thực tế — callback `onChatroomMemberEnter`
+    // của SDK không được invoke (đo bằng log 2 máy, cả 2 platform). Không bơm attachment ra đây thì
+    // JS chỉ thấy một tin text rỗng, không biết ai vào/ra [GAP-20].
+    if ([message.attachment isKindOfClass:[V2NIMChatroomNotificationAttachment class]]) {
+        V2NIMChatroomNotificationAttachment *note = (V2NIMChatroomNotificationAttachment *)message.attachment;
+        map[@"notificationType"] = RNNIMNotificationTypeName(note.type);
+
+        // Mảng rỗng cũng coi như absent, cho khớp quy ước optional của senderNickname/senderAvatar.
+        if (note.targetIds.count > 0) {
+            map[@"targetIds"] = note.targetIds;
+        }
+        if (note.targetNicks.count > 0) {
+            map[@"targetNicks"] = note.targetNicks;
+        }
+        NSString *operatorId = RNNIMEmptyToNil(note.operatorId);
+        NSString *operatorNick = RNNIMEmptyToNil(note.operatorNick);
+        if (operatorId != nil) {
+            map[@"operatorId"] = operatorId;
+        }
+        if (operatorNick != nil) {
+            map[@"operatorNick"] = operatorNick;
+        }
+
+        // Ban vĩnh viễn và ban tạm là HAI trạng thái độc lập ở server. Thiếu 3 field này thì nhánh
+        // GỠ ban không phân biệt được loại nào vừa được gỡ [GAP-5]. Chỉ bơm cho attachment ban:
+        // `V2NIMChatroomMemberEnterNotificationAttachment` cũng có 3 property y hệt nhưng KHÔNG bơm,
+        // vì tin vào/ra đang chạy thật, thêm field vào đó là rủi ro regression thuần.
+        if ([note isKindOfClass:[V2NIMChatroomChatBannedNotificationAttachment class]]) {
+            V2NIMChatroomChatBannedNotificationAttachment *ban =
+                (V2NIMChatroomChatBannedNotificationAttachment *)note;
+            map[@"chatBanned"] = @(ban.chatBanned);
+            map[@"tempChatBanned"] = @(ban.tempChatBanned);
+            // GIÂY ở CẢ 2 platform — `NSTimeInterval` bên này, `long` bên Android, cùng đơn vị nên
+            // KHÔNG quy đổi. Đừng nhầm với `timestamp` (iOS giây / Android ms, chỗ đó mới ×1000).
+            // 0 = đã gỡ ban tạm.
+            map[@"tempChatBannedDuration"] = @(ban.tempChatBannedDuration);
+        }
+    }
+    return map;
 }
 
 static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
@@ -366,6 +455,9 @@ static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
 /// Listener và provider phải được GIỮ STRONG: SDK không retain, thả ra là event im lặng biến mất.
 @property (nonatomic, strong) NSMutableDictionary<NSString *, RNNIMChatroomListener *> *listeners;
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSArray *> *providers;
+/// roomId -> `V2NIMUserInfoConfig` dựng sẵn từ nickname/avatar lúc enter. Cần giữ vì `userInfoConfig`
+/// KHÔNG được truyền từ người gửi sang người nhận nếu bên gửi không tự đính kèm (đo bằng log 2 máy).
+@property (nonatomic, strong) NSMutableDictionary<NSString *, V2NIMUserInfoConfig *> *senderInfoByRoom;
 
 @end
 
@@ -386,6 +478,7 @@ static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
         _clients = [NSMutableDictionary dictionary];
         _listeners = [NSMutableDictionary dictionary];
         _providers = [NSMutableDictionary dictionary];
+        _senderInfoByRoom = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -429,6 +522,7 @@ static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
         enterParams.accountId = accid;
         enterParams.roomNick = RNNIMStr(params[@"nickname"]);
         enterParams.roomAvatar = RNNIMStr(params[@"avatar"]);
+        [self rememberSenderInfo:roomId nickname:params[@"nickname"] avatar:params[@"avatar"]];
         enterParams.enableLbs = YES;
         // Builder bên Android tự điền timeout mặc định 60s, còn iOS init thẳng struct nên field này
         // là 0. Set tay cho khớp mặc định trong docs, khỏi phụ thuộc SDK có coi 0 là "dùng default".
@@ -507,12 +601,22 @@ static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
 #pragma mark -- message --
 
 /// Gửi text. Thành công còn bắn thêm qua observeChatroomSendMessage.
-- (void)sendTextMessage:(NSString *)roomId text:(NSString *)text success:(Success)success err:(Errors)err {
+- (void)sendTextMessage:(NSString *)roomId text:(NSString *)text serverExtension:(NSString *)serverExtension success:(Success)success err:(Errors)err {
     V2NIMChatroomClient *client = [self clientFor:roomId err:err];
     if (client == nil) {
         return;
     }
     V2NIMChatroomMessage *message = [V2NIMChatroomMessageCreator createTextMessage:RNNIMStr(text)];
+    // ✅ verified 2026-08-26 (msgId 2d4749d4): server KHÔNG tự truyền userInfoConfig sang người nhận,
+    // set ở đây thì phía nhận mới có senderNickname/senderAvatar [GAP-22]. Bỏ dòng này là tin gửi đi
+    // mất tên/avatar ở mọi máy khác. Android làm điều tương đương qua internal builder (fail-soft).
+    message.userInfoConfig = self.senderInfoByRoom[RNNIMStr(roomId)];
+    // Chuỗi tuỳ ý của app đi kèm tin (vd metadata trích dẫn). Rỗng thì KHÔNG set — để nil, đừng
+    // gán @"" vì bên nhận phân biệt "không có extension" bằng absent/nil.
+    NSString *extension = RNNIMEmptyToNil(serverExtension);
+    if (extension != nil) {
+        message.serverExtension = extension;
+    }
     [[client getChatroomService] sendMessage:message
                                       params:[[V2NIMSendChatroomMessageParams alloc] init]
                                      success:^(V2NIMSendChatroomMessageResult *result) {
@@ -595,6 +699,64 @@ static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
                                         }];
 }
 
+#pragma mark -- quản trị thành viên (cấm chat / danh sách đen) --
+
+// ⚠️ CHƯA VERIFY RUNTIME — cả 3 method dưới mới viết theo raw-docs, chưa chạy thật lần nào.
+// Quyền (creator/admin, admin không đụng được admin khác) do SDK chặn, bridge KHÔNG kiểm trước:
+// kiểm ở đây sẽ phải tự suy luận role, mà role có thể đã đổi ở server -> sai còn tệ hơn để SDK báo.
+// Chi tiết quyền ghi ở header file.
+
+- (void)setMemberChatBanned:(NSString *)roomId accountId:(NSString *)accountId chatBanned:(BOOL)chatBanned notificationExtension:(NSString *)notificationExtension success:(Success)success err:(Errors)err {
+    V2NIMChatroomClient *client = [self clientFor:roomId err:err];
+    if (client == nil) {
+        return;
+    }
+    [[client getChatroomService] setMemberChatBannedStatus:RNNIMStr(accountId)
+                                                chatBanned:chatBanned
+                                     notificationExtension:RNNIMEmptyToNil(notificationExtension)
+                                                   success:^{
+                                                       success(@(YES));
+                                                   }
+                                                   failure:^(V2NIMError *error) {
+                                                       err(RNNIMErrorToNSError(error));
+                                                   }];
+}
+
+// durationSeconds: GIÂY ở cả iOS (NSInteger) lẫn Android (long) -> truyền thẳng, không quy đổi.
+// Khác hẳn timestamp/beginTime (NSTimeInterval giây vs long ms) phải nhân/chia 1000 — đừng nhầm.
+- (void)setMemberTempChatBanned:(NSString *)roomId accountId:(NSString *)accountId durationSeconds:(NSInteger)durationSeconds notificationEnabled:(BOOL)notificationEnabled notificationExtension:(NSString *)notificationExtension success:(Success)success err:(Errors)err {
+    V2NIMChatroomClient *client = [self clientFor:roomId err:err];
+    if (client == nil) {
+        return;
+    }
+    [[client getChatroomService] setMemberTempChatBanned:RNNIMStr(accountId)
+                                  tempChatBannedDuration:durationSeconds
+                                     notificationEnabled:notificationEnabled
+                                   notificationExtension:RNNIMEmptyToNil(notificationExtension)
+                                                 success:^{
+                                                     success(@(YES));
+                                                 }
+                                                 failure:^(V2NIMError *error) {
+                                                     err(RNNIMErrorToNSError(error));
+                                                 }];
+}
+
+- (void)setMemberBlocked:(NSString *)roomId accountId:(NSString *)accountId blocked:(BOOL)blocked notificationExtension:(NSString *)notificationExtension success:(Success)success err:(Errors)err {
+    V2NIMChatroomClient *client = [self clientFor:roomId err:err];
+    if (client == nil) {
+        return;
+    }
+    [[client getChatroomService] setMemberBlockedStatus:RNNIMStr(accountId)
+                                                blocked:blocked
+                                  notificationExtension:RNNIMEmptyToNil(notificationExtension)
+                                                success:^{
+                                                    success(@(YES));
+                                                }
+                                                failure:^(V2NIMError *error) {
+                                                    err(RNNIMErrorToNSError(error));
+                                                }];
+}
+
 #pragma mark -- legacy: recent-session list --
 
 /// Giữ nguyên old-gen: NIMViewController cần info của phòng CHƯA vào (V2 chỉ có info của phòng đã
@@ -621,6 +783,24 @@ static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
 }
 
 #pragma mark -- helpers --
+
+/// Dựng sẵn `V2NIMUserInfoConfig` của phiên lúc enter để `sendTextMessage` đính kèm vào mọi tin.
+/// Cả hai field rỗng thì KHÔNG tạo object — đính kèm config rỗng còn tệ hơn không đính kèm.
+- (void)rememberSenderInfo:(NSString *)roomId nickname:(NSString *)nickname avatar:(NSString *)avatar {
+    NSString *nick = RNNIMEmptyToNil(nickname);
+    NSString *avatarUrl = RNNIMEmptyToNil(avatar);
+    if (nick == nil && avatarUrl == nil) {
+        [self.senderInfoByRoom removeObjectForKey:RNNIMStr(roomId)];
+        return;
+    }
+    V2NIMUserInfoConfig *config = [[V2NIMUserInfoConfig alloc] init];
+    config.senderNick = nick;
+    config.senderAvatar = avatarUrl;
+    // "Thời điểm cập nhật cuối uinfo của người gửi" — để 0 là mốc epoch, server có thể coi là quá cũ.
+    // ⚠️ Android phải set giống, lệch chỗ này thì hai bên gửi ra hai kiểu metadata.
+    config.userInfoTimestamp = [[NSDate date] timeIntervalSince1970];
+    self.senderInfoByRoom[RNNIMStr(roomId)] = config;
+}
 
 - (V2NIMChatroomClient *)clientFor:(NSString *)roomId err:(Errors)err {
     V2NIMChatroomClient *client = self.clients[RNNIMStr(roomId)];
@@ -650,6 +830,7 @@ static NSArray *RNNIMFromMessages(NSArray<V2NIMChatroomMessage *> *messages) {
     // chết ngay trước khi `exit` kịp bắn onChatroomExited -> JS mất event EXITED của lần thoát này.
     [self.listeners removeObjectForKey:key];
     [self.providers removeObjectForKey:key];
+    [self.senderInfoByRoom removeObjectForKey:key];
 }
 
 /// Đồng bộ appKey runtime với SDK. Chỉ so-và-đổi; KHÔNG dùng ensureRegisterV2WithAppKey: của

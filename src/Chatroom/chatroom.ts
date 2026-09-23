@@ -75,8 +75,79 @@ class NimChatroom {
     return RNNeteaseIm.getNimSdkAppKey();
   }
 
-  sendTextMessage(roomId: string, text: string): Promise<NIMChatroomMessage> {
-    return RNNeteaseIm.sendChatroomTextMessage(roomId, text);
+  /**
+   * Gửi text. `serverExtension` là chuỗi tuỳ ý đi kèm tin (JSON của app, vd metadata trích dẫn);
+   * bên nhận đọc lại ở `NIMChatroomMessage.serverExtension`.
+   *
+   * Mặc định `''` là CỐ Ý: bridge native nhận đúng 3 tham số, nếu để `undefined` lọt xuống thì
+   * RN báo sai arity lúc chạy. Gọi 2 tham số như cũ vẫn chạy y nguyên nhờ default này.
+   */
+  sendTextMessage(
+    roomId: string,
+    text: string,
+    serverExtension: string = ''
+  ): Promise<NIMChatroomMessage> {
+    return RNNeteaseIm.sendChatroomTextMessage(roomId, text, serverExtension);
+  }
+
+  /**
+   * Cấm chat VĨNH VIỄN / gỡ (`chatBanned=false`). Gỡ vĩnh viễn không đụng hạn cấm tạm.
+   * ⚠️ Chỉ creator/administrator phòng gọi được, và administrator không thao tác được lên
+   * creator/administrator khác — xem QUYỀN ở `ChatroomV2Service.java`. Sai quyền thì SDK trả lỗi.
+   */
+  setMemberChatBanned(
+    roomId: string,
+    accountId: string,
+    chatBanned: boolean,
+    notificationExtension: string = ''
+  ): Promise<boolean> {
+    return RNNeteaseIm.setChatroomMemberChatBanned(
+      roomId,
+      accountId,
+      chatBanned,
+      notificationExtension
+    );
+  }
+
+  /**
+   * Cấm chat TẠM THỜI / gỡ. `tempChatBannedDuration` tính bằng **GIÂY** (không phải ms như
+   * `timestamp` của message), tối đa 30 ngày một lần, truyền 0 để gỡ. Set lại là GHI ĐÈ hạn cũ,
+   * không cộng dồn. Bridge không quy đổi đơn vị — store/UI tự quyết phút/giờ.
+   */
+  setMemberTempChatBanned(
+    roomId: string,
+    accountId: string,
+    tempChatBannedDuration: number,
+    notificationEnabled: boolean = true,
+    notificationExtension: string = ''
+  ): Promise<boolean> {
+    return RNNeteaseIm.setChatroomMemberTempChatBanned(
+      roomId,
+      accountId,
+      tempChatBannedDuration,
+      notificationEnabled,
+      notificationExtension
+    );
+  }
+
+  /**
+   * Thêm/gỡ danh sách đen NIM — công cụ ENFORCEMENT của "danh sách đen" nghiệp vụ [D-032].
+   * Nặng hơn cấm chat: người bị chặn bị ĐÁ khỏi phòng (`observeChatroomKicked`) và mất kết nối.
+   * ⚠️ Gọi ĐI KÈM API blacklist của backend, không gọi đơn lẻ — DB backend là nguồn sự thật,
+   * hàm này chỉ tạo hiệu lực tức thì.
+   */
+  setMemberBlocked(
+    roomId: string,
+    accountId: string,
+    blocked: boolean,
+    notificationExtension: string = ''
+  ): Promise<boolean> {
+    return RNNeteaseIm.setChatroomMemberBlocked(
+      roomId,
+      accountId,
+      blocked,
+      notificationExtension
+    );
   }
 }
 

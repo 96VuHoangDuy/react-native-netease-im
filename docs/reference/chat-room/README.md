@@ -32,3 +32,5 @@ Docs chính thức NetEase NIM **V2 chatroom** (`V2NIMChatroomClient` — [D-015
 
 - Phân tích + quyết định feature: `pyeon-chinese-mobile/docs/features/chat-room/` (nhánh `feat/chat-room`)
 - `docs/features/chatroom/README.md` (repo này) đã cập nhật theo bridge V2: Android dùng `ChatroomV2Service.java` + artifact `com.netease.nimlib:chatroom`; iOS còn old-gen, chờ viết lại.
+
+- **[nim-error-codes.md](nim-error-codes.md)** — bảng mã lỗi NIM đầy đủ (⭐ tra 113xxx/114xxx khi bridge chatroom reject; ⚠️ mã `50000xx` là của MIDDLEWARE TQ, không phải NIM — xem 4 dòng đầu file)

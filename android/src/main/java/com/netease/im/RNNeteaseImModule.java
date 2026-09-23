@@ -240,8 +240,30 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     }
 
     @ReactMethod
-    public void sendChatroomTextMessage(String roomId, String text, Promise promise) {
-        ChatroomV2Service.sendTextMessage(roomId, text, promise);
+    public void sendChatroomTextMessage(String roomId, String text, String serverExtension,
+                                        Promise promise) {
+        ChatroomV2Service.sendTextMessage(roomId, text, serverExtension, promise);
+    }
+
+    // 3 hàm dưới chỉ creator/administrator phòng gọi được — xem QUYỀN ở header ChatroomV2Service.
+    @ReactMethod
+    public void setChatroomMemberChatBanned(String roomId, String accountId, boolean chatBanned,
+                                            String notificationExtension, Promise promise) {
+        ChatroomV2Service.setMemberChatBanned(roomId, accountId, chatBanned, notificationExtension, promise);
+    }
+
+    @ReactMethod
+    public void setChatroomMemberTempChatBanned(String roomId, String accountId, double duration,
+                                                boolean notificationEnabled,
+                                                String notificationExtension, Promise promise) {
+        ChatroomV2Service.setMemberTempChatBanned(roomId, accountId, duration, notificationEnabled,
+                notificationExtension, promise);
+    }
+
+    @ReactMethod
+    public void setChatroomMemberBlocked(String roomId, String accountId, boolean blocked,
+                                         String notificationExtension, Promise promise) {
+        ChatroomV2Service.setMemberBlocked(roomId, accountId, blocked, notificationExtension, promise);
     }
 
     @ReactMethod
@@ -1672,10 +1694,10 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType ,final Promise promise) {
+    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
 
-            sessionService.sendTextMessageWithSession(content, sessionId, sessionType, sessionName, messageSubType, new SessionService.OnSendMessageListener() {
+            sessionService.sendTextMessageWithSession(content, sessionId, sessionType, sessionName, messageSubType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1744,9 +1766,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendGifMessageWithSession(String url,String aspectRatio, String sessionId, String typeStr, String sessionName, final Promise promise) {
+    public void sendGifMessageWithSession(String url,String aspectRatio, String sessionId, String typeStr, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendGifMessageWithSession(url, aspectRatio, sessionId, typeStr, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendGifMessageWithSession(url, aspectRatio, sessionId, typeStr, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1775,9 +1797,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, final Promise promise) {
+    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1808,9 +1830,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendFileMessageWithSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, final Promise promise) {
+    public void sendFileMessageWithSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendFileMessageWitSession(filePath, fileName, fileType, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendFileMessageWitSession(filePath, fileName, fileType, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1823,9 +1845,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendFileMessage(String filePath, String fileName, String fileType, final Promise promise) {
+    public void sendFileMessage(String filePath, String fileName, String fileType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendFileMessage(filePath, fileName, fileType, new SessionService.OnSendMessageListener() {
+            sessionService.sendFileMessage(filePath, fileName, fileType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1898,9 +1920,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, final Promise promise) {
+    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendVideoMessageWithSession(file, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendVideoMessageWithSession(file, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1933,9 +1955,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, final Promise promise) {
+    public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendCardMessage(toSessionType, toSessionId, name, imgPath, cardSessionId, cardSessionType, new SessionService.OnSendMessageListener() {
+            sessionService.sendCardMessage(toSessionType, toSessionId, name, imgPath, cardSessionId, cardSessionType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1980,9 +2002,9 @@ WritableMap _result = Arguments.createMap();
 //    longitude, // 经度
 //    address // 地址信息描述
     @ReactMethod
-    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, final Promise promise) {
+    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendLocationMessage(sessionId, sessionType, latitude, longitude, address, new SessionService.OnSendMessageListener() {
+            sessionService.sendLocationMessage(sessionId, sessionType, latitude, longitude, address, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     if (code == ResponseCode.RES_SUCCESS) {

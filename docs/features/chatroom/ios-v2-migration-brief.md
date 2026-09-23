@@ -2,6 +2,30 @@
 
 **Ngày:** 2026-08-21 · **Dành cho:** session làm iOS · **Android đã xong và chạy thật** — nhiệm vụ là làm iOS **khớp hệt** Android, không thiết kế lại.
 
+> ## ✅ ĐÃ THỰC HIỆN 2026-08-22 — commit `21e1fba`
+>
+> Brief này giữ lại để tra cứu. **4 chỗ brief nói thiếu/sai**, phát hiện lúc code, bản đã ship theo
+> vế bên phải:
+>
+> 1. **Bảng §3.1 thiếu method thứ 8** — `getSdkAppKey` → native `getNimSdkAppKey`
+>    (`chatroom.ts` có gọi). Đã implement.
+> 2. **Đơn vị thời gian lệch platform** (brief không nhắc). iOS trả `NSTimeInterval` **giây**
+>    (`V2NIMChatroomMessageListOption.beginTime` ghi rõ "单位秒"); Android trả `long` **mili-giây**
+>    (`javap`: `getCreateTime():long`). Bridge iOS **quy về ms** khi serialize
+>    (`timestamp`/`enterTime`/`updateTime`/`revokeTime`) và **chia lại 1000** khi nhận `beginTime`.
+> 3. **§3.2/§3.3 nói "event bọc thêm `roomId` ở cấp ngoài" — KHÔNG đúng với
+>    `observeChatroomInfoUpdated`**: Android emit thẳng `fromInfo(info)`, không bọc. iOS giữ y hệt.
+> 4. **Chuỗi enum không suy ra được từ header iOS.** Android trả `enum.name()`; đã extract tên hằng
+>    thật từ bytecode aar. Một chỗ hai bên đặt tên khác nhau: Android `V2NIM_MESSAGE_TYPE_TIPS` vs
+>    header iOS `V2NIM_MESSAGE_TYPE_TIP` — iOS trả theo **Android**.
+>
+> Hai thứ brief không thể biết trước, đã xử lý trong code: `exit` phải chạy **trước** khi nhả
+> listener (nếu SDK giữ listener yếu thì mất event `EXITED`), và `enterParams.timeout` phải set tay
+> `= 60` vì iOS `init` để `0` trong khi Android có 60 sẵn nhờ builder.
+>
+> Trạng thái: build xanh (pod + app), **chưa chạy thật lần nào**. Ma trận test dùng chung
+> `pyeon-chinese-mobile/docs/features/chat-room/plans/test-android-bridge.md`.
+
 Đọc trước: `docs/reference/chat-room/README.md` (index docs NIM V2, có line number từng section).
 Quyết định gốc: `pyeon-chinese-mobile/docs/features/chat-room/decisions/DECISIONS.md` — [D-015], **[D-020]**.
 Luồng đã trace: `pyeon-chinese-mobile/docs/flows/chatroom-enter-message.md`.

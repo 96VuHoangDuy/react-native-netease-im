@@ -1848,8 +1848,36 @@ RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSIntege
     }];
 }
 
-RCT_EXPORT_METHOD(sendChatroomTextMessage:(nonnull NSString *)roomId text:(nonnull NSString *)text resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[self chatroomController] sendTextMessage:roomId text:text success:^(id params) {
+RCT_EXPORT_METHOD(sendChatroomTextMessage:(nonnull NSString *)roomId text:(nonnull NSString *)text serverExtension:(NSString *)serverExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] sendTextMessage:roomId text:text serverExtension:serverExtension success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        RNNIMChatroomReject(reject, error);
+    }];
+}
+
+// Quản trị thành viên phòng. ⚠️ CHƯA VERIFY RUNTIME.
+// Quyền: chỉ creator/administrator; admin KHÔNG đụng được creator lẫn admin khác; không đụng được
+// fictitious user và anonymous tourist. SDK tự chặn và trả lỗi qua reject — bridge không kiểm trước.
+RCT_EXPORT_METHOD(setChatroomMemberChatBanned:(nonnull NSString *)roomId accountId:(nonnull NSString *)accountId chatBanned:(BOOL)chatBanned notificationExtension:(NSString *)notificationExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] setMemberChatBanned:roomId accountId:accountId chatBanned:chatBanned notificationExtension:notificationExtension success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        RNNIMChatroomReject(reject, error);
+    }];
+}
+
+// durationSeconds tính bằng GIÂY (giống Android), tối đa 30 ngày, 0 = huỷ cấm.
+RCT_EXPORT_METHOD(setChatroomMemberTempChatBanned:(nonnull NSString *)roomId accountId:(nonnull NSString *)accountId durationSeconds:(NSInteger)durationSeconds notificationEnabled:(BOOL)notificationEnabled notificationExtension:(NSString *)notificationExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] setMemberTempChatBanned:roomId accountId:accountId durationSeconds:durationSeconds notificationEnabled:notificationEnabled notificationExtension:notificationExtension success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        RNNIMChatroomReject(reject, error);
+    }];
+}
+
+RCT_EXPORT_METHOD(setChatroomMemberBlocked:(nonnull NSString *)roomId accountId:(nonnull NSString *)accountId blocked:(BOOL)blocked notificationExtension:(NSString *)notificationExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] setMemberBlocked:roomId accountId:accountId blocked:blocked notificationExtension:notificationExtension success:^(id params) {
         resolve(params);
     } err:^(id error) {
         RNNIMChatroomReject(reject, error);

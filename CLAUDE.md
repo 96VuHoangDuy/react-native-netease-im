@@ -38,7 +38,7 @@ Làm việc trong repo này như một maintainer của thư viện React Native
 
 ## RULE-FLOW-01 — Trace luồng xong thì lưu lại thành `flows/`
 
-> Luật đầy đủ + format: `RULE-FLOW-01` trong `~/.claude/CLAUDE.md` (global, áp dụng mọi repo).
+> Luật đầy đủ + format: `RULE-FLOW-01` trong skill `engineering-workflows` (`references/legacy-rules.md`, bản Claude ở `~/.claude/skills`, bản Codex ở `~/.codex/skills`) (global, áp dụng mọi repo).
 > Dưới đây chỉ là phần riêng của repo này.
 
 - **Thư mục:** `docs/flows/<tên-luồng>.md` — xem `docs/flows/README.md`.

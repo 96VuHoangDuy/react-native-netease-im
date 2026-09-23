@@ -43,7 +43,30 @@ typedef void(^Errors)(id _Nullable error);
 /// beginTimeMs tính bằng MILI-giây cho khớp Android; SDK iOS nhận giây nên bên trong tự chia 1000.
 - (void)fetchMessageHistory:(NSString *_Nonnull)roomId limit:(NSInteger)limit beginTime:(double)beginTimeMs orderBy:(NSString *_Nullable)orderBy success:(Success _Nonnull)success err:(Errors _Nonnull)err;
 
-- (void)sendTextMessage:(NSString *_Nonnull)roomId text:(NSString *_Nonnull)text success:(Success _Nonnull)success err:(Errors _Nonnull)err;
+/// `serverExtension` là chuỗi tuỳ ý đi kèm tin (JSON của app, vd metadata trích dẫn); nil/rỗng thì không set.
+- (void)sendTextMessage:(NSString *_Nonnull)roomId text:(NSString *_Nonnull)text serverExtension:(NSString *_Nullable)serverExtension success:(Success _Nonnull)success err:(Errors _Nonnull)err;
+
+#pragma mark -- quản trị thành viên (cấm chat / danh sách đen) --
+
+/**
+ * ⚠️ CHƯA VERIFY RUNTIME — mới viết theo `raw-docs/member-management.md`, chưa chạy thật lần nào.
+ *
+ * QUYỀN, giống hệt nhau cho cả 3 method dưới đây (SDK tự chặn, bridge KHÔNG kiểm trước):
+ * - Chỉ **creator** và **administrator** của phòng gọi được.
+ * - Administrator **không** thao tác được lên creator và administrator khác — chỉ creator làm được.
+ *   Tức admin phòng chỉ cấm được thành viên thường.
+ * - Không thao tác được lên fictitious user và anonymous tourist.
+ * Gọi sai quyền thì SDK trả lỗi qua `err`, không phải no-op im lặng.
+ */
+
+/// Cấm chat vĩnh viễn / gỡ cấm.
+- (void)setMemberChatBanned:(NSString *_Nonnull)roomId accountId:(NSString *_Nonnull)accountId chatBanned:(BOOL)chatBanned notificationExtension:(NSString *_Nullable)notificationExtension success:(Success _Nonnull)success err:(Errors _Nonnull)err;
+
+/// Cấm chat tạm thời / gỡ. `durationSeconds` tính bằng **giây** (giống Android), tối đa 30 ngày, `0` = huỷ cấm.
+- (void)setMemberTempChatBanned:(NSString *_Nonnull)roomId accountId:(NSString *_Nonnull)accountId durationSeconds:(NSInteger)durationSeconds notificationEnabled:(BOOL)notificationEnabled notificationExtension:(NSString *_Nullable)notificationExtension success:(Success _Nonnull)success err:(Errors _Nonnull)err;
+
+/// Thêm / gỡ khỏi danh sách đen của phòng.
+- (void)setMemberBlocked:(NSString *_Nonnull)roomId accountId:(NSString *_Nonnull)accountId blocked:(BOOL)blocked notificationExtension:(NSString *_Nullable)notificationExtension success:(Success _Nonnull)success err:(Errors _Nonnull)err;
 
 #pragma mark -- legacy: recent-session list (NIMViewController), KHÔNG thuộc bridge V2 --
 

@@ -203,6 +203,8 @@ Repo hiện không có session UI ở JS; mọi logic chat thực thi ở native
   - reaction / remove reaction
   - birthday notification
 - Unknown user / stranger enrichment có thể đi qua native `CacheUsers` và `UserStrangers`.
+- Session `cmd10000` là **kênh lệnh của backend** (khoá tài khoản, đổi mật khẩu, và từ 2026-09 các custom notice khác). Tin tới dưới dạng **custom message P2P**, không phải custom system notification — consumer app phải nghe `observeRecentContact`, `observeCustomNotification` KHÔNG nổ.
+- `WarningLoginAttachment.toReactNative()` merge nguyên `data` gốc vào `extend` (`Arguments.makeNativeMap`), nên payload Android bằng iOS. **Đây là contract**: bỏ merge là consumer mất mọi trường ngoài 4 trường cảnh báo đăng nhập. Xem `../../playbook/GAPS.md` mục `CustomAttachParser`.
 - Session module đồng thời kiểm soát message anti-spam option:
   - iOS dùng `IM_BUSINESS_ID`
   - Android có hook nội bộ nhưng chưa bridge public
