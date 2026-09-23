@@ -57,3 +57,9 @@ Bảo trì repo này như một thư viện React Native có native runtime ph�
 
 - Nếu sửa feature hiện có, cập nhật `docs/features/<feature>/README.md` trong cùng thay đổi nếu contract hoặc behavior đổi.
 - Nếu thêm feature mới, tạo feature doc tương ứng hoặc ghi rõ chưa đủ dữ liệu để tạo.
+
+## Claude → Codex Sync (ZYZJ)
+
+- Sau file này, Codex phải đọc `CLAUDE.md`, rồi `AI_PLAYBOOK.md` và docs liên quan trước source.
+- Khi thay đổi contract bridge, verify consumer `pyeon-chinese-mobile` sau package.
+- Nếu `AGENTS.md` và `CLAUDE.md` mâu thuẫn, file này thắng.

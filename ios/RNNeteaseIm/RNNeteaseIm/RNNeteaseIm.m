@@ -1782,52 +1782,113 @@ RCT_EXPORT_METHOD(cleanListSessionsCache:(NSArray *)sessionIds resolve:(RCTPromi
 
 #pragma mark -- chatroom -----------------------------------------------
 
+// Chatroom V2: mã lỗi NIM (113404 phòng không tồn tại, 102302 sai token, 102404 sai accid) phải lên
+// tới JS nguyên vẹn — nuốt thành "-1" là mất đường lần ngược nguyên nhân.
+static void RNNIMChatroomReject(RCTPromiseRejectBlock reject, id error) {
+    if ([error isKindOfClass:NSError.class]) {
+        NSError *e = (NSError *)error;
+        reject([@(e.code) stringValue], e.localizedDescription, e);
+        return;
+    }
+    reject(@"-1", [NSString stringWithFormat:@"%@", error], nil);
+}
+
+/// Bridge chỉ sống trong module này; controller cần nó để emit event realtime của phòng.
+- (ChatroomViewController *)chatroomController {
+    ChatroomViewController *controller = [ChatroomViewController initWithChatroomViewController];
+    controller.bridge = _bridge;
+    return controller;
+}
+
 RCT_EXPORT_METHOD(loginChatroom:(nonnull NSDictionary *)params resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ChatroomViewController initWithChatroomViewController] loginChatroom:params success:^(id param) {
+    [[self chatroomController] loginChatroom:params success:^(id param) {
         resolve(param);
     } err:^(id error) {
-        reject(@"-1", error, nil);
+        RNNIMChatroomReject(reject, error);
     }];
 }
 
 RCT_EXPORT_METHOD(logoutChatroom:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] logoutChatroom:roomId success:^(id params) {
+    [[self chatroomController] logoutChatroom:roomId success:^(id params) {
         resolve(params);
     } err:^(id error) {
-        reject(@"-1", error, nil);
+        RNNIMChatroomReject(reject, error);
     }];
 }
 
 RCT_EXPORT_METHOD(fetchChatroomInfo:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomInfo:roomId success:^(id params) {
+    [[self chatroomController] fetchChatroomInfo:roomId success:^(id params) {
         resolve(params);
     } err:^(id error) {
-        reject(@"-1", error, nil);
+        RNNIMChatroomReject(reject, error);
     }];
 }
 
-RCT_EXPORT_METHOD(fetchChatroomMember:(nonnull NSString *)roomId userId:(nonnull NSString *)userId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMember:roomId userId:userId success:^(id params) {
+RCT_EXPORT_METHOD(fetchChatroomMember:(nonnull NSString *)roomId accountIds:(NSArray *)accountIds resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] fetchChatroomMember:roomId accountIds:accountIds success:^(id params) {
         resolve(params);
     } err:^(id error) {
-        reject(@"-1", error, nil);
+        RNNIMChatroomReject(reject, error);
     }];
 }
 
-RCT_EXPORT_METHOD(fetchChatroomMembers:(nonnull NSString *)roomId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchChatroomMembers:roomId success:^(id params) {
+RCT_EXPORT_METHOD(fetchChatroomMembers:(nonnull NSString *)roomId limit:(NSInteger)limit pageToken:(NSString *)pageToken onlyOnline:(BOOL)onlyOnline resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] fetchChatroomMembers:roomId limit:limit pageToken:pageToken onlyOnline:onlyOnline success:^(id params) {
         resolve(params);
     } err:^(id error) {
-        reject(@"-1", error, nil);
+        RNNIMChatroomReject(reject, error);
     }];
 }
 
-RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSInteger)limit currentMessageId:(NSString *)currentMessageId orderBy:(NSString *)orderBy resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ChatroomViewController initWithChatroomViewController] fetchMessageHistory:roomId limit:limit currentMessageId:currentMessageId orderBy:orderBy success:^(id params) {
+RCT_EXPORT_METHOD(fetchMessageHistory:(nonnull NSString *)roomId limit:(NSInteger)limit beginTime:(double)beginTime orderBy:(NSString *)orderBy resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] fetchMessageHistory:roomId limit:limit beginTime:beginTime orderBy:orderBy success:^(id params) {
         resolve(params);
     } err:^(id error) {
-        reject(@"-1", error, nil);
+        RNNIMChatroomReject(reject, error);
     }];
+}
+
+RCT_EXPORT_METHOD(sendChatroomTextMessage:(nonnull NSString *)roomId text:(nonnull NSString *)text serverExtension:(NSString *)serverExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] sendTextMessage:roomId text:text serverExtension:serverExtension success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        RNNIMChatroomReject(reject, error);
+    }];
+}
+
+// Quản trị thành viên phòng. ⚠️ CHƯA VERIFY RUNTIME.
+// Quyền: chỉ creator/administrator; admin KHÔNG đụng được creator lẫn admin khác; không đụng được
+// fictitious user và anonymous tourist. SDK tự chặn và trả lỗi qua reject — bridge không kiểm trước.
+RCT_EXPORT_METHOD(setChatroomMemberChatBanned:(nonnull NSString *)roomId accountId:(nonnull NSString *)accountId chatBanned:(BOOL)chatBanned notificationExtension:(NSString *)notificationExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] setMemberChatBanned:roomId accountId:accountId chatBanned:chatBanned notificationExtension:notificationExtension success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        RNNIMChatroomReject(reject, error);
+    }];
+}
+
+// durationSeconds tính bằng GIÂY (giống Android), tối đa 30 ngày, 0 = huỷ cấm.
+RCT_EXPORT_METHOD(setChatroomMemberTempChatBanned:(nonnull NSString *)roomId accountId:(nonnull NSString *)accountId durationSeconds:(NSInteger)durationSeconds notificationEnabled:(BOOL)notificationEnabled notificationExtension:(NSString *)notificationExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] setMemberTempChatBanned:roomId accountId:accountId durationSeconds:durationSeconds notificationEnabled:notificationEnabled notificationExtension:notificationExtension success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        RNNIMChatroomReject(reject, error);
+    }];
+}
+
+RCT_EXPORT_METHOD(setChatroomMemberBlocked:(nonnull NSString *)roomId accountId:(nonnull NSString *)accountId blocked:(BOOL)blocked notificationExtension:(NSString *)notificationExtension resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[self chatroomController] setMemberBlocked:roomId accountId:accountId blocked:blocked notificationExtension:notificationExtension success:^(id params) {
+        resolve(params);
+    } err:^(id error) {
+        RNNIMChatroomReject(reject, error);
+    }];
+}
+
+// Chẩn đoán 102302: appKey mà SDK ĐANG dùng lúc runtime. Token backend chỉ hợp lệ dưới đúng appKey
+// đã cấp nó — lệch là invalid token.
+RCT_EXPORT_METHOD(getNimSdkAppKey:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    NSString *appKey = [[NIMSDK sharedSDK] appKey];
+    resolve(@{@"sdkAppKey": appKey == nil ? @"" : appKey});
 }
 
 RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getDeviceLanguage){

@@ -1617,7 +1617,7 @@ public class SessionService {
 
     }
 
-    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType, OnSendMessageListener onSendMessageListener) {
+    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         SessionTypeEnum sessionT = SessionUtil.getSessionType(sessionType);
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionT, content);
         if (!messageSubType.equals(0)) {
@@ -1631,7 +1631,7 @@ public class SessionService {
             message.setNIMAntiSpamOption(antiSpamOption);
         }
 
-        sendMessageSelf(message, onSendMessageListener, false, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     /**
@@ -1669,7 +1669,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
-    public void sendGifMessageWithSession(String url, String aspectRatio, String sessionId, String typeStr, String sessionName, OnSendMessageListener onSendMessageListener) {
+    public void sendGifMessageWithSession(String url, String aspectRatio, String sessionId, String typeStr, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         SessionTypeEnum sessionType = SessionUtil.getSessionType(typeStr);
         IMMessage message = MessageBuilder.createTextMessage(sessionId, sessionType, "[动图]");
 
@@ -1680,7 +1680,7 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void sendGifMessage(String url, String aspectRatio, List<String> selectedMembers, Boolean isSkipFriendCheck, Boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
@@ -1749,7 +1749,10 @@ public class SessionService {
                 message.setStatus(MsgStatusEnum.success);
                 getMsgService().saveMessageToLocal(message, true);
             } else {
-                sendMessageSelf(message, onSendMessageListener, false, false, false);
+                // Tin "tip" là chú thích hệ thống của chính máy mình, không phải tin người dùng gửi:
+                // luôn bỏ qua kiểm tra bạn bè. Nếu không, khối kiểm tra ở `sendMessageSelf` lại gọi
+                // `sendTipMessage` -> đệ quy.
+                sendMessageSelf(message, onSendMessageListener, false, true, true);
             }
         }
     }
@@ -2061,7 +2064,7 @@ public class SessionService {
     }
 
 
-    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         File temp = ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()), true);
@@ -2074,7 +2077,7 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void sendImageMessage(String file, String displayName, boolean isHighQuality, boolean isSkipFriendCheck, Boolean isSkipTipForStranger, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
@@ -2104,7 +2107,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
-    public void sendFileMessageWitSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
+    public void sendFileMessageWitSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         File file = new File(filePath);
         SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
         IMMessage message = MessageBuilder.createFileMessage(sessionId, sessionTypeEnum, file, fileName);
@@ -2113,10 +2116,10 @@ public class SessionService {
         Map<String, Object> remoteExt = new HashMap<String, Object>();
         remoteExt.put("fileType", fileType);
         message.setRemoteExtension(remoteExt);
-        sendMessageSelf(message, onSendMessageListener, false, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
-    public void sendFileMessage(String filePath, String fileName, String fileType, OnSendMessageListener onSendMessageListener) {
+    public void sendFileMessage(String filePath, String fileName, String fileType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         File file = new File(filePath);
         IMMessage message = MessageBuilder.createFileMessage(sessionId, sessionTypeEnum, file, fileName);
         message.setContent(fileName);
@@ -2124,7 +2127,7 @@ public class SessionService {
         Map<String, Object> remoteExt = new HashMap<String, Object>();
         remoteExt.put("fileType", fileType);
         message.setRemoteExtension(remoteExt);
-        sendMessageSelf(message, onSendMessageListener, false, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void sendAudioMessage(String file, long duration, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
@@ -2179,7 +2182,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
-    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, OnSendMessageListener onSendMessageListener) {
+    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         String md5 = MD5.getStreamMD5(file);
         File f = new File(file);
@@ -2213,10 +2216,10 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
-    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, OnSendMessageListener onSendMessageListener) {
+    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         double lat = 23.12504;
         try {
             lat = Double.parseDouble(latitude);
@@ -2281,7 +2284,7 @@ public class SessionService {
         sendMessageSelf(message, onSendMessageListener, false, false, false);
     }
 
-    public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, OnSendMessageListener onSendMessageListener) {
+    public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
         SessionTypeEnum sessionTypeE = SessionUtil.getSessionType(toSessionType);
         IMMessage message = MessageBuilder.createTextMessage(toSessionId, sessionTypeE, "[个人名片]");
 
@@ -2294,7 +2297,7 @@ public class SessionService {
 
         message.setRemoteExtension(remoteExt);
 
-        sendMessageSelf(message, onSendMessageListener, false, false, false);
+        sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
     public void forwardMultipleTextMessage(ReadableMap dataDict, String sessionId, String sessionType, String content, OnSendMessageListener onSendMessageListener) {
@@ -2572,26 +2575,32 @@ public class SessionService {
             sessionName = NimUserInfoCache.getInstance().getUserName(message.getSessionId());
 
             isFriend = NIMClient.getService(FriendService.class).isMyFriend(message.getSessionId());
-            // [DEBUG] Temporarily disabled friend check to debug error 20000
-            // if (!isFriend && !isSkipFriendCheck) {
-            //     Map<String, Object> localExt = new HashMap<String, Object>();
-            //
-            //     if (!isFriend) {
-            //         localExt.put("isCancelResend", true);
-            //     }
-            //
-            //     message.setStatus(MsgStatusEnum.fail);
-            //     message.setLocalExtension(localExt);
-            //     CustomMessageConfig config = new CustomMessageConfig();
-            //     config.enablePush = false;
-            //     config.enableUnreadCount = false;
-            //     message.setConfig(config);
-            //     getMsgService().saveMessageToLocal(message, true);
-            //     if (!isSkipTipForStranger) {
-            //         sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
-            //     }
-            //     return;
-            // }
+            // Không phải bạn bè và không có phiên tạm hợp lệ -> KHÔNG đẩy lên NIM (server từ chối),
+            // mà lưu tin ở máy với trạng thái fail để người gửi thấy bong bóng tin hỏng kèm dòng
+            // "Gửi thất bại, người này không muốn nhận tin nhắn riêng từ ..." (MessageItem.tsx).
+            // ⚠️ Khối này chỉ đúng khi MỌI đường gửi truyền được `isSkipFriendCheck` từ JS xuống.
+            // Trước 2026-09-22 các biến thể *WithSession truyền cứng `false` nên bật khối lên là vỡ
+            // luồng nhắn người lạ qua phiên tạm (MB-16) — đã thông cờ cho 7 phương thức, đừng thêm
+            // đường gửi mới mà quên hai tham số này.
+            if (!isFriend && !isSkipFriendCheck) {
+                Map<String, Object> localExt = new HashMap<String, Object>();
+
+                if (!isFriend) {
+                    localExt.put("isCancelResend", true);
+                }
+
+                message.setStatus(MsgStatusEnum.fail);
+                message.setLocalExtension(localExt);
+                CustomMessageConfig config = new CustomMessageConfig();
+                config.enablePush = false;
+                config.enableUnreadCount = false;
+                message.setConfig(config);
+                getMsgService().saveMessageToLocal(message, true);
+                if (!isSkipTipForStranger) {
+                    sendTipMessage("SEND_MESSAGE_FAILED_WIDTH_STRANGER", null, true, false);
+                }
+                return;
+            }
         }
         getMsgService().sendMessage(message, resend).setCallback(new RequestCallback<Void>() {
             @Override

@@ -87,3 +87,4 @@
 ## Gaps
 
 - Repo không có docs riêng cho custom notification payload ngoài enum TypeScript và source native.
+- ⚠️ `observeCustomNotification` chỉ nổ với custom notification **app → app** của NIM SDK. Notice do backend gửi qua middleware Yunxin (`system/notice/custom/send`) tới máy như **tin custom P2P session `cmd10000`** — đo thật 2026-09-17 trên cả iOS lẫn Android. Consumer nào cần bắt loại đó phải đi qua `observeRecentContact`.

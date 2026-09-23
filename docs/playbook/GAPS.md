@@ -103,6 +103,16 @@
 - Impact:
   - `addListener("observeAttachmentProgress", ...)` không bao giờ được gọi; nếu FE dựa vào đây để show progress/refetch thì logic chết
 
+### Android `CustomAttachParser` nuốt mọi payload có khoá `type` vào `WarningLoginAttachment`
+
+- Evidence:
+  - `android/src/main/java/com/netease/im/session/extension/CustomAttachParser.java:23-26` trả `WarningLoginAttachment` chỉ vì `data` có khoá `MessageConstant.WarningLogin.WARINING_TYPE` (= `"type"`, `MessageConstant.java:156`)
+  - mọi tin lệnh backend gửi qua session `cmd10000` đều có khoá `type` → rơi vào nhánh này
+- Impact:
+  - trước 2026-09-17 `toReactNative()` chỉ serialize 4 trường cố định nên JS mất hết trường còn lại (`sessionId`, `senderId`, `requestId`…) và `type` bị ép thành chuỗi; iOS không có vấn đề này vì đẩy nguyên `dataDict`
+  - đã vá bằng `rawData` + `writableMap.merge(Arguments.makeNativeMap(rawData))` — payload nay đủ trường, nhưng **nhánh parser vẫn khớp nhầm**; thêm attachment mới có khoá `type` là lại đụng
+  - ⚠️ chưa verify: sửa điều kiện khớp của parser có làm vỡ tin cảnh báo đăng nhập cũ không
+
 ## Media / Attachment Drift
 
 ### Android mất `url`/`fileUrl` khi `isFilePathDeleted` (image/file/audio), video thì không

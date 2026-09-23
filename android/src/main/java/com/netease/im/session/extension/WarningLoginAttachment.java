@@ -10,6 +10,9 @@ public class WarningLoginAttachment extends CustomAttachment {
     private String deviceName;
     private String warningType;
     private String timeLogin;
+    // Tin lệnh cmd10000 nào có khoá "type" cũng rơi vào đây (parser khớp theo "type"), nên giữ nguyên
+    // toàn bộ data để JS nhận đủ trường (D-046 sessionId, I-31 senderId/requestId...), giống iOS.
+    private JSONObject rawData;
 
 
     public WarningLoginAttachment() {
@@ -26,6 +29,7 @@ public class WarningLoginAttachment extends CustomAttachment {
         deviceName = data.getString(MessageConstant.WarningLogin.DEVICE_NAME);
         warningType = data.getString(MessageConstant.WarningLogin.WARINING_TYPE);
         timeLogin = data.getString(MessageConstant.WarningLogin.TIME_LOGIN);
+        rawData = data;
     }
 
     @Override
@@ -45,6 +49,9 @@ public class WarningLoginAttachment extends CustomAttachment {
         writableMap.putString(MessageConstant.WarningLogin.DEVICE_ID, deviceId);
         writableMap.putString(MessageConstant.WarningLogin.DEVICE_NAME, deviceName);
         writableMap.putString(MessageConstant.WarningLogin.WARINING_TYPE, warningType);
+        if (rawData != null) {
+            writableMap.merge(Arguments.makeNativeMap(rawData));
+        }
         return writableMap;
     }
 }

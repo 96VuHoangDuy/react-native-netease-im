@@ -37,6 +37,7 @@ import com.facebook.react.common.MapBuilder;
 import com.netease.im.common.ImageLoaderKit;
 import com.netease.im.common.ResourceUtil;
 import com.netease.im.contact.BlackListObserver;
+import com.netease.im.chatroom.ChatroomV2Service;
 import com.netease.im.contact.FriendListService;
 import com.netease.im.contact.FriendObserver;
 import com.netease.im.login.LoginService;
@@ -196,6 +197,73 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
     @ReactMethod
     public void setCustomerServiceCallName(String name) {
         CallService.setCustomerServiceCallName(name);
+    }
+
+    // ---- Chatroom V2 (NIM chatroom vùng miền) ----
+    // Tên method giữ trùng khít bridge iOS (RNNeteaseIm.m) để JS không phải rẽ nhánh platform.
+
+    @ReactMethod
+    public void loginChatroom(ReadableMap params, Promise promise) {
+        ChatroomV2Service.enter(params, promise);
+    }
+
+    @ReactMethod
+    public void logoutChatroom(String roomId, Promise promise) {
+        ChatroomV2Service.exit(roomId, promise);
+    }
+
+    @ReactMethod
+    public void fetchChatroomInfo(String roomId, Promise promise) {
+        ChatroomV2Service.getChatroomInfo(roomId, promise);
+    }
+
+    @ReactMethod
+    public void fetchChatroomMember(String roomId, ReadableArray accountIds, Promise promise) {
+        ChatroomV2Service.getMemberByIds(roomId, accountIds, promise);
+    }
+
+    @ReactMethod
+    public void fetchChatroomMembers(String roomId, int limit, String pageToken, boolean onlyOnline,
+                                     Promise promise) {
+        ChatroomV2Service.getMemberList(roomId, limit, pageToken, onlyOnline, promise);
+    }
+
+    @ReactMethod
+    public void fetchMessageHistory(String roomId, int limit, double beginTime, String orderBy,
+                                    Promise promise) {
+        ChatroomV2Service.getMessageList(roomId, limit, beginTime, orderBy, promise);
+    }
+
+    @ReactMethod
+    public void getNimSdkAppKey(Promise promise) {
+        ChatroomV2Service.getSdkAppKey(promise);
+    }
+
+    @ReactMethod
+    public void sendChatroomTextMessage(String roomId, String text, String serverExtension,
+                                        Promise promise) {
+        ChatroomV2Service.sendTextMessage(roomId, text, serverExtension, promise);
+    }
+
+    // 3 hàm dưới chỉ creator/administrator phòng gọi được — xem QUYỀN ở header ChatroomV2Service.
+    @ReactMethod
+    public void setChatroomMemberChatBanned(String roomId, String accountId, boolean chatBanned,
+                                            String notificationExtension, Promise promise) {
+        ChatroomV2Service.setMemberChatBanned(roomId, accountId, chatBanned, notificationExtension, promise);
+    }
+
+    @ReactMethod
+    public void setChatroomMemberTempChatBanned(String roomId, String accountId, double duration,
+                                                boolean notificationEnabled,
+                                                String notificationExtension, Promise promise) {
+        ChatroomV2Service.setMemberTempChatBanned(roomId, accountId, duration, notificationEnabled,
+                notificationExtension, promise);
+    }
+
+    @ReactMethod
+    public void setChatroomMemberBlocked(String roomId, String accountId, boolean blocked,
+                                         String notificationExtension, Promise promise) {
+        ChatroomV2Service.setMemberBlocked(roomId, accountId, blocked, notificationExtension, promise);
     }
 
     @ReactMethod
@@ -374,8 +442,12 @@ public class RNNeteaseImModule extends ReactContextBaseJavaModule implements Lif
         sessionService.updateIsSeenMessage(isSeenMessage);
     }
 
-    /** Đồng bộ appKey runtime với SDK (initV2 khóa appKey ở manifest; V9 truyền per-login). No-op nếu trùng. */
-    private void syncAppKey(String appKey) {
+    /**
+     * Đồng bộ appKey runtime với SDK (initV2 khóa appKey ở manifest; V9 truyền per-login). No-op nếu trùng.
+     * static: chatroom bridge (ChatroomV2Service) cũng phải gọi trước khi enter phòng, nếu không
+     * token của backend bị xác thực dưới appKey manifest -> 102302 invalid token.
+     */
+    public static void syncAppKey(String appKey) {
         try {
             if (appKey != null && !appKey.isEmpty() && !appKey.equals(NIMClient.getAppKey())) {
                 com.netease.nimlib.sdk.v2.V2NIMError e = NIMClient.updateAppKey(appKey);
@@ -1622,10 +1694,10 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType ,final Promise promise) {
+    public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
 
-            sessionService.sendTextMessageWithSession(content, sessionId, sessionType, sessionName, messageSubType, new SessionService.OnSendMessageListener() {
+            sessionService.sendTextMessageWithSession(content, sessionId, sessionType, sessionName, messageSubType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1694,9 +1766,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendGifMessageWithSession(String url,String aspectRatio, String sessionId, String typeStr, String sessionName, final Promise promise) {
+    public void sendGifMessageWithSession(String url,String aspectRatio, String sessionId, String typeStr, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendGifMessageWithSession(url, aspectRatio, sessionId, typeStr, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendGifMessageWithSession(url, aspectRatio, sessionId, typeStr, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1725,9 +1797,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, final Promise promise) {
+    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1758,9 +1830,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendFileMessageWithSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, final Promise promise) {
+    public void sendFileMessageWithSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendFileMessageWitSession(filePath, fileName, fileType, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendFileMessageWitSession(filePath, fileName, fileType, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1773,9 +1845,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendFileMessage(String filePath, String fileName, String fileType, final Promise promise) {
+    public void sendFileMessage(String filePath, String fileName, String fileType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendFileMessage(filePath, fileName, fileType, new SessionService.OnSendMessageListener() {
+            sessionService.sendFileMessage(filePath, fileName, fileType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1848,9 +1920,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, final Promise promise) {
+    public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendVideoMessageWithSession(file, sessionId, sessionType, sessionName, new SessionService.OnSendMessageListener() {
+            sessionService.sendVideoMessageWithSession(file, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1883,9 +1955,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, final Promise promise) {
+    public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendCardMessage(toSessionType, toSessionId, name, imgPath, cardSessionId, cardSessionType, new SessionService.OnSendMessageListener() {
+            sessionService.sendCardMessage(toSessionType, toSessionId, name, imgPath, cardSessionId, cardSessionType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1930,9 +2002,9 @@ WritableMap _result = Arguments.createMap();
 //    longitude, // 经度
 //    address // 地址信息描述
     @ReactMethod
-    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, final Promise promise) {
+    public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendLocationMessage(sessionId, sessionType, latitude, longitude, address, new SessionService.OnSendMessageListener() {
+            sessionService.sendLocationMessage(sessionId, sessionType, latitude, longitude, address, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     if (code == ResponseCode.RES_SUCCESS) {

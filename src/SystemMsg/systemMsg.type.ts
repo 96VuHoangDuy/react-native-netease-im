@@ -54,7 +54,12 @@ export enum NIMCustomNotificationTypeEnum {
   OBSERVE_RECEIVE_TEMPORARY_SESSION = 6,
   TEAM_JOIN_REQUEST_NEW = 7,
   TEAM_JOIN_REQUEST_APPROVED = 8,
-  TEAM_JOIN_REQUEST_DECLINED = 9
+  TEAM_JOIN_REQUEST_DECLINED = 9,
+  /**
+   * [D-046] Phòng chat vùng miền vừa bị ẩn -> người đang ở TRONG phòng tự thoát.
+   * `sessionId` mang **roomId**, không phải accid/teamId.
+   */
+  CHATROOM_ROOM_HIDDEN = 10
 }
 
 export interface ICustomerNotificationDataTemporarySession {

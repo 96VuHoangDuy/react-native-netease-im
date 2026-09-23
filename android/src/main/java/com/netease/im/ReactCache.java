@@ -142,6 +142,21 @@ public class ReactCache {
     public final static String observeBackgroundPushEvent = "observeBackgroundPushEvent";//''
     public final static String observeCallState = "observeCallState";//'语音通话状态' (Phase 3, emit qua default case)
 
+    // Chatroom V2 (NIM chatroom vùng miền). Tên phải KHÁC các case debounce/batch trong emit() bên dưới
+    // để rơi vào nhánh default (emit thẳng) — tin nhắn phòng chat không được gộp/trễ.
+    public final static String observeChatroomStatus = "observeChatroomStatus";
+    public final static String observeChatroomKicked = "observeChatroomKicked";
+    public final static String observeChatroomMessage = "observeChatroomMessage";
+    public final static String observeChatroomSendMessage = "observeChatroomSendMessage";
+    public final static String observeChatroomMessageRevoked = "observeChatroomMessageRevoked";
+    public final static String observeChatroomMemberIn = "observeChatroomMemberIn";
+    public final static String observeChatroomMemberOut = "observeChatroomMemberOut";
+    public final static String observeChatroomMemberRoleUpdated = "observeChatroomMemberRoleUpdated";
+    public final static String observeChatroomMemberInfoUpdated = "observeChatroomMemberInfoUpdated";
+    public final static String observeChatroomSelfBanned = "observeChatroomSelfBanned";
+    public final static String observeChatroomChatBanned = "observeChatroomChatBanned";
+    public final static String observeChatroomInfoUpdated = "observeChatroomInfoUpdated";
+
     final static String TAG = "ReactCache";
     private static ReactContext reactContext;
 

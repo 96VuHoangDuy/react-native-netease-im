@@ -353,14 +353,18 @@ class NimSession {
     sessionType: string,
     latitude: string,
     longitude: string,
-    address: string
+    address: string,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
   ) {
     return RNNeteaseIm.sendLocationMessage(
       sessionId,
       sessionType,
       latitude,
       longitude,
-      address
+      address,
+      isSkipFriendCheck,
+      isSkipTipForStranger
     );
   }
   /**
@@ -408,7 +412,9 @@ class NimSession {
     name: string,
     imgPath: string,
     cardSessionId: string,
-    cardSessionType: string
+    cardSessionType: string,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
   ) {
     return RNNeteaseIm.sendCardMessage(
       toSessionType,
@@ -416,7 +422,9 @@ class NimSession {
       name,
       imgPath,
       cardSessionId,
-      cardSessionType
+      cardSessionType,
+      isSkipFriendCheck,
+      isSkipTipForStranger
     );
   }
   /**
@@ -702,8 +710,20 @@ class NimSession {
     );
   }
 
-  sendFileMessage(filePath: string, fileName: string, fileType: string) {
-    return RNNeteaseIm.sendFileMessage(filePath, fileName, fileType);
+  sendFileMessage(
+    filePath: string,
+    fileName: string,
+    fileType: string,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
+  ) {
+    return RNNeteaseIm.sendFileMessage(
+      filePath,
+      fileName,
+      fileType,
+      isSkipFriendCheck,
+      isSkipTipForStranger
+    );
   }
 
   createNotificationBirthday(
@@ -755,7 +775,9 @@ class NimSession {
     fileType: string,
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
-    sessionName: string
+    sessionName: string,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
   ) {
     return RNNeteaseIm.sendFileMessageWithSession(
       path,
@@ -763,7 +785,9 @@ class NimSession {
       fileType,
       sessionId,
       sessionType,
-      sessionName
+      sessionName,
+      isSkipFriendCheck,
+      isSkipTipForStranger
     );
   }
 
@@ -772,14 +796,18 @@ class NimSession {
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
     sessionName: string,
-    messageSubType?: NIMMessageSubTypeEnum
+    messageSubType?: NIMMessageSubTypeEnum,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
   ) {
     return RNNeteaseIm.sendTextMessageWithSession(
       msgContent,
       sessionId,
       sessionType,
       sessionName,
-      messageSubType
+      messageSubType,
+      isSkipFriendCheck,
+      isSkipTipForStranger
     );
   }
 
@@ -788,14 +816,18 @@ class NimSession {
     fileName: string,
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
-    sessionName: string
+    sessionName: string,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
   ) {
     return RNNeteaseIm.sendImageMessageWithSession(
       path,
       fileName,
       sessionId,
       sessionType,
-      sessionName
+      sessionName,
+      isSkipFriendCheck,
+      isSkipTipForStranger
     );
   }
 
@@ -803,13 +835,17 @@ class NimSession {
     path: string,
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
-    sessionName: string
+    sessionName: string,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
   ) {
     return RNNeteaseIm.sendVideoMessageWithSession(
       path,
       sessionId,
       sessionType,
-      sessionName
+      sessionName,
+      isSkipFriendCheck,
+      isSkipTipForStranger
     );
   }
 
@@ -818,14 +854,18 @@ class NimSession {
     aspectRatio: string,
     sessionId: string,
     sessionType: NIMSessionTypeEnum,
-    sessionName: string
+    sessionName: string,
+    isSkipFriendCheck: boolean = false,
+    isSkipTipForStranger: boolean = false
   ) {
     return RNNeteaseIm.sendGifMessageWithSession(
       url,
       aspectRatio,
       sessionId,
       sessionType,
-      sessionName
+      sessionName,
+      isSkipFriendCheck,
+      isSkipTipForStranger
     );
   }
 
