@@ -1697,13 +1697,17 @@ WritableMap _result = Arguments.createMap();
     public void sendTextMessageWithSession(String content, String sessionId, String sessionType, String sessionName, Integer messageSubType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
 
-            sessionService.sendTextMessageWithSession(content, sessionId, sessionType, sessionName, messageSubType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendTextMessageWithSession(content, sessionId, sessionType, sessionName, messageSubType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
                 }
             });
-            promise.resolve("success");
+            if (sent) {
+                promise.resolve("success");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send text message: " + e.getMessage());
         }
@@ -1768,13 +1772,17 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendGifMessageWithSession(String url,String aspectRatio, String sessionId, String typeStr, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendGifMessageWithSession(url, aspectRatio, sessionId, typeStr, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendGifMessageWithSession(url, aspectRatio, sessionId, typeStr, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
                 }
             });
-            promise.resolve("success");
+            if (sent) {
+                promise.resolve("success");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send gif message: " + e.getMessage());
         }
@@ -1799,13 +1807,17 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
                 }
             });
-            promise.resolve("success");
+            if (sent) {
+                promise.resolve("success");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send image message: " + e.getMessage());
         }
@@ -1832,13 +1844,17 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendFileMessageWithSession(String filePath, String fileName, String fileType, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendFileMessageWitSession(filePath, fileName, fileType, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendFileMessageWitSession(filePath, fileName, fileType, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
                 }
             });
-            promise.resolve("200");
+            if (sent) {
+                promise.resolve("200");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send file message: " + e.getMessage());
         }
@@ -1847,13 +1863,17 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendFileMessage(String filePath, String fileName, String fileType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendFileMessage(filePath, fileName, fileType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendFileMessage(filePath, fileName, fileType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
                 }
             });
-            promise.resolve("200");
+            if (sent) {
+                promise.resolve("200");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send file message: " + e.getMessage());
         }
@@ -1922,13 +1942,17 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendVideoMessageWithSession(String file, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendVideoMessageWithSession(file, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendVideoMessageWithSession(file, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
                 }
             });
-            promise.resolve("success");
+            if (sent) {
+                promise.resolve("success");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send video message: " + e.getMessage());
         }
@@ -1957,14 +1981,18 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendCardMessage(String toSessionType, String toSessionId, String name, String imgPath, String cardSessionId, String cardSessionType, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendCardMessage(toSessionType, toSessionId, name, imgPath, cardSessionId, cardSessionType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendCardMessage(toSessionType, toSessionId, name, imgPath, cardSessionId, cardSessionType, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
                 }
             });
 
-            promise.resolve("200");
+            if (sent) {
+                promise.resolve("200");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch (Exception e) {
             promise.reject("SEND_ERROR", "Failed to send card message: " + e.getMessage());
         }
@@ -2004,7 +2032,7 @@ WritableMap _result = Arguments.createMap();
     @ReactMethod
     public void sendLocationMessage(String sessionId, String sessionType, String latitude, String longitude, String address, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
         try {
-            sessionService.sendLocationMessage(sessionId, sessionType, latitude, longitude, address, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendLocationMessage(sessionId, sessionType, latitude, longitude, address, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     if (code == ResponseCode.RES_SUCCESS) {
@@ -2016,7 +2044,11 @@ WritableMap _result = Arguments.createMap();
                     return 0;
                 }
             });
-            promise.resolve("success");
+            if (sent) {
+                promise.resolve("success");
+            } else {
+                promise.reject("FRIEND_CHECK_BLOCKED", "Not a friend and no temporary session: message saved locally as failed");
+            }
         } catch ( Exception e) {
             promise.reject("SEND_ERROR", "Failed to send location message: " + e.getMessage());
         }
