@@ -1987,7 +1987,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }
 }
 
--(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType {
+-(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
     NSLog(@"[FRIEND_CHECK][ENTRY][sendTextMessageWithSession] sessionId=%@ sessionType=%@ messageSubType=%ld contentLength=%lu isFriendNow=%d", sessionId, sessionType, (long)messageSubType, (unsigned long)(msgContent ? msgContent.length : 0), [[NIMSDK sharedSDK].userManager isMyFriend:sessionId]);
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithText:msgContent andApnsMembers:@[] andeSession:session senderName:sessionName messageSubType:messageSubType];
@@ -2167,7 +2167,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                                                 completion:completion];
 }
 
--(void) sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
+-(void) sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithGif:url aspectRatio:aspectRatio andSession:session senderName:sessionName];
     [self handleSendMessage:message session:session];
@@ -2203,7 +2203,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }
 }
 
--(void) sendImageMessageWithSession:(NSString *)path isHighQuality:(BOOL *)isHighQuality sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
+-(void) sendImageMessageWithSession:(NSString *)path isHighQuality:(BOOL *)isHighQuality sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
     UIImage *image = [[UIImage alloc] initWithContentsOfFile:path];
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithImage:image andeSession:session isHighQuality:isHighQuality senderName:sessionName];
@@ -2463,7 +2463,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 
--(void)sendVideoMessageWithSession:(NSString *)path sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName {
+-(void)sendVideoMessageWithSession:(NSString *)path sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
     if ([path hasPrefix:@"file:///private"]) {
         path = [path stringByReplacingOccurrencesOfString:@"file:///private" withString:@""];
     }
@@ -2516,7 +2516,7 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 //    [self sendCustomMessage:CustomMessgeTypeCustom data:dataDict];
 //}
 
--(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName success:(Success)success err:(Errors)err {
+-(void) sendFileMessageWithSession:(NSString *)path fileName:(NSString *)fileName fileType:(NSString*)fileType sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger success:(Success)success err:(Errors)err {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
     NIMMessage *message = [NIMMessageMaker msgWithFile:path fileName:fileName fileType:(NSString *)fileType andeSession:session senderName:sessionName];
     
@@ -2530,10 +2530,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }
 }
 
--(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName fileType:(NSString *)fileType success:(Success)succe Err:(Errors)err{
+-(void)sendFileMessage:(NSString *)filePath fileName:(NSString *)fileName fileType:(NSString *)fileType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger success:(Success)succe Err:(Errors)err{
     NIMMessage *message = [NIMMessageMaker msgWithFile:filePath fileName:fileName fileType:fileType andeSession:self._session senderName:_myUserName];
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         NSError *error;
         [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:self._session error:&error];
         
@@ -2587,13 +2587,13 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 
 
 //发送地理位置消息
--(void)sendLocationMessage:(NSString *)sessionId sessionType:(NSString *)sessionType latitude:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address success:(Success)succe Err:(Errors)err{
+-(void)sendLocationMessage:(NSString *)sessionId sessionType:(NSString *)sessionType latitude:(  NSString *)latitude longitude:(  NSString *)longitude address:(  NSString *)address isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger success:(Success)succe Err:(Errors)err{
     NIMLocationObject *locaObj = [[NIMLocationObject alloc]initWithLatitude:[latitude doubleValue] longitude:[longitude doubleValue] title:address];
     NIMKitLocationPoint *locationPoint = [[NIMKitLocationPoint alloc]initWithLocationObject:locaObj];
     NIMSession *session = [NIMSession session:sessionId type:[sessionType integerValue]];
     
     NIMMessage *message = [NIMMessageMaker msgWithLocation:locationPoint andeSession:session senderName:_myUserName];
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [self handleSendMessage:message session:session];
         
         succe(@"200");
@@ -2666,12 +2666,12 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 //发送名片
-- (void)sendCardMessage:(NSString *)toSessionType sessionId:(NSString *)toSessionId name:(NSString *)name imgPath:(NSString *)strImgPath cardSessionId:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType {
+- (void)sendCardMessage:(NSString *)toSessionType sessionId:(NSString *)toSessionId name:(NSString *)name imgPath:(NSString *)strImgPath cardSessionId:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
     NIMSession *session = [NIMSession session:toSessionId type:[toSessionType integerValue]];
     
     NIMMessage *message = [NIMMessageMaker msgWithCard:cardSessionId cardSessionType:cardSessionType cardSessionName:name avatar:strImgPath andSession:session senderName:_myUserName];
     
-    if ([self isFriendToSendMessage:message isSkipFriendCheck:NO isSkipTipForStranger:NO]) {
+    if ([self isFriendToSendMessage:message isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger]) {
         [self handleSendMessage:message session:session];
     }
 }

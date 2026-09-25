@@ -967,28 +967,37 @@ RCT_EXPORT_METHOD(clearSystemMessages){
     [[NoticeViewController initWithNoticeViewController] deleAllNotic];
 }
 
-RCT_EXPORT_METHOD(sendFileMessageWithSession:(nonnull NSString *)path fileName:(nonnull NSString *)fileName fileType:(NSString*)fileType sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController] sendFileMessageWithSession:path fileName:fileName fileType:fileType sessionId:sessionId sessionType:sessionType sessionName:sessionName success:^(id params) {
+// ⛔ 8 hàm gửi dưới đây (4 hàm *WithSession, file-with-session, file, vị trí, danh thiếp) PHẢI nhận
+// isSkipFriendCheck + isSkipTipForStranger ở CUỐI (trước resolve/reject), đúng thứ tự src/Session/Session.ts.
+// 5c6c6c6 (I-39: cờ kiểm tra bạn bè) thêm 2 cờ ở JS + Android nhưng sót iOS → bridge báo
+// "called with N arguments but expects N-2" và tin không gửi được. Sửa JS/Android thì sửa cả chỗ này.
+RCT_EXPORT_METHOD(sendFileMessageWithSession:(nonnull NSString *)path fileName:(nonnull NSString *)fileName fileType:(NSString*)fileType sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController] sendFileMessageWithSession:path fileName:fileName fileType:fileType sessionId:sessionId sessionType:sessionType sessionName:sessionName isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger success:^(id params) {
         resolve(params);
     } err:^(id error) {
         reject(@"-1", error, nil);
     }];
 }
 
-RCT_EXPORT_METHOD(sendTextMessageWithSession:(nonnull NSString *)msgContent sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName messageSubType:(NSInteger)messageSubType) {
-    [[ConversationViewController initWithConversationViewController] sendTextMessageWithSession:msgContent sessionId:sessionId sessionType:sessionType sessionName:sessionName messageSubType:messageSubType];
+RCT_EXPORT_METHOD(sendTextMessageWithSession:(nonnull NSString *)msgContent sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName messageSubType:(NSInteger)messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+    [[ConversationViewController initWithConversationViewController] sendTextMessageWithSession:msgContent sessionId:sessionId sessionType:sessionType sessionName:sessionName messageSubType:messageSubType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
-RCT_EXPORT_METHOD(sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName) {
-    [[ConversationViewController initWithConversationViewController] sendGifMessageWithSession:url aspectRatio:aspectRatio sessionId:sessionId sessionType:sessionType sessionName:sessionName];
+RCT_EXPORT_METHOD(sendGifMessageWithSession:(NSString *)url aspectRatio:(NSString *)aspectRatio sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+    [[ConversationViewController initWithConversationViewController] sendGifMessageWithSession:url aspectRatio:aspectRatio sessionId:sessionId sessionType:sessionType sessionName:sessionName isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
-RCT_EXPORT_METHOD(sendImageMessageWithSession:(nonnull NSString *)path isHighQuality:(nonnull BOOL *)isHighQuality sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName) {
-    [[ConversationViewController initWithConversationViewController] sendImageMessageWithSession:path isHighQuality:isHighQuality sessionId:sessionId sessionType:sessionType sessionName:sessionName];
+// Tham số 2 nhận `id`: JS truyền chuỗi ("true"/"false" ở UIChatDetailStore/MediaGalleryStore, tên file ở
+// ReceiveShareIntent/GroupAndShareFileCreator — Android coi đó là fileName). Khai `BOOL *` thì RN không chuyển được
+// chuỗi → "Argument 1 … could not be processed. Aborting method call." → ảnh không gửi, không báo lỗi (đo 2026-09-25).
+RCT_EXPORT_METHOD(sendImageMessageWithSession:(nonnull NSString *)path isHighQuality:(id)isHighQuality sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+    // "true" → YES; "false" / tên file / nil → NO. msgWithImage chỉ xét con trỏ khác NULL nên truyền &hq hoặc NULL.
+    BOOL hq = [isHighQuality respondsToSelector:@selector(boolValue)] && [isHighQuality boolValue];
+    [[ConversationViewController initWithConversationViewController] sendImageMessageWithSession:path isHighQuality:(hq ? &hq : NULL) sessionId:sessionId sessionType:sessionType sessionName:sessionName isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
-RCT_EXPORT_METHOD(sendVideoMessageWithSession:(nonnull NSString *)path sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName) {
-    [[ConversationViewController initWithConversationViewController] sendVideoMessageWithSession:path sessionId:sessionId sessionType:sessionType sessionName:sessionName];
+RCT_EXPORT_METHOD(sendVideoMessageWithSession:(nonnull NSString *)path sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+    [[ConversationViewController initWithConversationViewController] sendVideoMessageWithSession:path sessionId:sessionId sessionType:sessionType sessionName:sessionName isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
 //会话开始
@@ -1200,8 +1209,8 @@ RCT_EXPORT_METHOD(sendImageMessages:(nonnull NSString *)path displayName:(nonnul
     [[ConversationViewController initWithConversationViewController] sendImageMessages:path displayName:displayName isHighQuality:isHighQuality isSkipCheckFriend:isSkipCheckFriend isSkipTipForStranger:isSkipTipForStranger parentId:nil indexCount:nil];
 }
 
-RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName fileType:(NSString *)fileType resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
-    [[ConversationViewController initWithConversationViewController]sendFileMessage:filePath fileName:fileName fileType:fileType success:^(id param) {
+RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName fileType:(NSString *)fileType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    [[ConversationViewController initWithConversationViewController]sendFileMessage:filePath fileName:fileName fileType:fileType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger success:^(id param) {
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);
@@ -1295,8 +1304,8 @@ RCT_EXPORT_METHOD(setStrangerRecentReplyed:(nonnull  NSString *)sessionId) {
 }
 
 //发送地理位置消息
-RCT_EXPORT_METHOD(sendLocationMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType latitude:(nonnull  NSString *)latitude longitude:(nonnull  NSString *)longitude address:(nonnull  NSString *)address resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
-    [[ConversationViewController initWithConversationViewController] sendLocationMessage:sessionId sessionType: sessionType latitude:latitude longitude:longitude address:address success:^(id param) {
+RCT_EXPORT_METHOD(sendLocationMessage:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType latitude:(nonnull  NSString *)latitude longitude:(nonnull  NSString *)longitude address:(nonnull  NSString *)address isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject){
+    [[ConversationViewController initWithConversationViewController] sendLocationMessage:sessionId sessionType: sessionType latitude:latitude longitude:longitude address:address isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger success:^(id param) {
         resolve(param);
     } Err:^(id erro) {
         reject(@"-1",erro,nil);
@@ -1393,9 +1402,9 @@ RCT_EXPORT_METHOD(sendBankTransferMessage:(NSString *)amount comments:(NSString 
     [[ConversationViewController initWithConversationViewController] sendBankTransferMessage:amount comments:comments serialNo:serialNo];
 }
 //发送名片消息
-RCT_EXPORT_METHOD(sendCardMessage:(NSString *)toSessionType sessionId:(NSString *)toSessionId name:(NSString *)name imgPath:(NSString *)strImgPath cardSessionId:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType){
+RCT_EXPORT_METHOD(sendCardMessage:(NSString *)toSessionType sessionId:(NSString *)toSessionId name:(NSString *)name imgPath:(NSString *)strImgPath cardSessionId:(NSString *)cardSessionId cardSessionType:(NSString *)cardSessionType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger){
     
-    [[ConversationViewController initWithConversationViewController] sendCardMessage:toSessionType sessionId:toSessionId name:name imgPath:strImgPath cardSessionId:cardSessionId cardSessionType:cardSessionType];
+    [[ConversationViewController initWithConversationViewController] sendCardMessage:toSessionType sessionId:toSessionId name:name imgPath:strImgPath cardSessionId:cardSessionId cardSessionType:cardSessionType isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
 }
 
 //发送提醒消息
