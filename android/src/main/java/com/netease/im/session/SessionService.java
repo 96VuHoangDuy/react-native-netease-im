@@ -2615,6 +2615,15 @@ public class SessionService {
      * không qua sendMessageSelf nên trước đây nhận cờ mà không kiểm — gửi người lạ luôn đi).
      * Trả `true` = đã chặn (tin lưu local fail + tip), nơi gọi KHÔNG được gửi tiếp.
      */
+    /**
+     * TẮT (2026-09-25): owner chốt luật = bản release/1.6.13 (lib 67156d0) — cả iOS lẫn Android KHÔNG chặn
+     * người-không-phải-bạn tại máy; tin lên NIM, server quyết, bị từ chối thì markNonFriendFailure → note đỏ + toast.
+     * Chặn tại máy (bật ở I-39, 22/09) làm Android khác iOS ở các đường JS không gác trước (gửi lại, chuyển tiếp,
+     * thư viện, chia sẻ…): hiện tip "chưa phải bạn bè" thay cho toast server. Bật lại phải bật cả iOS
+     * (`isFriendToSendMessage`) và owner duyệt.
+     */
+    private static final boolean LOCAL_FRIEND_CHECK_ENABLED = false;
+
     private boolean blockIfNotFriend(final IMMessage message, boolean isSkipFriendCheck, boolean isSkipTipForStranger) {
         if (message.getSessionType() == SessionTypeEnum.P2P) {
             sessionName = NimUserInfoCache.getInstance().getUserName(message.getSessionId());
@@ -2627,7 +2636,7 @@ public class SessionService {
             // Trước 2026-09-22 các biến thể *WithSession truyền cứng `false` nên bật khối lên là vỡ
             // luồng nhắn người lạ qua phiên tạm (MB-16) — đã thông cờ cho 7 phương thức, đừng thêm
             // đường gửi mới mà quên hai tham số này.
-            if (!isFriend && !isSkipFriendCheck) {
+            if (LOCAL_FRIEND_CHECK_ENABLED && !isFriend && !isSkipFriendCheck) {
                 Map<String, Object> localExt = new HashMap<String, Object>();
 
                 if (!isFriend) {
