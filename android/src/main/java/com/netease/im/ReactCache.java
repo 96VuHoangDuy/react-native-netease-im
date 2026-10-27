@@ -462,7 +462,8 @@ public class ReactCache {
                 map.putString("mute", getMessageNotifyType(team.getMessageNotifyType()));
             }
         }
-        map.putString("imagePath", imagePath);
+        // Team/user không có ảnh → "" như iOS (NIMViewController.m); null làm vỡ màn chuyển tiếp phía JS (Mantis #260).
+        map.putString("imagePath", imagePath != null ? imagePath : "");
         map.putString("imageLocal", ImageLoaderKit.getMemoryCachedAvatar(imagePath));
         map.putString("name", name);
         map.putString("sessionType", Integer.toString(contact.getSessionType().getValue()));
@@ -1098,7 +1099,8 @@ public class ReactCache {
                         }
                     }
                 }
-                map.putString("imagePath", imagePath);
+                // Cùng lý do với createRecent(): null làm vỡ màn chuyển tiếp phía JS (Mantis #260).
+                map.putString("imagePath", imagePath != null ? imagePath : "");
                 map.putString("imageLocal", ImageLoaderKit.getMemoryCachedAvatar(imagePath));
                 map.putString("name", name);
                 map.putString("sessionType", Integer.toString(contact.getSessionType().getValue()));
