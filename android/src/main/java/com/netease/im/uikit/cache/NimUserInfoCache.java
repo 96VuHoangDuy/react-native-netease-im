@@ -193,6 +193,10 @@ public class NimUserInfoCache {
     }
 
     public NimUserInfo getUserInfo(String account) {
+        // [Mantis #318] account rỗng ⇒ ConcurrentHashMap.get(null) ném NPE; trả null cho caller tự xử.
+        if (TextUtils.isEmpty(account)) {
+            return null;
+        }
         // if (!hasUser(account)) {
         //     LogUtil.e(TAG, "getUserInfo null, account=" + account + ", account2UserMap=" + account2UserMap);
             getUserInfoFromRemote(account, null);
