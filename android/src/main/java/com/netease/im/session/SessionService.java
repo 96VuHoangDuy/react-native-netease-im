@@ -2575,6 +2575,14 @@ public class SessionService {
      * Wrapper @ReactMethod dùng giá trị này để reject promise thay vì resolve "success" giả (đo 2026-09-25).
      */
     public boolean sendMessageSelf(final IMMessage message, final OnSendMessageListener onSendMessageListener, boolean resend, boolean isSkipFriendCheck, boolean isSkipTipForStranger) {
+        // [Mantis #318 - phát hiện khi test] Phiên chưa mở (startSession chưa gọi hoặc gọi với id rỗng,
+        // vd. CSKH chưa được gán nhân viên/chatbot) ⇒ message.sessionId = null ⇒ NPE trong
+        // NimUserInfoCache (ConcurrentHashMap không nhận key null) làm app chết. Coi như gửi
+        // thất bại tại máy: không lưu, không đẩy NIM, trả false để JS reject promise.
+        if (message == null || TextUtils.isEmpty(message.getSessionId())) {
+            LogUtil.e(TAG, "sendMessageSelf: session chưa mở (sessionId rỗng), bỏ qua tin");
+            return false;
+        }
         appendPushConfig(message);
         // [FIX #0000138 - phần còn sót] Dùng sessionId/sessionType của chính message thay vì
         // field instance sessionId/sessionTypeEnum: field instance có thể đã bị đổi bởi một
