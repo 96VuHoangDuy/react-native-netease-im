@@ -990,10 +990,10 @@ RCT_EXPORT_METHOD(sendGifMessageWithSession:(NSString *)url aspectRatio:(NSStrin
 // Tham số 2 nhận `id`: JS truyền chuỗi ("true"/"false" ở UIChatDetailStore/MediaGalleryStore, tên file ở
 // ReceiveShareIntent/GroupAndShareFileCreator — Android coi đó là fileName). Khai `BOOL *` thì RN không chuyển được
 // chuỗi → "Argument 1 … could not be processed. Aborting method call." → ảnh không gửi, không báo lỗi (đo 2026-09-25).
-RCT_EXPORT_METHOD(sendImageMessageWithSession:(nonnull NSString *)path isHighQuality:(id)isHighQuality sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
+RCT_EXPORT_METHOD(sendImageMessageWithSession:(nonnull NSString *)path isHighQuality:(id)isHighQuality sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger isKeepOriginal:(BOOL)isKeepOriginal) {
     // "true" → YES; "false" / tên file / nil → NO. msgWithImage chỉ xét con trỏ khác NULL nên truyền &hq hoặc NULL.
     BOOL hq = [isHighQuality respondsToSelector:@selector(boolValue)] && [isHighQuality boolValue];
-    [[ConversationViewController initWithConversationViewController] sendImageMessageWithSession:path isHighQuality:(hq ? &hq : NULL) sessionId:sessionId sessionType:sessionType sessionName:sessionName isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger];
+    [[ConversationViewController initWithConversationViewController] sendImageMessageWithSession:path isHighQuality:(hq ? &hq : NULL) sessionId:sessionId sessionType:sessionType sessionName:sessionName isSkipFriendCheck:isSkipFriendCheck isSkipTipForStranger:isSkipTipForStranger isKeepOriginal:isKeepOriginal];
 }
 
 RCT_EXPORT_METHOD(sendVideoMessageWithSession:(nonnull NSString *)path sessionId:(nonnull NSString *)sessionId sessionType:(nonnull NSString *)sessionType sessionName:(nonnull NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
@@ -1205,8 +1205,8 @@ RCT_EXPORT_METHOD(sendMultiMediaMessage:(NSArray *)listMedia isSkipFriendCheck:(
 }
 
 //发送图片消息
-RCT_EXPORT_METHOD(sendImageMessages:(nonnull NSString *)path displayName:(nonnull NSString *)displayName isHighQuality:(nonnull BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger) {
-    [[ConversationViewController initWithConversationViewController] sendImageMessages:path displayName:displayName isHighQuality:isHighQuality isSkipCheckFriend:isSkipCheckFriend isSkipTipForStranger:isSkipTipForStranger parentId:nil indexCount:nil];
+RCT_EXPORT_METHOD(sendImageMessages:(nonnull NSString *)path displayName:(nonnull NSString *)displayName isHighQuality:(nonnull BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger isKeepOriginal:(BOOL)isKeepOriginal) {
+    [[ConversationViewController initWithConversationViewController] sendImageMessages:path displayName:displayName isHighQuality:isHighQuality isSkipCheckFriend:isSkipCheckFriend isSkipTipForStranger:isSkipTipForStranger parentId:nil indexCount:nil isKeepOriginal:isKeepOriginal];
 }
 
 RCT_EXPORT_METHOD(sendFileMessage:(nonnull  NSString *)filePath fileName:(nonnull  NSString *)fileName fileType:(NSString *)fileType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
