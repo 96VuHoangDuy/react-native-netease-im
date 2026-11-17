@@ -2075,6 +2075,9 @@ public class SessionService {
         SessionTypeEnum sessionTypeEnum = SessionUtil.getSessionType(sessionType);
         IMMessage message = MessageBuilder.createImageMessage(sessionId, sessionTypeEnum, f, TextUtils.isEmpty(fileName) ? f.getName() : fileName);
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
+        if (isKeepOriginal) {
+            remoteExt.put("isKeepOriginal", true);
+        }
 
         message.setRemoteExtension(remoteExt);
 
@@ -2092,6 +2095,10 @@ public class SessionService {
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
         IMMessage message = MessageBuilder.createImageMessage(sessionId, sessionTypeEnum, f, TextUtils.isEmpty(displayName) ? f.getName() : displayName);
         Map<String, Object> remoteExt = MapBuilder.newHashMap();
+        // Bên nhận dựa vào dấu này để hiển thị kiểu sticker (nhỏ, nền trong suốt).
+        if (isKeepOriginal) {
+            remoteExt.put("isKeepOriginal", true);
+        }
 
         if (parentId != null) {
             remoteExt.put("parentId", parentId);

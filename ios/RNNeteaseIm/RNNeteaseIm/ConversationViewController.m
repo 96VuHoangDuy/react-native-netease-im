@@ -1028,6 +1028,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     if ([message.remoteExt objectForKey:@"parentId"] != nil) {
         [imgObj setObject:[message.remoteExt objectForKey:@"parentId"] forKey:@"parentId"];
     }
+
+    if ([[message.remoteExt objectForKey:@"isKeepOriginal"] boolValue]) {
+        [imgObj setObject:@YES forKey:@"isKeepOriginal"];
+    }
     
     if ([message.remoteExt objectForKey:@"indexCount"] != nil) {
         [imgObj setObject:[message.remoteExt objectForKey:@"indexCount"] forKey:@"indexCount"];
@@ -2206,7 +2210,10 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 // msgWithImage vẽ lại ảnh thành JPEG (GIF mất chuyển động) → isKeepOriginal gửi nguyên file (sticker sinh nhật).
 -(NIMMessage *) imageMessageWithPath:(NSString *)path session:(NIMSession *)session isHighQuality:(BOOL *)isHighQuality isKeepOriginal:(BOOL)isKeepOriginal senderName:(NSString *)senderName {
     if (isKeepOriginal) {
-        return [NIMMessageMaker msgWithImagePath:path andeSession:session senderName:senderName];
+        NIMMessage *message = [NIMMessageMaker msgWithImagePath:path andeSession:session senderName:senderName];
+        // Bên nhận dựa vào dấu này để hiển thị kiểu sticker (nhỏ, nền trong suốt).
+        message.remoteExt = @{@"isKeepOriginal": @YES};
+        return message;
     }
     UIImage *image = [[UIImage alloc] initWithContentsOfFile:path];
     return [NIMMessageMaker msgWithImage:image andeSession:session isHighQuality:isHighQuality senderName:senderName];

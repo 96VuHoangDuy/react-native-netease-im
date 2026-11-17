@@ -2497,6 +2497,10 @@ public class ReactCache {
                 if (remoteExtension.containsKey("indexCount") && remoteExtension.get("indexCount") != null) {
                     imageObj.putInt("indexCount", (int) remoteExtension.get("indexCount"));
                 }
+
+                if (Boolean.TRUE.equals(remoteExtension.get("isKeepOriginal"))) {
+                    imageObj.putBoolean("isKeepOriginal", true);
+                }
             }
 
             if (localExtension != null && localExtension.containsKey("isReplacePathSuccess") && localExtension.get("isReplacePathSuccess").equals(true) && imageAttachment.getPath() == null) {
