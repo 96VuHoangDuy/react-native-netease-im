@@ -2203,11 +2203,19 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
     }
 }
 
--(void) sendImageMessageWithSession:(NSString *)path isHighQuality:(BOOL *)isHighQuality sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger {
+// msgWithImage vẽ lại ảnh thành JPEG (GIF mất chuyển động) → isKeepOriginal gửi nguyên file (sticker sinh nhật).
+-(NIMMessage *) imageMessageWithPath:(NSString *)path session:(NIMSession *)session isHighQuality:(BOOL *)isHighQuality isKeepOriginal:(BOOL)isKeepOriginal senderName:(NSString *)senderName {
+    if (isKeepOriginal) {
+        return [NIMMessageMaker msgWithImagePath:path andeSession:session senderName:senderName];
+    }
     UIImage *image = [[UIImage alloc] initWithContentsOfFile:path];
+    return [NIMMessageMaker msgWithImage:image andeSession:session isHighQuality:isHighQuality senderName:senderName];
+}
+
+-(void) sendImageMessageWithSession:(NSString *)path isHighQuality:(BOOL *)isHighQuality sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger isKeepOriginal:(BOOL)isKeepOriginal {
     NIMSession *session = [NIMSession session:sessionId type:[sessionType intValue]];
-    NIMMessage *message = [NIMMessageMaker msgWithImage:image andeSession:session isHighQuality:isHighQuality senderName:sessionName];
-    
+    NIMMessage *message = [self imageMessageWithPath:path session:session isHighQuality:isHighQuality isKeepOriginal:isKeepOriginal senderName:sessionName];
+
     [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
 }
 
@@ -2268,9 +2276,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
 }
 
 //发送图片
--(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isHighQuality:(BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber *)indexCount {
-    UIImage *img = [[UIImage alloc]initWithContentsOfFile:path];
-    NIMMessage *message = [NIMMessageMaker msgWithImage:img andeSession:self._session isHighQuality:isHighQuality senderName:_myUserName];
+-(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isHighQuality:(BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber *)indexCount isKeepOriginal:(BOOL)isKeepOriginal {
+    NIMMessage *message = [self imageMessageWithPath:path session:self._session isHighQuality:isHighQuality isKeepOriginal:isKeepOriginal senderName:_myUserName];
     
     NSMutableDictionary *msgRemoteExt = [[NSMutableDictionary alloc] initWithDictionary: message.remoteExt ? message.remoteExt : @{}];
     
@@ -2442,7 +2449,8 @@ static const NSInteger DWFriendAckAutoMessageRetryLimit = 1;
                 isSkipCheckFriend:isSkipFriendCheck
            isSkipTipForStranger:isSkipTipForStranger
                          parentId:parentMediaId
-                       indexCount:media[@"indexCount"]];
+                       indexCount:media[@"indexCount"]
+                   isKeepOriginal:NO];
         } else if ([mediaType isEqualToString:@"video"]) {
             [self sendVideoMessage:mediaData[@"file"]
                           duration:mediaData[@"duration"]

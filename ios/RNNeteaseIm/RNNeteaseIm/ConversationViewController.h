@@ -35,7 +35,7 @@ typedef void(^Errors)(id erro);
 
 -(void)sendMessageTeamNotificationRequestJoin:(nonnull  NSDictionary *)sourceId targets:(nonnull NSArray *)targets type:(nonnull NSNumber*)type success:(Success)succe Err:(Errors)err;
 //发送图片
--(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isHighQuality:(BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber *)indexCount;
+-(void)sendImageMessages:(NSString *)path displayName:(NSString *)displayName isHighQuality:(BOOL *)isHighQuality isSkipCheckFriend:(BOOL *)isSkipCheckFriend isSkipTipForStranger:(BOOL *)isSkipTipForStranger parentId:(nullable NSString *)parentId indexCount:(nullable NSNumber *)indexCount isKeepOriginal:(BOOL)isKeepOriginal;
 //发送音频
 -(void)sendAudioMessage:(NSString *)file duration:(NSString *)duration isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger;
 
@@ -197,7 +197,7 @@ typedef void(^Errors)(id erro);
 
 -(void)sendTextMessageWithSession:(NSString *)msgContent sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName messageSubType:(NSInteger)messageSubType isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger;
 
--(void) sendImageMessageWithSession:(NSString *)path isHighQuality:(BOOL *)isHighQuality sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger;
+-(void) sendImageMessageWithSession:(NSString *)path isHighQuality:(BOOL *)isHighQuality sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger isKeepOriginal:(BOOL)isKeepOriginal;
 
 -(void)sendVideoMessageWithSession:(NSString *)path sessionId:(NSString *)sessionId sessionType:(NSString *)sessionType sessionName:(NSString *)sessionName isSkipFriendCheck:(BOOL *)isSkipFriendCheck isSkipTipForStranger:(BOOL *)isSkipTipForStranger;
 

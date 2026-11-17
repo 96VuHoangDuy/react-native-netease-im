@@ -258,7 +258,9 @@ class NimSession {
     displayName?: string,
     isHighQuality?: boolean,
     isSkipFriendCheck?: boolean,
-    isSkipTipForStranger?: boolean
+    isSkipTipForStranger?: boolean,
+    // true: gửi nguyên file, không nén JPEG (giữ chuyển động GIF)
+    isKeepOriginal: boolean = false
   ) {
     if (Platform.OS === 'ios') {
       return RNNeteaseIm.sendImageMessages(
@@ -266,7 +268,8 @@ class NimSession {
         displayName ?? '',
         isHighQuality ?? false,
         isSkipFriendCheck ?? false,
-        isSkipTipForStranger ?? false
+        isSkipTipForStranger ?? false,
+        isKeepOriginal
       );
     }
 
@@ -275,7 +278,8 @@ class NimSession {
       displayName ?? '',
       isHighQuality ?? false,
       isSkipFriendCheck ?? false,
-      isSkipTipForStranger ?? false
+      isSkipTipForStranger ?? false,
+      isKeepOriginal
     );
   }
 
@@ -818,7 +822,8 @@ class NimSession {
     sessionType: NIMSessionTypeEnum,
     sessionName: string,
     isSkipFriendCheck: boolean = false,
-    isSkipTipForStranger: boolean = false
+    isSkipTipForStranger: boolean = false,
+    isKeepOriginal: boolean = false
   ) {
     return RNNeteaseIm.sendImageMessageWithSession(
       path,
@@ -827,7 +832,8 @@ class NimSession {
       sessionType,
       sessionName,
       isSkipFriendCheck,
-      isSkipTipForStranger
+      isSkipTipForStranger,
+      isKeepOriginal
     );
   }
 

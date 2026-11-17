@@ -2006,7 +2006,7 @@ public class SessionService {
                             isHighQuality = false;
                         }
 
-                        sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger, finalParentMediaId, (Double) media.get("indexCount"), null);
+                        sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger, finalParentMediaId, (Double) media.get("indexCount"), false, null);
                         continue;
                     }
 
@@ -2064,10 +2064,11 @@ public class SessionService {
     }
 
 
-    public boolean sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, OnSendMessageListener onSendMessageListener) {
+    public boolean sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, boolean isKeepOriginal, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
-        File temp = ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()), true);
+        // Nén sang JPEG làm GIF mất chuyển động → isKeepOriginal gửi nguyên file (sticker sinh nhật).
+        File temp = isKeepOriginal ? null : ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()), true);
         if (temp != null) {
             f = temp;
         }
@@ -2080,11 +2081,11 @@ public class SessionService {
         return sendMessageSelf(message, onSendMessageListener, false, isSkipFriendCheck, isSkipTipForStranger);
     }
 
-    public void sendImageMessage(String file, String displayName, boolean isHighQuality, boolean isSkipFriendCheck, Boolean isSkipTipForStranger, String parentId, Double indexCount, OnSendMessageListener onSendMessageListener) {
+    public void sendImageMessage(String file, String displayName, boolean isHighQuality, boolean isSkipFriendCheck, Boolean isSkipTipForStranger, String parentId, Double indexCount, boolean isKeepOriginal, OnSendMessageListener onSendMessageListener) {
         file = Uri.parse(file).getPath();
         File f = new File(file);
         LogUtil.w(TAG, "path:" + f.getPath() + "-size:" + FileUtil.formatFileSize(f.length()));
-        File temp = ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()), isHighQuality);
+        File temp = isKeepOriginal ? null : ImageUtil.getScaledImageFileWithMD5(f, FileUtil.getMimeType(f.getPath()), isHighQuality);
         if (temp != null) {
             f = temp;
         }

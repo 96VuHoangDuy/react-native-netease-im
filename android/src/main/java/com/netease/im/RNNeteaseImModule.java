@@ -1805,9 +1805,9 @@ WritableMap _result = Arguments.createMap();
     }
 
     @ReactMethod
-    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, final Promise promise) {
+    public void sendImageMessageWithSession(String file, String fileName, String sessionId, String sessionType, String sessionName, boolean isSkipFriendCheck, boolean isSkipTipForStranger, boolean isKeepOriginal, final Promise promise) {
         try {
-            boolean sent = sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, new SessionService.OnSendMessageListener() {
+            boolean sent = sessionService.sendImageMessageWithSession(file, fileName, sessionId, sessionType, sessionName, isSkipFriendCheck, isSkipTipForStranger, isKeepOriginal, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
@@ -1827,9 +1827,9 @@ WritableMap _result = Arguments.createMap();
 //    file, // 图片文件对象
 //    displayName // 文件显示名字，如果第三方 APP 不关注，可以为 null
     @ReactMethod
-    public void sendImageMessage(String file, String displayName, boolean isHighQuality,boolean isSkipFriendCheck, boolean isSkipTipForStranger,final Promise promise) {
+    public void sendImageMessage(String file, String displayName, boolean isHighQuality,boolean isSkipFriendCheck, boolean isSkipTipForStranger, boolean isKeepOriginal, final Promise promise) {
         try {
-            sessionService.sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger,null, null, new SessionService.OnSendMessageListener() {
+            sessionService.sendImageMessage(file, displayName, isHighQuality,isSkipFriendCheck, isSkipTipForStranger,null, null, isKeepOriginal, new SessionService.OnSendMessageListener() {
                 @Override
                 public int onResult(int code, IMMessage message) {
                     return 0;
