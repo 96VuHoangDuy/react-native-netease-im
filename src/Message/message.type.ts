@@ -195,6 +195,8 @@ export interface NimMessageTypeExtend extends NimSessionTypeExtend {
 
   parentId?: string;
   indexCount?: number;
+  // Tin ảnh gửi nguyên file (sticker sinh nhật) — hiển thị nhỏ, nền trong suốt.
+  isKeepOriginal?: boolean;
 
   // Notification Customer Service
   account: string;
